@@ -6,7 +6,7 @@ Multi-layered security protecting contact information while maintaining accessib
 
 ### 1. Server-Side Only Contact Info
 
-Contact information never sent to client - stored in server env vars, generated server-side in API routes with Cloudflare Turnstile CAPTCHA protection.
+Contact information stored in server env vars and only delivered through protected API endpoints after Cloudflare Turnstile CAPTCHA verification - never embedded in static HTML/JavaScript bundles.
 
 ### 2. Bot Detection & Rate Limiting (`/middleware.ts`)
 
