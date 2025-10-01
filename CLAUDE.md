@@ -22,29 +22,42 @@ resumate/
 ├── app/
 │   ├── layout.tsx
 │   ├── page.tsx                    # Landing page
+│   ├── api/
+│   │   └── contact-card/
+│   │       └── route.ts            # vCard generation API
 │   ├── resume/
-│   │   ├── page.tsx                # Main resume page with download button
+│   │   ├── page.tsx                # Resume overview
 │   │   └── view/
-│   │       └── page.tsx            # Full experience data explorer (MAIN FOCUS)
+│   │       └── page.tsx            # Data explorer (MAIN FOCUS)
 │   └── globals.css
 ├── components/
 │   ├── data/
-│   │   ├── DataExplorer.tsx        # Main component showing all bullets
+│   │   ├── DataExplorer.tsx        # Main component
 │   │   ├── CompanySection.tsx      # Grouped by company
 │   │   ├── BulletCard.tsx          # Individual bullet display
 │   │   ├── TagFilter.tsx           # Multi-select tag filter
 │   │   └── SearchBar.tsx           # Search functionality
 │   └── ui/
 │       ├── Badge.tsx               # For tags
-│       └── Button.tsx              # Reusable button
+│       ├── Button.tsx              # Reusable button
+│       └── ContactLinks.tsx        # Contact download
+├── scripts/
+│   ├── fetch-gist-data.js          # Pull gist → local (prebuild)
+│   ├── gist-push.js                # Push local → gist
+│   └── gist-view.js                # View gist content
 ├── lib/
-│   └── utils.ts                    # Utility functions
+│   ├── utils.ts                    # Utilities
+│   └── vcard.ts                    # vCard 3.0 generation
 ├── types/
 │   └── resume.ts                   # TypeScript types
 ├── data/
-│   └── resume-data.json            # All experience data
-├── public/
-│   └── resume.pdf                  # Static fallback PDF (optional)
+│   ├── resume-data.json            # Your data (gitignored)
+│   └── resume-data-template.json   # Template
+├── .github/
+│   └── workflows/
+│       └── gist-deploy-trigger.yml # Hourly auto-deploy
+├── middleware.ts                   # Security & rate limiting
+└── .env.local                      # Secrets (gitignored)
 ```
 
 ## Key Features (Phase 1)
@@ -61,15 +74,22 @@ resumate/
 
 ### Development
 ```bash
-npm run dev        # Start development server
-npm run build      # Build for production
+npm run dev        # Start development server with Turbopack
+npm run build      # Build for production (auto-fetches gist via prebuild)
 npm run lint       # Run ESLint
 npm run start      # Start production server
 ```
 
-### Testing
+### Data Management (Gist Integration)
 ```bash
-# Add when tests are implemented
+npm run data:pull  # Fetch latest from GitHub Gist → local
+npm run data:push  # Push local changes → Gist
+npm run data:view  # View gist content in terminal
+```
+
+### Deployment
+```bash
+vercel --prod      # Deploy to Vercel production
 ```
 
 ## Design System
@@ -231,12 +251,10 @@ npm run dev  # Visit http://localhost:3000
 ### Ready for Deployment
 The application is production-ready and can be deployed to Vercel immediately.
 
-### Remaining Known Issues (Non-Critical)
-From CodeRabbit review - these are minor improvements that don't block deployment:
-1. **Tag mappings** - data/tag-mapping.json has some questionable mappings (covid→entrepreneurship, python/golang→machine-learning)
-2. **Date format consistency** - TEMPLATE_GUIDE.md shows both abbreviated and full month names
-3. **Rate limiting** - In-memory implementation has documented race conditions; migrate to Redis for multi-instance production
-4. **'unknown' IP bucket** - Currently logs warning; consider rejecting requests without IP headers in strict production mode
+### Known Considerations
+1. **Date format** - TEMPLATE_GUIDE.md shows both abbreviated and full month names for flexibility
+2. **Rate limiting** - In-memory implementation; consider Redis for multi-instance deployments
+3. **IP detection** - Currently logs warning for missing IP; acceptable for single-instance Vercel
 
 ### Future Enhancements
 1. **Add static PDF** - Generate/add `public/resume.pdf` (optional static version)
@@ -281,38 +299,70 @@ Required environment variables (see `.env.example` for template):
 
 **Security Note:** Phone and email are NEVER exposed to the client. They're only used server-side in the vCard generation API route.
 
-### Personal Data Management
+### GitHub Gist Integration (Remote Data Editing)
 
-Your `data/resume-data.json` is gitignored. For remote editing:
+Your `data/resume-data.json` is gitignored. **Implemented**: GitHub Gist as remote data source.
 
-1. **Create Private Gist** (https://gist.github.com)
-   - Filename: `resume-data-[yourname].json`
-   - Content: Your resume data JSON
-   - **Create as "secret gist"** (private)
-
-2. **Get Raw URL**
-   - Click "Raw" button
-   - Copy URL: `https://gist.githubusercontent.com/[user]/[hash]/raw/[hash]/resume-data.json`
-
-3. **Optional: Add to .env.local**
+**Setup**:
+1. Create secret gist at https://gist.github.com
+2. Get raw URL and add to `.env.local`:
    ```env
-   RESUME_DATA_GIST_URL=https://gist.githubusercontent.com/...
+   RESUME_DATA_GIST_URL=https://gist.githubusercontent.com/[user]/[hash]/raw/resume-data.json
    ```
 
-4. **Edit from Anywhere**
-   - Edit gist on GitHub
-   - Pull changes locally when needed
-   - Future: App can fetch directly from gist
+**Workflow**:
+```bash
+npm run data:pull  # Fetch gist → local (also runs on prebuild)
+npm run data:push  # Push local → gist (requires gh CLI)
+npm run data:view  # View gist in terminal
+```
 
-This gives you a remote-editable data source without needing a database.
+**Auto-deploy**:
+- GitHub Action (`.github/workflows/gist-deploy-trigger.yml`) runs hourly
+- Checks gist `updated_at` timestamp vs last Vercel deployment
+- Validates JSON format
+- Triggers Vercel deploy hook if changed
+- Uses Vercel API (not git commits) for timestamp tracking
 
 ## Deployment
 
-Project can be deployed to Vercel or any Next.js-compatible hosting platform.
+**Status**: Deployed to ollie.gg via Vercel with full gist integration and auto-deploy.
 
-### Pre-Deployment Checklist
-- ✅ Environment variables configured in Vercel dashboard
-- ✅ `.env.local` added to `.gitignore` (already done)
-- ✅ Build succeeds locally: `npm run build`
-- ✅ No secrets in build output verified
-- ✅ Turnstile keys tested and working
+### Vercel Setup (Completed)
+
+1. **Environment Variables** - Set using Vercel CLI with `printf` to avoid newlines:
+   ```bash
+   printf "%s" "value" | vercel env add VAR_NAME production
+   ```
+   Required vars: `CONTACT_EMAIL_PERSONAL`, `CONTACT_EMAIL_PROFESSIONAL`, `CONTACT_PHONE`, `NEXT_PUBLIC_TURNSTILE_SITE_KEY`, `TURNSTILE_SECRET_KEY`, `RESUME_DATA_GIST_URL`
+
+2. **GitHub Action Secrets** - For auto-deploy workflow:
+   - `VERCEL_TOKEN` - API token from https://vercel.com/account/tokens
+   - `VERCEL_PROJECT_ID` - From `vercel project inspect`
+   - `VERCEL_DEPLOY_HOOK_URL` - Deploy hook from Vercel dashboard
+
+3. **Deploy Command**:
+   ```bash
+   vercel --prod
+   ```
+
+### Auto-Deploy Architecture
+
+**Flow**:
+1. Edit gist on phone/browser → gist `updated_at` changes
+2. GitHub Action runs hourly (cron: `0 * * * *`)
+3. Fetches gist metadata via GitHub API
+4. Validates JSON with `jq`
+5. Queries Vercel API for last deployment timestamp
+6. Compares timestamps (gist vs Vercel)
+7. Triggers Vercel deploy hook if gist is newer
+
+**No git commits** - timestamps tracked via Vercel API, not repo state.
+
+### Checklist
+- ✅ Deployed to ollie.gg
+- ✅ Environment variables set correctly (no newlines!)
+- ✅ GitHub Action running hourly
+- ✅ JSON validation in workflow
+- ✅ Turnstile working on production
+- ✅ Auto-deploy tested and functional

@@ -83,7 +83,7 @@ Edit `data/resume-data.json` with YOUR career story:
 
 **Remember**: Write everything yourself. This is your authentic career history.
 
-### 4. Add Your Contact Info
+### 4. Add Your Contact Info & Gist URL
 
 Edit `.env.local`:
 
@@ -95,6 +95,9 @@ CONTACT_PHONE=+1234567890
 # Get free Turnstile keys from https://dash.cloudflare.com/turnstile
 NEXT_PUBLIC_TURNSTILE_SITE_KEY=your-site-key-here
 TURNSTILE_SECRET_KEY=your-secret-key-here
+
+# Optional: GitHub Gist for remote editing
+RESUME_DATA_GIST_URL=https://gist.githubusercontent.com/[user]/[hash]/raw/resume-data.json
 ```
 
 ### 5. Run Locally
@@ -225,80 +228,126 @@ Claude Code and Warp editors should run this extensively when making changes.
 
 ## Deployment
 
-### Vercel (Recommended)
+### Vercel Setup
 
-1. **Push to GitHub**
+1. **Install Vercel CLI**
    ```bash
-   git add .
-   git commit -m "feat: personal resume site"
-   git push
+   npm i -g vercel
+   vercel login
    ```
 
-2. **Connect to Vercel**
-   - Go to [vercel.com](https://vercel.com)
-   - Import your repository
-   - Vercel auto-detects Next.js
+2. **Link Project**
+   ```bash
+   vercel link
+   ```
 
-3. **Add Environment Variables**
-   - Go to Project Settings → Environment Variables
-   - Add all variables from `.env.local`
-   - Add for Production, Preview, and Development
+3. **Set Environment Variables**
+
+   Use `printf` to avoid newline issues:
+
+   ```bash
+   # Contact info
+   printf "%s" "your@email.com" | vercel env add CONTACT_EMAIL_PROFESSIONAL production
+   printf "%s" "personal@email.com" | vercel env add CONTACT_EMAIL_PERSONAL production
+   printf "%s" "+1234567890" | vercel env add CONTACT_PHONE production
+
+   # Turnstile keys
+   printf "%s" "0x4AAA..." | vercel env add NEXT_PUBLIC_TURNSTILE_SITE_KEY production
+   printf "%s" "0x4AAA..." | vercel env add TURNSTILE_SECRET_KEY production
+
+   # Gist URL (for build-time data fetch)
+   printf "%s" "https://gist.githubusercontent.com/..." | vercel env add RESUME_DATA_GIST_URL production
+   ```
 
 4. **Deploy**
-   - Vercel automatically deploys on push
-   - Visit your deployment URL
+   ```bash
+   vercel --prod
+   ```
+
+### GitHub Actions Auto-Deploy
+
+Set up automatic deploys when your gist is updated:
+
+1. **Create Vercel Deploy Hook**
+   - Vercel Dashboard → Project Settings → Git → Deploy Hooks
+   - Create hook for `main` branch
+
+2. **Create Vercel API Token**
+   - https://vercel.com/account/tokens
+   - Scope: your project
+
+3. **Get Project ID**
+   ```bash
+   vercel project inspect resumate | grep "ID"
+   ```
+
+4. **Set GitHub Secrets**
+   ```bash
+   # Project ID
+   printf "%s" "prj_..." | gh secret set VERCEL_PROJECT_ID -R your-username/resumate
+
+   # API Token
+   printf "%s" "your_token" | gh secret set VERCEL_TOKEN -R your-username/resumate
+
+   # Deploy Hook URL
+   printf "%s" "https://api.vercel.com/v1/integrations/..." | gh secret set VERCEL_DEPLOY_HOOK_URL -R your-username/resumate
+   ```
+
+The GitHub Action (`.github/workflows/gist-deploy-trigger.yml`) will:
+- Run hourly via cron
+- Check if gist was updated since last Vercel deployment
+- Validate JSON format
+- Trigger deploy if changes detected
 
 ### Security Checklist
-- ✅ Environment variables configured in Vercel dashboard
-- ✅ `.env.local` is gitignored (verify)
-- ✅ No secrets committed to repository
+- ✅ Environment variables set in Vercel (no newlines!)
+- ✅ `.env.local` is gitignored
+- ✅ No secrets in repository
 - ✅ Build succeeds: `npm run build`
-- ✅ Turnstile keys working (test download)
+- ✅ Turnstile working on production
+- ✅ GitHub Action secrets configured
 
 ---
 
-## Personal Data Management
+## Remote Data Editing with GitHub Gists
 
-### Your Resume Data (Not a Backup)
+Your resume data (`data/resume-data.json`) is **gitignored** for privacy. To edit from anywhere (phone, tablet, any browser), use a **private GitHub Gist** as your remote data source.
 
-Your personal resume data (`data/resume-data.json`) is **gitignored** to keep it private. For editing from anywhere (not just your local machine), use a **private GitHub Gist**:
-
-#### Setup Private Gist (Recommended)
+### Setup
 
 1. **Create Secret Gist**
    - Go to https://gist.github.com
-   - Click "New gist"
    - Filename: `resume-data-[yourname].json`
-   - Content: Paste your `data/resume-data.json`
-   - **Select "Create secret gist"** (keeps it private)
+   - Paste your `data/resume-data.json`
+   - **Select "Create secret gist"**
 
 2. **Get Raw URL**
-   - Click "Raw" button in your new gist
-   - Copy URL: `https://gist.githubusercontent.com/[user]/[hash]/raw/[hash]/resume-data-[yourname].json`
-   - This URL stays stable even when you edit
+   - Click "Raw" button
+   - Copy URL: `https://gist.githubusercontent.com/[user]/[hash]/raw/resume-data-[yourname].json`
 
-3. **Optional: Add to .env.local** (for future gist-fetch feature)
+3. **Add to .env.local**
    ```env
-   RESUME_DATA_GIST_URL=https://gist.githubusercontent.com/...
+   RESUME_DATA_GIST_URL=https://gist.githubusercontent.com/[user]/[hash]/raw/resume-data-[yourname].json
    ```
 
-4. **Edit from Anywhere**
-   - Go to https://gist.github.com/[your-username]
-   - Find your resume gist
-   - Click "Edit" - full editor available
-   - Changes are immediate
+### Workflow
 
-**Benefits**:
-- ✅ Edit your resume from any device
-- ✅ GitHub's editor with syntax highlighting
-- ✅ Private and secure (secret gist)
-- ✅ Version history built-in
-- ✅ No database needed
+```bash
+# Pull latest from gist to local
+npm run data:pull
 
-**How to use**:
-- **Local dev**: Edit `data/resume-data.json` directly
-- **Remote editing**: Edit the gist, then pull changes locally
-- **Future**: App can fetch directly from gist (optional enhancement)
+# Push local changes to gist
+npm run data:push
+
+# View gist content in terminal
+npm run data:view
+```
+
+**Edit from anywhere**: Visit https://gist.github.com/[your-username], find your gist, click "Edit". Changes sync automatically.
+
+**Build-time fetch**: Vercel automatically pulls from gist during `npm run build` (via `prebuild` hook).
+
+**Auto-deploy**: GitHub Action checks gist hourly and triggers Vercel deploy when changes detected.
 
 ---
 
@@ -309,34 +358,34 @@ resumate/
 ├── app/
 │   ├── page.tsx              # Landing page
 │   ├── layout.tsx            # Root layout
-│   ├── robots.ts             # Dynamic robots.txt (pulls from data)
+│   ├── robots.ts             # Dynamic robots.txt
 │   ├── api/
 │   │   └── contact-card/
-│   │       └── route.ts      # vCard generation API (server-side only)
+│   │       └── route.ts      # vCard generation (server-side)
 │   └── resume/
 │       ├── page.tsx          # Resume overview
 │       └── view/
 │           └── page.tsx      # Data explorer
 ├── components/
 │   ├── ui/                   # Reusable UI components
-│   │   ├── Navbar.tsx
-│   │   ├── Button.tsx
-│   │   └── ContactLinks.tsx
 │   └── data/                 # Data visualization components
-│       ├── DataExplorer.tsx
-│       ├── CompanySection.tsx
-│       └── BulletCard.tsx
+├── scripts/
+│   ├── fetch-gist-data.js    # Pull gist → local (prebuild hook)
+│   ├── gist-push.js          # Push local → gist
+│   └── gist-view.js          # View gist content
 ├── lib/
-│   ├── vcard.ts              # vCard 3.0 generation with escaping
+│   ├── vcard.ts              # vCard 3.0 generation
 │   └── utils.ts              # Utilities
 ├── types/
 │   └── resume.ts             # TypeScript types
 ├── data/
 │   ├── resume-data.json      # YOUR data (gitignored)
-│   ├── resume-data-template.json  # Template for others
-│   └── TEMPLATE_GUIDE.md     # Data structure docs
-├── middleware.ts             # Security (bot detection, rate limiting)
-└── .env.local                # Your secrets (gitignored)
+│   └── resume-data-template.json  # Template
+├── .github/
+│   └── workflows/
+│       └── gist-deploy-trigger.yml  # Hourly gist → deploy automation
+├── middleware.ts             # Security & rate limiting
+└── .env.local                # Secrets (gitignored)
 ```
 
 ---
