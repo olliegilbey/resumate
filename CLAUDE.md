@@ -4,7 +4,17 @@
 
 **Resumate** is an intelligent resume system that curates experience based on role types. This framework can be used as a personal portfolio site and will eventually be fully open-sourced.
 
-## Phase 1 MVP - Current Focus
+## Meta-Project Philosophy
+
+This project is a **meta-resume**: it demonstrates technical capabilities through its own creation. Key principles:
+
+1. **Human-authored, AI-curated**: All bullet text written by you, AI only selects what's relevant
+2. **Rust/WASM showcase**: Demonstrates systems programming, WebAssembly, performance optimization
+3. **Agentic coding**: You oversee architecture, AI assists implementation (Anthropic hiring guideline compliant)
+4. **Growth engineering**: Analytics-driven, iterated based on recruiter behavior data
+5. **Fast & light**: Sub-5s generation time, no heavy servers, client-side compilation
+
+## Phase 1 MVP - Complete ✅
 
 Building a beautiful data explorer that shows all resume experience in a filterable, searchable interface, plus a simple download button for a static PDF resume.
 
@@ -14,7 +24,7 @@ Building a beautiful data explorer that shows all resume experience in a filtera
 - **Deployment**: Vercel
 - **Security**: Cloudflare Turnstile CAPTCHA
 - **Design**: Clean, modern, inspired by Linear/Notion aesthetics
-- **Color Palette**: Tailwind's slate/blue tones
+- **Color Palette**: Tailwind's slate/blue tones (Phase 2: liquid glass dark mode)
 
 ### Project Structure
 ```
@@ -68,7 +78,7 @@ resumate/
 - **Priority Indicator**: Visual ranking of bullet importance
 - **Metrics Highlight**: Emphasize quantifiable achievements
 - **Responsive Design**: Mobile-first approach
-- **Static PDF Download**: Simple fallback resume
+- **vCard Download**: Cloudflare Turnstile-protected contact card
 
 ## Commands to Run
 
@@ -122,25 +132,6 @@ Resume data is stored in `data/resume-data.json` with the following structure:
   - Context (additional detail for future AI use)
 - **Skills**: Technical and soft skills
 - **Education**: Degree information
-
-## Future Phases (Not in Phase 1)
-
-- Claude API integration for intelligent curation
-- Rust/WASM PDF generation
-- Role-based resume customization
-- Job description analysis
-- Analytics tracking
-- Open-source framework extraction
-
-## Development Notes
-
-- Focus on quality over speed
-- Mobile-first responsive design
-- Full TypeScript type safety
-- Server components where possible
-- Accessibility with proper ARIA labels
-- Clean, professional aesthetics
-- Performance optimized
 
 ## Code Quality Tools
 
@@ -270,13 +261,6 @@ The application is production-ready and can be deployed to Vercel immediately.
 - **Scalable**: Easy to add new tag types, bullet fields, or filtering logic
 - **Performance**: Efficient filtering with useMemo, minimal re-renders
 
-### Phase 2 Features (Not Started)
-- Claude API integration for role-based curation
-- Rust/WASM PDF generation
-- Job description analysis
-- Role type selector
-- AI bullet selection
-
 ## Environment Variables
 
 Required environment variables (see `.env.example` for template):
@@ -366,3 +350,357 @@ npm run data:view  # View gist in terminal
 - ✅ JSON validation in workflow
 - ✅ Turnstile working on production
 - ✅ Auto-deploy tested and functional
+
+---
+
+# Development Roadmap (Phase 2+)
+
+## Phase 2: Bug Fixes & Tag System (Days 1-4)
+
+### Critical Bug Fixes (Days 1-2)
+
+#### Bug 1: Tag Filtering Display Logic ⚠️ URGENT
+**Root Cause**: DataExplorer correctly filters `filteredItems`, but CompanySection receives full company object and renders ALL bullets.
+
+**The Issue**:
+```
+DataExplorer → filteredItems (correct) → filteredCompanies (by ID)
+                                       ↓
+CompanySection receives full company.positions[].bullets (WRONG!)
+```
+
+**Fix**:
+1. DataExplorer: Compute `Set<string>` of filtered bullet IDs from `filteredItems`
+2. Pass `filteredBulletIds` prop to CompanySection
+3. CompanySection: Filter `allBullets` with `filteredBulletIds.has(bullet.id)` before rendering
+
+**Files**:
+- `components/data/DataExplorer.tsx`: Add filteredBulletIds computation, pass to CompanySection
+- `components/data/CompanySection.tsx`: Accept filteredBulletIds prop, filter before render
+
+#### Bug 2: vCard Download Speed
+**Current**: 800ms delay (line 132, app/page.tsx)
+**Fix**: Reduce to 300ms - still shows success UI, feels snappier
+
+#### Bug 3: Turnstile Popup Fallback
+**Current**: Modal auto-closes 1.5s after download starts
+**Risk**: If auto-download fails, fallback button disappears
+**Fix**:
+- Keep modal open if `downloadInitiated === false` after 3s
+- Add manual "Close" button
+- Only auto-close on confirmed download
+
+### Tag System Refactor (Days 3-4)
+
+**Problem**: Hardcoded Tag union type (18 tags) + hardcoded colors in Badge.tsx
+
+**Solution**: CSS-Based Dynamic Tag Colors
+
+1. **Remove Tag union type**:
+```typescript
+// types/resume.ts
+export type Tag = string; // was: union of literals
+```
+
+2. **Tag extraction utility**:
+```typescript
+// lib/tags.ts (new)
+export function extractAllTags(data: ResumeData): string[]
+export function getTagColorClass(tag: string, allTags: string[]): string
+```
+
+3. **CSS color system** (20 OKLCH colors + gradient overflow)
+4. **Badge.tsx refactor**: Dynamic color assignment
+
+---
+
+## Phase 3: Liquid Glass Dark Mode (Days 5-8)
+
+### Design System: Modern, Fast, Apple-Inspired
+
+**Color Philosophy**:
+- OKLCH color space (perceptually uniform)
+- Dark mode default
+- Liquid glass aesthetic: frosted backgrounds, subtle gradients, depth through blur
+
+**CSS Architecture**:
+- 20 predefined tag colors
+- Glass morphism components
+- Performance-optimized animations (GPU-accelerated only)
+- NEVER animate: width, height, top, left, margin, padding
+- ONLY animate: transform, opacity, filter
+
+**Performance Budget**:
+- First Contentful Paint: < 1.2s
+- Largest Contentful Paint: < 2.5s
+- Cumulative Layout Shift: < 0.1
+- First Input Delay: < 100ms
+- Lighthouse Performance Score: ≥ 95
+
+---
+
+## Phase 4: Page Unification (Days 9-11)
+
+### Goal: Single "Experience" Page
+
+**New Routes**:
+- `/` - Landing (hero, quick links, about)
+- `/experience` - Unified resume + explorer (replaces /resume and /resume/view)
+
+**Unified Experience Page Structure**:
+1. Hero: Name, Location, Tagline
+2. Professional Summary (2-3 lines)
+3. Stats Bar: Years experience, companies, key achievements (animated counters)
+4. Resume Generation Section:
+   - Role selector dropdown
+   - "Generate Resume" button
+   - Quick Actions: LinkedIn, GitHub, 📅 Book Call (cal.com/ollie)
+5. Full Experience Explorer (inline, not separate page)
+6. What is Resumate? (explanation + GitHub link)
+
+---
+
+## Phase 5: Rust/WASM Resume Compiler (Days 12-22) 🦀
+
+### Why Rust?
+1. **Performance**: <5s generation time (target: 2-3s)
+2. **Showcase**: Demonstrates systems programming mastery
+3. **Dual format**: PDF + DOCX from single codebase
+4. **Client-side**: Zero server cost, infinite scaling
+
+### Tech Stack
+- `pdf-writer` - Low-level PDF generation
+- `docx-rs` - DOCX generation
+- `wasm-bindgen` - JS interop
+- `serde` - JSON serialization
+- `wasm-pack` - Build tooling
+
+### Heuristic Algorithm
+```rust
+pub fn score_bullet(bullet: &Bullet, role: &RoleMapping) -> f32 {
+    let tag_score = /* tag relevance 0-1 */;
+    let priority_score = bullet.priority / 10.0;
+    let metrics_bonus = if bullet.metrics.is_some() { 0.1 } else { 0.0 };
+
+    (tag_score * 0.6) + (priority_score * 0.3) + metrics_bonus
+}
+```
+
+### 20-Second Constraint
+- WASM initialization: ~500ms (cached)
+- Bullet selection: ~100ms
+- PDF/DOCX generation: ~2-3s
+- **Total: 2.5-4s** ✅ (well under 20s)
+
+---
+
+## Phase 6: PostHog Analytics (Days 23-24)
+
+### Event Tracking (No Database Needed!)
+
+**Key Events**:
+```typescript
+posthog.capture('resume_generated', {
+  role: 'developer-relations',
+  format: 'pdf',
+  bullet_count: 18,
+  bullet_ids: [...],
+  bullet_texts: [...], // Full text for reference
+  generation_time_ms: 2340,
+});
+
+posthog.capture('resume_ai_curated', {
+  job_description_length: 1200,
+  ai_processing_time_ms: 4500,
+});
+
+posthog.capture('tag_filter_applied', { tags: [...], results_count: 12 });
+posthog.capture('search_performed', { query: '...', results_count: 8 });
+posthog.capture('calendar_link_clicked', { source: 'experience_page' });
+```
+
+**User Properties** (auto-captured):
+- Device type, OS, browser
+- Screen resolution
+- Location (city, country)
+- Session duration
+- UTM parameters
+
+**Session Replay**: Enabled for all downloads
+
+---
+
+## Phase 7: N8N Notifications (Days 25-26)
+
+### Workflow: PostHog → N8N → Notification
+
+**Architecture**:
+```
+Resume Downloaded (PostHog event)
+      ↓
+PostHog Webhook → N8N Workflow
+      ↓
+1. Enrich with session replay URL
+2. Store in Airtable/Notion
+3. Send Slack/Telegram notification
+```
+
+**Notification Format**:
+```
+🎯 New Resume Downloaded
+
+Role: Developer Relations
+Format: PDF
+Location: San Francisco, US
+Device: Desktop - Chrome
+Referrer: LinkedIn Job Post
+
+📊 View Session Replay: [link]
+📄 View Bullets: [link]
+```
+
+**Storage Schema** (Airtable):
+- Download ID, Timestamp
+- Role, Format
+- User metadata (IP, location, device)
+- Bullet IDs + texts
+- Session replay URL
+- Generation time
+
+---
+
+## Phase 8: AI Curation - Claude API (Days 27-35)
+
+### Secure, Cost-Controlled AI Selection
+
+**20-Second Constraint**:
+- Claude API: ~3-5s
+- WASM generation: ~2-3s
+- **Total: 5-8s** ✅
+
+### Input Validation & Sanitization
+
+```typescript
+// lib/prompt-sanitization.ts
+const MAX_JOB_DESC_LENGTH = 5000;
+const INJECTION_PATTERNS = [
+  /ignore (previous|all) (instructions|prompts)/i,
+  /system prompt/i,
+  /forget (everything|all)/i,
+];
+
+export function sanitizeJobDescription(input: string): string {
+  // 1. Length check
+  // 2. Injection pattern detection
+  // 3. Strip code blocks
+  // 4. Special character ratio check
+  // 5. Normalize whitespace
+}
+```
+
+### Claude API Integration
+
+```typescript
+const response = await client.messages.create({
+  model: 'claude-3-5-sonnet-20241022',
+  max_tokens: 2000,
+  temperature: 0.2,
+
+  system: `You are a resume curator. Select 15-20 most relevant bullets.
+
+  RULES:
+  1. Respond with ONLY JSON array of bullet IDs
+  2. Do NOT modify any text
+  3. Do NOT write new content
+
+  OUTPUT: { "bullet_ids": ["id1", "id2", ...] }`,
+
+  messages: [{
+    role: 'user',
+    content: `Job Description:\n${sanitized}\n\nExperience:\n${JSON.stringify(bullets)}`
+  }],
+});
+```
+
+### Rate Limiting
+- 5 requests per hour per IP
+- Track in middleware.ts
+- Return 429 if exceeded
+
+### Cost Management
+- Claude Sonnet: ~$0.02 per request
+- 5 req/hour/IP limit: ~$0.10/hour per user
+- Anthropic API spending cap: $100/month
+- Real estimate: ~10 requests/day = $6/month
+
+---
+
+## Testing Strategy
+
+### Unit Tests
+- Tag extraction logic
+- Bullet scoring algorithm
+- Prompt sanitization functions
+
+### Integration Tests
+- API routes (vCard, curate, notifications)
+- External services (PostHog, N8N, Claude)
+
+### E2E Tests (Playwright)
+- Full download flow (Turnstile → PDF)
+- Tag filtering accuracy
+- AI curation end-to-end
+- Dark mode rendering
+
+### Performance Tests
+- Lighthouse: Target 95+ performance score
+- WASM load time < 500ms
+- PDF generation < 3s
+- Tag filter response < 100ms
+
+---
+
+## Timeline
+
+| Phase | Duration | Dependencies | Milestone |
+|-------|----------|--------------|-----------|
+| 2: Bug Fixes | 2 days | None | Filtering works correctly |
+| 2: Tag System | 2 days | After bug fixes | Dynamic tags, extensible |
+| 3: Dark Mode | 4 days | After tags | Liquid glass aesthetic |
+| 4: Page Unification | 3 days | After dark mode | Single experience page |
+| 5: Rust/WASM | 11 days | After unification | PDF + DOCX generation |
+| 6: PostHog | 2 days | Parallel with WASM | Analytics live |
+| 7: N8N | 2 days | After PostHog | Notifications working |
+| 8: Claude API | 9 days | After WASM | AI curation live |
+
+**Total: ~35 days (5 weeks)**
+
+**Milestone Schedule**:
+- Week 1: Bugs fixed, tags dynamic, dark mode live
+- Week 2: Unified page, WASM scaffold, PostHog tracking
+- Week 3: PDF generation working, DOCX generation, N8N notifications
+- Week 4: Polish, testing, performance optimization
+- Week 5: AI curation, security hardening, production launch
+
+---
+
+## Project Documentation (for Recruiters)
+
+This project demonstrates:
+- **Rust/WASM**: Client-side document generation
+- **AI-assisted curation**: Human-written content, AI only selects
+- **Growth engineering**: Analytics-driven iteration
+- **Agentic coding**: Human oversight + AI assistance (Anthropic compliant)
+
+### Technical Highlights
+- Sub-5s resume generation (Rust/WASM)
+- Client-side compilation, zero server cost
+- Dual format (PDF + DOCX) from single codebase
+- OKLCH colors, liquid glass design
+- PostHog analytics, N8N automation
+
+### Compliance
+✅ All experience bullets: Human-written
+✅ AI role: Selection only, no content generation
+✅ Transparency: Recruiters see full experience history
+✅ Verifiable: GitHub commit history shows agentic development
