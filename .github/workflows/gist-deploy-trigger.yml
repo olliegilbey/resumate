@@ -11,9 +11,6 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-      - name: Checkout repository
-        uses: actions/checkout@v4
-
       - name: Fetch gist metadata
         id: gist
         run: |
@@ -52,23 +49,40 @@ jobs:
             echo "error_msg=$ERROR_MSG" >> $GITHUB_OUTPUT
           fi
 
+      - name: Get last Vercel deployment time
+        id: vercel
+        if: steps.validate.outputs.valid == 'true'
+        run: |
+          echo "Fetching last Vercel deployment..."
+          VERCEL_RESPONSE=$(curl -s -H "Authorization: Bearer ${{ secrets.VERCEL_TOKEN }}" \
+            "https://api.vercel.com/v6/deployments?projectId=${{ secrets.VERCEL_PROJECT_ID }}&limit=1&state=READY")
+
+          LAST_DEPLOY=$(echo "$VERCEL_RESPONSE" | jq -r '.deployments[0].created')
+
+          if [ "$LAST_DEPLOY" = "null" ] || [ -z "$LAST_DEPLOY" ]; then
+            echo "No previous deployment found, will trigger deploy"
+            LAST_DEPLOY=0
+          else
+            # Convert from milliseconds to ISO 8601 for comparison
+            LAST_DEPLOY_ISO=$(date -u -d @$((LAST_DEPLOY / 1000)) +"%Y-%m-%dT%H:%M:%SZ" 2>/dev/null || date -u -r $((LAST_DEPLOY / 1000)) +"%Y-%m-%dT%H:%M:%SZ")
+            echo "Last Vercel deployment: $LAST_DEPLOY_ISO"
+            LAST_DEPLOY=$LAST_DEPLOY_ISO
+          fi
+
+          echo "last_deploy=$LAST_DEPLOY" >> $GITHUB_OUTPUT
+
       - name: Check if gist changed since last deploy
         id: check
         if: steps.validate.outputs.valid == 'true'
         run: |
-          # Get last known update time from cache/artifact
-          if [ -f .gist-last-deploy ]; then
-            LAST_DEPLOY=$(cat .gist-last-deploy)
-            echo "Last deploy timestamp: $LAST_DEPLOY"
-          else
-            LAST_DEPLOY=""
-            echo "No previous deploy timestamp found"
-          fi
+          GIST_UPDATE="${{ steps.gist.outputs.updated_at }}"
+          LAST_DEPLOY="${{ steps.vercel.outputs.last_deploy }}"
 
-          CURRENT_UPDATE="${{ steps.gist.outputs.updated_at }}"
+          echo "Gist updated: $GIST_UPDATE"
+          echo "Last deploy: $LAST_DEPLOY"
 
-          if [ "$CURRENT_UPDATE" != "$LAST_DEPLOY" ]; then
-            echo "Gist has been updated! Triggering deploy..."
+          if [ "$LAST_DEPLOY" = "0" ] || [[ "$GIST_UPDATE" > "$LAST_DEPLOY" ]]; then
+            echo "Gist has been updated since last deploy! Triggering deploy..."
             echo "changed=true" >> $GITHUB_OUTPUT
           else
             echo "No changes detected, skipping deploy."
@@ -88,16 +102,6 @@ jobs:
             echo "❌ Deploy trigger failed (HTTP $HTTP_STATUS)"
             exit 1
           fi
-
-      - name: Update last deploy timestamp
-        if: steps.check.outputs.changed == 'true'
-        run: |
-          echo "${{ steps.gist.outputs.updated_at }}" > .gist-last-deploy
-          git config user.name "github-actions[bot]"
-          git config user.email "github-actions[bot]@users.noreply.github.com"
-          git add .gist-last-deploy
-          git commit -m "chore: update gist deploy timestamp [skip ci]"
-          git push
 
       - name: Notify on JSON validation failure
         if: steps.validate.outputs.valid == 'false'
