@@ -1,0 +1,76 @@
+name: Gist Update Deploy Trigger
+
+# Runs every hour to check if gist has been updated
+on:
+  schedule:
+    - cron: '0 * * * *'  # Every hour at minute 0
+  workflow_dispatch:  # Allow manual trigger from GitHub UI
+
+jobs:
+  check-gist-and-deploy:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Fetch gist metadata
+        id: gist
+        run: |
+          # Extract gist ID from URL
+          GIST_ID="64d226d47825c6b346f6640a9dd7c262"
+
+          # Fetch gist metadata from GitHub API
+          GIST_DATA=$(curl -s -H "Accept: application/vnd.github.v3+json" \
+            "https://api.github.com/gists/${GIST_ID}")
+
+          # Extract updated_at timestamp
+          UPDATED_AT=$(echo "$GIST_DATA" | jq -r '.updated_at')
+          echo "Gist last updated: $UPDATED_AT"
+          echo "updated_at=$UPDATED_AT" >> $GITHUB_OUTPUT
+
+      - name: Check if gist changed since last deploy
+        id: check
+        run: |
+          # Get last known update time from cache/artifact
+          if [ -f .gist-last-deploy ]; then
+            LAST_DEPLOY=$(cat .gist-last-deploy)
+            echo "Last deploy timestamp: $LAST_DEPLOY"
+          else
+            LAST_DEPLOY=""
+            echo "No previous deploy timestamp found"
+          fi
+
+          CURRENT_UPDATE="${{ steps.gist.outputs.updated_at }}"
+
+          if [ "$CURRENT_UPDATE" != "$LAST_DEPLOY" ]; then
+            echo "Gist has been updated! Triggering deploy..."
+            echo "changed=true" >> $GITHUB_OUTPUT
+          else
+            echo "No changes detected, skipping deploy."
+            echo "changed=false" >> $GITHUB_OUTPUT
+          fi
+
+      - name: Trigger Vercel deployment
+        if: steps.check.outputs.changed == 'true'
+        run: |
+          echo "Triggering Vercel deploy hook..."
+          HTTP_STATUS=$(curl -X POST "${{ secrets.VERCEL_DEPLOY_HOOK_URL }}" \
+            -o /dev/null -w "%{http_code}" -s)
+
+          if [ "$HTTP_STATUS" -eq 201 ] || [ "$HTTP_STATUS" -eq 200 ]; then
+            echo "✅ Deploy triggered successfully (HTTP $HTTP_STATUS)"
+          else
+            echo "❌ Deploy trigger failed (HTTP $HTTP_STATUS)"
+            exit 1
+          fi
+
+      - name: Update last deploy timestamp
+        if: steps.check.outputs.changed == 'true'
+        run: |
+          echo "${{ steps.gist.outputs.updated_at }}" > .gist-last-deploy
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add .gist-last-deploy
+          git commit -m "chore: update gist deploy timestamp [skip ci]"
+          git push
