@@ -39,3 +39,12 @@ yarn-error.log*
 # typescript
 *.tsbuildinfo
 next-env.d.ts
+
+# Environment variables with secrets
+.env.local
+
+# Personal resume data (keep template, gitignore personal data)
+data/resume-data.json
+
+# Session/local files
+.claude/

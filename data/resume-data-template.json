@@ -1,0 +1,73 @@
+{
+  "personal": {
+    "name": "Your Name",
+    "fullName": "Your Full Legal Name",
+    "email": "your.email@example.com",
+    "phone": "+1234567890",
+    "location": "City, Country",
+    "citizenship": ["Country 1", "Country 2"],
+    "linkedin": "your-linkedin-username",
+    "github": "your-github-username",
+    "website": "yourwebsite.com"
+  },
+  "summary": "Your professional summary highlighting your expertise, experience, and value proposition. 2-3 sentences that capture your career focus and key strengths.",
+  "tagline": "Optional: A memorable motto or phrase that represents your professional philosophy",
+  "companies": [
+    {
+      "id": "company-short-name",
+      "name": "Company Name",
+      "dateRange": "Month Year – Month Year",
+      "location": "City, Country (or Remote)",
+      "context": "Optional: Company description or context (e.g., 'Web3 Cloud Infrastructure')",
+      "positions": [
+        {
+          "id": "company-role-id",
+          "role": "Your Role/Title",
+          "dateRange": "Month Year – Month Year",
+          "description": "Primary description of this role - what you did and your key responsibility. This is the main bullet that defines the position.",
+          "descriptionTags": ["tag1", "tag2", "tag3"],
+          "descriptionPriority": 10,
+          "descriptionMetrics": "Optional: extracted metric like '10x increase' or '1M users'",
+          "descriptionContext": "Optional: additional context for AI curation",
+          "descriptionLink": "Optional: URL to relevant work",
+          "bullets": [
+            {
+              "id": "unique-bullet-id",
+              "text": "Additional achievement or responsibility bullet. Keep original wording.",
+              "tags": ["tag1", "tag2"],
+              "priority": 8,
+              "metrics": "Optional: extracted metric",
+              "context": "Optional: additional context",
+              "link": "Optional: URL"
+            }
+          ]
+        }
+      ]
+    }
+  ],
+  "skills": {
+    "technical": ["Skill 1", "Skill 2", "Skill 3"],
+    "soft": ["Skill 1", "Skill 2", "Skill 3"]
+  },
+  "education": [
+    {
+      "degree": "Degree Name",
+      "degreeType": "BSc/BA/MSc/etc",
+      "institution": "University Name",
+      "location": "City, Country",
+      "year": "YYYY",
+      "coursework": ["Course 1", "Course 2", "Course 3"],
+      "societies": ["Society 1", "Society 2"]
+    }
+  ],
+  "accomplishments": [
+    {
+      "id": "unique-accomplishment-id",
+      "title": "Award or Achievement Title",
+      "description": "Brief description of the accomplishment",
+      "year": "YYYY",
+      "tags": ["optional-tag"]
+    }
+  ],
+  "interests": ["Interest 1", "Interest 2", "Interest 3"]
+}
