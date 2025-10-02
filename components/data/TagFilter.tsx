@@ -25,17 +25,19 @@ export function TagFilter({ selectedTags, onTagToggle, bullets, className }: Tag
 
   return (
     <div className={cn("space-y-4", className)}>
-      <div className="flex items-center justify-between">
-        <h3 className="text-sm font-medium text-slate-900">Filter by Tags</h3>
-        {selectedTags.length > 0 && (
-          <Button
-            variant="outline"
-            size="sm"
-            onClick={() => selectedTags.forEach(tag => onTagToggle(tag))}
-          >
-            Clear All
-          </Button>
-        )}
+      <div className="flex items-center justify-between min-h-[32px]">
+        <h3 className="text-sm font-medium text-slate-900 dark:text-slate-100">Filter by Tags</h3>
+        <Button
+          variant="outline"
+          size="sm"
+          onClick={() => selectedTags.forEach(tag => onTagToggle(tag))}
+          className={cn(
+            "transition-opacity",
+            selectedTags.length === 0 && "opacity-0 pointer-events-none"
+          )}
+        >
+          Clear All
+        </Button>
       </div>
 
       <div className="space-y-2">
@@ -48,11 +50,11 @@ export function TagFilter({ selectedTags, onTagToggle, bullets, className }: Tag
               type="checkbox"
               checked={selectedTags.includes(tag)}
               onChange={() => onTagToggle(tag)}
-              className="rounded border-slate-300 text-blue-600 focus:ring-blue-500 focus:ring-offset-0"
+              className="rounded border-slate-300 text-blue-600 focus:ring-blue-500 focus:ring-offset-0 dark:bg-slate-700 dark:border-slate-600 dark:checked:bg-blue-500 dark:checked:border-blue-500"
             />
             <div className="flex items-center space-x-2 min-w-0 flex-1">
-              <Badge tag={tag} className="group-hover:opacity-80" />
-              <span className="text-xs text-slate-500">({tagCounts[tag]})</span>
+              <Badge tag={tag} allTags={allTags} className="group-hover:opacity-80" />
+              <span className="text-xs text-slate-500 dark:text-slate-400">({tagCounts[tag]})</span>
             </div>
           </label>
         ))}

@@ -88,6 +88,7 @@ npm run dev        # Start development server with Turbopack
 npm run build      # Build for production (auto-fetches gist via prebuild)
 npm run lint       # Run ESLint
 npm run start      # Start production server
+npx prettier --write <file>  # Format code (use for CSS, TypeScript, JSON)
 ```
 
 ### Data Management (Gist Integration)
@@ -740,6 +741,24 @@ const response = await client.messages.create({
 - Week 3: PDF generation working, DOCX generation, N8N notifications
 - Week 4: Polish, testing, performance optimization
 - Week 5: AI curation, security hardening, production launch
+
+---
+
+## Code Quality & Formatting
+
+**Always use Prettier for formatting** - saves tokens and ensures consistency:
+```bash
+npx prettier --write <file>  # Format specific file
+npx prettier --write app/    # Format directory
+```
+
+Use prettier instead of manual formatting for:
+- CSS/SCSS files (especially after large edits)
+- TypeScript/JavaScript
+- JSON files
+- Markdown
+
+Pre-commit hooks: Not implemented yet (fast iteration phase). Will add when stabilizing for production.
 
 ---
 

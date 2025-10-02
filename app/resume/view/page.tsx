@@ -4,7 +4,7 @@ import resumeData from "@/data/resume-data.json"
 
 export default function ResumeViewPage() {
   return (
-    <main className="min-h-screen bg-slate-50">
+    <main className="min-h-screen">
       <DataExplorer data={resumeData as ResumeData} />
     </main>
   )

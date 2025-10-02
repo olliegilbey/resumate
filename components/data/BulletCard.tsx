@@ -5,15 +5,16 @@ import { Star } from "lucide-react"
 
 interface BulletCardProps {
   bullet: BulletPoint
+  allTags: string[]
   className?: string
 }
 
-export function BulletCard({ bullet, className }: BulletCardProps) {
+export function BulletCard({ bullet, allTags, className }: BulletCardProps) {
   const priorityStars = Math.min(Math.max(Math.round(bullet.priority / 2), 1), 5)
 
   return (
     <div className={cn(
-      "bg-white rounded-lg border border-slate-200 p-4 hover:shadow-md transition-shadow",
+      "glass glass-hover rounded-xl p-4",
       className
     )}>
       <div className="flex gap-4">
@@ -24,21 +25,21 @@ export function BulletCard({ bullet, className }: BulletCardProps) {
             {Array.from({ length: priorityStars }).map((_, i) => (
               <Star
                 key={i}
-                className="h-3 w-3 fill-yellow-400 text-yellow-400"
+                className="h-3 w-3 fill-white/90 text-white/90 dark:fill-slate-500/30 dark:text-slate-400/30"
               />
             ))}
           </div>
 
           {/* Tags below stars */}
           {bullet.tags.map(tag => (
-            <Badge key={tag} tag={tag} />
+            <Badge key={tag} tag={tag} allTags={allTags} />
           ))}
         </div>
 
         {/* Content on the right */}
         <div className="flex-1">
           <div className="mb-3">
-            <p className="text-base leading-7 text-slate-700">
+            <p className="text-base leading-7 text-slate-700 dark:text-slate-200">
               {parseMarkdownLinks(bullet.text).map((part) => {
                 if (part.type === 'link' && part.url) {
                   return (
@@ -66,8 +67,8 @@ export function BulletCard({ bullet, className }: BulletCardProps) {
           </div>
 
           {bullet.context && (
-            <div className="mt-3 pt-3 border-t border-slate-100">
-              <p className="text-sm text-slate-500 italic">
+            <div className="mt-3 pt-3 border-t border-slate-200 dark:border-slate-700">
+              <p className="text-sm text-slate-500 dark:text-slate-400 italic">
                 {bullet.context}
               </p>
             </div>

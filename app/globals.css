@@ -1,8 +1,15 @@
 @import "tailwindcss";
 
+@variant dark (&:is(.dark *));
+
 :root {
   --background: #ffffff;
   --foreground: #171717;
+}
+
+:root.dark {
+  --background: #0a0a0a;
+  --foreground: #ededed;
 }
 
 @theme inline {
@@ -12,15 +19,514 @@
   --font-mono: var(--font-geist-mono);
 }
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
-  }
+/* Tag Color System - 20 OKLCH Colors */
+/* Strategy: Same CSS variable names, but values change in dark mode */
+:root {
+  /* Tag 0 - Purple */
+  --tag-0-bg: oklch(0.88 0.15 300 / 0.7);
+  --tag-0-fg: oklch(0.42 0.15 300);
+
+  /* Tag 1 - Blue */
+  --tag-1-bg: oklch(0.88 0.15 240 / 0.7);
+  --tag-1-fg: oklch(0.42 0.15 240);
+
+  /* Tag 2 - Cyan */
+  --tag-2-bg: oklch(0.88 0.15 200 / 0.7);
+  --tag-2-fg: oklch(0.42 0.15 200);
+
+  /* Tag 3 - Teal */
+  --tag-3-bg: oklch(0.88 0.15 180 / 0.7);
+  --tag-3-fg: oklch(0.42 0.15 180);
+
+  /* Tag 4 - Green */
+  --tag-4-bg: oklch(0.88 0.15 150 / 0.7);
+  --tag-4-fg: oklch(0.42 0.15 150);
+
+  /* Tag 5 - Lime */
+  --tag-5-bg: oklch(0.88 0.15 120 / 0.7);
+  --tag-5-fg: oklch(0.42 0.15 120);
+
+  /* Tag 6 - Yellow */
+  --tag-6-bg: oklch(0.92 0.15 90 / 0.7);
+  --tag-6-fg: oklch(0.46 0.15 90);
+
+  /* Tag 7 - Orange */
+  --tag-7-bg: oklch(0.88 0.15 60 / 0.7);
+  --tag-7-fg: oklch(0.42 0.15 60);
+
+  /* Tag 8 - Red */
+  --tag-8-bg: oklch(0.88 0.15 30 / 0.7);
+  --tag-8-fg: oklch(0.42 0.15 30);
+
+  /* Tag 9 - Pink */
+  --tag-9-bg: oklch(0.88 0.15 350 / 0.7);
+  --tag-9-fg: oklch(0.42 0.15 350);
+
+  /* Tag 10 - Magenta */
+  --tag-10-bg: oklch(0.88 0.15 320 / 0.7);
+  --tag-10-fg: oklch(0.42 0.15 320);
+
+  /* Tag 11 - Violet */
+  --tag-11-bg: oklch(0.88 0.15 280 / 0.7);
+  --tag-11-fg: oklch(0.42 0.15 280);
+
+  /* Tag 12 - Indigo */
+  --tag-12-bg: oklch(0.88 0.15 260 / 0.7);
+  --tag-12-fg: oklch(0.42 0.15 260);
+
+  /* Tag 13 - Sky */
+  --tag-13-bg: oklch(0.88 0.15 220 / 0.7);
+  --tag-13-fg: oklch(0.42 0.15 220);
+
+  /* Tag 14 - Aqua */
+  --tag-14-bg: oklch(0.88 0.15 190 / 0.7);
+  --tag-14-fg: oklch(0.42 0.15 190);
+
+  /* Tag 15 - Emerald */
+  --tag-15-bg: oklch(0.88 0.15 160 / 0.7);
+  --tag-15-fg: oklch(0.42 0.15 160);
+
+  /* Tag 16 - Grass */
+  --tag-16-bg: oklch(0.88 0.15 135 / 0.7);
+  --tag-16-fg: oklch(0.42 0.15 135);
+
+  /* Tag 17 - Amber */
+  --tag-17-bg: oklch(0.92 0.15 75 / 0.7);
+  --tag-17-fg: oklch(0.46 0.15 75);
+
+  /* Tag 18 - Coral */
+  --tag-18-bg: oklch(0.88 0.15 45 / 0.7);
+  --tag-18-fg: oklch(0.42 0.15 45);
+
+  /* Tag 19 - Rose */
+  --tag-19-bg: oklch(0.88 0.15 10 / 0.7);
+  --tag-19-fg: oklch(0.42 0.15 10);
+}
+
+/* Dark mode: override CSS variables with dark values */
+:root.dark {
+  /* Tag 0 - Purple */
+  --tag-0-bg: oklch(0.30 0.14 300 / 0.7);
+  --tag-0-fg: oklch(0.88 0.14 300);
+
+  /* Tag 1 - Blue */
+  --tag-1-bg: oklch(0.30 0.14 240 / 0.7);
+  --tag-1-fg: oklch(0.88 0.14 240);
+
+  /* Tag 2 - Cyan */
+  --tag-2-bg: oklch(0.30 0.14 200 / 0.7);
+  --tag-2-fg: oklch(0.88 0.14 200);
+
+  /* Tag 3 - Teal */
+  --tag-3-bg: oklch(0.30 0.14 180 / 0.7);
+  --tag-3-fg: oklch(0.88 0.14 180);
+
+  /* Tag 4 - Green */
+  --tag-4-bg: oklch(0.30 0.14 150 / 0.7);
+  --tag-4-fg: oklch(0.88 0.14 150);
+
+  /* Tag 5 - Lime */
+  --tag-5-bg: oklch(0.30 0.14 120 / 0.7);
+  --tag-5-fg: oklch(0.88 0.14 120);
+
+  /* Tag 6 - Yellow */
+  --tag-6-bg: oklch(0.35 0.14 90 / 0.7);
+  --tag-6-fg: oklch(0.92 0.14 90);
+
+  /* Tag 7 - Orange */
+  --tag-7-bg: oklch(0.30 0.14 60 / 0.7);
+  --tag-7-fg: oklch(0.88 0.14 60);
+
+  /* Tag 8 - Red */
+  --tag-8-bg: oklch(0.30 0.14 30 / 0.7);
+  --tag-8-fg: oklch(0.88 0.14 30);
+
+  /* Tag 9 - Pink */
+  --tag-9-bg: oklch(0.30 0.14 350 / 0.7);
+  --tag-9-fg: oklch(0.88 0.14 350);
+
+  /* Tag 10 - Magenta */
+  --tag-10-bg: oklch(0.30 0.14 320 / 0.7);
+  --tag-10-fg: oklch(0.88 0.14 320);
+
+  /* Tag 11 - Violet */
+  --tag-11-bg: oklch(0.30 0.14 280 / 0.7);
+  --tag-11-fg: oklch(0.88 0.14 280);
+
+  /* Tag 12 - Indigo */
+  --tag-12-bg: oklch(0.30 0.14 260 / 0.7);
+  --tag-12-fg: oklch(0.88 0.14 260);
+
+  /* Tag 13 - Sky */
+  --tag-13-bg: oklch(0.30 0.14 220 / 0.7);
+  --tag-13-fg: oklch(0.88 0.14 220);
+
+  /* Tag 14 - Aqua */
+  --tag-14-bg: oklch(0.30 0.14 190 / 0.7);
+  --tag-14-fg: oklch(0.88 0.14 190);
+
+  /* Tag 15 - Emerald */
+  --tag-15-bg: oklch(0.30 0.14 160 / 0.7);
+  --tag-15-fg: oklch(0.88 0.14 160);
+
+  /* Tag 16 - Grass */
+  --tag-16-bg: oklch(0.30 0.14 135 / 0.7);
+  --tag-16-fg: oklch(0.88 0.14 135);
+
+  /* Tag 17 - Amber */
+  --tag-17-bg: oklch(0.35 0.14 75 / 0.7);
+  --tag-17-fg: oklch(0.92 0.14 75);
+
+  /* Tag 18 - Coral */
+  --tag-18-bg: oklch(0.30 0.14 45 / 0.7);
+  --tag-18-fg: oklch(0.88 0.14 45);
+
+  /* Tag 19 - Rose */
+  --tag-19-bg: oklch(0.30 0.14 10 / 0.7);
+  --tag-19-fg: oklch(0.88 0.14 10);
+}
+
+/* Simple utility classes - same classes for both modes */
+.bg-tag-0 {
+  background-color: var(--tag-0-bg);
+}
+.text-tag-0 {
+  color: var(--tag-0-fg);
+}
+.bg-tag-1 {
+  background-color: var(--tag-1-bg);
+}
+.text-tag-1 {
+  color: var(--tag-1-fg);
+}
+.bg-tag-2 {
+  background-color: var(--tag-2-bg);
+}
+.text-tag-2 {
+  color: var(--tag-2-fg);
+}
+.bg-tag-3 {
+  background-color: var(--tag-3-bg);
+}
+.text-tag-3 {
+  color: var(--tag-3-fg);
+}
+.bg-tag-4 {
+  background-color: var(--tag-4-bg);
+}
+.text-tag-4 {
+  color: var(--tag-4-fg);
+}
+.bg-tag-5 {
+  background-color: var(--tag-5-bg);
+}
+.text-tag-5 {
+  color: var(--tag-5-fg);
+}
+.bg-tag-6 {
+  background-color: var(--tag-6-bg);
+}
+.text-tag-6 {
+  color: var(--tag-6-fg);
+}
+.bg-tag-7 {
+  background-color: var(--tag-7-bg);
+}
+.text-tag-7 {
+  color: var(--tag-7-fg);
+}
+.bg-tag-8 {
+  background-color: var(--tag-8-bg);
+}
+.text-tag-8 {
+  color: var(--tag-8-fg);
+}
+.bg-tag-9 {
+  background-color: var(--tag-9-bg);
+}
+.text-tag-9 {
+  color: var(--tag-9-fg);
+}
+.bg-tag-10 {
+  background-color: var(--tag-10-bg);
+}
+.text-tag-10 {
+  color: var(--tag-10-fg);
+}
+.bg-tag-11 {
+  background-color: var(--tag-11-bg);
+}
+.text-tag-11 {
+  color: var(--tag-11-fg);
+}
+.bg-tag-12 {
+  background-color: var(--tag-12-bg);
+}
+.text-tag-12 {
+  color: var(--tag-12-fg);
+}
+.bg-tag-13 {
+  background-color: var(--tag-13-bg);
+}
+.text-tag-13 {
+  color: var(--tag-13-fg);
+}
+.bg-tag-14 {
+  background-color: var(--tag-14-bg);
+}
+.text-tag-14 {
+  color: var(--tag-14-fg);
+}
+.bg-tag-15 {
+  background-color: var(--tag-15-bg);
+}
+.text-tag-15 {
+  color: var(--tag-15-fg);
+}
+.bg-tag-16 {
+  background-color: var(--tag-16-bg);
+}
+.text-tag-16 {
+  color: var(--tag-16-fg);
+}
+.bg-tag-17 {
+  background-color: var(--tag-17-bg);
+}
+.text-tag-17 {
+  color: var(--tag-17-fg);
+}
+.bg-tag-18 {
+  background-color: var(--tag-18-bg);
+}
+.text-tag-18 {
+  color: var(--tag-18-fg);
+}
+.bg-tag-19 {
+  background-color: var(--tag-19-bg);
+}
+.text-tag-19 {
+  color: var(--tag-19-fg);
 }
 
 body {
-  background: var(--background);
   color: var(--foreground);
   font-family: Arial, Helvetica, sans-serif;
+  background-color: #f0f4ff;
+  background-image:
+    radial-gradient(
+      700px circle at 27% 37%,
+      oklch(0.88 0.09 240 / 0.7),
+      transparent
+    ),
+    radial-gradient(
+      600px circle at 97% 21%,
+      oklch(0.86 0.10 200 / 0.6),
+      transparent
+    ),
+    radial-gradient(
+      650px circle at 52% 99%,
+      oklch(0.87 0.09 280 / 0.65),
+      transparent
+    ),
+    radial-gradient(
+      550px circle at 10% 29%,
+      oklch(0.89 0.08 260 / 0.55),
+      transparent
+    ),
+    radial-gradient(
+      600px circle at 97% 96%,
+      oklch(0.88 0.09 220 / 0.6),
+      transparent
+    ),
+    radial-gradient(
+      650px circle at 33% 50%,
+      oklch(0.87 0.09 180 / 0.6),
+      transparent
+    ),
+    radial-gradient(
+      700px circle at 79% 53%,
+      oklch(0.86 0.10 300 / 0.65),
+      transparent
+    );
+  background-attachment: fixed;
+  background-size: 100% 100%;
+  transition: background-color 0.3s ease;
+}
+
+:root.dark body {
+  background-color: #0f1419;
+  background-image:
+    radial-gradient(
+      700px circle at 27% 37%,
+      oklch(0.25 0.12 240 / 0.8),
+      transparent
+    ),
+    radial-gradient(
+      600px circle at 97% 21%,
+      oklch(0.22 0.13 200 / 0.7),
+      transparent
+    ),
+    radial-gradient(
+      650px circle at 52% 99%,
+      oklch(0.24 0.12 280 / 0.75),
+      transparent
+    ),
+    radial-gradient(
+      550px circle at 10% 29%,
+      oklch(0.23 0.11 260 / 0.65),
+      transparent
+    ),
+    radial-gradient(
+      600px circle at 97% 96%,
+      oklch(0.25 0.12 220 / 0.7),
+      transparent
+    ),
+    radial-gradient(
+      650px circle at 33% 50%,
+      oklch(0.24 0.12 180 / 0.7),
+      transparent
+    ),
+    radial-gradient(
+      700px circle at 79% 53%,
+      oklch(0.23 0.13 300 / 0.75),
+      transparent
+    );
+}
+
+/* Liquid Glass Utility Classes */
+.glass {
+  position: relative;
+  background: linear-gradient(
+    135deg,
+    oklch(0.97 0.01 240 / 0.65),
+    oklch(0.96 0.02 240 / 0.7)
+  );
+  backdrop-filter: blur(16px) saturate(180%);
+  -webkit-backdrop-filter: blur(16px) saturate(180%);
+  border: 1px solid oklch(0.85 0.01 240 / 0.3);
+  box-shadow:
+    0 8px 32px oklch(0.7 0.05 240 / 0.12),
+    inset 0 1px 0 oklch(1 0 0 / 0.6);
+  isolation: isolate;
+  will-change: backdrop-filter;
+}
+
+:root.dark .glass {
+  background: linear-gradient(
+    135deg,
+    oklch(0.32 0.03 240 / 0.4),
+    oklch(0.28 0.04 240 / 0.5)
+  );
+  border: 1px solid oklch(0.40 0.05 240 / 0.35);
+  box-shadow:
+    0 8px 32px oklch(0 0 0 / 0.3),
+    inset 0 1px 0 oklch(1 0 0 / 0.15);
+}
+
+/* Lighter glass for navbar/secondary elements */
+.glass-light {
+  background: rgba(248, 248, 248, 0.7);
+  border: 1px solid rgba(255, 255, 255, 0.18);
+  box-shadow:
+    0 4px 16px rgba(100, 116, 139, 0.05),
+    inset 0 1px 0 rgba(255, 255, 255, 0.5);
+}
+
+/* Apply backdrop-filter to pseudo-element for Chrome compatibility */
+.glass-light::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  -webkit-backdrop-filter: blur(7px) saturate(150%);
+  backdrop-filter: blur(7px) saturate(150%);
+  z-index: -1;
+  pointer-events: none;
+}
+
+:root.dark .glass-light {
+  background: rgba(30, 41, 59, 0.7);
+  border: 1px solid rgba(71, 85, 105, 0.35);
+  box-shadow:
+    0 4px 16px rgba(0, 0, 0, 0.25),
+    inset 0 1px 0 rgba(255, 255, 255, 0.12);
+}
+
+/* Hover effect for interactive glass elements */
+.glass-hover {
+  transition: all 0.2s ease;
+}
+
+.glass-hover:hover {
+  backdrop-filter: blur(20px) saturate(200%);
+  -webkit-backdrop-filter: blur(20px) saturate(200%);
+  transform: translateY(-2px);
+  box-shadow:
+    0 12px 48px oklch(0.7 0.05 240 / 0.12),
+    inset 0 1px 0 oklch(1 0 0 / 0.6);
+}
+
+:root.dark .glass-hover:hover {
+  box-shadow:
+    0 12px 48px oklch(0 0 0 / 0.4),
+    inset 0 1px 0 oklch(1 0 0 / 0.15);
+}
+
+/* Glass Badge - subtle glassmorphism for small elements like tags */
+.glass-badge {
+  backdrop-filter: blur(12px) saturate(150%);
+  -webkit-backdrop-filter: blur(12px) saturate(150%);
+  border: 1px solid oklch(1 0 0 / 0.25);
+  box-shadow:
+    0 2px 8px oklch(0 0 0 / 0.1),
+    inset 0 0.5px 0 oklch(1 0 0 / 0.4);
+}
+
+:root.dark .glass-badge {
+  backdrop-filter: blur(12px) saturate(150%);
+  -webkit-backdrop-filter: blur(12px) saturate(150%);
+  border: 1px solid oklch(1 0 0 / 0.2);
+  box-shadow:
+    0 2px 8px oklch(0 0 0 / 0.25),
+    inset 0 0.5px 0 oklch(1 0 0 / 0.15);
+}
+
+/* Custom checkbox styling */
+input[type="checkbox"] {
+  appearance: none;
+  -webkit-appearance: none;
+  width: 16px;
+  height: 16px;
+  border-radius: 4px;
+  border: 1.5px solid oklch(0.75 0.01 240);
+  background-color: oklch(1 0 0);
+  cursor: pointer;
+  position: relative;
+  transition: all 0.2s ease;
+}
+
+input[type="checkbox"]:checked {
+  background-color: oklch(0.55 0.20 240);
+  border-color: oklch(0.55 0.20 240);
+}
+
+input[type="checkbox"]:checked::after {
+  content: '';
+  position: absolute;
+  left: 4px;
+  top: 1px;
+  width: 4px;
+  height: 8px;
+  border: solid white;
+  border-width: 0 2px 2px 0;
+  transform: rotate(45deg);
+}
+
+:root.dark input[type="checkbox"] {
+  background-color: oklch(0.25 0.02 240 / 0.8);
+  border-color: oklch(0.45 0.05 240 / 0.6);
+}
+
+:root.dark input[type="checkbox"]:checked {
+  background-color: oklch(0.50 0.18 240);
+  border-color: oklch(0.50 0.18 240);
 }

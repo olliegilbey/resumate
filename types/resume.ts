@@ -1,22 +1,4 @@
-export type Tag =
-  | 'developer-relations'
-  | 'product-management'
-  | 'technical-leadership'
-  | 'business-development'
-  | 'community-building'
-  | 'event-management'
-  | 'public-speaking'
-  | 'technical-writing'
-  | 'team-leadership'
-  | 'cross-functional'
-  | 'strategic-planning'
-  | 'blockchain'
-  | 'machine-learning'
-  | 'growth-engineering'
-  | 'data-driven'
-  | 'entrepreneurship'
-  | 'ecosystem-building'
-  | 'content-creation'
+export type Tag = string
 
 export interface BulletPoint {
   id: string

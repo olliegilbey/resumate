@@ -61,14 +61,14 @@ export function ContactLinks({
               href={link.href}
               target={link.target}
               rel={link.target === "_blank" ? "noopener noreferrer" : undefined}
-              className="flex items-center text-slate-600 hover:text-slate-900 transition-colors"
+              className="flex items-center text-slate-600 hover:text-slate-900 dark:text-slate-400 dark:hover:text-slate-100 transition-colors"
             >
               <Icon className="h-5 w-5 mr-2" />
               {link.label}
             </a>
           )
         })}
-        <span className="flex items-center text-slate-600">
+        <span className="flex items-center text-slate-600 dark:text-slate-400">
           <MapPin className="h-5 w-5 mr-2" />
           {location}
         </span>

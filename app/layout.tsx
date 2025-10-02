@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
 import { Navbar } from "@/components/ui/Navbar";
+import { ThemeProvider } from "@/contexts/ThemeContext";
 import resumeData from "@/data/resume-data.json";
 
 const geistSans = Geist({
@@ -25,12 +26,36 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="en">
+    <html lang="en" suppressHydrationWarning>
+      <head>
+        <script dangerouslySetInnerHTML={{
+          __html: `
+            (function() {
+              const stored = localStorage.getItem('theme-override');
+              const systemDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
+              const systemTheme = systemDark ? 'dark' : 'light';
+
+              // If stored override matches system, remove it (reset to auto-follow)
+              if (stored === systemTheme) {
+                localStorage.removeItem('theme-override');
+              }
+
+              const theme = stored && stored !== systemTheme ? stored : systemTheme;
+
+              if (theme === 'dark') {
+                document.documentElement.classList.add('dark');
+              }
+            })();
+          `
+        }} />
+      </head>
       <body
         className={`${geistSans.variable} ${geistMono.variable} antialiased`}
       >
-        <Navbar />
-        {children}
+        <ThemeProvider>
+          <Navbar />
+          {children}
+        </ThemeProvider>
       </body>
     </html>
   );

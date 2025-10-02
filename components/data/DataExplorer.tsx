@@ -6,6 +6,7 @@ import { SearchBar } from "./SearchBar"
 import { TagFilter } from "./TagFilter"
 import { CompanySection } from "./CompanySection"
 import { cn } from "@/lib/utils"
+import { extractAllTags } from "@/lib/tags"
 
 interface DataExplorerProps {
   data: ResumeData
@@ -24,6 +25,9 @@ interface FilterableItem {
 export function DataExplorer({ data, className }: DataExplorerProps) {
   const [searchQuery, setSearchQuery] = useState("")
   const [selectedTags, setSelectedTags] = useState<Tag[]>([])
+
+  // Extract all tags from resume data
+  const allTags = useMemo(() => extractAllTags(data), [data])
 
   const handleTagToggle = (tag: Tag) => {
     setSelectedTags(prev =>
@@ -150,54 +154,53 @@ export function DataExplorer({ data, className }: DataExplorerProps) {
   return (
     <div className={cn("max-w-7xl mx-auto px-4 md:px-8 py-8", className)}>
       {/* Header */}
-      <div className="mb-8">
-        <h1 className="text-3xl font-semibold tracking-tight text-slate-900 mb-2">
+      <div className="mb-6">
+        <h1 className="text-3xl font-semibold tracking-tight text-slate-900 dark:text-slate-100 mb-2">
           Full Experience Compendium
         </h1>
-        <p className="text-slate-600">
+        <p className="text-slate-600 dark:text-slate-300">
           All achievements and experience, filterable by tag and searchable by keyword.
         </p>
       </div>
 
-      {/* Filters */}
-      <div className="mb-8 grid grid-cols-1 lg:grid-cols-3 gap-6">
-        <div className="lg:col-span-2">
-          <SearchBar
-            value={searchQuery}
-            onChange={setSearchQuery}
-            placeholder="Search experience, companies, roles, or tags..."
-          />
-        </div>
-        <div className="lg:col-span-1">
-          <div className="bg-white rounded-lg border border-slate-200 p-4">
-            <div className="grid grid-cols-3 gap-4 text-center">
-              <div>
-                <div className="text-2xl font-semibold text-slate-900">{stats.totalBullets}</div>
-                <div className="text-xs text-slate-500">Bullets</div>
-              </div>
-              <div>
-                <div className="text-2xl font-semibold text-slate-900">{stats.companies}</div>
-                <div className="text-xs text-slate-500">Companies</div>
-              </div>
-              <div>
-                <div className="text-2xl font-semibold text-slate-900">{stats.tagsUsed}</div>
-                <div className="text-xs text-slate-500">Tags</div>
-              </div>
-            </div>
-          </div>
-        </div>
+      {/* Search Bar - Full Width */}
+      <div className="mb-6">
+        <SearchBar
+          value={searchQuery}
+          onChange={setSearchQuery}
+          placeholder="Search experience, companies, roles, or tags..."
+        />
       </div>
 
       {/* Main Content */}
       <div className="grid grid-cols-1 lg:grid-cols-4 gap-8">
         {/* Sidebar */}
         <div className="lg:col-span-1">
-          <div className="bg-white rounded-lg border border-slate-200 p-4 sticky top-8">
-            <TagFilter
-              selectedTags={selectedTags}
-              onTagToggle={handleTagToggle}
-              bullets={bulletsForTagFilter}
-            />
+          <div className="sticky top-20 space-y-6">
+            {/* Stats Card - Above Filter */}
+            <div className="glass rounded-lg px-6 py-3 flex items-center justify-center gap-6">
+              <div className="text-center">
+                <div className="text-xl font-semibold text-slate-900 dark:text-slate-100">{stats.totalBullets}</div>
+                <div className="text-xs text-slate-500 dark:text-slate-400">Bullets</div>
+              </div>
+              <div className="text-center">
+                <div className="text-xl font-semibold text-slate-900 dark:text-slate-100">{stats.companies}</div>
+                <div className="text-xs text-slate-500 dark:text-slate-400">Companies</div>
+              </div>
+              <div className="text-center">
+                <div className="text-xl font-semibold text-slate-900 dark:text-slate-100">{stats.tagsUsed}</div>
+                <div className="text-xs text-slate-500 dark:text-slate-400">Tags</div>
+              </div>
+            </div>
+
+            {/* Filter by Tags */}
+            <div className="glass rounded-lg p-4">
+              <TagFilter
+                selectedTags={selectedTags}
+                onTagToggle={handleTagToggle}
+                bullets={bulletsForTagFilter}
+              />
+            </div>
           </div>
         </div>
 
@@ -222,6 +225,7 @@ export function DataExplorer({ data, className }: DataExplorerProps) {
                   key={company.id}
                   company={company}
                   filteredBulletIds={filteredBulletIds}
+                  allTags={allTags}
                 />
               ))}
             </div>

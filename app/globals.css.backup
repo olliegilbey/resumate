@@ -1,0 +1,235 @@
+@import "tailwindcss";
+
+@variant dark (&:is(.dark *));
+
+:root {
+  --background: #ffffff;
+  --foreground: #171717;
+}
+
+:root.dark {
+  --background: #0a0a0a;
+  --foreground: #ededed;
+}
+
+@theme inline {
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  --font-sans: var(--font-geist-sans);
+  --font-mono: var(--font-geist-mono);
+}
+
+/* Tag Color System - 20 OKLCH Colors */
+:root {
+  /* Tag 0 - Purple */
+  --tag-0-bg: oklch(0.85 0.15 300);
+  --tag-0-fg: oklch(0.35 0.15 300);
+
+  /* Tag 1 - Blue */
+  --tag-1: oklch(0.85 0.15 240);
+  --tag-1-fg: oklch(0.35 0.15 240);
+  --tag-1-dark: oklch(0.25 0.12 240);
+  --tag-1-fg-dark: oklch(0.85 0.12 240);
+
+  /* Tag 2 - Cyan */
+  --tag-2: oklch(0.85 0.15 200);
+  --tag-2-fg: oklch(0.35 0.15 200);
+  --tag-2-dark: oklch(0.25 0.12 200);
+  --tag-2-fg-dark: oklch(0.85 0.12 200);
+
+  /* Tag 3 - Teal */
+  --tag-3: oklch(0.85 0.15 180);
+  --tag-3-fg: oklch(0.35 0.15 180);
+  --tag-3-dark: oklch(0.25 0.12 180);
+  --tag-3-fg-dark: oklch(0.85 0.12 180);
+
+  /* Tag 4 - Green */
+  --tag-4: oklch(0.85 0.15 150);
+  --tag-4-fg: oklch(0.35 0.15 150);
+  --tag-4-dark: oklch(0.25 0.12 150);
+  --tag-4-fg-dark: oklch(0.85 0.12 150);
+
+  /* Tag 5 - Lime */
+  --tag-5: oklch(0.85 0.15 120);
+  --tag-5-fg: oklch(0.35 0.15 120);
+  --tag-5-dark: oklch(0.25 0.12 120);
+  --tag-5-fg-dark: oklch(0.85 0.12 120);
+
+  /* Tag 6 - Yellow */
+  --tag-6: oklch(0.90 0.15 90);
+  --tag-6-fg: oklch(0.40 0.15 90);
+  --tag-6-dark: oklch(0.30 0.12 90);
+  --tag-6-fg-dark: oklch(0.90 0.12 90);
+
+  /* Tag 7 - Orange */
+  --tag-7: oklch(0.85 0.15 60);
+  --tag-7-fg: oklch(0.35 0.15 60);
+  --tag-7-dark: oklch(0.25 0.12 60);
+  --tag-7-fg-dark: oklch(0.85 0.12 60);
+
+  /* Tag 8 - Red */
+  --tag-8: oklch(0.85 0.15 30);
+  --tag-8-fg: oklch(0.35 0.15 30);
+  --tag-8-dark: oklch(0.25 0.12 30);
+  --tag-8-fg-dark: oklch(0.85 0.12 30);
+
+  /* Tag 9 - Pink */
+  --tag-9: oklch(0.85 0.15 350);
+  --tag-9-fg: oklch(0.35 0.15 350);
+  --tag-9-dark: oklch(0.25 0.12 350);
+  --tag-9-fg-dark: oklch(0.85 0.12 350);
+
+  /* Tag 10 - Magenta */
+  --tag-10: oklch(0.85 0.15 320);
+  --tag-10-fg: oklch(0.35 0.15 320);
+  --tag-10-dark: oklch(0.25 0.12 320);
+  --tag-10-fg-dark: oklch(0.85 0.12 320);
+
+  /* Tag 11 - Violet */
+  --tag-11: oklch(0.85 0.15 280);
+  --tag-11-fg: oklch(0.35 0.15 280);
+  --tag-11-dark: oklch(0.25 0.12 280);
+  --tag-11-fg-dark: oklch(0.85 0.12 280);
+
+  /* Tag 12 - Indigo */
+  --tag-12: oklch(0.85 0.15 260);
+  --tag-12-fg: oklch(0.35 0.15 260);
+  --tag-12-dark: oklch(0.25 0.12 260);
+  --tag-12-fg-dark: oklch(0.85 0.12 260);
+
+  /* Tag 13 - Sky */
+  --tag-13: oklch(0.85 0.15 220);
+  --tag-13-fg: oklch(0.35 0.15 220);
+  --tag-13-dark: oklch(0.25 0.12 220);
+  --tag-13-fg-dark: oklch(0.85 0.12 220);
+
+  /* Tag 14 - Aqua */
+  --tag-14: oklch(0.85 0.15 190);
+  --tag-14-fg: oklch(0.35 0.15 190);
+  --tag-14-dark: oklch(0.25 0.12 190);
+  --tag-14-fg-dark: oklch(0.85 0.12 190);
+
+  /* Tag 15 - Emerald */
+  --tag-15: oklch(0.85 0.15 160);
+  --tag-15-fg: oklch(0.35 0.15 160);
+  --tag-15-dark: oklch(0.25 0.12 160);
+  --tag-15-fg-dark: oklch(0.85 0.12 160);
+
+  /* Tag 16 - Grass */
+  --tag-16: oklch(0.85 0.15 135);
+  --tag-16-fg: oklch(0.35 0.15 135);
+  --tag-16-dark: oklch(0.25 0.12 135);
+  --tag-16-fg-dark: oklch(0.85 0.12 135);
+
+  /* Tag 17 - Amber */
+  --tag-17: oklch(0.88 0.15 75);
+  --tag-17-fg: oklch(0.38 0.15 75);
+  --tag-17-dark: oklch(0.28 0.12 75);
+  --tag-17-fg-dark: oklch(0.88 0.12 75);
+
+  /* Tag 18 - Coral */
+  --tag-18: oklch(0.85 0.15 45);
+  --tag-18-fg: oklch(0.35 0.15 45);
+  --tag-18-dark: oklch(0.25 0.12 45);
+  --tag-18-fg-dark: oklch(0.85 0.12 45);
+
+  /* Tag 19 - Rose */
+  --tag-19: oklch(0.85 0.15 10);
+  --tag-19-fg: oklch(0.35 0.15 10);
+  --tag-19-dark: oklch(0.25 0.12 10);
+  --tag-19-fg-dark: oklch(0.85 0.12 10);
+}
+
+/* Generate tag background/text color utility classes */
+@layer utilities {
+  .bg-tag-0 { background-color: var(--tag-0); }
+  .text-tag-0-fg { color: var(--tag-0-fg); }
+  .bg-tag-1 { background-color: var(--tag-1); }
+  .text-tag-1-fg { color: var(--tag-1-fg); }
+  .bg-tag-2 { background-color: var(--tag-2); }
+  .text-tag-2-fg { color: var(--tag-2-fg); }
+  .bg-tag-3 { background-color: var(--tag-3); }
+  .text-tag-3-fg { color: var(--tag-3-fg); }
+  .bg-tag-4 { background-color: var(--tag-4); }
+  .text-tag-4-fg { color: var(--tag-4-fg); }
+  .bg-tag-5 { background-color: var(--tag-5); }
+  .text-tag-5-fg { color: var(--tag-5-fg); }
+  .bg-tag-6 { background-color: var(--tag-6); }
+  .text-tag-6-fg { color: var(--tag-6-fg); }
+  .bg-tag-7 { background-color: var(--tag-7); }
+  .text-tag-7-fg { color: var(--tag-7-fg); }
+  .bg-tag-8 { background-color: var(--tag-8); }
+  .text-tag-8-fg { color: var(--tag-8-fg); }
+  .bg-tag-9 { background-color: var(--tag-9); }
+  .text-tag-9-fg { color: var(--tag-9-fg); }
+  .bg-tag-10 { background-color: var(--tag-10); }
+  .text-tag-10-fg { color: var(--tag-10-fg); }
+  .bg-tag-11 { background-color: var(--tag-11); }
+  .text-tag-11-fg { color: var(--tag-11-fg); }
+  .bg-tag-12 { background-color: var(--tag-12); }
+  .text-tag-12-fg { color: var(--tag-12-fg); }
+  .bg-tag-13 { background-color: var(--tag-13); }
+  .text-tag-13-fg { color: var(--tag-13-fg); }
+  .bg-tag-14 { background-color: var(--tag-14); }
+  .text-tag-14-fg { color: var(--tag-14-fg); }
+  .bg-tag-15 { background-color: var(--tag-15); }
+  .text-tag-15-fg { color: var(--tag-15-fg); }
+  .bg-tag-16 { background-color: var(--tag-16); }
+  .text-tag-16-fg { color: var(--tag-16-fg); }
+  .bg-tag-17 { background-color: var(--tag-17); }
+  .text-tag-17-fg { color: var(--tag-17-fg); }
+  .bg-tag-18 { background-color: var(--tag-18); }
+  .text-tag-18-fg { color: var(--tag-18-fg); }
+  .bg-tag-19 { background-color: var(--tag-19); }
+  .text-tag-19-fg { color: var(--tag-19-fg); }
+}
+
+/* Dark mode tag color variants - applied when .dark class is on root */
+@layer utilities {
+  :root.dark .bg-tag-0-dark { background-color: var(--tag-0-dark); }
+  :root.dark .text-tag-0-fg-dark { color: var(--tag-0-fg-dark); }
+  :root.dark .bg-tag-1-dark { background-color: var(--tag-1-dark); }
+  :root.dark .text-tag-1-fg-dark { color: var(--tag-1-fg-dark); }
+  :root.dark .bg-tag-2-dark { background-color: var(--tag-2-dark); }
+  :root.dark .text-tag-2-fg-dark { color: var(--tag-2-fg-dark); }
+  :root.dark .bg-tag-3-dark { background-color: var(--tag-3-dark); }
+  :root.dark .text-tag-3-fg-dark { color: var(--tag-3-fg-dark); }
+  :root.dark .bg-tag-4-dark { background-color: var(--tag-4-dark); }
+  :root.dark .text-tag-4-fg-dark { color: var(--tag-4-fg-dark); }
+  :root.dark .bg-tag-5-dark { background-color: var(--tag-5-dark); }
+  :root.dark .text-tag-5-fg-dark { color: var(--tag-5-fg-dark); }
+  :root.dark .bg-tag-6-dark { background-color: var(--tag-6-dark); }
+  :root.dark .text-tag-6-fg-dark { color: var(--tag-6-fg-dark); }
+  :root.dark .bg-tag-7-dark { background-color: var(--tag-7-dark); }
+  :root.dark .text-tag-7-fg-dark { color: var(--tag-7-fg-dark); }
+  :root.dark .bg-tag-8-dark { background-color: var(--tag-8-dark); }
+  :root.dark .text-tag-8-fg-dark { color: var(--tag-8-fg-dark); }
+  :root.dark .bg-tag-9-dark { background-color: var(--tag-9-dark); }
+  :root.dark .text-tag-9-fg-dark { color: var(--tag-9-fg-dark); }
+  :root.dark .bg-tag-10-dark { background-color: var(--tag-10-dark); }
+  :root.dark .text-tag-10-fg-dark { color: var(--tag-10-fg-dark); }
+  :root.dark .bg-tag-11-dark { background-color: var(--tag-11-dark); }
+  :root.dark .text-tag-11-fg-dark { color: var(--tag-11-fg-dark); }
+  :root.dark .bg-tag-12-dark { background-color: var(--tag-12-dark); }
+  :root.dark .text-tag-12-fg-dark { color: var(--tag-12-fg-dark); }
+  :root.dark .bg-tag-13-dark { background-color: var(--tag-13-dark); }
+  :root.dark .text-tag-13-fg-dark { color: var(--tag-13-fg-dark); }
+  :root.dark .bg-tag-14-dark { background-color: var(--tag-14-dark); }
+  :root.dark .text-tag-14-fg-dark { color: var(--tag-14-fg-dark); }
+  :root.dark .bg-tag-15-dark { background-color: var(--tag-15-dark); }
+  :root.dark .text-tag-15-fg-dark { color: var(--tag-15-fg-dark); }
+  :root.dark .bg-tag-16-dark { background-color: var(--tag-16-dark); }
+  :root.dark .text-tag-16-fg-dark { color: var(--tag-16-fg-dark); }
+  :root.dark .bg-tag-17-dark { background-color: var(--tag-17-dark); }
+  :root.dark .text-tag-17-fg-dark { color: var(--tag-17-fg-dark); }
+  :root.dark .bg-tag-18-dark { background-color: var(--tag-18-dark); }
+  :root.dark .text-tag-18-fg-dark { color: var(--tag-18-fg-dark); }
+  :root.dark .bg-tag-19-dark { background-color: var(--tag-19-dark); }
+  :root.dark .text-tag-19-fg-dark { color: var(--tag-19-fg-dark); }
+}
+
+body {
+  background: var(--background);
+  color: var(--foreground);
+  font-family: Arial, Helvetica, sans-serif;
+}
