@@ -185,26 +185,35 @@ export default function HomePage() {
 
             {/* Turnstile Modal */}
             {showTurnstileModal && (
-              <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm">
-                <div className="bg-white rounded-2xl p-8 max-w-md w-full mx-4 shadow-2xl relative">
+              <div
+                className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm"
+                onClick={handleCloseModal}
+              >
+                <div
+                  className="bg-white rounded-2xl p-8 max-w-md w-full mx-4 shadow-2xl relative"
+                  onClick={(e) => e.stopPropagation()}
+                >
                   {/* Close button */}
                   <button
                     onClick={handleCloseModal}
                     disabled={isVerifying}
-                    className="absolute top-4 right-4 text-slate-400 hover:text-slate-600 transition-colors disabled:opacity-50"
+                    className="absolute top-4 right-4 text-slate-400 hover:text-slate-600 transition-colors disabled:opacity-50 cursor-pointer"
                     aria-label="Close modal"
                   >
                     <X className="h-5 w-5" />
                   </button>
 
-                  <div className="text-center mb-6">
-                    <h3 className="text-2xl font-semibold text-slate-900 mb-2">
-                      Verify You&apos;re Human
-                    </h3>
-                    <p className="text-slate-600">
-                      Complete the verification below to download my contact card.
-                    </p>
-                  </div>
+                  {/* Only show header during Turnstile verification */}
+                  {!verifiedToken && (
+                    <div className="text-center mb-6">
+                      <h3 className="text-2xl font-semibold text-slate-900 mb-2">
+                        Verify You&apos;re Human
+                      </h3>
+                      <p className="text-slate-600">
+                        Complete the verification below to download my contact card.
+                      </p>
+                    </div>
+                  )}
 
                   {/* Error Message */}
                   {errorMessage && (
@@ -234,21 +243,15 @@ export default function HomePage() {
                     <div className="flex flex-col items-center justify-center py-8">
                       <div className="text-center mb-6">
                         <div className="w-16 h-16 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-4">
-                          {downloadInitiated ? (
-                            <Download className="w-8 h-8 text-green-600 animate-bounce" />
-                          ) : (
-                            <svg className="w-8 h-8 text-green-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
-                            </svg>
-                          )}
+                          <svg className="w-8 h-8 text-green-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                          </svg>
                         </div>
                         <p className="text-lg font-medium text-slate-900 mb-2">
-                          {downloadInitiated ? 'Download Starting...' : 'Verification Complete!'}
+                          Verification Complete!
                         </p>
                         <p className="text-sm text-slate-600 mb-4">
-                          {downloadInitiated
-                            ? 'Your download should begin shortly.'
-                            : 'Your download will start automatically in a moment.'}
+                          Your download will start automatically in a moment.
                         </p>
                       </div>
                       {/* Always show fallback button in case auto-download fails */}
@@ -258,9 +261,7 @@ export default function HomePage() {
                         className="inline-flex items-center justify-center w-full px-6 py-3 text-base font-medium text-slate-600 bg-slate-100 hover:bg-slate-200 rounded-lg transition-all duration-200"
                       >
                         <Download className="mr-2 h-4 w-4" />
-                        {downloadInitiated
-                          ? "Download didn't start? Click here"
-                          : "Click here to download"}
+                        Download didn&apos;t start? Click here
                       </a>
                     </div>
                   ) : (
@@ -282,7 +283,7 @@ export default function HomePage() {
                   <button
                     onClick={handleCloseModal}
                     disabled={isVerifying}
-                    className="mt-4 w-full px-4 py-2 text-sm text-slate-600 hover:text-slate-900 transition-colors disabled:opacity-50"
+                    className="mt-4 w-full px-4 py-2 text-sm text-slate-600 hover:text-slate-900 transition-colors disabled:opacity-50 cursor-pointer"
                   >
                     Cancel
                   </button>

@@ -74,9 +74,9 @@ export function DataExplorer({ data, className }: DataExplorerProps) {
         item.role.toLowerCase().includes(searchQuery.toLowerCase()) ||
         item.tags.some(tag => tag.toLowerCase().includes(searchQuery.toLowerCase()))
 
-      // Tag filter (require ALL selected tags to be present)
+      // Tag filter (require ANY selected tag to be present - OR logic)
       const matchesTags = selectedTags.length === 0 ||
-        selectedTags.every(tag => item.tags.includes(tag))
+        selectedTags.some(tag => item.tags.includes(tag))
 
       return matchesSearch && matchesTags
     })
