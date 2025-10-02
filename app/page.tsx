@@ -129,7 +129,7 @@ export default function HomePage() {
           setErrorMessage(null)
           setDownloadInitiated(false)
         }, 1500)
-      }, 800) // Short delay to show success state and fallback button
+      }, 300) // Short delay to show success state - feels snappier
 
       autoDownloadTimerRef.current = timer
       return () => {

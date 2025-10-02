@@ -5,6 +5,7 @@ import { Building2, Briefcase } from "lucide-react"
 
 interface CompanySectionProps {
   company: Company
+  filteredBulletIds?: Set<string>
   className?: string
 }
 
@@ -15,7 +16,7 @@ interface ExtendedBullet extends BulletPoint {
   descriptionMetrics?: string
 }
 
-export function CompanySection({ company, className }: CompanySectionProps) {
+export function CompanySection({ company, filteredBulletIds, className }: CompanySectionProps) {
   // Combine all bullets from all positions (descriptions + bullets) and sort by priority
   const allBullets: ExtendedBullet[] = []
 
@@ -38,8 +39,13 @@ export function CompanySection({ company, className }: CompanySectionProps) {
     })
   })
 
+  // Filter bullets if filteredBulletIds is provided
+  const displayBullets = filteredBulletIds
+    ? allBullets.filter(bullet => filteredBulletIds.has(bullet.id))
+    : allBullets
+
   // Sort by priority (highest first)
-  allBullets.sort((a, b) => b.priority - a.priority)
+  displayBullets.sort((a, b) => b.priority - a.priority)
 
   return (
     <div className={cn("space-y-6", className)}>
@@ -81,9 +87,9 @@ export function CompanySection({ company, className }: CompanySectionProps) {
         </div>
       </div>
 
-      {/* All bullets combined, sorted by priority */}
+      {/* Filtered bullets, sorted by priority */}
       <div className="space-y-3">
-        {allBullets.map(bullet => (
+        {displayBullets.map(bullet => (
           <BulletCard key={bullet.id} bullet={bullet} />
         ))}
       </div>

@@ -82,11 +82,36 @@ export function DataExplorer({ data, className }: DataExplorerProps) {
     })
   }, [allFilterableItems, searchQuery, selectedTags])
 
-  // Get companies that have matching filtered items
-  const filteredCompanies = useMemo(() => {
+  // Get companies that have matching filtered items AND set of filtered bullet IDs
+  const { filteredCompanies, filteredBulletIds } = useMemo(() => {
     const matchingCompanyIds = new Set(filteredItems.map(item => item.companyId))
 
-    return data.companies
+    // Build set of bullet IDs that passed the filter
+    const bulletIds = new Set<string>()
+    filteredItems.forEach(item => {
+      // Find the matching bullet or description by matching text
+      data.companies.forEach(company => {
+        if (company.id !== item.companyId) return
+
+        company.positions.forEach(position => {
+          if (position.role !== item.role) return
+
+          // Check if this is a description
+          if (item.text === position.description) {
+            bulletIds.add(`${position.id}-description`)
+          }
+
+          // Check if this is a bullet
+          position.bullets.forEach(bullet => {
+            if (bullet.text === item.text) {
+              bulletIds.add(bullet.id)
+            }
+          })
+        })
+      })
+    })
+
+    const companies = data.companies
       .filter(company => matchingCompanyIds.has(company.id))
       .sort((a, b) => {
         // Sort by date (newest first)
@@ -101,6 +126,8 @@ export function DataExplorer({ data, className }: DataExplorerProps) {
         }
         return getYear(b.dateRange) - getYear(a.dateRange)
       })
+
+    return { filteredCompanies: companies, filteredBulletIds: bulletIds }
   }, [data.companies, filteredItems])
 
   // Calculate stats
@@ -194,6 +221,7 @@ export function DataExplorer({ data, className }: DataExplorerProps) {
                 <CompanySection
                   key={company.id}
                   company={company}
+                  filteredBulletIds={filteredBulletIds}
                 />
               ))}
             </div>
