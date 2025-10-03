@@ -31,7 +31,7 @@ jobs:
         run: |
           # Fetch the gist content
           GIST_ID="64d226d47825c6b346f6640a9dd7c262"
-          GIST_URL="https://gist.githubusercontent.com/olliegilbey/${GIST_ID}/raw/resume-data-oliver.json"
+          GIST_URL="https://gist.githubusercontent.com/olliegilbey/${GIST_ID}/raw/resume-data.json"
 
           echo "Fetching gist content for validation..."
           GIST_CONTENT=$(curl -s "$GIST_URL")

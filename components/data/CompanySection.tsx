@@ -1,4 +1,4 @@
-import { Company, BulletPoint, Tag } from "@/types/resume"
+import { Company, BulletPoint } from "@/types/resume"
 import { BulletCard } from "./BulletCard"
 import { cn } from "@/lib/utils"
 import { Building2, Briefcase } from "lucide-react"
@@ -10,31 +10,12 @@ interface CompanySectionProps {
   className?: string
 }
 
-interface ExtendedBullet extends BulletPoint {
-  isDescription?: boolean
-  descriptionTags?: Tag[]
-  descriptionPriority?: number
-  descriptionMetrics?: string
-}
-
 export function CompanySection({ company, filteredBulletIds, allTags, className }: CompanySectionProps) {
-  // Combine all bullets from all positions (descriptions + bullets) and sort by priority
-  const allBullets: ExtendedBullet[] = []
+  // Collect all bullets from all positions (position descriptions are NOT displayed as bullets)
+  const allBullets: BulletPoint[] = []
 
   company.positions.forEach(position => {
-    // Add position description as a bullet
-    allBullets.push({
-      id: `${position.id}-description`,
-      text: position.description,
-      tags: position.descriptionTags,
-      priority: position.descriptionPriority,
-      metrics: position.descriptionMetrics,
-      context: position.descriptionContext,
-      link: position.descriptionLink,
-      isDescription: true,
-    })
-
-    // Add all position bullets
+    // Only add actual experience bullets, not position descriptions
     position.bullets.forEach(bullet => {
       allBullets.push(bullet)
     })

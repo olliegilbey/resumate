@@ -297,10 +297,33 @@ Your `data/resume-data.json` is gitignored. **Implemented**: GitHub Gist as remo
 
 **Workflow**:
 ```bash
-npm run data:pull  # Fetch gist → local (also runs on prebuild)
+npm run data:pull  # Fetch gist → local (also runs on prebuild with --force)
 npm run data:push  # Push local → gist (requires gh CLI)
 npm run data:view  # View gist in terminal
+
+# Force flags for automation (skip interactive prompts)
+npm run data:pull -- --force
+npm run data:push -- --force
 ```
+
+**⚠️ CRITICAL: Always Pull Before Editing Data**
+
+**Claude MUST follow this workflow when editing `data/resume-data.json`:**
+
+1. **ALWAYS run `npm run data:pull` FIRST** before any edits to sync gist → local
+2. Edit the local file
+3. Run `npm run data:push` to sync local → gist
+4. **NEVER** edit the file without pulling first - this causes data loss!
+
+**Safety Features**:
+- `data:pull` warns if local differs from gist (prompts for confirmation)
+- `data:push` warns if gist differs from local (prompts for confirmation)
+- Use `--force` flag to skip prompts in automation/CI
+
+**Conflict Resolution**:
+- System uses "last write wins" - no automatic merging
+- If conflict detected, scripts prompt user to confirm overwrite
+- No merge conflicts, just simple replacement
 
 **Auto-deploy**:
 - GitHub Action (`.github/workflows/gist-deploy-trigger.yml`) runs hourly
@@ -308,6 +331,7 @@ npm run data:view  # View gist in terminal
 - Validates JSON format
 - Triggers Vercel deploy hook if changed
 - Uses Vercel API (not git commits) for timestamp tracking
+- Prebuild uses `--force` flag to avoid blocking builds
 
 ## Development Workflow & Error Handling
 
@@ -392,16 +416,36 @@ npm run data:view  # View gist in terminal
 
 ### Auto-Deploy Architecture
 
-**Flow**:
-1. Edit gist on phone/browser → gist `updated_at` changes
-2. GitHub Action runs hourly (cron: `0 * * * *`)
-3. Fetches gist metadata via GitHub API
-4. Validates JSON with `jq`
-5. Queries Vercel API for last deployment timestamp
-6. Compares timestamps (gist vs Vercel)
-7. Triggers Vercel deploy hook if gist is newer
+#### How Deployments Are Triggered
 
-**No git commits** - timestamps tracked via Vercel API, not repo state.
+**1. Git Push to GitHub (Standard Vercel Behavior):**
+- Vercel watches your main branch automatically
+- Any push to `main` triggers automatic deployment
+- This is the standard Vercel GitHub integration
+
+**2. Gist Updates (Hourly Auto-Deploy):**
+- **Workflow**: `.github/workflows/gist-deploy-trigger.yml`
+- **Schedule**: Runs every hour at minute 0 (cron: `0 * * * *`)
+- **Can also trigger manually** from GitHub Actions UI
+
+**Hourly Check Process:**
+1. Fetch gist metadata from GitHub API
+2. **Validate JSON format** with `jq` (fail-fast if invalid)
+3. Query Vercel API for last deployment timestamp
+4. Compare gist `updated_at` vs Vercel last deploy time
+5. If gist is newer → trigger Vercel deploy hook
+6. If JSON invalid → fail with error, skip deploy
+
+**3. Manual Deployment:**
+- Run `vercel --prod` locally
+- Or trigger deploy from Vercel dashboard UI
+
+#### Important Notes
+
+- **No git commits required** - timestamps tracked via Vercel API, not repo state
+- **Prebuild always fetches gist** - `package.json` has `"prebuild": "node scripts/fetch-gist-data.js --force"`
+- **Gist filename must be** `resume-data.json` (generic for all users)
+- **JSON validation is strict** - malformed JSON blocks deployment to prevent build failures
 
 ### Checklist
 - ✅ Deployed to ollie.gg

@@ -20,6 +20,7 @@ export interface VCardData {
   firstName: string
   lastName: string
   fullName: string
+  nickname?: string         // If provided, FN field uses "nickname lastName" instead of fullName
   email?: string | string[] // Can be single email or array of emails
   phone?: string
   url?: string
@@ -46,7 +47,12 @@ export function generateVCard(data: VCardData): string {
 
   // Name fields (escaped per vCard 3.0 spec)
   lines.push(`N:${escapeVCardText(data.lastName)};${escapeVCardText(data.firstName)};;;`)
-  lines.push(`FN:${escapeVCardText(data.fullName)}`)
+
+  // Use nickname + lastName for display name if nickname provided, otherwise use fullName
+  const displayName = data.nickname
+    ? `${data.nickname} ${data.lastName}`.trim()
+    : data.fullName
+  lines.push(`FN:${escapeVCardText(displayName)}`)
 
   // Organization and title
   if (data.organization) {

@@ -105,6 +105,7 @@ async function generateContactCardResponse(token: string): Promise<NextResponse>
     firstName,
     lastName,
     fullName: resumeData.personal.fullName,
+    nickname: resumeData.personal.nickname,
     email: emails, // Pass array of emails (personal first, then professional)
     phone,
     linkedin: resumeData.personal.linkedin,

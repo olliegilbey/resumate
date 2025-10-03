@@ -35,6 +35,7 @@ export interface Company {
 export interface PersonalInfo {
   name: string
   fullName: string
+  nickname?: string         // Preferred name (e.g., "Ollie" for "Oliver")
   email: string
   phone: string
   location: string
