@@ -161,7 +161,46 @@ Resume data is stored in `data/resume-data.json` with the following structure:
 - **Skills**: Technical and soft skills
 - **Education**: Degree information
 
-## Code Quality Tools
+## Code Quality & Documentation Standards
+
+### TypeScript & JSDoc Best Practices
+
+**Current Approach**: TypeScript provides primary type safety; JSDoc is minimal.
+
+**When to use JSDoc:**
+- ✅ Public API functions/components used by other developers
+- ✅ Complex business logic requiring explanation
+- ✅ Non-obvious function behavior or edge cases
+- ❌ Simple utility functions (TypeScript types are sufficient)
+- ❌ React components with clear prop types
+- ❌ Internal implementation details
+
+**Example - Good JSDoc usage:**
+```typescript
+/**
+ * Generate a vCard (VCF) file content string
+ * Following vCard 3.0 specification
+ */
+export function generateVCard(data: VCardData): string {
+  // Implementation...
+}
+```
+
+**Example - TypeScript is enough:**
+```typescript
+// Good - no JSDoc needed, types are clear
+function getInitials(name: string): string {
+  return name.split(' ').map(word => word[0]).join('').toUpperCase().slice(0, 2)
+}
+```
+
+**Pre-commit Checks:**
+All commits are automatically checked by Husky + lint-staged:
+- TypeScript compilation (`tsc --noEmit`) - catches type errors
+- ESLint with auto-fix - enforces code style
+- Files must pass both checks to commit
+
+This prevents build-breaking commits from reaching CI/Vercel.
 
 ### CodeRabbit CLI
 
