@@ -3,6 +3,7 @@ import { Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
 import { Navbar } from "@/components/ui/Navbar";
 import { ThemeProvider } from "@/contexts/ThemeContext";
+import { SpeedInsights } from "@vercel/speed-insights/next";
 import resumeData from "@/data/resume-data.json";
 
 const geistSans = Geist({
@@ -56,6 +57,7 @@ export default function RootLayout({
           <Navbar />
           {children}
         </ThemeProvider>
+        <SpeedInsights />
       </body>
     </html>
   );
