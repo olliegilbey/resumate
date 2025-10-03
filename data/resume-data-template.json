@@ -2,6 +2,7 @@
   "personal": {
     "name": "Your Name",
     "fullName": "Your Full Legal Name",
+    "nickname": "Nick",
     "email": "your.email@example.com",
     "phone": "+1234567890",
     "location": "City, Country",

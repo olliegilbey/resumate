@@ -118,11 +118,38 @@ vercel --prod      # Deploy to Vercel production
 - Bullet text: text-base, leading-7
 - Meta info: text-sm, text-slate-500
 
-## Data Structure
+## Data Structure & Type System
+
+### Current Approach: Template as Pseudo-Schema
+
+**Design Decision**: We use `data/resume-data-template.json` as the implicit schema for TypeScript type inference.
+
+**How it works:**
+- TypeScript infers JSON types from the template file at compile time
+- `types/resume.ts` defines the explicit TypeScript interfaces
+- Template must include ALL fields (even optional ones) for TypeScript to recognize them
+- At build time, `resume-data.json` is fetched from gist and must match template structure
+
+**Why this approach:**
+- ✅ Simple - no additional dependencies or build steps
+- ✅ Sufficient for single-user/small team use
+- ✅ Template serves dual purpose: example + type inference source
+- ❌ No runtime validation (relies on prebuild + TypeScript compile)
+- ❌ Optional fields must exist in template (can be confusing)
+
+**Future Enhancement Option:**
+Consider migrating to JSON Schema + runtime validation if:
+- Multiple contributors need strict validation
+- Runtime data validation becomes critical
+- Template/types sync becomes problematic
+
+Potential tools: JSON Schema, Zod, or Ajv for runtime validation.
+
+### Data Structure
 
 Resume data is stored in `data/resume-data.json` with the following structure:
 
-- **Personal Info**: Contact details, links
+- **Personal Info**: Contact details, links, optional nickname
 - **Summary**: Brief professional summary
 - **Bullets**: Array of experience bullets with:
   - Company, role, date range
