@@ -13,17 +13,11 @@ interface TurnstileResponse {
   'error-codes'?: string[]
 }
 
-// In-memory store for used tokens (prevents replay attacks)
-// TODO: In production with multiple instances, use Redis or similar distributed store
+// In-memory store for used tokens (prevents replay attacks within function instance lifetime)
+// Note: In serverless, each function instance is stateless and short-lived
+// The Set is garbage collected when the instance terminates, so no cleanup interval needed
+// TODO: For production with multiple instances, use Redis or similar distributed store
 const usedTokens = new Set<string>()
-const TOKEN_EXPIRY_MS = 5 * 60 * 1000 // 5 minutes
-
-// Clean up expired tokens periodically
-setInterval(() => {
-  if (usedTokens.size > 1000) {
-    usedTokens.clear() // Simple cleanup - in production use timestamps
-  }
-}, TOKEN_EXPIRY_MS)
 
 async function verifyTurnstileToken(token: string): Promise<boolean> {
   const secretKey = process.env.TURNSTILE_SECRET_KEY
@@ -59,7 +53,7 @@ async function verifyTurnstileToken(token: string): Promise<boolean> {
 async function generateContactCardResponse(token: string): Promise<NextResponse> {
   // Check if token was already used (replay attack prevention)
   if (usedTokens.has(token)) {
-    console.warn('Token replay attack detected:', token.substring(0, 20) + '...')
+    console.warn('Duplicate Turnstile token blocked')
     return new NextResponse('Token already used', { status: 403 })
   }
 
@@ -100,6 +94,9 @@ async function generateContactCardResponse(token: string): Promise<NextResponse>
   const firstName = nameParts[0] || ''
   const lastName = nameParts.length > 1 ? nameParts.slice(1).join(' ') : ''
 
+  // Get most recent job title from first company's first position
+  const mostRecentTitle = resumeData.companies[0]?.positions[0]?.role || 'Professional'
+
   // Generate vCard content on server
   const vcardContent = generateVCard({
     firstName,
@@ -113,8 +110,8 @@ async function generateContactCardResponse(token: string): Promise<NextResponse>
     address: {
       city: resumeData.personal.location,
     },
-    title: 'Developer Relations Lead',
-    note: 'Developer Relations professional with expertise in blockchain technology, AI, and developer communities.',
+    title: mostRecentTitle,
+    note: resumeData.summary,
   })
 
   // Return as downloadable file

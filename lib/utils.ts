@@ -13,7 +13,16 @@ export interface TextPart {
 }
 
 /**
+ * Validate URL protocol to prevent XSS attacks
+ * Only allows https, http, and mailto protocols
+ */
+function isValidProtocol(url: string): boolean {
+  return /^(https?|mailto):/i.test(url)
+}
+
+/**
  * Parse markdown links [text](url) and return an array of parts
+ * Sanitizes URLs to prevent XSS attacks via javascript: or data: protocols
  */
 export function parseMarkdownLinks(text: string): TextPart[] {
   const parts: TextPart[] = []
@@ -32,13 +41,24 @@ export function parseMarkdownLinks(text: string): TextPart[] {
       })
     }
 
-    // Add the link
-    parts.push({
-      type: 'link',
-      content: match[1],
-      url: match[2],
-      key: keyCounter++
-    })
+    const url = match[2]
+
+    // Validate URL protocol - if invalid, render as plain text instead of link
+    if (isValidProtocol(url)) {
+      parts.push({
+        type: 'link',
+        content: match[1],
+        url: url,
+        key: keyCounter++
+      })
+    } else {
+      // Invalid protocol - render as plain text to prevent XSS
+      parts.push({
+        type: 'text',
+        content: match[1],
+        key: keyCounter++
+      })
+    }
 
     lastIndex = regex.lastIndex
   }

@@ -78,20 +78,15 @@ function checkRateLimit(ip: string, maxRequests: number = 30, windowMs: number =
 export function middleware(request: NextRequest) {
   const userAgent = request.headers.get('user-agent') || ''
 
-  // Get IP from headers (Next.js doesn't expose request.ip in all environments)
-  // SECURITY NOTE: x-forwarded-for and x-real-ip headers can be spoofed by clients.
-  // Ensure your deployment platform (Vercel, Cloudflare, etc.) strips client-provided
-  // proxy headers and only trusts headers set by your infrastructure.
-  // On Vercel: x-forwarded-for is automatically sanitized by their edge network.
-  const ip = request.headers.get('x-forwarded-for')?.split(',')[0].trim() ||
-            request.headers.get('x-real-ip')
+  // Get IP from trusted sources only (prevents header spoofing)
+  // Priority: x-vercel-forwarded-for (Vercel-set) > x-real-ip
+  // NEVER trust x-forwarded-for directly as clients can spoof it
+  const trustedIp =
+    request.headers.get('x-vercel-forwarded-for')?.split(',')[0].trim() ??
+    request.headers.get('x-real-ip')?.split(',')[0].trim()
 
-  // For production: reject requests without IP headers to prevent 'unknown' bucket abuse
-  // Currently allowing 'unknown' for development/testing with higher monitoring
-  if (!ip) {
-    console.warn('Request received without IP headers - falling back to unknown bucket')
-  }
-  const ipAddress = ip || 'unknown'
+  // In dev without proxy headers, use fallback (in production, Vercel always sets headers)
+  const ipAddress = trustedIp || 'dev-local'
 
   // 1. Bot detection
   if (isBot(userAgent)) {
@@ -123,29 +118,49 @@ export function middleware(request: NextRequest) {
 
   // 3. Add security headers
   const response = NextResponse.next()
-  
+
   // Prevent embedding in iframes (clickjacking protection)
   response.headers.set('X-Frame-Options', 'SAMEORIGIN')
-  
+
   // Prevent MIME type sniffing
   response.headers.set('X-Content-Type-Options', 'nosniff')
 
-  // Content Security Policy (X-XSS-Protection is deprecated)
-  // Note: This is a permissive CSP suitable for Next.js with Turbopack and Cloudflare Turnstile
-  // For production, consider tightening these directives and using nonces
+  // Content Security Policy with 'unsafe-inline' for theme script
+  // NOTE: The theme initialization script MUST run before React hydration to prevent
+  // flash of unstyled content. Next.js Script component doesn't support this timing.
+  // Alternative approaches attempted but failed:
+  // 1. External script with Script component - doesn't execute before hydration
+  // 2. Script hash - would break on any code change
+  // This is a calculated tradeoff: XSS risk from inline script vs FOUC user experience
+  const isDev = process.env.NODE_ENV !== 'production'
+  const scriptSrc = isDev
+    ? "'self' 'unsafe-inline' 'unsafe-eval' https://challenges.cloudflare.com https://va.vercel-scripts.com"
+    : "'self' 'unsafe-inline' https://challenges.cloudflare.com https://va.vercel-scripts.com"
+
   response.headers.set(
     'Content-Security-Policy',
     "default-src 'self'; " +
-    "script-src 'self' 'unsafe-inline' 'unsafe-eval' https://challenges.cloudflare.com; " +
+    `script-src ${scriptSrc}; ` +
     "style-src 'self' 'unsafe-inline'; " +
     "img-src 'self' data: https:; " +
     "font-src 'self' data:; " +
-    "connect-src 'self' https://challenges.cloudflare.com; " +
-    "frame-src https://challenges.cloudflare.com;"
+    "connect-src 'self' https://challenges.cloudflare.com https://vitals.vercel-insights.com; " +
+    "frame-src https://challenges.cloudflare.com; " +
+    "worker-src 'self' blob:; " +
+    "child-src https://challenges.cloudflare.com;"
   )
 
   // Referrer policy
   response.headers.set('Referrer-Policy', 'strict-origin-when-cross-origin')
+
+  // Strict-Transport-Security (HSTS) - force HTTPS for 1 year
+  response.headers.set('Strict-Transport-Security', 'max-age=31536000; includeSubDomains')
+
+  // Permissions-Policy - restrict browser features
+  response.headers.set(
+    'Permissions-Policy',
+    'camera=(), microphone=(), geolocation=(), browsing-topics=(), interest-cohort=()'
+  )
 
   return response
 }
@@ -158,8 +173,8 @@ export const config = {
      * - _next/static (static files)
      * - _next/image (image optimization files)
      * - favicon.ico (favicon file)
-     * - public files (public folder)
+     * - public files (images and scripts)
      */
-    '/((?!_next/static|_next/image|favicon.ico|.*\\.svg$|.*\\.png$|.*\\.jpg$|.*\\.jpeg$|.*\\.gif$|.*\\.webp$).*)',
+    '/((?!_next/static|_next/image|favicon.ico|.*\\.svg$|.*\\.png$|.*\\.jpg$|.*\\.jpeg$|.*\\.gif$|.*\\.webp$|.*\\.js$).*)',
   ],
 }

@@ -5,29 +5,22 @@ import { Building2, Briefcase } from "lucide-react"
 
 interface CompanySectionProps {
   company: Company
-  filteredBulletIds?: Set<string>
   allTags: string[]
   className?: string
 }
 
-export function CompanySection({ company, filteredBulletIds, allTags, className }: CompanySectionProps) {
-  // Collect all bullets from all positions (position descriptions are NOT displayed as bullets)
+export function CompanySection({ company, allTags, className }: CompanySectionProps) {
+  // Collect all bullets from all positions (already filtered by DataExplorer)
   const allBullets: BulletPoint[] = []
 
   company.positions.forEach(position => {
-    // Only add actual experience bullets, not position descriptions
     position.bullets.forEach(bullet => {
       allBullets.push(bullet)
     })
   })
 
-  // Filter bullets if filteredBulletIds is provided
-  const displayBullets = filteredBulletIds
-    ? allBullets.filter(bullet => filteredBulletIds.has(bullet.id))
-    : allBullets
-
   // Sort by priority (highest first)
-  displayBullets.sort((a, b) => b.priority - a.priority)
+  const displayBullets = allBullets.sort((a, b) => b.priority - a.priority)
 
   return (
     <div className={cn("space-y-6", className)}>

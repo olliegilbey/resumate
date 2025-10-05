@@ -264,7 +264,7 @@ All core Phase 1 features have been implemented with security hardening:
 - ✅ Resume overview page
 - ✅ Full data explorer at `/resume/view` with:
   - ✅ Search functionality (text-based filtering)
-  - ✅ Tag filtering (AND logic - requires all selected tags)
+  - ✅ Tag filtering (OR logic - shows items with any selected tag)
   - ✅ Company grouping with timeline
   - ✅ Priority indicators (star rating)
   - ✅ Metrics highlighting

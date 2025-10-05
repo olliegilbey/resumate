@@ -32,7 +32,7 @@ Resumate is **not** an AI resume generator. It's a curation system that helps yo
 ### 🎯 Core Functionality
 - **Experience Data Explorer** - Beautiful, filterable view of all your career history
 - **Smart Search** - Filter experiences by text across all fields
-- **Tag-Based Filtering** - Multi-select tags with AND logic (requires all selected tags)
+- **Tag-Based Filtering** - Multi-select tags with OR logic (shows items with any selected tag)
 - **Company Timeline** - Hierarchical structure: Company → Position → Achievements
 - **Priority System** - Manually rank importance of each bullet (1-10)
 - **Metrics Highlighting** - Emphasize quantifiable achievements

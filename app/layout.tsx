@@ -29,26 +29,28 @@ export default function RootLayout({
   return (
     <html lang="en" suppressHydrationWarning>
       <head>
-        <script dangerouslySetInnerHTML={{
-          __html: `
-            (function() {
-              const stored = localStorage.getItem('theme-override');
-              const systemDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
-              const systemTheme = systemDark ? 'dark' : 'light';
-
-              // If stored override matches system, remove it (reset to auto-follow)
-              if (stored === systemTheme) {
-                localStorage.removeItem('theme-override');
-              }
-
-              const theme = stored && stored !== systemTheme ? stored : systemTheme;
-
-              if (theme === 'dark') {
-                document.documentElement.classList.add('dark');
-              }
-            })();
-          `
-        }} />
+        <script
+          dangerouslySetInnerHTML={{
+            __html: `
+              (function () {
+                try {
+                  const stored = localStorage.getItem('theme-override')
+                  const systemDark = window.matchMedia('(prefers-color-scheme: dark)').matches
+                  const systemTheme = systemDark ? 'dark' : 'light'
+                  if (stored === systemTheme) {
+                    localStorage.removeItem('theme-override')
+                  }
+                  const theme = stored && stored !== systemTheme ? stored : systemTheme
+                  if (theme === 'dark') {
+                    document.documentElement.classList.add('dark')
+                  }
+                } catch (error) {
+                  console.warn('Theme initialization failed:', error)
+                }
+              })()
+            `,
+          }}
+        />
       </head>
       <body
         className={`${geistSans.variable} ${geistMono.variable} antialiased`}
