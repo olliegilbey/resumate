@@ -13,4 +13,10 @@ pub fn init_panic_hook() {
     console_error_panic_hook::set_once();
 }
 
-// WASM exports will go here
+/// Test export to validate WASM build pipeline
+#[wasm_bindgen]
+pub fn version() -> String {
+    env!("CARGO_PKG_VERSION").to_string()
+}
+
+// PDF and DOCX generation exports will go here
