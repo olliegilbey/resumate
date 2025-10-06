@@ -5,6 +5,7 @@ import { ResumeData, Tag, BulletPoint } from "@/types/resume"
 import { SearchBar } from "./SearchBar"
 import { TagFilter } from "./TagFilter"
 import { CompanySection } from "./CompanySection"
+import { GlassPanel } from "@/components/ui/GlassPanel"
 import { cn } from "@/lib/utils"
 import { extractAllTags } from "@/lib/tags"
 
@@ -129,7 +130,7 @@ export function DataExplorer({ data, className }: DataExplorerProps) {
         <div className="lg:col-span-1">
           <div className="sticky top-20 space-y-6">
             {/* Stats Card - Above Filter */}
-            <div className="glass rounded-lg px-6 py-3 flex items-center justify-center gap-6">
+            <GlassPanel padding="none" className="px-6 py-3 flex items-center justify-center gap-6">
               <div className="text-center">
                 <div className="text-xl font-semibold text-slate-900 dark:text-slate-100">{stats.totalBullets}</div>
                 <div className="text-xs text-slate-500 dark:text-slate-400">Bullets</div>
@@ -142,16 +143,16 @@ export function DataExplorer({ data, className }: DataExplorerProps) {
                 <div className="text-xl font-semibold text-slate-900 dark:text-slate-100">{stats.tagsUsed}</div>
                 <div className="text-xs text-slate-500 dark:text-slate-400">Tags</div>
               </div>
-            </div>
+            </GlassPanel>
 
             {/* Filter by Tags */}
-            <div className="glass rounded-lg p-4">
+            <GlassPanel padding="sm">
               <TagFilter
                 selectedTags={selectedTags}
                 onTagToggle={handleTagToggle}
                 bullets={allBulletsForTagFilter}
               />
-            </div>
+            </GlassPanel>
           </div>
         </div>
 

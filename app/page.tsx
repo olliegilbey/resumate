@@ -2,6 +2,7 @@
 
 import { useState, useRef, useEffect, useCallback } from "react"
 import { Button } from "@/components/ui/Button"
+import { GlassPanel } from "@/components/ui/GlassPanel"
 import { ContactLinks } from "@/components/ui/ContactLinks"
 import Link from "next/link"
 import { ArrowRight, Briefcase, Download, AlertCircle, X } from "lucide-react"
@@ -178,7 +179,7 @@ export default function HomePage() {
                 onClick={handleOpenModal}
                 disabled={isVerifying}
                 size="lg"
-                className="bg-gradient-to-r from-cyan-500 to-blue-600 hover:from-cyan-600 hover:to-blue-700 dark:from-blue-600 dark:to-purple-600 dark:hover:from-blue-700 dark:hover:to-purple-700"
+                variant="gradient"
               >
                 <Download className="mr-2 h-4 w-4" />
                 Get Contact Card
@@ -191,8 +192,10 @@ export default function HomePage() {
                 className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm"
                 onClick={handleCloseModal}
               >
-                <div
-                  className="glass rounded-2xl p-8 max-w-md w-full mx-4 shadow-2xl relative"
+                <GlassPanel
+                  padding="lg"
+                  radius="2xl"
+                  className="max-w-md w-full mx-4 shadow-2xl relative"
                   onClick={(e) => e.stopPropagation()}
                 >
                   {/* Close button */}
@@ -295,7 +298,7 @@ export default function HomePage() {
                   >
                     Cancel
                   </button>
-                </div>
+                </GlassPanel>
               </div>
             )}
           </div>
@@ -304,7 +307,7 @@ export default function HomePage() {
 
       {/* About Section */}
       <div className="max-w-3xl mx-auto px-4 md:px-8 py-12">
-        <div className="glass rounded-2xl p-8 md:p-10">
+        <GlassPanel padding="xl" radius="2xl">
           <h2 className="text-2xl font-semibold text-slate-900 dark:text-slate-100 mb-4">About Me</h2>
           <div className="prose prose-slate max-w-none">
             <p className="text-lg text-slate-700 dark:text-slate-200 leading-relaxed mb-4">
@@ -316,24 +319,24 @@ export default function HomePage() {
               </p>
             )}
           </div>
-        </div>
+        </GlassPanel>
       </div>
 
       {/* Recruiter CTA */}
       <div className="max-w-3xl mx-auto px-4 md:px-8 pb-16">
-        <div className="glass rounded-2xl p-8 md:p-10 text-center">
+        <GlassPanel padding="xl" radius="2xl" align="center">
           <Briefcase className="h-12 w-12 text-blue-600 dark:text-blue-400 mx-auto mb-4" />
           <h2 className="text-2xl font-semibold text-slate-900 dark:text-slate-100 mb-3">Looking to Hire?</h2>
           <p className="text-slate-600 dark:text-slate-300 mb-6 max-w-lg mx-auto">
             View my full professional experience, download my resume, or explore my work history interactively.
           </p>
           <Link href="/resume">
-            <Button size="lg" className="bg-gradient-to-r from-cyan-500 to-blue-600 hover:from-cyan-600 hover:to-blue-700 dark:from-blue-600 dark:to-purple-600 dark:hover:from-blue-700 dark:hover:to-purple-700">
+            <Button size="lg" variant="gradient">
               View Professional Profile
               <ArrowRight className="ml-2 h-4 w-4" />
             </Button>
           </Link>
-        </div>
+        </GlassPanel>
       </div>
     </main>
   )

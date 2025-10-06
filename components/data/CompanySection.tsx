@@ -1,5 +1,7 @@
 import { Company, BulletPoint } from "@/types/resume"
 import { BulletCard } from "./BulletCard"
+import { GlassPanel } from "@/components/ui/GlassPanel"
+import { IconBadge } from "@/components/ui/IconBadge"
 import { cn } from "@/lib/utils"
 import { Building2, Briefcase } from "lucide-react"
 
@@ -25,11 +27,11 @@ export function CompanySection({ company, allTags, className }: CompanySectionPr
   return (
     <div className={cn("space-y-6", className)}>
       {/* Company Header */}
-      <div className="glass rounded-xl p-4 space-y-3">
+      <GlassPanel padding="sm" className="space-y-3">
         <div className="flex items-center space-x-3">
-          <div className="flex items-center justify-center w-8 h-8 bg-slate-100 dark:bg-slate-700 rounded-lg">
+          <IconBadge>
             <Building2 className="h-4 w-4 text-slate-600 dark:text-slate-300" />
-          </div>
+          </IconBadge>
           <div>
             <h3 className="text-lg font-semibold text-slate-900 dark:text-slate-100 tracking-tight">
               {company.name}
@@ -60,7 +62,7 @@ export function CompanySection({ company, allTags, className }: CompanySectionPr
             </div>
           ))}
         </div>
-      </div>
+      </GlassPanel>
 
       {/* Filtered bullets, sorted by priority */}
       <div className="space-y-3">
