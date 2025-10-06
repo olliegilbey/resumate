@@ -9,11 +9,12 @@ interface TagFilterProps {
   selectedTags: Tag[]
   onTagToggle: (tag: Tag) => void
   bullets: BulletPoint[]
+  allTags: string[]
   className?: string
 }
 
-export function TagFilter({ selectedTags, onTagToggle, bullets, className }: TagFilterProps) {
-  // Get all unique tags and their counts
+export function TagFilter({ selectedTags, onTagToggle, bullets, allTags, className }: TagFilterProps) {
+  // Get tag counts for display
   const tagCounts = bullets.reduce((acc, bullet) => {
     bullet.tags.forEach(tag => {
       acc[tag] = (acc[tag] || 0) + 1
@@ -21,7 +22,8 @@ export function TagFilter({ selectedTags, onTagToggle, bullets, className }: Tag
     return acc
   }, {} as Record<Tag, number>)
 
-  const allTags = Object.keys(tagCounts) as Tag[]
+  // Filter to only tags that have bullets (with counts), preserving sorted order
+  const displayTags = allTags.filter(tag => tagCounts[tag] > 0)
 
   return (
     <div className={cn("space-y-4", className)}>
@@ -41,7 +43,7 @@ export function TagFilter({ selectedTags, onTagToggle, bullets, className }: Tag
       </div>
 
       <div className="space-y-2">
-        {allTags.map(tag => (
+        {displayTags.map(tag => (
           <label
             key={tag}
             className="flex items-center space-x-3 cursor-pointer group"

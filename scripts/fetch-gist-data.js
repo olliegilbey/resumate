@@ -15,15 +15,16 @@
  *   - Vercel: Set RESUME_DATA_GIST_URL in environment variables
  */
 
-const fs = require('fs');
-const path = require('path');
-const https = require('https');
-const readline = require('readline');
+import fs from 'fs';
+import path from 'path';
+import https from 'https';
+import readline from 'readline';
+import dotenv from 'dotenv';
 
 // Load .env.local if it exists (for local development)
 try {
-  require('dotenv').config({ path: '.env.local' });
-} catch (error) {
+  dotenv.config({ path: '.env.local' });
+} catch {
   // dotenv not available (production build), use process.env directly
 }
 

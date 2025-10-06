@@ -2,7 +2,7 @@
 
 ## Project Overview
 
-**Resumate** is an intelligent resume system that curates experience based on role types. This framework can be used as a personal portfolio site and will eventually be fully open-sourced.
+**Resumate** is an intelligent resume system that curates experience based on role types using Rust/WASM for client-side PDF+DOCX generation. This framework serves as both a personal portfolio site and a technical showcase of systems programming, WebAssembly, and AI integration.
 
 ## Meta-Project Philosophy
 
@@ -13,110 +13,356 @@ This project is a **meta-resume**: it demonstrates technical capabilities throug
 3. **Agentic coding**: You oversee architecture, AI assists implementation (Anthropic hiring guideline compliant)
 4. **Growth engineering**: Analytics-driven, iterated based on recruiter behavior data
 5. **Fast & light**: Sub-5s generation time, no heavy servers, client-side compilation
+6. **Security-first**: Turnstile protection, rate limiting, no data exposure
 
-## Phase 1 MVP - Complete ✅
+---
 
-Building a beautiful data explorer that shows all resume experience in a filterable, searchable interface, plus a simple download button for a static PDF resume.
+## Current Status
 
-### Tech Stack
-- **Framework**: Next.js 15.5.4 (Turbopack) with App Router (TypeScript)
-- **Styling**: Tailwind CSS v4
-- **Deployment**: Vercel
-- **Security**: Cloudflare Turnstile CAPTCHA
-- **Design**: Clean, modern, inspired by Linear/Notion aesthetics
-- **Color Palette**: Tailwind's slate/blue tones (Phase 2: liquid glass dark mode)
+### Phase 1: Foundation & Data Explorer - ✅ COMPLETE
 
-### Project Structure
+**Completed Features:**
+- ✅ Beautiful, filterable experience explorer at `/resume/view`
+- ✅ Search functionality (text-based filtering)
+- ✅ Tag filtering with smart priority sorting (count × avg_priority)
+- ✅ Click-to-filter tags from bullet cards
+- ✅ Company grouping with timeline
+- ✅ Priority indicators and metrics highlighting
+- ✅ Responsive design (mobile-first)
+- ✅ vCard download with Cloudflare Turnstile protection
+- ✅ Cal.com booking link integration
+- ✅ Comprehensive test coverage (48 tests passing)
+- ✅ GitHub Gist integration with auto-deploy
+
+**Tech Stack:**
+- Framework: Next.js 15.5.4 (Turbopack) with App Router (TypeScript)
+- Styling: Tailwind CSS v4
+- Testing: Vitest + @testing-library/react
+- Deployment: Vercel
+- Security: Cloudflare Turnstile CAPTCHA
+- Data Source: GitHub Gist (hourly auto-deploy)
+
+### Phase 5: Rust/WASM PDF+DOCX Engine - 🚧 IN PROGRESS
+
+Building dual-format (PDF + DOCX) resume generation with Rust compiled to WebAssembly, featuring:
+- Server-side heuristic bullet selection
+- Client-side WASM document generation
+- Beautiful progress UI with educational messaging
+- Full observability and reconstruction capability
+
+---
+
+## Architecture Overview
+
+### Data Flow (Security-Conscious)
+
+```
+┌─────────────────────────────────────────────────────────────┐
+│ BUILD TIME (Server)                                          │
+├─────────────────────────────────────────────────────────────┤
+│ • prebuild hook: fetch-gist-data.js                         │
+│ • Full resume-data.json cached at build time                │
+│ • Server has complete data (never exposed to client)        │
+└─────────────────────────────────────────────────────────────┘
+                            ↓
+┌─────────────────────────────────────────────────────────────┐
+│ USER INTERACTION                                             │
+├─────────────────────────────────────────────────────────────┤
+│ 1. User visits /resume page                                 │
+│ 2. Sees role dropdown (from roleProfiles[])                 │
+│ 3. Selects role (e.g., "Product Manager")                  │
+│ 4. Clicks "Generate Resume"                                 │
+│ 5. Turnstile CAPTCHA appears                                │
+│ 6. User completes verification                              │
+└─────────────────────────────────────────────────────────────┘
+                            ↓
+                 POST /api/resume/prepare
+         { roleId: "product-manager", turnstileToken }
+                            ↓
+┌─────────────────────────────────────────────────────────────┐
+│ SERVER (Next.js API Route)                                  │
+├─────────────────────────────────────────────────────────────┤
+│ 1. Verify Turnstile token with Cloudflare                   │
+│ 2. Rate limit check (5 generations/hour/IP)                 │
+│ 3. Load resume-data.json from build-time cache              │
+│ 4. Find RoleProfile by roleId                               │
+│ 5. Extract all bullets from companies                       │
+│ 6. Run heuristic selection:                                 │
+│    • Score bullets (priority + tags + metrics)             │
+│    • Apply diversity constraints                            │
+│    • Select top 10-15 bullets                               │
+│ 7. Build GenerationPayload:                                 │
+│    {                                                         │
+│      personal: PersonalInfo,        // Full contact info    │
+│      selectedBullets: Bullet[],     // Only selected        │
+│      roleProfile: RoleProfile,      // Role config          │
+│      metadata: { ids, timestamp }                           │
+│    }                                                         │
+│ 8. Log to PostHog & N8N (store IDs for reconstruction)     │
+│ 9. Return GenerationPayload to client                       │
+└─────────────────────────────────────────────────────────────┘
+                            ↓
+┌─────────────────────────────────────────────────────────────┐
+│ CLIENT (WASM Generation)                                     │
+├─────────────────────────────────────────────────────────────┤
+│ Progress UI:                                                │
+│ ✨ "Initializing resume compiler..."          (~500ms)     │
+│ 🧠 "Analyzing your curated experience..."     (~200ms)     │
+│ 📄 "Generating PDF (ATS-optimized)..."        (~1500ms)    │
+│ 📝 "Generating DOCX (Word format)..."         (~1200ms)    │
+│ ⚡ "Finalizing downloads..."                  (~300ms)     │
+│                                                              │
+│ → Dual download: PDF + DOCX                                │
+│ → Track completion in PostHog                               │
+└─────────────────────────────────────────────────────────────┘
+```
+
+**Security Guarantees:**
+- ✅ Full resume JSON stored server-side only (build-time cache)
+- ✅ Client receives ONLY selected bullets post-curation
+- ✅ Turnstile prevents automated abuse
+- ✅ Rate limiting (5 generations/hour/IP)
+- ✅ No client-side manipulation of selection
+
+---
+
+## Project Structure
+
 ```
 resumate/
+├── rust-pdf/                          # Rust/WASM workspace
+│   ├── Cargo.toml                     # Workspace config
+│   ├── crates/
+│   │   ├── core/                      # Core types & selection
+│   │   │   ├── Cargo.toml
+│   │   │   └── src/
+│   │   │       ├── lib.rs
+│   │   │       ├── types.rs           # Data structures
+│   │   │       ├── selector/          # Selection algorithms
+│   │   │       │   ├── mod.rs
+│   │   │       │   ├── heuristic.rs   # Rule-based selection
+│   │   │       │   ├── scoring.rs     # Bullet scoring
+│   │   │       │   └── diversity.rs   # Diversity constraints
+│   │   │       └── validation.rs
+│   │   │
+│   │   ├── pdf/                       # PDF generation
+│   │   │   ├── Cargo.toml
+│   │   │   └── src/
+│   │   │       ├── lib.rs
+│   │   │       ├── generator.rs       # Main PDF builder
+│   │   │       ├── layout/            # Layout engine
+│   │   │       │   ├── mod.rs
+│   │   │       │   ├── positioning.rs
+│   │   │       │   ├── text_flow.rs   # Text wrapping
+│   │   │       │   └── spacing.rs     # ATS compliance
+│   │   │       └── rendering/         # Content rendering
+│   │   │           ├── mod.rs
+│   │   │           ├── header.rs
+│   │   │           ├── experience.rs
+│   │   │           └── footer.rs
+│   │   │
+│   │   ├── docx/                      # DOCX generation
+│   │   │   ├── Cargo.toml
+│   │   │   └── src/
+│   │   │       ├── lib.rs
+│   │   │       └── generator.rs
+│   │   │
+│   │   └── wasm/                      # WASM bindings
+│   │       ├── Cargo.toml
+│   │       └── src/
+│   │           ├── lib.rs             # wasm_bindgen exports
+│   │           ├── bridge.rs          # JS ↔ Rust
+│   │           └── error.rs           # Error handling
+│   │
+│   ├── examples/
+│   │   ├── reconstruct.rs             # CLI for PDF reconstruction
+│   │   └── validate_types.rs          # CI type validation
+│   │
+│   └── fixtures/
+│       └── sample_resume.json         # Test data
+│
 ├── app/
 │   ├── layout.tsx
-│   ├── page.tsx                    # Landing page
+│   ├── page.tsx                       # Landing page
 │   ├── api/
-│   │   └── contact-card/
-│   │       └── route.ts            # vCard generation API
+│   │   ├── contact-card/
+│   │   │   └── route.ts               # vCard generation
+│   │   └── resume/
+│   │       └── prepare/
+│   │           └── route.ts           # Curation + selection API
 │   ├── resume/
-│   │   ├── page.tsx                # Resume overview
+│   │   ├── page.tsx                   # Resume generation page
 │   │   └── view/
-│   │       └── page.tsx            # Data explorer (MAIN FOCUS)
+│   │       └── page.tsx               # Experience explorer
 │   └── globals.css
+│
 ├── components/
-│   ├── data/
-│   │   ├── DataExplorer.tsx        # Main component
-│   │   ├── CompanySection.tsx      # Grouped by company
-│   │   ├── BulletCard.tsx          # Individual bullet display
-│   │   ├── TagFilter.tsx           # Multi-select tag filter
-│   │   └── SearchBar.tsx           # Search functionality
-│   └── ui/
-│       ├── Badge.tsx               # For tags
-│       ├── Button.tsx              # Reusable button
-│       └── ContactLinks.tsx        # Contact download
-├── scripts/
-│   ├── fetch-gist-data.js          # Pull gist → local (prebuild)
-│   ├── gist-push.js                # Push local → gist
-│   └── gist-view.js                # View gist content
+│   ├── data/                          # Explorer components
+│   │   ├── DataExplorer.tsx
+│   │   ├── CompanySection.tsx
+│   │   ├── BulletCard.tsx
+│   │   ├── TagFilter.tsx
+│   │   └── SearchBar.tsx
+│   ├── resume/                        # Generation components
+│   │   ├── RoleSelector.tsx           # Role dropdown
+│   │   ├── TurnstileGate.tsx          # CAPTCHA modal
+│   │   ├── GenerationProgress.tsx     # Animated progress UI
+│   │   └── PDFGenerator.tsx           # Main orchestration
+│   └── ui/                            # Shared UI components
+│       ├── Badge.tsx
+│       ├── Button.tsx
+│       ├── GlassPanel.tsx
+│       └── ContactLinks.tsx
+│
 ├── lib/
-│   ├── utils.ts                    # Utilities
-│   └── vcard.ts                    # vCard 3.0 generation
+│   ├── wasm/                          # WASM integration
+│   │   ├── loader.ts                  # Initialize WASM
+│   │   ├── types.ts                   # TypeScript types
+│   │   └── errors.ts                  # Error handling
+│   ├── security/
+│   │   ├── turnstile.ts               # Verification
+│   │   └── rate-limit.ts              # Rate limiting
+│   ├── analytics/
+│   │   ├── posthog.ts                 # Event tracking
+│   │   └── n8n.ts                     # Webhook integration
+│   ├── utils.ts
+│   ├── tags.ts                        # Tag utilities
+│   └── vcard.ts                       # vCard generation
+│
 ├── types/
-│   └── resume.ts                   # TypeScript types
+│   └── resume.ts                      # TypeScript types (canonical)
+│
+├── scripts/
+│   ├── fetch-gist-data.js             # Prebuild: fetch gist
+│   ├── gist-push.js                   # Push local → gist
+│   ├── gist-view.js                   # View gist
+│   ├── codegen/
+│   │   └── validate-types.ts          # CI: TS ↔ Rust validation
+│   └── test/
+│
 ├── data/
-│   ├── resume-data.json            # Your data (gitignored)
-│   └── resume-data-template.json   # Template
+│   ├── resume-data.json               # Full resume (gitignored)
+│   └── resume-data-template.json      # Template/schema
+│
 ├── .github/
 │   └── workflows/
-│       └── gist-deploy-trigger.yml # Hourly auto-deploy
-├── middleware.ts                   # Security & rate limiting
-└── .env.local                      # Secrets (gitignored)
+│       └── gist-deploy-trigger.yml    # Hourly auto-deploy
+│
+├── middleware.ts                      # Security & rate limiting
+└── .env.local                         # Secrets (gitignored)
 ```
 
-## Key Features (Phase 1)
-- **Data Explorer**: Beautiful, filterable view of all experience bullets
-- **Search**: Filter bullets by text search (case-insensitive)
-- **Tag Filter**: Multi-select checkboxes for tags
-- **Company Grouping**: Group bullets by company with timeline
-- **Priority Indicator**: Visual ranking of bullet importance
-- **Metrics Highlight**: Emphasize quantifiable achievements
-- **Responsive Design**: Mobile-first approach
-- **vCard Download**: Cloudflare Turnstile-protected contact card
+---
 
-## Commands to Run
+## Data Structure
 
-### Development
-```bash
-npm run dev        # Start development server with Turbopack
-npm run build      # Build for production (auto-fetches gist via prebuild)
-npm run lint       # Run ESLint
-npm run start      # Start production server
-npx prettier --write <file>  # Format code (use for CSS, TypeScript, JSON)
+### Resume Data with Role Profiles
+
+```json
+{
+  "personal": {
+    "name": "Oliver Gilbey",
+    "fullName": "Oliver James Gilbey",
+    "nickname": "Ollie",
+    "email": "email@example.com",
+    "phone": "+1234567890",
+    "location": "London - Central",
+    "citizenship": ["South African", "British"],
+    "linkedin": "olivergilbey",
+    "github": "olliegilbey",
+    "website": "ollie.gg",
+    "calendar": "https://cal.com/ollie"
+  },
+  "summary": "Professional summary...",
+  "tagline": "Motto or tagline",
+  "companies": [
+    {
+      "id": "company-id",
+      "name": "Company Name",
+      "dateRange": "Jan 2022 – Present",
+      "location": "Remote",
+      "context": "Industry context",
+      "positions": [
+        {
+          "id": "position-id",
+          "role": "Role Title",
+          "dateRange": "Jan 2022 – Present",
+          "description": "Primary description",
+          "descriptionTags": ["tag1", "tag2"],
+          "descriptionPriority": 9,
+          "bullets": [
+            {
+              "id": "bullet-id",
+              "text": "Achievement text",
+              "tags": ["tag1", "tag2"],
+              "priority": 10,
+              "metrics": "50% improvement",
+              "context": "Additional context",
+              "link": "https://example.com"
+            }
+          ]
+        }
+      ]
+    }
+  ],
+  "skills": {
+    "technical": ["Rust", "TypeScript", "Python"],
+    "soft": ["Leadership", "Communication"]
+  },
+  "education": [
+    {
+      "degree": "Computer Science",
+      "degreeType": "BSc",
+      "institution": "University Name",
+      "location": "Location",
+      "year": "2020",
+      "coursework": ["Course 1", "Course 2"],
+      "societies": ["Society 1"]
+    }
+  ],
+  "accomplishments": [
+    {
+      "id": "acc-id",
+      "title": "Award Title",
+      "description": "Description",
+      "year": "2021",
+      "tags": ["tag1"]
+    }
+  ],
+  "interests": ["Interest 1", "Interest 2"],
+
+  "roleProfiles": [
+    {
+      "id": "product-manager",
+      "name": "Product Manager",
+      "description": "Strategic product leadership with data-driven decision making",
+      "primaryTags": ["product-management", "data-driven", "strategic-planning"],
+      "secondaryTags": ["team-leadership", "cross-functional"],
+      "targetBulletCount": 12
+    },
+    {
+      "id": "developer-relations",
+      "name": "Developer Relations",
+      "description": "Technical advocacy and community building",
+      "primaryTags": ["developer-relations", "community-building", "public-speaking"],
+      "secondaryTags": ["technical-writing", "event-management"],
+      "targetBulletCount": 14
+    },
+    {
+      "id": "technical-leadership",
+      "name": "Technical Leadership",
+      "description": "Engineering leadership and architecture",
+      "primaryTags": ["technical-leadership", "team-leadership", "architecture"],
+      "secondaryTags": ["mentorship", "strategic-planning"],
+      "targetBulletCount": 13
+    }
+  ]
+}
 ```
 
-### Data Management (Gist Integration)
-```bash
-npm run data:pull  # Fetch latest from GitHub Gist → local
-npm run data:push  # Push local changes → Gist
-npm run data:view  # View gist content in terminal
-```
+**User Control:** Edit gist → update roleProfiles → automatic deploy → new roles appear in dropdown
 
-### Deployment
-```bash
-vercel --prod      # Deploy to Vercel production
-```
-
-## Design System
-
-### Colors (Tailwind)
-- Primary: blue-600
-- Background: slate-50
-- Cards: white with slate-200 borders
-- Text: slate-900 (headings), slate-600 (body)
-- Tags: Various pastels (blue-100, green-100, purple-100, etc.)
-
-### Typography
-- Headings: font-semibold, tracking-tight
-- Body: font-normal, leading-relaxed
-- Bullet text: text-base, leading-7
-- Meta info: text-sm, text-slate-500
+---
 
 ## Data Structure & Type System
 
@@ -145,21 +391,416 @@ Consider migrating to JSON Schema + runtime validation if:
 
 Potential tools: JSON Schema, Zod, or Ajv for runtime validation.
 
-### Data Structure
+---
 
-Resume data is stored in `data/resume-data.json` with the following structure:
+## Commands to Run
 
-- **Personal Info**: Contact details, links, optional nickname
-- **Summary**: Brief professional summary
-- **Bullets**: Array of experience bullets with:
-  - Company, role, date range
-  - Bullet text
-  - Tags (product-management, developer-relations, etc.)
-  - Priority (1-10)
-  - Metrics (extracted numbers for emphasis)
-  - Context (additional detail for future AI use)
-- **Skills**: Technical and soft skills
-- **Education**: Degree information
+### Development
+```bash
+npm run dev               # Start dev server with Turbopack
+npm run build             # Build for production (auto-fetches gist via prebuild)
+npm run lint              # Run ESLint
+npm run start             # Start production server
+npm run test              # Run Vitest tests
+npm run test:watch        # Watch mode
+npm run test:ui           # Vitest UI
+npx prettier --write <file>  # Format code (use for CSS, TypeScript, JSON)
+```
+
+### Data Management (Gist Integration)
+```bash
+npm run data:pull         # Fetch latest from GitHub Gist → local
+npm run data:push         # Push local changes → Gist
+npm run data:view         # View gist content in terminal
+
+# Force flags for automation (skip interactive prompts)
+npm run data:pull -- --force
+npm run data:push -- --force
+```
+
+**⚠️ CRITICAL: Always Pull Before Editing Data**
+
+**Claude MUST follow this workflow when editing `data/resume-data.json`:**
+
+1. **ALWAYS run `npm run data:pull` FIRST** before any edits to sync gist → local
+2. Edit the local file
+3. Run `npm run data:push` to sync local → gist
+4. **NEVER** edit the file without pulling first - this causes data loss!
+
+**Safety Features:**
+- `data:pull` warns if local differs from gist (prompts for confirmation)
+- `data:push` warns if gist differs from local (prompts for confirmation)
+- Use `--force` flag to skip prompts in automation/CI
+
+**Conflict Resolution:**
+- System uses "last write wins" - no automatic merging
+- If conflict detected, scripts prompt user to confirm overwrite
+- No merge conflicts, just simple replacement
+
+### Rust/WASM
+```bash
+cd rust-pdf
+cargo build               # Build Rust
+cargo test                # Run tests
+cargo test -- --nocapture # Tests with output
+cargo bench               # Benchmarks
+
+# Build WASM
+cd crates/wasm
+wasm-pack build --target web --out-dir ../../../public/wasm
+
+# Reconstruction CLI
+cargo run --example reconstruct -- \
+  --generation-id abc-123 \
+  --gist-url $RESUME_DATA_GIST_URL \
+  --output-pdf resume.pdf \
+  --output-docx resume.docx
+```
+
+### Validation
+```bash
+npm run validate:types    # TS ↔ Rust roundtrip test
+cargo run --example validate_types < data/resume-data.json
+```
+
+### Deployment
+```bash
+vercel --prod      # Deploy to Vercel production
+```
+
+---
+
+## Phase 5: Rust/WASM PDF+DOCX Engine (CURRENT)
+
+### Implementation Plan
+
+#### Phase 5.1: Foundation (8-10 hours)
+**Tasks:**
+1. Create Rust workspace structure
+2. Configure Cargo.toml with dependencies
+3. Add `roleProfiles` to resume-data.json
+4. Manually write Rust types matching TypeScript
+5. Create CI validation script
+6. Write property-based tests for serialization
+
+**Dependencies:**
+```toml
+[workspace.dependencies]
+serde = { version = "1.0", features = ["derive"] }
+serde_json = "1.0"
+pdf-writer = "0.9"
+docx-rs = "0.4"
+wasm-bindgen = "0.2"
+chrono = "0.4"
+thiserror = "1.0"
+proptest = "1.0"  # Property-based testing
+```
+
+#### Phase 5.2: Server API + Security (6-8 hours)
+**Create `/api/resume/prepare` route:**
+1. Verify Turnstile token
+2. IP-based rate limiting (5/hour)
+3. Load resume data from build cache
+4. Find matching RoleProfile
+5. Run heuristic selection
+6. Return `GenerationPayload`
+7. Log to PostHog + N8N
+
+**Rate Limiting:**
+```typescript
+// lib/security/rate-limit.ts
+const store = new Map<string, number[]>()
+
+export async function isRateLimited(
+  ip: string,
+  action: string,
+  max: number,
+  windowSec: number
+): Promise<boolean>
+```
+
+#### Phase 5.3: Heuristic Selection (TDD) (8-10 hours)
+**Scoring Algorithm:**
+```rust
+fn score_bullet(bullet: &Bullet, role: &RoleProfile) -> f64 {
+    let priority_score = (bullet.priority as f64 / 10.0) * 0.3;
+
+    let tag_matches = count_tag_matches(bullet, role);
+    let tag_score = calculate_tag_relevance(tag_matches, role) * 0.6;
+
+    let metrics_bonus = if bullet.metrics.is_some() { 0.1 } else { 0.0 };
+
+    priority_score + tag_score + metrics_bonus
+}
+```
+
+**Tests:**
+- ✅ High priority bullets score well
+- ✅ Tag matching increases score
+- ✅ Metrics add bonus
+- ✅ Diversity constraint (max 4 per company)
+- ✅ Property tests (random inputs)
+
+#### Phase 5.4: PDF Generation (10-12 hours)
+**Using `pdf-writer` crate:**
+1. Create `ResumeLayout` struct (shared with DOCX)
+2. Implement header rendering (name, contact)
+3. Implement experience section (grouped by company)
+4. Add text wrapping
+5. Implement footer
+6. Test ATS compliance
+
+**ATS Optimization:**
+- ✅ Standard fonts (Helvetica/Arial)
+- ✅ 10-12pt body text
+- ✅ 1.15-1.25 line spacing
+- ✅ Logical reading order
+- ✅ No images in text
+
+#### Phase 5.5: DOCX Generation (8-10 hours)
+**Using `docx-rs` crate:**
+1. Use same `ResumeLayout` as PDF
+2. Match PDF structure exactly
+3. Test content parity
+4. Validate file size
+
+**Consistency Test:**
+```rust
+#[test]
+fn pdf_and_docx_content_matches() {
+    let pdf_text = extract_text_from_pdf(&pdf_bytes);
+    let docx_text = extract_text_from_docx(&docx_bytes);
+    assert_eq!(pdf_text.trim(), docx_text.trim());
+}
+```
+
+#### Phase 5.6: WASM Bindings (6-8 hours)
+**Exports:**
+```rust
+#[wasm_bindgen]
+pub fn generate_pdf_wasm(payload_json: &str) -> Result<Vec<u8>, JsValue>
+
+#[wasm_bindgen]
+pub fn generate_docx_wasm(payload_json: &str) -> Result<Vec<u8>, JsValue>
+```
+
+**Error Handling:**
+```rust
+#[derive(Debug, thiserror::Error)]
+pub enum ResumeError {
+    #[error("Invalid data: {0}")]
+    InvalidData(String),
+
+    #[error("PDF generation failed: {0}")]
+    PDFError(String),
+
+    #[error("DOCX generation failed: {0}")]
+    DOCXError(String),
+}
+```
+
+#### Phase 5.7: Next.js Integration + UX (8-10 hours)
+**Components:**
+1. `RoleSelector` - Dropdown from roleProfiles
+2. `TurnstileGate` - CAPTCHA modal
+3. `GenerationProgress` - 5-step animated UI
+4. `PDFGenerator` - Main orchestration
+
+**Progress Steps:**
+1. ✨ Initializing resume compiler (WASM loading)
+2. 🧠 Analyzing curated experience (validation)
+3. 📄 Generating PDF (ATS-optimized)
+4. 📝 Generating DOCX (Word format)
+5. ⚡ Finalizing downloads (blob creation)
+
+#### Phase 5.8: Observability + CLI (6-8 hours)
+**Generation Record (stored in N8N/Airtable):**
+```typescript
+interface GenerationRecord {
+  id: string
+  timestamp: string
+  role: string
+  method: 'heuristic' | 'ai'
+
+  // Reconstruction data
+  selectedBulletIds: string[]
+  roleProfileSnapshot: RoleProfile
+
+  // Metadata
+  bulletCount: number
+  companies: string[]
+  tags: string[]
+
+  // Analytics
+  userAgent: string
+  locationCity: string
+  sessionReplayUrl: string
+}
+```
+
+**Reconstruction CLI:**
+```bash
+cargo run --example reconstruct -- \
+  --generation-id abc-123 \
+  --output-pdf resume.pdf
+```
+
+#### Phase 5.9: Testing + Polish (4-6 hours)
+1. Test all role profiles
+2. Compare PDF and DOCX side-by-side
+3. Run ATS checker tools
+4. Performance profiling
+5. Fix visual inconsistencies
+
+**Total: 60-76 hours (~2-3 weeks)**
+
+---
+
+## Type Synchronization Strategy
+
+### Approach: Template-as-Schema
+
+**Process:**
+1. `types/resume.ts` is canonical source
+2. Developer manually writes matching Rust types
+3. CI validates roundtrip: JSON → TS → Rust → JSON
+
+**CI Validation:**
+```typescript
+// scripts/codegen/validate-types.ts
+const json = JSON.stringify(mockResumeData)
+const rustOutput = execSync('cargo run --example validate_types', { input: json })
+const rustParsed = JSON.parse(rustOutput.toString())
+assert.deepStrictEqual(mockResumeData, rustParsed)
+```
+
+**Trade-off:**
+- **Pro:** Simple, no magic, clear ownership
+- **Con:** Manual sync (but CI catches errors)
+
+---
+
+## Security & Performance Targets
+
+### Security
+- ✅ Full resume server-side only
+- ✅ Turnstile verification required
+- ✅ Rate limiting (5/hour/IP)
+- ✅ Server-side selection (no client manipulation)
+- ✅ All generations logged
+
+### Performance
+- ✅ Total time: <5s (target: 2-3s)
+- ✅ WASM bundle: <600KB
+- ✅ API response: <300ms
+- ✅ Selection: <100ms
+- ✅ PDF generation: <1.5s
+- ✅ DOCX generation: <1.2s
+
+### Quality
+- ✅ 100+ tests passing
+- ✅ TypeScript ↔ Rust validated
+- ✅ PDF and DOCX visually consistent
+- ✅ ATS-compliant output
+- ✅ Reconstruction CLI works
+
+---
+
+## Future Phases
+
+### Phase 6: Claude API Integration (Days 27-35)
+
+**Easy Migration:**
+```typescript
+// app/api/resume/prepare/route.ts
+
+async function selectBullets(bullets, roleProfile, jobDescription?) {
+  if (jobDescription) {
+    // AI-powered selection
+    return await claudeAPISelection(bullets, roleProfile, jobDescription)
+  } else {
+    // Rule-based selection
+    return await heuristicSelection(bullets, roleProfile)
+  }
+}
+```
+
+**UI Addition:**
+- Optional textarea for job description
+- If provided → Claude API route
+- If empty → heuristic route
+- Both return same structure → same WASM generation path
+
+**Security:**
+- Input sanitization (max 5000 chars)
+- Injection pattern detection
+- Rate limiting (5/hour/IP)
+- Cost control (Anthropic spending cap)
+
+### Phase 7: PostHog Analytics (Ongoing)
+
+**Events:**
+```typescript
+posthog.capture('resume_generated', {
+  role: 'product-manager',
+  format: 'pdf+docx',
+  bulletCount: 12,
+  generationTime: 2340,
+  method: 'heuristic'
+})
+
+posthog.capture('tag_filter_applied', {
+  tags: ['leadership', 'blockchain'],
+  resultsCount: 15
+})
+
+posthog.capture('calendar_link_clicked', {
+  source: 'landing_page'
+})
+```
+
+### Phase 8: N8N Notifications (Ongoing)
+
+**Workflow:**
+```
+Resume Generated (PostHog) → N8N Webhook
+    ↓
+1. Enrich with session replay URL
+2. Store in Airtable/Notion
+3. Send Slack/Telegram notification
+```
+
+**Notification Format:**
+```
+🎯 New Resume Downloaded
+
+Role: Developer Relations
+Format: PDF + DOCX
+Location: San Francisco, US
+Device: Desktop - Chrome
+
+📊 View Session: [link]
+📄 Bullets: [list of IDs]
+```
+
+---
+
+## Design System
+
+### Colors (Tailwind)
+- Primary: blue-600
+- Background: slate-50
+- Cards: white with slate-200 borders
+- Text: slate-900 (headings), slate-600 (body)
+- Tags: Various pastels (blue-100, green-100, purple-100, etc.)
+
+### Typography
+- Headings: font-semibold, tracking-tight
+- Body: font-normal, leading-relaxed
+- Bullet text: text-base, leading-7
+- Meta info: text-sm, text-slate-500
+
+---
 
 ## Code Quality & Documentation Standards
 
@@ -248,158 +889,23 @@ Both Claude Code and Warp editors should invoke CodeRabbit:
 - When quality concerns arise
 - As part of the development workflow
 
-## Current Status (Phase 1 Enhanced - Production Ready)
+### Code Quality & Formatting
 
-✅ **PHASE 1 MVP IS COMPLETE AND PRODUCTION-READY**
-
-All core Phase 1 features have been implemented with security hardening:
-
-### Core Features
-- ✅ Landing page with hero section and contact links
-- ✅ **vCard Contact Download** with Cloudflare Turnstile protection
-  - Server-side vCard generation (contact info never exposed to client)
-  - Auto-download functionality (works in Arc & Chrome)
-  - Multiple email support (personal + professional)
-  - One-time token validation with replay attack prevention
-- ✅ Resume overview page
-- ✅ Full data explorer at `/resume/view` with:
-  - ✅ Search functionality (text-based filtering)
-  - ✅ Tag filtering (OR logic - shows items with any selected tag)
-  - ✅ Company grouping with timeline
-  - ✅ Priority indicators (star rating)
-  - ✅ Metrics highlighting
-  - ✅ Responsive design
-  - ✅ Clean slate/blue aesthetic
-  - ✅ Hierarchical data structure (Company → Position → Bullets)
-
-### Security Features
-- ✅ **Contact Info Protection**
-  - Phone and email removed from client-side bundle
-  - Server-side environment variables for sensitive data
-  - Turnstile CAPTCHA before vCard download
-- ✅ **Middleware Security**
-  - Bot detection with allowlist for legitimate crawlers
-  - Rate limiting (30 req/min, 100 req/min for Googlebot)
-  - Security headers (CSP, X-Frame-Options, X-Content-Type-Options)
-  - IP-based rate limiting with spoofing mitigation notes
-- ✅ **vCard Generation**
-  - Full vCard 3.0 spec compliance
-  - Special character escaping (backslash, semicolon, comma, newlines)
-  - LinkedIn/GitHub URL sanitization
-  - Unicode-safe encoding
-
-### Code Quality
-- ✅ Build: Zero errors, zero warnings
-- ✅ TypeScript: Full type safety throughout
-- ✅ Security audit: No secrets in build output
-- ✅ Accessibility: ARIA labels on icon-only links
-- ✅ Error handling: Null safety for data properties
-- ✅ Race condition prevention: Auto-download timer management
-
-### To Test
+**Always use Prettier for formatting** - saves tokens and ensures consistency:
 ```bash
-npm run dev  # Visit http://localhost:3000
+npx prettier --write <file>  # Format specific file
+npx prettier --write app/    # Format directory
 ```
 
-**Key Routes:**
-- `/` - Landing page with hero and preview
-- `/resume` - Resume download page (explains Resumate concept)
-- `/resume/view` - **Main data explorer** (the core MVP feature)
+Use prettier instead of manual formatting for:
+- CSS/SCSS files (especially after large edits)
+- TypeScript/JavaScript
+- JSON files
+- Markdown
 
-### Ready for Deployment
-The application is production-ready and can be deployed to Vercel immediately.
+---
 
-### Known Considerations
-1. **Date format** - TEMPLATE_GUIDE.md shows both abbreviated and full month names for flexibility
-2. **Rate limiting** - In-memory implementation; consider Redis for multi-instance deployments
-3. **IP detection** - Currently logs warning for missing IP; acceptable for single-instance Vercel
-
-### Future Enhancements
-1. **Add static PDF** - Generate/add `public/resume.pdf` (optional static version)
-2. **Tighten CSP** - Consider using nonces instead of 'unsafe-inline'/'unsafe-eval'
-3. **Add animations** - Consider framer-motion for smooth transitions
-4. **JSON Schema validation** - Add formal schema for resume-data.json
-5. **Deploy to Vercel** - Connect to your custom domain
-
-### Architecture Notes for Future Development
-- **Clean separation**: UI components in `/components/ui`, data components in `/components/data`
-- **Type safety**: All data strongly typed in `types/resume.ts`
-- **Server components**: Used where possible, client components marked with "use client"
-- **Scalable**: Easy to add new tag types, bullet fields, or filtering logic
-- **Performance**: Efficient filtering with useMemo, minimal re-renders
-
-## Environment Variables
-
-Required environment variables (see `.env.example` for template):
-
-### Server-Side Only
-- `CONTACT_EMAIL_PERSONAL` - Your primary email address
-- `CONTACT_EMAIL_PROFESSIONAL` - Your work/professional email address
-- `CONTACT_PHONE` - Your phone number (international format)
-- `TURNSTILE_SECRET_KEY` - Cloudflare Turnstile secret key
-
-### Client-Side (Public)
-- `NEXT_PUBLIC_TURNSTILE_SITE_KEY` - Cloudflare Turnstile site key
-
-### Setup Instructions
-1. Copy `.env.example` to `.env.local`
-2. Sign up for [Cloudflare Turnstile](https://dash.cloudflare.com/turnstile)
-3. Create a "Managed" widget with "Invisible" mode
-4. Copy site key and secret key to `.env.local`
-5. Add your contact information
-
-**Security Note:** Phone and email are NEVER exposed to the client. They're only used server-side in the vCard generation API route.
-
-### GitHub Gist Integration (Remote Data Editing)
-
-Your `data/resume-data.json` is gitignored. **Implemented**: GitHub Gist as remote data source.
-
-**Setup**:
-1. Create secret gist at https://gist.github.com
-2. Get raw URL and add to `.env.local`:
-   ```env
-   RESUME_DATA_GIST_URL=https://gist.githubusercontent.com/[user]/[hash]/raw/resume-data.json
-   ```
-
-**Workflow**:
-```bash
-npm run data:pull  # Fetch gist → local (also runs on prebuild with --force)
-npm run data:push  # Push local → gist (requires gh CLI)
-npm run data:view  # View gist in terminal
-
-# Force flags for automation (skip interactive prompts)
-npm run data:pull -- --force
-npm run data:push -- --force
-```
-
-**⚠️ CRITICAL: Always Pull Before Editing Data**
-
-**Claude MUST follow this workflow when editing `data/resume-data.json`:**
-
-1. **ALWAYS run `npm run data:pull` FIRST** before any edits to sync gist → local
-2. Edit the local file
-3. Run `npm run data:push` to sync local → gist
-4. **NEVER** edit the file without pulling first - this causes data loss!
-
-**Safety Features**:
-- `data:pull` warns if local differs from gist (prompts for confirmation)
-- `data:push` warns if gist differs from local (prompts for confirmation)
-- Use `--force` flag to skip prompts in automation/CI
-
-**Conflict Resolution**:
-- System uses "last write wins" - no automatic merging
-- If conflict detected, scripts prompt user to confirm overwrite
-- No merge conflicts, just simple replacement
-
-**Auto-deploy**:
-- GitHub Action (`.github/workflows/gist-deploy-trigger.yml`) runs hourly
-- Checks gist `updated_at` timestamp vs last Vercel deployment
-- Validates JSON format
-- Triggers Vercel deploy hook if changed
-- Uses Vercel API (not git commits) for timestamp tracking
-- Prebuild uses `--force` flag to avoid blocking builds
-
-## Development Workflow & Error Handling
+## Development Workflow & Guidelines
 
 ### Error Detection Strategy
 **Key principle**: Claude proactively catches errors before user testing whenever possible.
@@ -456,13 +962,43 @@ npm run data:push -- --force
 
 **Goal**: User experiences minimal errors during testing; Claude catches issues preemptively.
 
+### Testing Philosophy
+- **TDD for Rust** - Write tests first, then implementation
+- **Property-based tests** for type validation (proptest)
+- **Integration tests** for full PDF/DOCX generation
+- **Visual parity tests** - Compare PDF and DOCX output
+
 ---
 
 ## Deployment
 
-**Status**: Deployed to ollie.gg via Vercel with full gist integration and auto-deploy.
+**Status:** Deployed to ollie.gg via Vercel with full gist integration and auto-deploy.
 
-### Vercel Setup (Completed)
+### Environment Variables
+
+Required environment variables (see `.env.example` for template):
+
+**Server-Side Only:**
+- `CONTACT_EMAIL_PERSONAL` - Your primary email address
+- `CONTACT_EMAIL_PROFESSIONAL` - Your work/professional email address
+- `CONTACT_PHONE` - Your phone number (international format)
+- `TURNSTILE_SECRET_KEY` - Cloudflare Turnstile secret key
+- `RESUME_DATA_GIST_URL` - GitHub Gist raw URL for resume data
+- `N8N_WEBHOOK_URL` - N8N webhook for notifications (Phase 8)
+
+**Client-Side (Public):**
+- `NEXT_PUBLIC_TURNSTILE_SITE_KEY` - Cloudflare Turnstile site key
+
+**Setup Instructions:**
+1. Copy `.env.example` to `.env.local`
+2. Sign up for [Cloudflare Turnstile](https://dash.cloudflare.com/turnstile)
+3. Create a "Managed" widget with "Invisible" mode
+4. Copy site key and secret key to `.env.local`
+5. Add your contact information
+
+**Security Note:** Phone and email are NEVER exposed to the client. They're only used server-side in the vCard generation API route.
+
+### Vercel Setup
 
 1. **Environment Variables** - Set using Vercel CLI with `printf` to avoid newlines:
    ```bash
@@ -523,372 +1059,23 @@ npm run data:push -- --force
 
 ---
 
-# Development Roadmap (Phase 2+)
-
-## Phase 2: Bug Fixes & Tag System (Days 1-4)
-
-### Critical Bug Fixes (Days 1-2)
-
-#### Bug 1: Tag Filtering Display Logic ⚠️ URGENT
-**Root Cause**: DataExplorer correctly filters `filteredItems`, but CompanySection receives full company object and renders ALL bullets.
-
-**The Issue**:
-```
-DataExplorer → filteredItems (correct) → filteredCompanies (by ID)
-                                       ↓
-CompanySection receives full company.positions[].bullets (WRONG!)
-```
-
-**Fix**:
-1. DataExplorer: Compute `Set<string>` of filtered bullet IDs from `filteredItems`
-2. Pass `filteredBulletIds` prop to CompanySection
-3. CompanySection: Filter `allBullets` with `filteredBulletIds.has(bullet.id)` before rendering
-
-**Files**:
-- `components/data/DataExplorer.tsx`: Add filteredBulletIds computation, pass to CompanySection
-- `components/data/CompanySection.tsx`: Accept filteredBulletIds prop, filter before render
-
-#### Bug 2: vCard Download Speed
-**Current**: 800ms delay (line 132, app/page.tsx)
-**Fix**: Reduce to 300ms - still shows success UI, feels snappier
-
-#### Bug 3: Turnstile Popup Fallback
-**Current**: Modal auto-closes 1.5s after download starts
-**Risk**: If auto-download fails, fallback button disappears
-**Fix**:
-- Keep modal open if `downloadInitiated === false` after 3s
-- Add manual "Close" button
-- Only auto-close on confirmed download
-
-### Tag System Refactor (Days 3-4)
-
-**Problem**: Hardcoded Tag union type (18 tags) + hardcoded colors in Badge.tsx
-
-**Solution**: CSS-Based Dynamic Tag Colors
-
-1. **Remove Tag union type**:
-```typescript
-// types/resume.ts
-export type Tag = string; // was: union of literals
-```
-
-2. **Tag extraction utility**:
-```typescript
-// lib/tags.ts (new)
-export function extractAllTags(data: ResumeData): string[]
-export function getTagColorClass(tag: string, allTags: string[]): string
-```
-
-3. **CSS color system** (20 OKLCH colors + gradient overflow)
-4. **Badge.tsx refactor**: Dynamic color assignment
-
----
-
-## Phase 3: Liquid Glass Dark Mode (Days 5-8)
-
-### Design System: Modern, Fast, Apple-Inspired
-
-**Color Philosophy**:
-- OKLCH color space (perceptually uniform)
-- Dark mode default
-- Liquid glass aesthetic: frosted backgrounds, subtle gradients, depth through blur
-
-**CSS Architecture**:
-- 20 predefined tag colors
-- Glass morphism components
-- Performance-optimized animations (GPU-accelerated only)
-- NEVER animate: width, height, top, left, margin, padding
-- ONLY animate: transform, opacity, filter
-
-**Performance Budget**:
-- First Contentful Paint: < 1.2s
-- Largest Contentful Paint: < 2.5s
-- Cumulative Layout Shift: < 0.1
-- First Input Delay: < 100ms
-- Lighthouse Performance Score: ≥ 95
-
----
-
-## Phase 4: Page Unification (Days 9-11)
-
-### Goal: Single "Experience" Page
-
-**New Routes**:
-- `/` - Landing (hero, quick links, about)
-- `/experience` - Unified resume + explorer (replaces /resume and /resume/view)
-
-**Unified Experience Page Structure**:
-1. Hero: Name, Location, Tagline
-2. Professional Summary (2-3 lines)
-3. Stats Bar: Years experience, companies, key achievements (animated counters)
-4. Resume Generation Section:
-   - Role selector dropdown
-   - "Generate Resume" button
-   - Quick Actions: LinkedIn, GitHub, 📅 Book Call (cal.com/ollie)
-5. Full Experience Explorer (inline, not separate page)
-6. What is Resumate? (explanation + GitHub link)
-
----
-
-## Phase 5: Rust/WASM Resume Compiler (Days 12-22) 🦀
-
-### Why Rust?
-1. **Performance**: <5s generation time (target: 2-3s)
-2. **Showcase**: Demonstrates systems programming mastery
-3. **Dual format**: PDF + DOCX from single codebase
-4. **Client-side**: Zero server cost, infinite scaling
-
-### Tech Stack
-- `pdf-writer` - Low-level PDF generation
-- `docx-rs` - DOCX generation
-- `wasm-bindgen` - JS interop
-- `serde` - JSON serialization
-- `wasm-pack` - Build tooling
-
-### Heuristic Algorithm
-```rust
-pub fn score_bullet(bullet: &Bullet, role: &RoleMapping) -> f32 {
-    let tag_score = /* tag relevance 0-1 */;
-    let priority_score = bullet.priority / 10.0;
-    let metrics_bonus = if bullet.metrics.is_some() { 0.1 } else { 0.0 };
-
-    (tag_score * 0.6) + (priority_score * 0.3) + metrics_bonus
-}
-```
-
-### 20-Second Constraint
-- WASM initialization: ~500ms (cached)
-- Bullet selection: ~100ms
-- PDF/DOCX generation: ~2-3s
-- **Total: 2.5-4s** ✅ (well under 20s)
-
----
-
-## Phase 6: PostHog Analytics (Days 23-24)
-
-### Event Tracking (No Database Needed!)
-
-**Key Events**:
-```typescript
-posthog.capture('resume_generated', {
-  role: 'developer-relations',
-  format: 'pdf',
-  bullet_count: 18,
-  bullet_ids: [...],
-  bullet_texts: [...], // Full text for reference
-  generation_time_ms: 2340,
-});
-
-posthog.capture('resume_ai_curated', {
-  job_description_length: 1200,
-  ai_processing_time_ms: 4500,
-});
-
-posthog.capture('tag_filter_applied', { tags: [...], results_count: 12 });
-posthog.capture('search_performed', { query: '...', results_count: 8 });
-posthog.capture('calendar_link_clicked', { source: 'experience_page' });
-```
-
-**User Properties** (auto-captured):
-- Device type, OS, browser
-- Screen resolution
-- Location (city, country)
-- Session duration
-- UTM parameters
-
-**Session Replay**: Enabled for all downloads
-
----
-
-## Phase 7: N8N Notifications (Days 25-26)
-
-### Workflow: PostHog → N8N → Notification
-
-**Architecture**:
-```
-Resume Downloaded (PostHog event)
-      ↓
-PostHog Webhook → N8N Workflow
-      ↓
-1. Enrich with session replay URL
-2. Store in Airtable/Notion
-3. Send Slack/Telegram notification
-```
-
-**Notification Format**:
-```
-🎯 New Resume Downloaded
-
-Role: Developer Relations
-Format: PDF
-Location: San Francisco, US
-Device: Desktop - Chrome
-Referrer: LinkedIn Job Post
-
-📊 View Session Replay: [link]
-📄 View Bullets: [link]
-```
-
-**Storage Schema** (Airtable):
-- Download ID, Timestamp
-- Role, Format
-- User metadata (IP, location, device)
-- Bullet IDs + texts
-- Session replay URL
-- Generation time
-
----
-
-## Phase 8: AI Curation - Claude API (Days 27-35)
-
-### Secure, Cost-Controlled AI Selection
-
-**20-Second Constraint**:
-- Claude API: ~3-5s
-- WASM generation: ~2-3s
-- **Total: 5-8s** ✅
-
-### Input Validation & Sanitization
-
-```typescript
-// lib/prompt-sanitization.ts
-const MAX_JOB_DESC_LENGTH = 5000;
-const INJECTION_PATTERNS = [
-  /ignore (previous|all) (instructions|prompts)/i,
-  /system prompt/i,
-  /forget (everything|all)/i,
-];
-
-export function sanitizeJobDescription(input: string): string {
-  // 1. Length check
-  // 2. Injection pattern detection
-  // 3. Strip code blocks
-  // 4. Special character ratio check
-  // 5. Normalize whitespace
-}
-```
-
-### Claude API Integration
-
-```typescript
-const response = await client.messages.create({
-  model: 'claude-3-5-sonnet-20241022',
-  max_tokens: 2000,
-  temperature: 0.2,
-
-  system: `You are a resume curator. Select 15-20 most relevant bullets.
-
-  RULES:
-  1. Respond with ONLY JSON array of bullet IDs
-  2. Do NOT modify any text
-  3. Do NOT write new content
-
-  OUTPUT: { "bullet_ids": ["id1", "id2", ...] }`,
-
-  messages: [{
-    role: 'user',
-    content: `Job Description:\n${sanitized}\n\nExperience:\n${JSON.stringify(bullets)}`
-  }],
-});
-```
-
-### Rate Limiting
-- 5 requests per hour per IP
-- Track in middleware.ts
-- Return 429 if exceeded
-
-### Cost Management
-- Claude Sonnet: ~$0.02 per request
-- 5 req/hour/IP limit: ~$0.10/hour per user
-- Anthropic API spending cap: $100/month
-- Real estimate: ~10 requests/day = $6/month
-
----
-
-## Testing Strategy
-
-### Unit Tests
-- Tag extraction logic
-- Bullet scoring algorithm
-- Prompt sanitization functions
-
-### Integration Tests
-- API routes (vCard, curate, notifications)
-- External services (PostHog, N8N, Claude)
-
-### E2E Tests (Playwright)
-- Full download flow (Turnstile → PDF)
-- Tag filtering accuracy
-- AI curation end-to-end
-- Dark mode rendering
-
-### Performance Tests
-- Lighthouse: Target 95+ performance score
-- WASM load time < 500ms
-- PDF generation < 3s
-- Tag filter response < 100ms
-
----
-
-## Timeline
-
-| Phase | Duration | Dependencies | Milestone |
-|-------|----------|--------------|-----------|
-| 2: Bug Fixes | 2 days | None | Filtering works correctly |
-| 2: Tag System | 2 days | After bug fixes | Dynamic tags, extensible |
-| 3: Dark Mode | 4 days | After tags | Liquid glass aesthetic |
-| 4: Page Unification | 3 days | After dark mode | Single experience page |
-| 5: Rust/WASM | 11 days | After unification | PDF + DOCX generation |
-| 6: PostHog | 2 days | Parallel with WASM | Analytics live |
-| 7: N8N | 2 days | After PostHog | Notifications working |
-| 8: Claude API | 9 days | After WASM | AI curation live |
-
-**Total: ~35 days (5 weeks)**
-
-**Milestone Schedule**:
-- Week 1: Bugs fixed, tags dynamic, dark mode live
-- Week 2: Unified page, WASM scaffold, PostHog tracking
-- Week 3: PDF generation working, DOCX generation, N8N notifications
-- Week 4: Polish, testing, performance optimization
-- Week 5: AI curation, security hardening, production launch
-
----
-
-## Code Quality & Formatting
-
-**Always use Prettier for formatting** - saves tokens and ensures consistency:
-```bash
-npx prettier --write <file>  # Format specific file
-npx prettier --write app/    # Format directory
-```
-
-Use prettier instead of manual formatting for:
-- CSS/SCSS files (especially after large edits)
-- TypeScript/JavaScript
-- JSON files
-- Markdown
-
-Pre-commit hooks: Not implemented yet (fast iteration phase). Will add when stabilizing for production.
-
----
-
-## Project Documentation (for Recruiters)
+## Technical Showcases
 
 This project demonstrates:
-- **Rust/WASM**: Client-side document generation
-- **AI-assisted curation**: Human-written content, AI only selects
-- **Growth engineering**: Analytics-driven iteration
-- **Agentic coding**: Human oversight + AI assistance (Anthropic compliant)
 
-### Technical Highlights
-- Sub-5s resume generation (Rust/WASM)
-- Client-side compilation, zero server cost
-- Dual format (PDF + DOCX) from single codebase
-- OKLCH colors, liquid glass design
-- PostHog analytics, N8N automation
+1. **Rust/WASM** - Systems programming compiled to run in browser
+2. **Type Safety** - Rust + TypeScript with validated boundaries
+3. **Security** - Turnstile, rate limiting, server-side validation
+4. **Performance** - Sub-5s generation, optimized WASM
+5. **Testing** - TDD, property-based tests, 100+ test coverage
+6. **Analytics** - PostHog events, N8N automation, full observability
+7. **AI Integration** - Human-written content, AI-curated selection
+8. **Growth Engineering** - Data-driven iteration based on recruiter behavior
 
-### Compliance
-✅ All experience bullets: Human-written
-✅ AI role: Selection only, no content generation
-✅ Transparency: Recruiters see full experience history
-✅ Verifiable: GitHub commit history shows agentic development
+---
+
+## License & Contribution
+
+**Status:** Personal project, will be open-sourced
+
+**Philosophy:** This codebase serves as a living demonstration of technical capabilities. Every design decision prioritizes correctness, clarity, and craftsmanship.

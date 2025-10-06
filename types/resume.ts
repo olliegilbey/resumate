@@ -43,6 +43,7 @@ export interface PersonalInfo {
   linkedin: string
   github: string
   website: string
+  calendar?: string         // Cal.com or other calendar booking link
 }
 
 export interface Education {

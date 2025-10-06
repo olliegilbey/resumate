@@ -1,4 +1,4 @@
-import { Company, BulletPoint } from "@/types/resume"
+import { Company, BulletPoint, Tag } from "@/types/resume"
 import { BulletCard } from "./BulletCard"
 import { GlassPanel } from "@/components/ui/GlassPanel"
 import { IconBadge } from "@/components/ui/IconBadge"
@@ -8,10 +8,11 @@ import { Building2, Briefcase } from "lucide-react"
 interface CompanySectionProps {
   company: Company
   allTags: string[]
+  onTagClick?: (tag: Tag) => void
   className?: string
 }
 
-export function CompanySection({ company, allTags, className }: CompanySectionProps) {
+export function CompanySection({ company, allTags, onTagClick, className }: CompanySectionProps) {
   // Collect all bullets from all positions (already filtered by DataExplorer)
   const allBullets: BulletPoint[] = []
 
@@ -67,7 +68,12 @@ export function CompanySection({ company, allTags, className }: CompanySectionPr
       {/* Filtered bullets, sorted by priority */}
       <div className="space-y-3">
         {displayBullets.map(bullet => (
-          <BulletCard key={bullet.id} bullet={bullet} allTags={allTags} />
+          <BulletCard
+            key={bullet.id}
+            bullet={bullet}
+            allTags={allTags}
+            onTagClick={onTagClick}
+          />
         ))}
       </div>
     </div>

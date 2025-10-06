@@ -5,7 +5,7 @@ import { Button } from "@/components/ui/Button"
 import { GlassPanel } from "@/components/ui/GlassPanel"
 import { ContactLinks } from "@/components/ui/ContactLinks"
 import Link from "next/link"
-import { ArrowRight, Briefcase, Download, AlertCircle, X } from "lucide-react"
+import { ArrowRight, Briefcase, Download, AlertCircle, X, Calendar } from "lucide-react"
 import resumeData from "@/data/resume-data.json"
 import { Turnstile, type TurnstileInstance } from "@marsidev/react-turnstile"
 import { useTheme } from "@/contexts/ThemeContext"
@@ -173,17 +173,35 @@ export default function HomePage() {
               />
             )}
 
-            {/* Save Contact Card Button */}
-            <div className="mt-8">
+            {/* Action Buttons */}
+            <div className="mt-8 flex flex-col sm:flex-row items-center justify-center gap-4">
               <Button
                 onClick={handleOpenModal}
                 disabled={isVerifying}
                 size="lg"
                 variant="gradient"
+                className="w-full sm:w-auto min-w-[200px]"
               >
                 <Download className="mr-2 h-4 w-4" />
                 Get Contact Card
               </Button>
+              {resumeData?.personal?.calendar && (
+                <a
+                  href={resumeData.personal.calendar}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="w-full sm:w-auto"
+                >
+                  <Button
+                    size="lg"
+                    variant="outline"
+                    className="w-full min-w-[200px]"
+                  >
+                    <Calendar className="mr-2 h-4 w-4" />
+                    Book in my Cal
+                  </Button>
+                </a>
+              )}
             </div>
 
             {/* Turnstile Modal */}

@@ -6,12 +6,13 @@
  * Extracts gist ID from RESUME_DATA_GIST_URL and displays gist content
  */
 
-const { spawnSync } = require('child_process');
+import { spawnSync } from 'child_process';
+import dotenv from 'dotenv';
 
 // Load .env.local if it exists
 try {
-  require('dotenv').config({ path: '.env.local' });
-} catch (error) {
+  dotenv.config({ path: '.env.local' });
+} catch {
   // dotenv not available
 }
 

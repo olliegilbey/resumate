@@ -9,7 +9,8 @@
     "citizenship": ["Country 1", "Country 2"],
     "linkedin": "your-linkedin-username",
     "github": "your-github-username",
-    "website": "yourwebsite.com"
+    "website": "yourwebsite.com",
+    "calendar": "https://cal.com/username"
   },
   "summary": "Your professional summary highlighting your expertise, experience, and value proposition. 2-3 sentences that capture your career focus and key strengths.",
   "tagline": "Optional: A memorable motto or phrase that represents your professional philosophy",

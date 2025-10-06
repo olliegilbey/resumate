@@ -1,4 +1,4 @@
-import { BulletPoint } from "@/types/resume"
+import { BulletPoint, Tag } from "@/types/resume"
 import { Badge } from "@/components/ui/Badge"
 import { cn, parseMarkdownLinks } from "@/lib/utils"
 import { Star } from "lucide-react"
@@ -6,10 +6,11 @@ import { Star } from "lucide-react"
 interface BulletCardProps {
   bullet: BulletPoint
   allTags: string[]
+  onTagClick?: (tag: Tag) => void
   className?: string
 }
 
-export function BulletCard({ bullet, allTags, className }: BulletCardProps) {
+export function BulletCard({ bullet, allTags, onTagClick, className }: BulletCardProps) {
   const priorityStars = Math.min(Math.max(Math.round(bullet.priority / 2), 1), 5)
 
   return (
@@ -30,9 +31,15 @@ export function BulletCard({ bullet, allTags, className }: BulletCardProps) {
             ))}
           </div>
 
-          {/* Tags below stars */}
+          {/* Tags below stars - clickable if handler provided */}
           {bullet.tags.map(tag => (
-            <Badge key={tag} tag={tag} allTags={allTags} />
+            <Badge
+              key={tag}
+              tag={tag}
+              allTags={allTags}
+              onClick={onTagClick ? () => onTagClick(tag) : undefined}
+              className={onTagClick ? "cursor-pointer hover:opacity-80 transition-opacity" : undefined}
+            />
           ))}
         </div>
 

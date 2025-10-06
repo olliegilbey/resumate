@@ -5,14 +5,17 @@ import { getTagColorClass } from "@/lib/tags"
 interface BadgeProps {
   tag: Tag
   allTags: string[]
+  onClick?: () => void
   className?: string
 }
 
-export function Badge({ tag, allTags, className }: BadgeProps) {
+export function Badge({ tag, allTags, onClick, className }: BadgeProps) {
   const colorClasses = getTagColorClass(tag, allTags)
+  const Component = onClick ? 'button' : 'span'
 
   return (
-    <span
+    <Component
+      onClick={onClick}
       className={cn(
         "inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium glass-badge",
         colorClasses,
@@ -20,6 +23,6 @@ export function Badge({ tag, allTags, className }: BadgeProps) {
       )}
     >
       {tag.replaceAll('-', ' ')}
-    </span>
+    </Component>
   )
 }

@@ -7,7 +7,7 @@ import { TagFilter } from "./TagFilter"
 import { CompanySection } from "./CompanySection"
 import { GlassPanel } from "@/components/ui/GlassPanel"
 import { cn } from "@/lib/utils"
-import { extractAllTags } from "@/lib/tags"
+import { getSortedTags } from "@/lib/tags"
 
 interface DataExplorerProps {
   data: ResumeData
@@ -18,8 +18,8 @@ export function DataExplorer({ data, className }: DataExplorerProps) {
   const [searchQuery, setSearchQuery] = useState("")
   const [selectedTags, setSelectedTags] = useState<Tag[]>([])
 
-  // Extract all tags from resume data
-  const allTags = useMemo(() => extractAllTags(data), [data])
+  // Extract all tags from resume data, sorted by weight (count × avgPriority)
+  const allTags = useMemo(() => getSortedTags(data), [data])
 
   const handleTagToggle = (tag: Tag) => {
     setSelectedTags(prev =>
@@ -151,6 +151,7 @@ export function DataExplorer({ data, className }: DataExplorerProps) {
                 selectedTags={selectedTags}
                 onTagToggle={handleTagToggle}
                 bullets={allBulletsForTagFilter}
+                allTags={allTags}
               />
             </GlassPanel>
           </div>
@@ -177,6 +178,7 @@ export function DataExplorer({ data, className }: DataExplorerProps) {
                   key={company.id}
                   company={company}
                   allTags={allTags}
+                  onTagClick={handleTagToggle}
                 />
               ))}
             </div>

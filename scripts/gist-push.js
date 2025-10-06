@@ -10,15 +10,16 @@
  *   npm run data:push -- --force # Skip prompts (for automation)
  */
 
-const { spawnSync, execSync } = require('child_process');
-const fs = require('fs');
-const https = require('https');
-const readline = require('readline');
+import { spawnSync } from 'child_process';
+import fs from 'fs';
+import https from 'https';
+import readline from 'readline';
+import dotenv from 'dotenv';
 
 // Load .env.local if it exists
 try {
-  require('dotenv').config({ path: '.env.local' });
-} catch (error) {
+  dotenv.config({ path: '.env.local' });
+} catch {
   // dotenv not available
 }
 
