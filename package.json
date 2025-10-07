@@ -25,6 +25,12 @@
     "doc-gen/**/*.rs": [
       "bash -c 'cd doc-gen && cargo fmt --all'",
       "bash -c 'cd doc-gen && cargo clippy --all -- -D warnings'"
+    ],
+    "data/resume-data.json": [
+      "bash -c 'node -e \"JSON.parse(require(\\\"fs\\\").readFileSync(\\\"data/resume-data.json\\\", \\\"utf8\\\"))\" && echo \"✓ resume-data.json is valid JSON\"'"
+    ],
+    "data/resume-data-template.json": [
+      "bash -c 'node -e \"JSON.parse(require(\\\"fs\\\").readFileSync(\\\"data/resume-data-template.json\\\", \\\"utf8\\\"))\" && echo \"✓ resume-data-template.json is valid JSON\"'"
     ]
   },
   "dependencies": {

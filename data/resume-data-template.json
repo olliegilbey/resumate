@@ -71,5 +71,51 @@
       "tags": ["optional-tag"]
     }
   ],
-  "interests": ["Interest 1", "Interest 2", "Interest 3"]
+  "interests": ["Interest 1", "Interest 2", "Interest 3"],
+  "roleProfiles": [
+    {
+      "id": "software-engineer",
+      "name": "Software Engineer",
+      "description": "Full-stack development with focus on scalable systems",
+      "tagWeights": {
+        "engineering": 1.0,
+        "backend": 0.9,
+        "frontend": 0.8,
+        "architecture": 0.7,
+        "api-design": 0.7,
+        "testing": 0.6,
+        "ci-cd": 0.5
+      }
+    },
+    {
+      "id": "product-manager",
+      "name": "Product Manager",
+      "description": "Strategic product leadership with data-driven decision making",
+      "tagWeights": {
+        "product-management": 1.0,
+        "data-driven": 0.9,
+        "strategic-planning": 0.9,
+        "user-research": 0.8,
+        "roadmap": 0.8,
+        "team-leadership": 0.7,
+        "cross-functional": 0.7,
+        "engineering": 0.5
+      }
+    },
+    {
+      "id": "developer-relations",
+      "name": "Developer Relations",
+      "description": "Community building and developer advocacy",
+      "tagWeights": {
+        "developer-relations": 1.0,
+        "community": 0.9,
+        "content-creation": 0.9,
+        "public-speaking": 0.8,
+        "documentation": 0.8,
+        "engineering": 0.7,
+        "education": 0.7,
+        "product-management": 0.5
+      }
+    }
+  ]
 }
