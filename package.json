@@ -21,6 +21,10 @@
     "*.{ts,tsx}": [
       "eslint --fix",
       "bash -c 'npx tsc --noEmit'"
+    ],
+    "doc-gen/**/*.rs": [
+      "bash -c 'cd doc-gen && cargo fmt --all'",
+      "bash -c 'cd doc-gen && cargo clippy --all -- -D warnings'"
     ]
   },
   "dependencies": {
