@@ -11,7 +11,7 @@ members = [
 version = "0.1.0"
 edition = "2021"
 rust-version = "1.90.0"
-authors = ["Oliver Gilbey <olliegilbey@gmail.com>"]
+authors = ["Oliver Gilbey"]
 license = "MIT"
 repository = "https://github.com/olliegilbey/resumate"
 
