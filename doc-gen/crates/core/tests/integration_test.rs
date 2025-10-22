@@ -32,7 +32,6 @@ fn load_resume_data() -> ResumeData {
 }
 
 #[test]
-#[ignore = "TODO: Port to docgen_typst"]
 fn test_all_role_profiles_produce_valid_selections() {
     let resume = load_resume_data();
     let config = SelectionConfig::default();
@@ -89,7 +88,6 @@ fn test_all_role_profiles_produce_valid_selections() {
 }
 
 #[test]
-#[ignore = "TODO: Port to docgen_typst"]
 fn test_diversity_constraints_across_all_profiles() {
     let resume = load_resume_data();
     let config = SelectionConfig {
@@ -144,7 +142,6 @@ fn test_diversity_constraints_across_all_profiles() {
 }
 
 #[test]
-#[ignore = "TODO: Port to docgen_typst"]
 fn test_role_profiles_select_different_bullets() {
     let resume = load_resume_data();
     let config = SelectionConfig::default();
@@ -188,7 +185,6 @@ fn test_role_profiles_select_different_bullets() {
 }
 
 #[test]
-#[ignore = "TODO: Port to docgen_typst"]
 fn test_scoring_weights_are_respected() {
     let resume = load_resume_data();
 
@@ -223,7 +219,6 @@ fn test_scoring_weights_are_respected() {
 }
 
 #[test]
-#[ignore = "TODO: Port to docgen_typst"]
 fn test_all_profiles_include_position_descriptions() {
     let resume = load_resume_data();
     let config = SelectionConfig::default();
@@ -247,7 +242,6 @@ fn test_all_profiles_include_position_descriptions() {
 }
 
 #[test]
-#[ignore = "TODO: Port to docgen_typst"]
 fn test_selection_is_deterministic_for_all_profiles() {
     let resume = load_resume_data();
     let config = SelectionConfig::default();
@@ -279,7 +273,6 @@ fn test_selection_is_deterministic_for_all_profiles() {
 }
 
 #[test]
-#[ignore = "TODO: Port to docgen_typst"]
 fn test_tag_weights_affect_selection() {
     let resume = load_resume_data();
     let config = SelectionConfig {
@@ -329,7 +322,6 @@ fn test_tag_weights_affect_selection() {
 }
 
 #[test]
-#[ignore = "TODO: Port to docgen_typst"]
 fn test_expected_role_profiles_exist() {
     let resume = load_resume_data();
 
@@ -362,329 +354,14 @@ fn test_expected_role_profiles_exist() {
 }
 
 // ========== PDF Generation Integration Tests ==========
-// TODO: Port these tests to use docgen_typst::render_resume in typst crate tests
-
-#[test]
-#[ignore = "TODO: Port to docgen_typst"]
-#[ignore = "TODO: Port to docgen_typst"]
-fn test_pdf_generation_for_all_profiles() {
-    use docgen_core::GenerationPayload;
-
-    let resume = load_resume_data();
-    let config = SelectionConfig::default();
-
-    for role_profile in resume.role_profiles.as_ref().unwrap() {
-        println!("\n📄 Testing PDF generation for: {}", role_profile.name);
-
-        let selected = select_bullets(&resume, role_profile, &config);
-
-        let payload = GenerationPayload {
-            personal: resume.personal.clone(),
-            selected_bullets: selected,
-            role_profile: role_profile.clone(),
-            education: resume.education.clone(),
-            skills: resume.skills.clone(),
-            summary: resume.summary.clone(),
-            metadata: None,
-        };
-
-        let result = generate_pdf(&payload);
-        assert!(
-            result.is_ok(),
-            "PDF generation failed for profile '{}': {:?}",
-            role_profile.name,
-            result.err()
-        );
-
-        let pdf_bytes = result.unwrap();
-        assert!(
-            !pdf_bytes.is_empty(),
-            "PDF bytes empty for profile '{}'",
-            role_profile.name
-        );
-
-        // PDFs should start with %PDF- header
-        assert!(
-            pdf_bytes.starts_with(b"%PDF-"),
-            "Invalid PDF header for profile '{}'",
-            role_profile.name
-        );
-
-        // Reasonable size check (>1KB, <10MB)
-        assert!(
-            pdf_bytes.len() > 1000,
-            "PDF suspiciously small for profile '{}': {} bytes",
-            role_profile.name,
-            pdf_bytes.len()
-        );
-
-        assert!(
-            pdf_bytes.len() < 10_000_000,
-            "PDF suspiciously large for profile '{}': {} bytes",
-            role_profile.name,
-            pdf_bytes.len()
-        );
-
-        println!("  ✅ Generated PDF: {} bytes", pdf_bytes.len());
-    }
-}
-
-#[test]
-#[ignore = "TODO: Port to docgen_typst"]
-fn test_pdf_generation_consistency() {
-    use docgen_core::GenerationPayload;
-    unimplemented!("Port to docgen_typst::render_resume");
-
-    let resume = load_resume_data();
-    let config = SelectionConfig::default();
-    let role_profile = &resume.role_profiles.as_ref().unwrap()[0];
-
-    let selected = select_bullets(&resume, role_profile, &config);
-
-    let payload = GenerationPayload {
-        personal: resume.personal.clone(),
-        selected_bullets: selected,
-        role_profile: role_profile.clone(),
-        education: resume.education.clone(),
-        skills: resume.skills.clone(),
-        summary: resume.summary.clone(),
-        metadata: None,
-    };
-
-    // Generate PDFs multiple times
-    let pdf1 = generate_pdf(&payload).expect("First PDF generation failed");
-    let pdf2 = generate_pdf(&payload).expect("Second PDF generation failed");
-    let pdf3 = generate_pdf(&payload).expect("Third PDF generation failed");
-
-    // Check that sizes are reasonably consistent
-    // Note: Some variability is expected due to floating-point calculations in PDF layout
-    let size1 = pdf1.len();
-    let size2 = pdf2.len();
-    let size3 = pdf3.len();
-
-    // All sizes should be within 5% of each other (allows for floating-point variance)
-    let max_size = size1.max(size2).max(size3);
-    let min_size = size1.min(size2).min(size3);
-    let tolerance = (max_size as f64 * 0.05) as usize;
-
-    assert!(
-        max_size - min_size <= tolerance,
-        "PDF sizes vary too much: {} vs {} vs {} (tolerance: {} bytes)",
-        size1,
-        size2,
-        size3,
-        tolerance
-    );
-
-    println!(
-        "✓ PDF generation reasonably consistent: {} bytes (±{} bytes, {}%)",
-        size1,
-        max_size - min_size,
-        ((max_size - min_size) as f64 / max_size as f64 * 100.0)
-    );
-}
-
-#[test]
-#[ignore = "TODO: Port to docgen_typst"]
-fn test_pdf_generation_with_minimal_data() {
-    use docgen_core::GenerationPayload;
-    use docgen_core::{PersonalInfo, RoleProfile, ScoringWeights};
-    unimplemented!("Port to docgen_typst::render_resume");
-    use std::collections::HashMap;
-
-    // Minimal valid payload
-    let payload = GenerationPayload {
-        personal: PersonalInfo {
-            name: "Test Person".to_string(),
-            nickname: None,
-            tagline: None,
-            email: None,
-            phone: None,
-            location: None,
-            linkedin: None,
-            github: None,
-            website: None,
-            twitter: None,
-        },
-        selected_bullets: vec![],
-        role_profile: RoleProfile {
-            id: "test".to_string(),
-            name: "Test Role".to_string(),
-            description: None,
-            tag_weights: HashMap::new(),
-            scoring_weights: ScoringWeights {
-                tag_relevance: 0.6,
-                priority: 0.4,
-            },
-        },
-        education: None,
-        skills: None,
-        summary: None,
-        metadata: None,
-    };
-
-    let result = generate_pdf(&payload);
-    assert!(
-        result.is_ok(),
-        "PDF generation failed with minimal data: {:?}",
-        result.err()
-    );
-
-    let pdf_bytes = result.unwrap();
-    assert!(!pdf_bytes.is_empty(), "PDF bytes empty with minimal data");
-    assert!(pdf_bytes.starts_with(b"%PDF-"), "Invalid PDF header");
-}
-
-#[test]
-#[ignore = "TODO: Port to docgen_typst"]
-fn test_pdf_generation_with_unicode_content() {
-    use docgen_core::GenerationPayload;
-    use docgen_core::{scoring::ScoredBullet, Bullet, PersonalInfo, RoleProfile, ScoringWeights};
-    unimplemented!("Port to docgen_typst::render_resume");
-    use std::collections::HashMap;
-
-    let payload = GenerationPayload {
-        personal: PersonalInfo {
-            name: "José García-Martínez 李明".to_string(),
-            nickname: None,
-            tagline: Some("Test tagline with émojis 🚀".to_string()),
-            email: Some("josé@example.com".to_string()),
-            phone: None,
-            location: Some("São Paulo, Brasil".to_string()),
-            linkedin: None,
-            github: None,
-            website: None,
-            twitter: None,
-        },
-        selected_bullets: vec![ScoredBullet {
-            bullet: Bullet {
-                id: "b1".to_string(),
-                name: None,
-                location: None,
-                date_start: None,
-                date_end: None,
-                summary: None,
-                description: "Improved performance by 50% • Reduced costs • Enhanced UX 🎉"
-                    .to_string(),
-                tags: vec!["engineering".to_string()],
-                priority: 10,
-                link: None,
-            },
-            score: 0.95,
-            company_id: "company1".to_string(),
-            company_name: Some("Tech Corp™".to_string()),
-            position_id: "pos1".to_string(),
-            position_name: "Senior Engineer".to_string(),
-        }],
-        role_profile: RoleProfile {
-            id: "test".to_string(),
-            name: "Test Role".to_string(),
-            description: None,
-            tag_weights: HashMap::new(),
-            scoring_weights: ScoringWeights {
-                tag_relevance: 0.6,
-                priority: 0.4,
-            },
-        },
-        education: None,
-        skills: None,
-        summary: None,
-        metadata: None,
-    };
-
-    let result = generate_pdf(&payload);
-    assert!(
-        result.is_ok(),
-        "PDF generation failed with Unicode content: {:?}",
-        result.err()
-    );
-
-    let pdf_bytes = result.unwrap();
-    assert!(!pdf_bytes.is_empty());
-}
-
-#[test]
-#[ignore = "TODO: Port to docgen_typst"]
-fn test_pdf_generation_with_long_bullets() {
-    use docgen_core::GenerationPayload;
-    use docgen_core::{scoring::ScoredBullet, Bullet, PersonalInfo, RoleProfile, ScoringWeights};
-    unimplemented!("Port to docgen_typst::render_resume");
-    use std::collections::HashMap;
-
-    // Create a bullet with very long text to test text wrapping
-    let long_text = "Led a comprehensive infrastructure migration project that involved \
-        coordinating across multiple teams, refactoring legacy systems, implementing modern \
-        cloud-native architectures, establishing CI/CD pipelines, improving observability \
-        with distributed tracing and metrics, reducing operational costs by 40%, improving \
-        deployment frequency from monthly to daily, decreasing mean time to recovery by 75%, \
-        and mentoring 5 junior engineers throughout the process while maintaining 99.99% uptime.";
-
-    let payload = GenerationPayload {
-        personal: PersonalInfo {
-            name: "Test Person".to_string(),
-            nickname: None,
-            tagline: None,
-            email: None,
-            phone: None,
-            location: None,
-            linkedin: None,
-            github: None,
-            website: None,
-            twitter: None,
-        },
-        selected_bullets: vec![ScoredBullet {
-            bullet: Bullet {
-                id: "b1".to_string(),
-                name: None,
-                location: None,
-                date_start: None,
-                date_end: None,
-                summary: None,
-                description: long_text.to_string(),
-                tags: vec![],
-                priority: 10,
-                link: None,
-            },
-            score: 0.95,
-            company_id: "company1".to_string(),
-            company_name: Some("Test Company".to_string()),
-            position_id: "pos1".to_string(),
-            position_name: "Test Position".to_string(),
-        }],
-        role_profile: RoleProfile {
-            id: "test".to_string(),
-            name: "Test Role".to_string(),
-            description: None,
-            tag_weights: HashMap::new(),
-            scoring_weights: ScoringWeights {
-                tag_relevance: 0.6,
-                priority: 0.4,
-            },
-        },
-        education: None,
-        skills: None,
-        summary: None,
-        metadata: None,
-    };
-
-    let result = generate_pdf(&payload);
-    assert!(
-        result.is_ok(),
-        "PDF generation failed with long bullets: {:?}",
-        result.err()
-    );
-
-    let pdf_bytes = result.unwrap();
-    assert!(!pdf_bytes.is_empty());
-}
+// NOTE: PDF generation tests have been moved to doc-gen/crates/typst/tests/typst_generation_test.rs
+// This keeps generation-specific tests separate from core selection/scoring tests.
 
 // ========== Generation Payload Validation Tests ==========
 
 #[test]
-#[ignore = "TODO: Port to docgen_typst"]
 fn test_generation_payload_from_real_data() {
     use docgen_core::GenerationPayload;
-    unimplemented!("Port to docgen_typst::render_resume");
 
     let resume = load_resume_data();
     let config = SelectionConfig::default();
@@ -735,7 +412,6 @@ fn test_generation_payload_from_real_data() {
 }
 
 #[test]
-#[ignore = "TODO: Port to docgen_typst"]
 fn test_all_resume_data_fields_are_present() {
     let resume = load_resume_data();
 

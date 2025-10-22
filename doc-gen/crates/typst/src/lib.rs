@@ -58,7 +58,7 @@ pub enum TypstError {
 /// # Example
 /// ```no_run
 /// use docgen_typst::render_resume;
-/// use docgen_pdf::GenerationPayload;
+/// use docgen_core::GenerationPayload;
 ///
 /// # fn main() -> Result<(), Box<dyn std::error::Error>> {
 /// let payload: GenerationPayload = serde_json::from_str("{...}")?;

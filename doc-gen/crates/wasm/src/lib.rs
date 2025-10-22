@@ -518,19 +518,7 @@ mod tests {
         assert_eq!(estimate_pdf_size(20), 5000 + 4000);
     }
 
-    #[test]
-    fn test_estimate_docx_size() {
-        assert_eq!(estimate_docx_size(0), 15000);
-        assert_eq!(estimate_docx_size(10), 15000 + 3000);
-        assert_eq!(estimate_docx_size(20), 15000 + 6000);
-    }
-
-    #[test]
-    fn test_docx_larger_than_pdf() {
-        for bullet_count in 0..50 {
-            assert!(estimate_docx_size(bullet_count) > estimate_pdf_size(bullet_count));
-        }
-    }
+    // NOTE: DOCX generation has been removed - only PDF via Typst is supported
 
     // ========== Edge Case: Bullet Count Boundary ==========
 
@@ -632,24 +620,14 @@ mod tests {
     }
 
     #[test]
-    fn test_estimate_docx_size_large_count() {
-        let size = estimate_docx_size(100);
-        assert_eq!(size, 15000 + (100 * 300));
-        assert_eq!(size, 45000);
-    }
-
-    #[test]
     fn test_size_estimates_scale_linearly() {
         for count in [0, 5, 10, 20, 50].iter() {
             let pdf_size = estimate_pdf_size(*count);
-            let docx_size = estimate_docx_size(*count);
 
             // Verify linear scaling
             let expected_pdf = 5000 + (*count * 200);
-            let expected_docx = 15000 + (*count * 300);
 
             assert_eq!(pdf_size, expected_pdf);
-            assert_eq!(docx_size, expected_docx);
         }
     }
 

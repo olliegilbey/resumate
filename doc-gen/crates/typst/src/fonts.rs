@@ -65,12 +65,34 @@ mod tests {
     }
 
     #[test]
-    fn test_font_book_not_empty() {
+    fn test_font_count_stays_minimal() {
+        // REGRESSION TEST: Ensure we don't accidentally bloat WASM by loading too many fonts
+        // We need Liberation Serif with Regular, Bold, and Italic = 3 TTF files max
+        // Each TTF may contain multiple font variants (e.g., different Unicode ranges)
         let result = load_fonts();
-        assert!(result.is_ok());
+        assert!(result.is_ok(), "Font loading should succeed");
 
         let (_book, fonts) = result.unwrap();
-        // Should have multiple fonts (serif, sans, mono, etc.)
-        assert!(fonts.len() > 5, "Should have multiple font families");
+
+        // Should have at least 1 font loaded
+        assert!(
+            fonts.len() >= 1,
+            "Should have at least 1 font loaded, got {}",
+            fonts.len()
+        );
+
+        // CRITICAL: Prevent bloat - if this fails, someone added too many fonts!
+        // Max expected: 3 TTF files (Regular, Bold, Italic) × ~2-3 variants each = ~10 max
+        assert!(
+            fonts.len() <= 10,
+            "Font count too high! Got {} fonts. Only Liberation Serif (Regular, Bold, Italic) should be loaded. \
+             Check fonts.rs and embedded fonts to prevent WASM bloat (currently 6.3MB gzipped).",
+            fonts.len()
+        );
+
+        println!(
+            "✓ Font count is minimal: {} fonts loaded (max 10 allowed for Regular/Bold/Italic)",
+            fonts.len()
+        );
     }
 }
