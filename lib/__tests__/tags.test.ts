@@ -15,8 +15,6 @@ describe('extractAllTags', () => {
     expect(tags).toContain('product')
     expect(tags).toContain('scalability')
     expect(tags).toContain('backend')
-    expect(tags).toContain('open-source')
-    expect(tags).toContain('community')
   })
 
   it('should return sorted tags alphabetically', () => {
@@ -33,8 +31,8 @@ describe('extractAllTags', () => {
     expect(tags.length).toBe(uniqueTags.length)
   })
 
-  it('should handle empty companies array', () => {
-    const emptyData = { ...mockResumeData, companies: [], accomplishments: [] }
+  it('should handle empty experience array', () => {
+    const emptyData = { ...mockResumeData, experience: [] }
     const tags = extractAllTags(emptyData)
 
     expect(tags).toEqual([])
@@ -106,13 +104,13 @@ describe('getSortedTagsWithMetrics', () => {
   it('should handle missing priorities with default value of 5', () => {
     const dataWithMissingPriority = {
       ...mockResumeData,
-      companies: [{
-        ...mockResumeData.companies[0],
-        positions: [{
-          ...mockResumeData.companies[0].positions[0],
-          bullets: [{
+      experience: [{
+        ...mockResumeData.experience[0],
+        children: [{
+          ...mockResumeData.experience[0].children[0],
+          children: [{
             id: 'test',
-            text: 'Test bullet',
+            description: 'Test bullet',
             tags: ['test-tag'],
             priority: 0, // Zero priority should use default
           }]

@@ -1,0 +1,647 @@
+%% ============================================================================
+%% RESUMATE: COMPLETE SYSTEM ARCHITECTURE MAP
+%% ============================================================================
+%% This is the definitive, comprehensive map of the entire Resumate codebase.
+%% 118 files, 361 tests, all connections, all data flows.
+%% View in full-screen mermaid viewer for best experience.
+%% Last Updated: 2025-10-16
+%% ============================================================================
+
+graph TB
+    %% ========================================================================
+    %% EXTERNAL SYSTEMS & INFRASTRUCTURE
+    %% ========================================================================
+
+    subgraph EXTERNAL["🌍 EXTERNAL SYSTEMS & INFRASTRUCTURE"]
+        direction TB
+
+        GITHUB["🐙 GitHub Repository<br/>───────────────<br/>Source code hosting<br/>CI/CD triggers"]
+
+        GIST["📦 GitHub Gist<br/>───────────────<br/>resume-data.json<br/><b>SOURCE OF TRUTH FOR DATA</b><br/>Public gist<br/>Webhook to Vercel"]
+
+        VERCEL["☁️ Vercel Platform<br/>───────────────<br/>Build Pipeline<br/>CDN Distribution<br/>Serverless Functions<br/>Edge Network"]
+
+        CLOUDFLARE["🔒 Cloudflare<br/>───────────────<br/>Turnstile CAPTCHA<br/>Bot protection<br/>Challenges API"]
+
+        USER["👤 End User<br/>───────────────<br/>Web Browser<br/>HTTP Client"]
+
+        NPM_REG["📚 NPM Registry<br/>───────────────<br/>Dependencies<br/>Package resolution"]
+
+        CARGO_REG["🦀 Crates.io<br/>───────────────<br/>Rust dependencies<br/>Cargo packages"]
+    end
+
+    %% ========================================================================
+    %% TYPE SYSTEM - THE CORE (SINGLE SOURCE OF TRUTH)
+    %% ========================================================================
+
+    subgraph TYPE_SYSTEM["🦀 TYPE SYSTEM - SINGLE SOURCE OF TRUTH"]
+        direction TB
+
+        subgraph RUST_TYPES_CRATE["crates/shared-types/"]
+            direction TB
+
+            SHARED_TYPES["<b>src/lib.rs</b><br/>───────────────<br/><b>SOURCE OF TRUTH</b><br/>523 lines<br/>━━━━━━━━━━━<br/><b>Types:</b><br/>• Company (hierarchical)<br/>• Position (middle layer)<br/>• Bullet (leaf nodes)<br/>• RoleProfile<br/>• ScoringWeights<br/>• ResumeData (root)<br/>• PersonalInfo<br/>• Education<br/>━━━━━━━━━━━<br/><b>Features:</b><br/>• #[derive(JsonSchema)]<br/>• Validation methods<br/>• Serialize/Deserialize<br/>• PartialEq, Clone, Debug"]
+
+            SCHEMA_EMITTER["<b>src/bin/generate_schema.rs</b><br/>───────────────<br/>44 lines<br/>━━━━━━━━━━━<br/>Schema Generator Binary<br/>• Uses schemars crate<br/>• Generates JSON Schema<br/>• Adds metadata ($comment)<br/>• Writes to schemas/<br/>━━━━━━━━━━━<br/><b>Run:</b> cargo run --bin"]
+
+            ST_CARGO["<b>Cargo.toml</b><br/>───────────────<br/>Crate config<br/>• schemars<br/>• serde<br/>• serde_json"]
+
+            subgraph ST_TESTS["tests/"]
+                REAL_DATA_TEST["real_data.rs<br/>───────────────<br/>8 tests<br/>Real data validation"]
+
+                ROUNDTRIP_TEST["roundtrip.rs<br/>───────────────<br/>12 tests<br/>Serialization tests"]
+
+                SCHEMA_VAL_TEST["schema_validation.rs<br/>───────────────<br/>11 tests<br/>Schema compliance"]
+            end
+        end
+
+        JSON_SCHEMA_FILE["<b>schemas/resume.schema.json</b><br/>───────────────<br/><b>GENERATED JSON SCHEMA</b><br/>Auto-generated from Rust<br/>• $comment with timestamp<br/>• Full type definitions<br/>• Validation rules<br/>• Used for TS generation<br/>━━━━━━━━━━━<br/>⚠️ Never edit manually"]
+
+        TS_GENERATOR["<b>scripts/gen-ts-from-schemas.ts</b><br/>───────────────<br/>61 lines<br/>━━━━━━━━━━━<br/>TypeScript Generator<br/>• json-schema-to-typescript<br/>• Reads JSON Schema<br/>• Generates TS types<br/>• Adds banner comment<br/>━━━━━━━━━━━<br/><b>Run:</b> npm run types:gen"]
+
+        GENERATED_TS["<b>lib/types/generated-resume.ts</b><br/>───────────────<br/><b>GENERATED TYPESCRIPT</b><br/>Auto-generated from schema<br/>• Company, Position, Bullet<br/>• RoleProfile types<br/>• Full type safety<br/>━━━━━━━━━━━<br/>⚠️ Never edit manually<br/>Banner warns against edits"]
+
+        CANONICAL_TYPES["<b>types/resume.ts</b><br/>───────────────<br/><b>CANONICAL IMPORT LOCATION</b><br/>Re-exports generated types<br/>━━━━━━━━━━━<br/>✅ ALWAYS import from here<br/>✅ Never import from generated"]
+
+        TEMPLATE_JSON["<b>data/resume-data-template.json</b><br/>───────────────<br/>Template structure<br/>Example format<br/>Pseudo-schema"]
+
+        TEMPLATE_GUIDE["<b>data/TEMPLATE_GUIDE.md</b><br/>───────────────<br/>Template documentation<br/>Field explanations"]
+    end
+
+    %% ========================================================================
+    %% RUST CORE IMPLEMENTATION (ALGORITHMS & GENERATION)
+    %% ========================================================================
+
+    subgraph RUST_CORE["🦀 RUST CORE IMPLEMENTATION"]
+        direction TB
+
+        WORKSPACE_TOML["<b>Cargo.toml (root)</b><br/>───────────────<br/>Workspace configuration<br/>• shared-types<br/>• doc-gen workspace"]
+
+        subgraph DOC_GEN_WORKSPACE["doc-gen/ Workspace"]
+            direction TB
+
+            DG_README["<b>README.md</b><br/>───────────────<br/>Rust/WASM docs"]
+
+            DG_CLAUDE["<b>CLAUDE.md</b><br/>───────────────<br/>Rust-specific context<br/>AI assistant guide"]
+
+            DG_TEST_REPORT["<b>TEST_REPORT.md</b><br/>───────────────<br/>Test metrics<br/>361 total tests"]
+
+            subgraph CORE_CRATE["crates/core/ - Scoring & Selection"]
+                direction TB
+
+                CORE_LIB["<b>src/lib.rs</b><br/>───────────────<br/>Module exports<br/>Re-exports types"]
+
+                CORE_TYPES["<b>src/types.rs</b><br/>───────────────<br/>Type re-exports<br/>From shared-types"]
+
+                SCORING_RS["<b>src/scoring.rs</b><br/>───────────────<br/>553 lines | 22 tests<br/>━━━━━━━━━━━<br/><b>HIERARCHICAL SCORING</b><br/>━━━━━━━━━━━<br/><b>Formula:</b><br/>final_score = base × company_mult × position_mult<br/><br/>base = (tag_rel × tag_weight) + (priority/10 × pri_weight)<br/>company_mult = 0.8 + (priority/10) × 0.4<br/>position_mult = priority_mult × tag_mult<br/>━━━━━━━━━━━<br/><b>Functions:</b><br/>• score_bullet() - Main scoring<br/>• calculate_tag_relevance()<br/>• calculate_company_multiplier()<br/>• calculate_position_multiplier()<br/>━━━━━━━━━━━<br/><b>Tests:</b><br/>• 14 unit tests<br/>• 8 property-based tests"]
+
+                SELECTOR_RS["<b>src/selector.rs</b><br/>───────────────<br/>419 lines | 7 tests<br/>━━━━━━━━━━━<br/><b>BULLET SELECTION</b><br/>━━━━━━━━━━━<br/><b>Algorithm:</b><br/>1. Extract all bullets<br/>2. Score each bullet<br/>3. Sort by score (desc)<br/>4. Apply diversity constraints<br/>━━━━━━━━━━━<br/><b>SelectionConfig:</b><br/>• max_bullets: 18<br/>• max_per_company: 6<br/>• max_per_position: 4<br/>━━━━━━━━━━━<br/><b>Functions:</b><br/>• select_bullets() - Main<br/>• score_description_as_bullet()<br/>• apply_diversity_constraints()<br/>━━━━━━━━━━━<br/><b>Key Feature:</b><br/>Position descriptions → bullets"]
+
+                CORE_CARGO["<b>Cargo.toml</b><br/>───────────────<br/>Dependencies:<br/>• shared-types<br/>• serde<br/>• proptest (dev)"]
+
+                subgraph CORE_TESTS_DIR["tests/"]
+                    INTEGRATION_TEST["<b>integration_test.rs</b><br/>───────────────<br/>753 lines | 15 tests<br/>━━━━━━━━━━━<br/>Real data integration<br/>• All 6 role profiles<br/>• PDF generation tests<br/>• Diversity validation<br/>• Unicode handling<br/>• GenerationPayload tests<br/>━━━━━━━━━━━<br/>Uses: data/resume-data.json"]
+
+                    PDF_PERMUTATION_TEST["<b>pdf_permutation.rs</b><br/>───────────────<br/>733 lines | 7 tests<br/>━━━━━━━━━━━<br/><b>PERMUTATION TESTING</b><br/>━━━━━━━━━━━<br/>• All profiles × configs<br/>• Size consistency (CV=1.91%)<br/>• Performance (<1ms avg)<br/>• Structure validation<br/>• Content extraction<br/>• Page count estimates<br/>━━━━━━━━━━━<br/><b>PdfAnalysis struct:</b><br/>Tracks size, time, pages"]
+
+                    CORE_ROUNDTRIP["<b>roundtrip.rs</b><br/>───────────────<br/>12 tests<br/>Serialization tests"]
+                end
+            end
+
+            subgraph PDF_CRATE["crates/pdf/ - PDF Generation"]
+                direction TB
+
+                PDF_LIB["<b>src/lib.rs</b><br/>───────────────<br/>Main PDF API<br/>• generate_pdf()<br/>• GenerationPayload<br/>• Uses pdf-writer crate"]
+
+                PDF_GENERATOR["<b>src/generator.rs</b><br/>───────────────<br/>PDF document builder<br/>• Document structure<br/>• Page management<br/>• Content streaming"]
+
+                PDF_LAYOUT["<b>src/layout.rs</b><br/>───────────────<br/>Layout engine<br/>• Margins calculation<br/>• Line spacing<br/>• Text wrapping<br/>• Page breaks"]
+
+                subgraph PDF_RENDERING["src/rendering/"]
+                    PDF_RENDER_MOD["<b>mod.rs</b><br/>───────────────<br/>Module exports"]
+
+                    PDF_HEADER["<b>header.rs</b><br/>───────────────<br/>Header rendering<br/>• Name placement<br/>• Contact info<br/>• Formatting"]
+
+                    PDF_BODY["<b>experience.rs</b><br/>───────────────<br/>Body rendering<br/>• Company sections<br/>• Position headers<br/>• Bullet formatting<br/>• Hierarchical layout"]
+
+                    PDF_FOOTER["<b>footer.rs</b><br/>───────────────<br/>Footer rendering<br/>• Skills section<br/>• Education section<br/>• Page numbers"]
+                end
+
+                PDF_CARGO["<b>Cargo.toml</b><br/>───────────────<br/>Dependencies:<br/>• pdf-writer<br/>• shared-types"]
+
+                subgraph PDF_TESTS_DIR["tests/"]
+                    PDF_COMMON["<b>common/mod.rs</b><br/>───────────────<br/>Shared test utilities<br/>Test helpers"]
+                end
+            end
+
+            subgraph DOCX_CRATE["crates/docx/ - DOCX Generation"]
+                direction TB
+
+                DOCX_LIB["<b>src/lib.rs</b><br/>───────────────<br/>DOCX generation API<br/>• generate_docx()<br/>• Uses docx-rs crate<br/>━━━━━━━━━━━<br/>⏳ Phase 5.5 (future)<br/>Basic structure only"]
+
+                DOCX_CARGO["<b>Cargo.toml</b><br/>───────────────<br/>Dependencies:<br/>• docx-rs<br/>• shared-types"]
+            end
+
+            subgraph WASM_CRATE["crates/wasm/ - WASM Bindings"]
+                direction TB
+
+                WASM_LIB["<b>src/lib.rs</b><br/>───────────────<br/>733 lines | 20 tests<br/>━━━━━━━━━━━<br/><b>WASM EXPORTS</b><br/>━━━━━━━━━━━<br/><b>wasm_bindgen functions:</b><br/>• generate_pdf(json) → Vec<u8><br/>• generate_docx(json) → Vec<u8><br/>• validate_payload_json(json)<br/>• estimate_pdf_size(count)<br/>• estimate_docx_size(count)<br/>━━━━━━━━━━━<br/><b>Platform-agnostic:</b><br/>validate_payload_internal()<br/>Returns Result<(), String><br/>(for cross-platform tests)<br/>━━━━━━━━━━━<br/><b>Tests:</b><br/>• Boundary tests (0, 50 bullets)<br/>• Scoring weight validation<br/>• Whitespace tests<br/>• Size estimation tests"]
+
+                WASM_CARGO["<b>Cargo.toml</b><br/>───────────────<br/>Dependencies:<br/>• wasm-bindgen<br/>• docgen-pdf<br/>• docgen-docx<br/>• serde-wasm-bindgen"]
+            end
+
+            subgraph WASM_PKG["pkg/ - Generated WASM Artifacts"]
+                WASM_JS["<b>docgen_wasm.js</b><br/>───────────────<br/>JavaScript bindings<br/>Auto-generated"]
+
+                WASM_DTS["<b>docgen_wasm.d.ts</b><br/>───────────────<br/>TypeScript definitions<br/>Auto-generated"]
+
+                WASM_BG_DTS["<b>docgen_wasm_bg.wasm.d.ts</b><br/>───────────────<br/>WASM background types<br/>Auto-generated"]
+
+                WASM_PKG_JSON["<b>package.json</b><br/>───────────────<br/>WASM package metadata"]
+            end
+        end
+    end
+
+    %% ========================================================================
+    %% NEXT.JS APPLICATION (FRONTEND & API)
+    %% ========================================================================
+
+    subgraph NEXTJS_APP["⚛️ NEXT.JS APPLICATION"]
+        direction TB
+
+        NEXT_CONFIG["<b>next.config.ts</b><br/>───────────────<br/>Next.js configuration<br/>• Build settings<br/>• Environment vars<br/>• Webpack config"]
+
+        TS_CONFIG["<b>tsconfig.json</b><br/>───────────────<br/>TypeScript config<br/>• Path aliases (@/)<br/>• Strict mode<br/>• ES target"]
+
+        MIDDLEWARE["<b>middleware.ts</b><br/>───────────────<br/>Next.js middleware<br/>• Security headers<br/>• Request processing"]
+
+        NEXT_ENV_DTS["<b>next-env.d.ts</b><br/>───────────────<br/>Next.js type declarations<br/>Auto-generated"]
+
+        subgraph APP_DIR["app/ - Next.js 15 App Router"]
+            direction TB
+
+            APP_CLAUDE["<b>CLAUDE.md</b><br/>───────────────<br/>Next.js-specific context<br/>API patterns<br/>Component patterns"]
+
+            APP_LAYOUT["<b>layout.tsx</b><br/>───────────────<br/>Root layout<br/>• ThemeProvider<br/>• Font configuration<br/>• Global styles<br/>• Metadata"]
+
+            APP_PAGE["<b>page.tsx</b><br/>───────────────<br/><b>LANDING PAGE</b><br/>• Hero section<br/>• Feature highlights<br/>• Links to resume viewer<br/>• Dark/light toggle"]
+
+            APP_ICON["<b>icon.tsx</b><br/>───────────────<br/>Favicon generator<br/>Dynamic icon"]
+
+            APP_ROBOTS["<b>robots.ts</b><br/>───────────────<br/>robots.txt generator<br/>SEO configuration"]
+
+            subgraph RESUME_PAGES["resume/"]
+                RESUME_PAGE["<b>page.tsx</b><br/>───────────────<br/>Resume redirect page<br/>Redirects to /resume/view"]
+
+                RESUME_VIEW["<b>view/page.tsx</b><br/>───────────────<br/><b>MAIN RESUME VIEWER</b><br/>• DataExplorer component<br/>• Interactive filtering<br/>• Search functionality<br/>• Tag filtering<br/>• vCard download<br/>• Metrics display"]
+            end
+
+            subgraph API_ROUTES["api/"]
+                CONTACT_CARD_API["<b>contact-card/route.ts</b><br/>───────────────<br/><b>GET /api/contact-card</b><br/>━━━━━━━━━━━<br/>vCard download endpoint<br/>━━━━━━━━━━━<br/><b>Security:</b><br/>• Rate limit: 10/hour<br/>• Turnstile CAPTCHA<br/>• IP extraction<br/>━━━━━━━━━━━<br/><b>Generates:</b><br/>• vCard 3.0 format<br/>• Contact information<br/>• .vcf file download<br/>━━━━━━━━━━━<br/><b>Secrets (server-only):</b><br/>• CONTACT_EMAIL_PERSONAL<br/>• CONTACT_PHONE<br/>• TURNSTILE_SECRET_KEY"]
+
+                subgraph RESUME_API["resume/"]
+                    SELECT_API["<b>select/route.ts</b><br/>───────────────<br/>370 lines<br/>━━━━━━━━━━━<br/><b>POST /api/resume/select</b><br/>━━━━━━━━━━━<br/>Bullet selection endpoint<br/>━━━━━━━━━━━<br/><b>Request:</b><br/>• roleProfileId<br/>• turnstileToken<br/>• config (optional)<br/>━━━━━━━━━━━<br/><b>Response:</b><br/>• selected: ScoredBullet[]<br/>• roleProfile<br/>• config<br/>• count, timestamp<br/>━━━━━━━━━━━<br/><b>TypeScript Implementation:</b><br/>Mirrors Rust algorithm<br/>• selectBullets()<br/>• scoreBullet()<br/>• calculateTagRelevance()<br/>• calculateCompanyMultiplier()<br/>• calculatePositionMultiplier()<br/>• applyDiversityConstraints()<br/>━━━━━━━━━━━<br/>⚠️ Temporary until WASM<br/>(Phase 5.6 will replace)"]
+
+                    PREPARE_API["<b>prepare/route.ts</b><br/>───────────────<br/><b>POST /api/resume/prepare</b><br/>━━━━━━━━━━━<br/>Resume preparation<br/>⏳ Future: WASM integration<br/>Placeholder for Phase 5.7"]
+
+                    subgraph SELECT_TESTS["select/__tests__/"]
+                        SELECT_ROUTE_TEST["<b>route.test.ts</b><br/>───────────────<br/>451 lines | 13 tests<br/>━━━━━━━━━━━<br/><b>API ROUTE UNIT TESTS</b><br/>━━━━━━━━━━━<br/><b>Scoring Algorithm:</b><br/>• Tag relevance calculation<br/>• Company multiplier<br/>• Position multiplier<br/>• Component combination<br/>━━━━━━━━━━━<br/><b>Diversity Constraints:</b><br/>• maxBullets respected<br/>• maxPerCompany respected<br/>• maxPerPosition respected<br/>━━━━━━━━━━━<br/><b>Ensures Parity:</b><br/>With Rust implementation"]
+                    end
+                end
+            end
+        end
+
+        subgraph COMPONENTS_DIR["components/ - React Components"]
+            direction TB
+
+            subgraph DATA_COMPONENTS["data/ - Resume Viewer Components"]
+                DATA_EXPLORER["<b>DataExplorer.tsx</b><br/>───────────────<br/><b>MAIN RESUME VIEWER</b><br/>━━━━━━━━━━━<br/><b>Features:</b><br/>• Text search (real-time)<br/>• Tag filtering (click tags)<br/>• Company grouping<br/>• Timeline display<br/>• Metrics calculation<br/>• Responsive design<br/>━━━━━━━━━━━<br/><b>Uses:</b><br/>• SearchBar<br/>• TagFilter<br/>• CompanySection<br/>• BulletCard<br/>━━━━━━━━━━━<br/><b>Data Flow:</b><br/>ResumeData → Filter → Display"]
+
+                BULLET_CARD["<b>BulletCard.tsx</b><br/>───────────────<br/>Individual bullet display<br/>• Description text<br/>• Tags (clickable)<br/>• Priority indicator<br/>• Link (optional)<br/>• Highlight matches"]
+
+                COMPANY_SECTION["<b>CompanySection.tsx</b><br/>───────────────<br/>Company timeline grouping<br/>• Company header<br/>• Date range<br/>• Positions nested<br/>• Collapsible sections"]
+
+                SEARCH_BAR["<b>SearchBar.tsx</b><br/>───────────────<br/>Text search input<br/>• Real-time filtering<br/>• Debounced input<br/>• Clear button"]
+
+                TAG_FILTER["<b>TagFilter.tsx</b><br/>───────────────<br/>Tag filtering UI<br/>• All tags display<br/>• Click to filter<br/>• Active state<br/>• Tag counts"]
+            end
+
+            subgraph UI_COMPONENTS["ui/ - Reusable UI Components"]
+                BADGE["<b>Badge.tsx</b><br/>───────────────<br/>Tag badge component<br/>Styled pill"]
+
+                BUTTON["<b>Button.tsx</b><br/>───────────────<br/>Button component<br/>Variants & sizes"]
+
+                CONTACT_LINKS["<b>ContactLinks.tsx</b><br/>───────────────<br/>Social media links<br/>• LinkedIn<br/>• GitHub<br/>• Website<br/>• Twitter"]
+
+                GLASS_PANEL["<b>GlassPanel.tsx</b><br/>───────────────<br/>Glassmorphism panel<br/>Backdrop blur effect"]
+
+                ICON_BADGE["<b>IconBadge.tsx</b><br/>───────────────<br/>Icon with badge<br/>Notification indicator"]
+
+                NAVBAR["<b>Navbar.tsx</b><br/>───────────────<br/>Top navigation bar<br/>• Logo<br/>• Navigation links<br/>• Theme toggle"]
+
+                THEME_TOGGLE["<b>ThemeToggle.tsx</b><br/>───────────────<br/>Dark/light mode toggle<br/>Sun/moon icon"]
+            end
+
+            subgraph COMPONENT_TESTS["data/__tests__/"]
+                DATA_EXPLORER_TEST["<b>DataExplorer.test.tsx</b><br/>───────────────<br/>DataExplorer tests<br/>• Search functionality<br/>• Tag filtering<br/>• Component rendering"]
+
+                SEARCH_BAR_TEST["<b>SearchBar.test.tsx</b><br/>───────────────<br/>SearchBar tests<br/>• Input handling<br/>• Debouncing"]
+
+                TAG_FILTER_TEST["<b>TagFilter.test.tsx</b><br/>───────────────<br/>TagFilter tests<br/>• Tag selection<br/>• Active states"]
+            end
+        end
+
+        subgraph CONTEXTS["contexts/ - React Context"]
+            THEME_CONTEXT["<b>ThemeContext.tsx</b><br/>───────────────<br/>Theme state management<br/>• Dark/light mode<br/>• localStorage persistence<br/>• System preference detection"]
+        end
+
+        subgraph LIB_DIR["lib/ - Utilities & Libraries"]
+            direction TB
+
+            LIB_README["<b>README.md</b><br/>───────────────<br/>Library documentation"]
+
+            UTILS["<b>utils.ts</b><br/>───────────────<br/>General utilities<br/>• cn() - classnames helper<br/>• Type utilities"]
+
+            TAGS_LIB["<b>tags.ts</b><br/>───────────────<br/>Tag processing & filtering<br/>• Tag extraction<br/>• Tag counting<br/>• Priority calculation<br/>• Sorting algorithms"]
+
+            RESUME_METRICS["<b>resume-metrics.ts</b><br/>───────────────<br/>Resume metrics calculation<br/>• Total bullets<br/>• Companies count<br/>• Tag distribution<br/>• Date ranges"]
+
+            VCARD_GEN["<b>vcard.ts</b><br/>───────────────<br/><b>vCard 3.0 GENERATION</b><br/>━━━━━━━━━━━<br/>RFC 2426 compliant<br/>━━━━━━━━━━━<br/><b>Features:</b><br/>• N (name) field<br/>• FN (formatted name)<br/>• EMAIL, TEL fields<br/>• ADR (address)<br/>• URL (social links)<br/>• Special char escaping<br/>• CRLF line endings<br/>━━━━━━━━━━━<br/><b>Social Media:</b><br/>• LinkedIn → URL<br/>• GitHub → URL<br/>• Website → URL<br/>• Twitter → URL"]
+
+            RATE_LIMIT["<b>rate-limit.ts</b><br/>───────────────<br/><b>RATE LIMITING</b><br/>━━━━━━━━━━━<br/>In-memory implementation<br/>━━━━━━━━━━━<br/><b>RateLimitConfig:</b><br/>• limit: number<br/>• window: milliseconds<br/>━━━━━━━━━━━<br/><b>Functions:</b><br/>• checkRateLimit()<br/>• getClientIP()<br/>━━━━━━━━━━━<br/><b>IP Extraction Priority:</b><br/>1. cf-connecting-ip (Cloudflare)<br/>2. x-real-ip (Vercel)<br/>3. x-forwarded-for (generic)<br/>4. fallback: 'unknown'<br/>━━━━━━━━━━━<br/><b>Storage:</b><br/>Map<identifier, RequestInfo>"]
+
+            subgraph LIB_TESTS["__tests__/"]
+                LIB_TEST_README["<b>README.md</b><br/>───────────────<br/>Test documentation"]
+
+                TAGS_TEST["<b>tags.test.ts</b><br/>───────────────<br/>Tag utility tests<br/>• Tag extraction<br/>• Filtering logic<br/>• Sorting"]
+
+                VCARD_TEST["<b>vcard.test.ts</b><br/>───────────────<br/>548 lines | 34 tests<br/>━━━━━━━━━━━<br/><b>vCard GENERATION TESTS</b><br/>━━━━━━━━━━━<br/><b>Coverage:</b><br/>• Required fields<br/>• Optional fields<br/>• Special char escaping<br/>• Social media URLs<br/>• Address handling<br/>• Unicode support<br/>• CRLF line endings<br/>• RFC 2426 compliance<br/>━━━━━━━━━━━<br/><b>Edge Cases:</b><br/>• Empty fields<br/>• Partial addresses<br/>• International chars<br/>• Emoji support"]
+
+                RATE_LIMIT_TEST["<b>rate-limit.test.ts</b><br/>───────────────<br/>400 lines | 30 tests<br/>━━━━━━━━━━━<br/><b>RATE LIMITING TESTS</b><br/>━━━━━━━━━━━<br/><b>Coverage:</b><br/>• Request tracking<br/>• Limit enforcement<br/>• Window expiration<br/>• IP extraction<br/>• Concurrent requests<br/>━━━━━━━━━━━<br/><b>Edge Cases:</b><br/>• Zero limit<br/>• Empty identifiers<br/>• Very long identifiers<br/>• Special characters<br/>━━━━━━━━━━━<br/><b>Test Isolation:</b><br/>Date.now() + Math.random()<br/>Unique identifiers per test"]
+
+                subgraph LIB_FIXTURES["fixtures/"]
+                    RESUME_FIXTURE["<b>resume-data.fixture.ts</b><br/>───────────────<br/>Test fixture data<br/>Mock resume structure<br/>For component tests"]
+                end
+            end
+        end
+    end
+
+    %% ========================================================================
+    %% SCRIPTS & TOOLING
+    %% ========================================================================
+
+    subgraph SCRIPTS_DIR["🔧 SCRIPTS & TOOLING"]
+        direction TB
+
+        SCRIPTS_CLAUDE["<b>scripts/CLAUDE.md</b><br/>───────────────<br/>Scripts-specific context<br/>Gist integration patterns<br/>Type generation workflows"]
+
+        FETCH_GIST["<b>scripts/fetch-gist-data.js</b><br/>───────────────<br/><b>GIST → LOCAL</b><br/>━━━━━━━━━━━<br/>Fetch resume data from gist<br/>━━━━━━━━━━━<br/><b>Usage:</b><br/>npm run data:pull<br/>npm run data:pull -- --force<br/>━━━━━━━━━━━<br/><b>Modes:</b><br/>• Interactive: Prompts on conflict<br/>• Force: Overwrites (prebuild)<br/>━━━━━━━━━━━<br/><b>Process:</b><br/>1. Fetch from RESUME_DATA_GIST_URL<br/>2. Compare with local file<br/>3. Prompt or overwrite<br/>4. Write to data/resume-data.json<br/>━━━━━━━━━━━<br/>⚠️ ALWAYS run before editing data"]
+
+        PUSH_GIST["<b>scripts/gist-push.js</b><br/>───────────────<br/><b>LOCAL → GIST</b><br/>━━━━━━━━━━━<br/>Push local data to gist<br/>━━━━━━━━━━━<br/><b>Usage:</b><br/>npm run data:push<br/>npm run data:push -- --force<br/>━━━━━━━━━━━<br/><b>Process:</b><br/>1. Read local file<br/>2. Validate JSON<br/>3. Fetch current gist<br/>4. Compare & prompt<br/>5. Push with gh CLI<br/>━━━━━━━━━━━<br/><b>Requires:</b><br/>gh CLI authenticated"]
+
+        VIEW_GIST["<b>scripts/gist-view.js</b><br/>───────────────<br/>View gist in terminal<br/>Pretty-print JSON<br/>Debugging helper"]
+
+        GEN_TS_SCRIPT["<b>scripts/gen-ts-from-schemas.ts</b><br/>───────────────<br/>Already documented in TYPE_SYSTEM"]
+
+        VALIDATE_COMPENDIUM["<b>scripts/validate-compendium.mjs</b><br/>───────────────<br/>Schema validation<br/>• Validates resume data<br/>• Against JSON Schema<br/>• Runtime checks"]
+
+        TEST_SELECTION_API["<b>scripts/test-bullet-selection-api.ts</b><br/>───────────────<br/>API integration test<br/>Tests /api/resume/select<br/>All role profiles"]
+
+        TRANSFORM_DATA["<b>scripts/transform-resume-data.ts</b><br/>───────────────<br/>Data migration script<br/>• Schema migrations<br/>• Field transformations<br/>• Bulk updates"]
+
+        TRANSFORM_TEMPLATE["<b>scripts/transform-template.ts</b><br/>───────────────<br/>Template transformation<br/>Updates template structure"]
+
+        CLEAN_TEMPLATE["<b>scripts/clean-template.ts</b><br/>───────────────<br/>Template cleanup<br/>Removes old fields"]
+    end
+
+    %% ========================================================================
+    %% PUBLIC ASSETS
+    %% ========================================================================
+
+    subgraph PUBLIC_DIR["🌐 PUBLIC ASSETS"]
+        THEME_INIT["<b>public/theme-init.js</b><br/>───────────────<br/>Theme initialization<br/>• Runs before hydration<br/>• Prevents flash of wrong theme<br/>• Reads localStorage<br/>• Sets data-theme attribute"]
+    end
+
+    %% ========================================================================
+    %% DATA STORAGE
+    %% ========================================================================
+
+    subgraph DATA_STORAGE["💾 DATA STORAGE"]
+        direction TB
+
+        LOCAL_RESUME_DATA["<b>data/resume-data.json</b><br/>───────────────<br/><b>LOCAL RESUME DATA</b><br/>━━━━━━━━━━━<br/>⚠️ GITIGNORED<br/>━━━━━━━━━━━<br/><b>Source:</b> GitHub Gist<br/>━━━━━━━━━━━<br/><b>Lifecycle:</b><br/>1. Fetched via fetch-gist-data.js<br/>2. Used at build time<br/>3. Bundled into Next.js<br/>4. Served as static chunks<br/>━━━━━━━━━━━<br/><b>Never commit to git!</b><br/>Always pull before editing"]
+
+        TEMPLATE_DATA["<b>data/resume-data-template.json</b><br/>───────────────<br/>Already documented in TYPE_SYSTEM"]
+    end
+
+    %% ========================================================================
+    %% CONFIGURATION FILES
+    %% ========================================================================
+
+    subgraph CONFIG["⚙️ CONFIGURATION FILES"]
+        direction TB
+
+        PACKAGE_JSON["<b>package.json</b><br/>───────────────<br/><b>NPM PACKAGE CONFIG</b><br/>━━━━━━━━━━━<br/><b>Scripts:</b><br/>• dev, build, start<br/>• test, typecheck<br/>• data:pull, data:push<br/>• types:gen, schemas:emit<br/>• validate:*, check:drift<br/>━━━━━━━━━━━<br/><b>Dependencies:</b><br/>• next, react, react-dom<br/>• tailwindcss<br/>• vitest, @testing-library<br/>━━━━━━━━━━━<br/><b>Hooks:</b><br/>prebuild: fetch-gist-data --force"]
+
+        PACKAGE_LOCK["<b>package-lock.json</b><br/>───────────────<br/>NPM lockfile<br/>Auto-generated<br/>⚠️ Never edit manually"]
+
+        CARGO_LOCK["<b>Cargo.lock</b><br/>───────────────<br/>Cargo lockfile<br/>Auto-generated<br/>⚠️ Never edit manually"]
+
+        VITEST_CONFIG["<b>vitest.config.ts</b><br/>───────────────<br/>Vitest test runner config<br/>• Path aliases<br/>• Test environment<br/>• Coverage settings"]
+
+        VITEST_SETUP["<b>vitest.setup.ts</b><br/>───────────────<br/>Vitest global setup<br/>• Test utilities<br/>• Global mocks"]
+
+        POSTCSS_CONFIG["<b>postcss.config.mjs</b><br/>───────────────<br/>PostCSS configuration<br/>• Tailwind CSS<br/>• Autoprefixer"]
+
+        ESLINT_CONFIG["<b>eslint.config.mjs</b><br/>───────────────<br/>ESLint configuration<br/>• TypeScript rules<br/>• React rules<br/>• Next.js rules"]
+    end
+
+    %% ========================================================================
+    %% CLAUDE CODE & AI CONTEXT
+    %% ========================================================================
+
+    subgraph CLAUDE_CONTEXT["🤖 CLAUDE CODE & AI CONTEXT"]
+        direction TB
+
+        CLAUDE_ROOT["<b>.claude/CLAUDE.md</b><br/>───────────────<br/><b>ROOT AI CONTEXT</b><br/>━━━━━━━━━━━<br/>Main entry point for AI<br/>━━━━━━━━━━━<br/><b>Imports:</b><br/>• docs/*.md (shared context)<br/>• Component-specific CLAUDE.md<br/>━━━━━━━━━━━<br/><b>Structure:</b><br/>Modular, lazy-loaded<br/>Context on demand"]
+
+        CLAUDE_SETTINGS["<b>.claude/settings.local.json</b><br/>───────────────<br/>Claude Code settings<br/>• Tool approvals<br/>• Auto-accept patterns<br/>• Model selection"]
+    end
+
+    %% ========================================================================
+    %% DOCUMENTATION SYSTEM
+    %% ========================================================================
+
+    subgraph DOCUMENTATION["📚 DOCUMENTATION SYSTEM"]
+        direction TB
+
+        README_ROOT["<b>README.md</b><br/>───────────────<br/>Project overview<br/>• Quick start<br/>• Tech stack<br/>• Commands<br/>• Getting started"]
+
+        CODE_REVIEW_GUIDE_DOC["<b>CODE_REVIEW_GUIDE.md</b><br/>───────────────<br/>Code review checklist<br/>• File-by-file review<br/>• Review priorities<br/>• Test validation<br/>• Commit message"]
+
+        AGENTS_DOC["<b>AGENTS.md</b><br/>───────────────<br/>AI agent patterns<br/>• claude-md-generator<br/>• Agent usage"]
+
+        NAMING_CONVENTIONS["<b>NAMING_CONVENTIONS.md</b><br/>───────────────<br/>Code style guide<br/>• Naming patterns<br/>• File organization"]
+
+        SECURITY_DOC["<b>SECURITY.md</b><br/>───────────────<br/>Security policy<br/>• Vulnerability reporting<br/>• Security practices"]
+
+        subgraph DOCS_SHARED["docs/ - Shared Context"]
+            STATUS_DOC["<b>STATUS.md</b><br/>───────────────<br/>Current phase & progress<br/>• Phase 1: ✅ Complete<br/>• Phase 5: 🚧 In progress<br/>• Test metrics: 361 tests<br/>• Blockers & considerations"]
+
+            TODOS_DOC["<b>TODOS.md</b><br/>───────────────<br/>Active tasks<br/>• Current priorities<br/>• Task tracking"]
+
+            ARCHITECTURE_DOC["<b>ARCHITECTURE.md</b><br/>───────────────<br/>System design overview<br/>• High-level architecture<br/>• Component interactions<br/>• Data flows"]
+
+            ARCHITECTURE_DEEP["<b>ARCHITECTURE_DEEP_DIVE.md</b><br/>───────────────<br/>1206 lines<br/>━━━━━━━━━━━<br/><b>COMPLETE ARCHITECTURE MAP</b><br/>━━━━━━━━━━━<br/>This document's source!<br/>• All 118 files documented<br/>• All connections mapped<br/>• Data flow diagrams<br/>• File inventory<br/>• Dead code audit<br/>• Usage guide"]
+
+            COMPLETE_MAP["<b>ARCHITECTURE_COMPLETE_MAP.mmd</b><br/>───────────────<br/><b>THIS DIAGRAM!</b><br/>━━━━━━━━━━━<br/>Comprehensive mermaid<br/>• All files mapped<br/>• All connections<br/>• Visual system overview"]
+
+            WORKFLOWS_DOC["<b>WORKFLOWS.md</b><br/>───────────────<br/>Development patterns<br/>• Type sync workflow<br/>• Data sync workflow<br/>• Testing patterns<br/>• Git workflow"]
+
+            DATA_SCHEMA_DOC["<b>DATA_SCHEMA.md</b><br/>───────────────<br/>Type system reference<br/>• Type definitions<br/>• Field descriptions<br/>• Validation rules<br/>• Schema examples"]
+
+            COMMANDS_DOC["<b>COMMANDS.md</b><br/>───────────────<br/>Command reference<br/>• npm scripts<br/>• cargo commands<br/>• git commands<br/>• Common tasks"]
+
+            DEPLOYMENT_DOC["<b>DEPLOYMENT.md</b><br/>───────────────<br/>Environment setup<br/>• .env.local variables<br/>• Vercel configuration<br/>• Gist setup<br/>• Turnstile setup"]
+
+            PHASE_5_PLAN["<b>PHASE_5_PLAN.md</b><br/>───────────────<br/>Roadmap for Phase 5<br/>• PDF generation<br/>• DOCX generation<br/>• WASM integration<br/>• UI implementation"]
+
+            REFACTOR_SUMMARY["<b>REFACTOR_SUMMARY.md</b><br/>───────────────<br/>Historical refactor notes<br/>• Past changes<br/>• Lessons learned"]
+        end
+    end
+
+    %% ========================================================================
+    %% CI/CD & DEPLOYMENT
+    %% ========================================================================
+
+    subgraph CICD["🚀 CI/CD & DEPLOYMENT"]
+        direction TB
+
+        GH_WORKFLOWS_CLAUDE["<b>.github/workflows/CLAUDE.md</b><br/>───────────────<br/>CI/CD context for AI<br/>• Workflow patterns<br/>• Deployment triggers"]
+
+        VERCEL_CONFIG["<b>.vercel/project.json</b><br/>───────────────<br/>Vercel project config<br/>• Project ID<br/>• Organization ID"]
+    end
+
+    %% ========================================================================
+    %% CONNECTIONS - TYPE FLOW
+    %% ========================================================================
+
+    %% Rust Types → Schema → TypeScript
+    SHARED_TYPES -->|Uses schemars| SCHEMA_EMITTER
+    SCHEMA_EMITTER -->|Generates| JSON_SCHEMA_FILE
+    JSON_SCHEMA_FILE -->|Input to| TS_GENERATOR
+    TS_GENERATOR -->|Generates| GENERATED_TS
+    GENERATED_TS -->|Re-exported by| CANONICAL_TYPES
+    TEMPLATE_JSON -.->|Example format| SHARED_TYPES
+
+    %% Type usage in Rust
+    SHARED_TYPES -.->|Defines types for| SCORING_RS
+    SHARED_TYPES -.->|Defines types for| SELECTOR_RS
+    SHARED_TYPES -.->|Defines types for| PDF_LIB
+    SHARED_TYPES -.->|Defines types for| WASM_LIB
+    CORE_TYPES -->|Re-exports| SHARED_TYPES
+
+    %% Type usage in TypeScript
+    CANONICAL_TYPES -->|Imported by| SELECT_API
+    CANONICAL_TYPES -->|Imported by| CONTACT_CARD_API
+    CANONICAL_TYPES -->|Imported by| DATA_EXPLORER
+    CANONICAL_TYPES -->|Imported by| RESUME_VIEW
+
+    %% ========================================================================
+    %% CONNECTIONS - RUST CORE
+    %% ========================================================================
+
+    %% Cargo workspace
+    WORKSPACE_TOML -.->|Defines workspace| CORE_CARGO
+    WORKSPACE_TOML -.->|Defines workspace| PDF_CARGO
+    WORKSPACE_TOML -.->|Defines workspace| DOCX_CARGO
+    WORKSPACE_TOML -.->|Defines workspace| WASM_CARGO
+    WORKSPACE_TOML -.->|Defines workspace| ST_CARGO
+
+    %% Core module dependencies
+    CORE_LIB -->|Re-exports| SCORING_RS
+    CORE_LIB -->|Re-exports| SELECTOR_RS
+    SCORING_RS -->|Used by| SELECTOR_RS
+    SELECTOR_RS -->|Used by| PDF_LIB
+
+    %% PDF generation
+    PDF_LIB -->|Uses| PDF_GENERATOR
+    PDF_LIB -->|Uses| PDF_LAYOUT
+    PDF_GENERATOR -->|Uses| PDF_HEADER
+    PDF_GENERATOR -->|Uses| PDF_BODY
+    PDF_GENERATOR -->|Uses| PDF_FOOTER
+    PDF_LAYOUT -.->|Layout engine for| PDF_GENERATOR
+
+    %% WASM exports
+    WASM_LIB -->|Calls| PDF_LIB
+    WASM_LIB -->|Calls| DOCX_LIB
+    WASM_LIB -->|Generates| WASM_JS
+    WASM_LIB -->|Generates| WASM_DTS
+    WASM_LIB -->|Generates| WASM_BG_DTS
+
+    %% ========================================================================
+    %% CONNECTIONS - NEXT.JS APP
+    %% ========================================================================
+
+    %% App structure
+    APP_LAYOUT -->|Wraps| APP_PAGE
+    APP_LAYOUT -->|Wraps| RESUME_VIEW
+    APP_LAYOUT -->|Provides| THEME_CONTEXT
+    APP_PAGE -->|Links to| RESUME_VIEW
+    RESUME_PAGE -->|Redirects to| RESUME_VIEW
+
+    %% Resume viewer components
+    RESUME_VIEW -->|Renders| DATA_EXPLORER
+    DATA_EXPLORER -->|Uses| SEARCH_BAR
+    DATA_EXPLORER -->|Uses| TAG_FILTER
+    DATA_EXPLORER -->|Uses| COMPANY_SECTION
+    COMPANY_SECTION -->|Contains| BULLET_CARD
+    BULLET_CARD -->|Uses| BADGE
+    DATA_EXPLORER -->|Uses| TAGS_LIB
+    DATA_EXPLORER -->|Uses| RESUME_METRICS
+
+    %% API routes
+    CONTACT_CARD_API -->|Uses| VCARD_GEN
+    CONTACT_CARD_API -->|Uses| RATE_LIMIT
+    CONTACT_CARD_API -->|Verifies with| CLOUDFLARE
+    SELECT_API -->|Uses| RATE_LIMIT
+    SELECT_API -->|Verifies with| CLOUDFLARE
+    SELECT_API -->|Mirrors algorithm from| SCORING_RS
+    SELECT_API -->|Mirrors algorithm from| SELECTOR_RS
+
+    %% UI components
+    APP_LAYOUT -->|Uses| NAVBAR
+    NAVBAR -->|Uses| THEME_TOGGLE
+    THEME_TOGGLE -->|Updates| THEME_CONTEXT
+
+    %% ========================================================================
+    %% CONNECTIONS - DATA FLOW
+    %% ========================================================================
+
+    %% Gist → Local → Build
+    GIST -->|Fetched by| FETCH_GIST
+    FETCH_GIST -->|Writes to| LOCAL_RESUME_DATA
+    LOCAL_RESUME_DATA -->|Pushed by| PUSH_GIST
+    PUSH_GIST -->|Updates| GIST
+    LOCAL_RESUME_DATA -->|Build-time import| SELECT_API
+    LOCAL_RESUME_DATA -->|Build-time import| DATA_EXPLORER
+
+    %% Build pipeline
+    VERCEL -->|Prebuild hook| FETCH_GIST
+    VERCEL -->|Builds| NEXTJS_APP
+    VERCEL -->|Serves| USER
+
+    %% Scripts usage
+    TS_GENERATOR -.->|npm run types:gen| PACKAGE_JSON
+    FETCH_GIST -.->|npm run data:pull| PACKAGE_JSON
+    PUSH_GIST -.->|npm run data:push| PACKAGE_JSON
+
+    %% ========================================================================
+    %% CONNECTIONS - TESTING
+    %% ========================================================================
+
+    %% Rust tests
+    SCORING_RS -.->|Contains 22 tests| INTEGRATION_TEST
+    SELECTOR_RS -.->|Contains 7 tests| INTEGRATION_TEST
+    INTEGRATION_TEST -->|Uses| LOCAL_RESUME_DATA
+    PDF_PERMUTATION_TEST -->|Uses| LOCAL_RESUME_DATA
+    PDF_PERMUTATION_TEST -->|Tests| PDF_LIB
+    REAL_DATA_TEST -->|Validates| SHARED_TYPES
+    ROUNDTRIP_TEST -->|Tests| SHARED_TYPES
+    SCHEMA_VAL_TEST -->|Validates| JSON_SCHEMA_FILE
+
+    %% TypeScript tests
+    SELECT_ROUTE_TEST -->|Tests| SELECT_API
+    SELECT_ROUTE_TEST -.->|Ensures parity with| SCORING_RS
+    VCARD_TEST -->|Tests| VCARD_GEN
+    RATE_LIMIT_TEST -->|Tests| RATE_LIMIT
+    TAGS_TEST -->|Tests| TAGS_LIB
+    DATA_EXPLORER_TEST -->|Tests| DATA_EXPLORER
+    SEARCH_BAR_TEST -->|Tests| SEARCH_BAR
+    TAG_FILTER_TEST -->|Tests| TAG_FILTER
+
+    %% Test fixtures
+    RESUME_FIXTURE -->|Used by| DATA_EXPLORER_TEST
+
+    %% ========================================================================
+    %% CONNECTIONS - DOCUMENTATION
+    %% ========================================================================
+
+    %% Documentation hierarchy
+    CLAUDE_ROOT -->|Imports| STATUS_DOC
+    CLAUDE_ROOT -->|Imports| TODOS_DOC
+    CLAUDE_ROOT -->|Imports| ARCHITECTURE_DOC
+    CLAUDE_ROOT -->|Imports| WORKFLOWS_DOC
+    CLAUDE_ROOT -->|Imports| DATA_SCHEMA_DOC
+    CLAUDE_ROOT -->|Imports| COMMANDS_DOC
+    CLAUDE_ROOT -->|Imports| DEPLOYMENT_DOC
+    CLAUDE_ROOT -.->|Component context| APP_CLAUDE
+    CLAUDE_ROOT -.->|Component context| DG_CLAUDE
+    CLAUDE_ROOT -.->|Component context| SCRIPTS_CLAUDE
+    CLAUDE_ROOT -.->|Component context| GH_WORKFLOWS_CLAUDE
+
+    ARCHITECTURE_DEEP -->|Documents| COMPLETE_MAP
+    COMPLETE_MAP -.->|This diagram!| COMPLETE_MAP
+
+    %% ========================================================================
+    %% CONNECTIONS - EXTERNAL SYSTEMS
+    %% ========================================================================
+
+    %% GitHub
+    GITHUB -->|Webhook trigger| VERCEL
+    GITHUB -->|Hosts| GIST
+
+    %% User interactions
+    USER -->|Visits| VERCEL
+    USER -->|Downloads vCard| CONTACT_CARD_API
+    USER -->|Future: Generate PDF| PREPARE_API
+    PREPARE_API -.->|Future: Uses| WASM_LIB
+
+    %% Dependencies
+    NPM_REG -->|Provides| PACKAGE_JSON
+    CARGO_REG -->|Provides| WORKSPACE_TOML
+
+    %% ========================================================================
+    %% STYLING & VISUAL ORGANIZATION
+    %% ========================================================================
+
+    classDef external fill:#e1f5ff,stroke:#0066cc,stroke-width:4px
+    classDef types fill:#ffe1f5,stroke:#cc0066,stroke-width:3px
+    classDef rust fill:#ffebe1,stroke:#cc3300,stroke-width:2px
+    classDef nextjs fill:#e1ffe5,stroke:#00cc33,stroke-width:2px
+    classDef scripts fill:#fff5e1,stroke:#cc9900,stroke-width:2px
+    classDef data fill:#f0e1ff,stroke:#6600cc,stroke-width:2px
+    classDef tests fill:#ffe1e1,stroke:#cc0000,stroke-width:2px
+    classDef docs fill:#e1f5e1,stroke:#339900,stroke-width:2px
+    classDef config fill:#f5f5f5,stroke:#666666,stroke-width:1px
+    classDef generated fill:#ffffcc,stroke:#cc9900,stroke-width:2px,stroke-dasharray: 5 5
+
+    %% External systems
+    class GITHUB,GIST,VERCEL,CLOUDFLARE,USER,NPM_REG,CARGO_REG external
+
+    %% Type system
+    class SHARED_TYPES,SCHEMA_EMITTER,JSON_SCHEMA_FILE,TS_GENERATOR,GENERATED_TS,CANONICAL_TYPES,TEMPLATE_JSON,TEMPLATE_GUIDE types
+
+    %% Rust core
+    class WORKSPACE_TOML,CORE_LIB,CORE_TYPES,SCORING_RS,SELECTOR_RS,CORE_CARGO,PDF_LIB,PDF_GENERATOR,PDF_LAYOUT,PDF_HEADER,PDF_BODY,PDF_FOOTER,PDF_CARGO,DOCX_LIB,DOCX_CARGO,WASM_LIB,WASM_CARGO rust
+
+    %% Next.js
+    class APP_LAYOUT,APP_PAGE,RESUME_PAGE,RESUME_VIEW,CONTACT_CARD_API,SELECT_API,PREPARE_API,DATA_EXPLORER,BULLET_CARD,COMPANY_SECTION,SEARCH_BAR,TAG_FILTER,BADGE,BUTTON,CONTACT_LINKS,GLASS_PANEL,ICON_BADGE,NAVBAR,THEME_TOGGLE,THEME_CONTEXT,UTILS,TAGS_LIB,RESUME_METRICS,VCARD_GEN,RATE_LIMIT nextjs
+
+    %% Scripts
+    class FETCH_GIST,PUSH_GIST,VIEW_GIST,VALIDATE_COMPENDIUM,TEST_SELECTION_API,TRANSFORM_DATA,TRANSFORM_TEMPLATE,CLEAN_TEMPLATE,THEME_INIT scripts
+
+    %% Data
+    class LOCAL_RESUME_DATA,TEMPLATE_DATA data
+
+    %% Tests
+    class REAL_DATA_TEST,ROUNDTRIP_TEST,SCHEMA_VAL_TEST,INTEGRATION_TEST,PDF_PERMUTATION_TEST,CORE_ROUNDTRIP,SELECT_ROUTE_TEST,VCARD_TEST,RATE_LIMIT_TEST,TAGS_TEST,DATA_EXPLORER_TEST,SEARCH_BAR_TEST,TAG_FILTER_TEST,RESUME_FIXTURE tests
+
+    %% Documentation
+    class README_ROOT,CODE_REVIEW_GUIDE_DOC,AGENTS_DOC,NAMING_CONVENTIONS,SECURITY_DOC,STATUS_DOC,TODOS_DOC,ARCHITECTURE_DOC,ARCHITECTURE_DEEP,COMPLETE_MAP,WORKFLOWS_DOC,DATA_SCHEMA_DOC,COMMANDS_DOC,DEPLOYMENT_DOC,PHASE_5_PLAN,REFACTOR_SUMMARY,DG_README,DG_CLAUDE,DG_TEST_REPORT,APP_CLAUDE,SCRIPTS_CLAUDE,GH_WORKFLOWS_CLAUDE,CLAUDE_ROOT,CLAUDE_SETTINGS,LIB_README,LIB_TEST_README docs
+
+    %% Config
+    class NEXT_CONFIG,TS_CONFIG,MIDDLEWARE,NEXT_ENV_DTS,PACKAGE_JSON,PACKAGE_LOCK,CARGO_LOCK,VITEST_CONFIG,VITEST_SETUP,POSTCSS_CONFIG,ESLINT_CONFIG,VERCEL_CONFIG,ST_CARGO config
+
+    %% Generated files (special styling)
+    class JSON_SCHEMA_FILE,GENERATED_TS,WASM_JS,WASM_DTS,WASM_BG_DTS,WASM_PKG_JSON,PACKAGE_LOCK,CARGO_LOCK,NEXT_ENV_DTS generated

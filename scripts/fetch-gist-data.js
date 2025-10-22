@@ -15,6 +15,7 @@
  *   - Vercel: Set RESUME_DATA_GIST_URL in environment variables
  */
 
+import { spawnSync } from 'child_process';
 import fs from 'fs';
 import path from 'path';
 import https from 'https';
@@ -73,6 +74,27 @@ https.get(GIST_URL, (res) => {
     try {
       // Validate JSON
       JSON.parse(data);
+
+      // Write to temp file for schema validation
+      const tempFile = OUTPUT_PATH + '.tmp';
+      fs.writeFileSync(tempFile, data, 'utf8');
+
+      // Validate against schema
+      const validateResult = spawnSync('node', ['scripts/validate-compendium.mjs', tempFile], {
+        stdio: ['inherit', 'pipe', 'pipe'],
+        encoding: 'utf8'
+      });
+
+      if (validateResult.status !== 0) {
+        fs.unlinkSync(tempFile);
+        console.error('❌ Gist data validation failed:');
+        console.error(validateResult.stderr);
+        console.error('\n⚠️  Gist contains invalid data! Please fix manually.');
+        process.exit(1);
+      }
+
+      fs.unlinkSync(tempFile);
+      console.log('✅ Schema validation passed');
 
       // Check if local file exists and differs from gist
       if (!FORCE_MODE && fs.existsSync(OUTPUT_PATH)) {

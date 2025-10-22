@@ -5,8 +5,8 @@ import { ResumeData, Company } from "@/types/resume"
  */
 export function getTotalBullets(companies: Company[]): number {
   return companies.reduce(
-    (sum, company) => sum + company.positions.reduce(
-      (posSum, pos) => posSum + pos.bullets.length,
+    (sum, company) => sum + company.children.reduce(
+      (posSum, pos) => posSum + pos.children.length,
       0
     ),
     0
@@ -18,7 +18,7 @@ export function getTotalBullets(companies: Company[]): number {
  */
 export function getTotalPositions(companies: Company[]): number {
   return companies.reduce(
-    (sum, company) => sum + company.positions.length,
+    (sum, company) => sum + company.children.length,
     0
   )
 }
@@ -28,8 +28,8 @@ export function getTotalPositions(companies: Company[]): number {
  */
 export function getResumeMetrics(data: ResumeData) {
   return {
-    totalCompanies: data.companies.length,
-    totalPositions: getTotalPositions(data.companies),
-    totalBullets: getTotalBullets(data.companies),
+    totalCompanies: data.experience.length,
+    totalPositions: getTotalPositions(data.experience),
+    totalBullets: getTotalBullets(data.experience),
   }
 }

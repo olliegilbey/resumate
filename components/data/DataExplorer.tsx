@@ -29,31 +29,31 @@ export function DataExplorer({ data, className }: DataExplorerProps) {
     )
   }
 
-  // Helper function to extract year from date range for sorting
-  const getYear = (dateRange: string): number => {
-    const parts = dateRange.split(' – ')
-    const endDate = parts[1] || parts[0]
-    if (endDate.toLowerCase().includes('present') || endDate.toLowerCase().includes('current')) {
+  // Helper function to extract year from dateStart/dateEnd for sorting
+  const getYear = (dateStart: string, dateEnd?: string | null): number => {
+    // If no dateEnd, it's current (return very high value for sorting to top)
+    if (!dateEnd) {
       return 9999
     }
-    const match = endDate.match(/\d{4}/)
-    return match ? parseInt(match[0]) : 2000
+    // Extract year from dateEnd (format: YYYY-MM or YYYY)
+    const match = dateEnd.match(/(\d{4})/)
+    return match ? parseInt(match[1]) : 2000
   }
 
   // Filter companies directly on the JSON structure
   const filteredData = useMemo(() => {
-    const companies = data.companies
+    const companies = data.experience
       .map(company => ({
         ...company,
-        positions: company.positions
+        children: company.children
           .map(position => ({
             ...position,
-            bullets: position.bullets.filter(bullet => {
+            children: position.children.filter(bullet => {
               // Search filter across all fields
               const matchesSearch = searchQuery === "" ||
-                bullet.text.toLowerCase().includes(searchQuery.toLowerCase()) ||
-                company.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-                position.role.toLowerCase().includes(searchQuery.toLowerCase()) ||
+                bullet.description.toLowerCase().includes(searchQuery.toLowerCase()) ||
+                (company.name || '').toLowerCase().includes(searchQuery.toLowerCase()) ||
+                position.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
                 bullet.tags.some(tag => tag.toLowerCase().includes(searchQuery.toLowerCase()))
 
               // Tag filter (OR logic - any selected tag matches)
@@ -63,13 +63,13 @@ export function DataExplorer({ data, className }: DataExplorerProps) {
               return matchesSearch && matchesTags
             })
           }))
-          .filter(position => position.bullets.length > 0)
+          .filter(position => position.children.length > 0)
       }))
-      .filter(company => company.positions.length > 0)
-      .sort((a, b) => getYear(b.dateRange) - getYear(a.dateRange))
+      .filter(company => company.children.length > 0)
+      .sort((a, b) => getYear(b.dateStart, b.dateEnd) - getYear(a.dateStart, a.dateEnd))
 
     return companies
-  }, [data.companies, searchQuery, selectedTags])
+  }, [data.experience, searchQuery, selectedTags])
 
   // Calculate stats from filtered data
   const stats = useMemo(() => {
@@ -77,9 +77,9 @@ export function DataExplorer({ data, className }: DataExplorerProps) {
     const tagSet = new Set<string>()
 
     filteredData.forEach(company => {
-      company.positions.forEach(position => {
-        bulletCount += position.bullets.length
-        position.bullets.forEach(bullet => {
+      company.children.forEach(position => {
+        bulletCount += position.children.length
+        position.children.forEach(bullet => {
           bullet.tags.forEach(tag => tagSet.add(tag))
         })
       })
@@ -95,13 +95,13 @@ export function DataExplorer({ data, className }: DataExplorerProps) {
   // Get all bullets from original data for TagFilter counts
   const allBulletsForTagFilter = useMemo(() => {
     const bullets: BulletPoint[] = []
-    data.companies.forEach(company => {
-      company.positions.forEach(position => {
-        bullets.push(...position.bullets)
+    data.experience.forEach(company => {
+      company.children.forEach(position => {
+        bullets.push(...position.children)
       })
     })
     return bullets
-  }, [data.companies])
+  }, [data.experience])
 
   return (
     <div className={cn("max-w-7xl mx-auto px-4 md:px-8 py-8", className)}>

@@ -60,8 +60,15 @@ Resumate is **not** an AI resume generator. It's a curation system that helps yo
 ```bash
 git clone https://github.com/yourusername/resumate.git
 cd resumate
+
+# Install dependencies (recommended - uses justfile)
+just install
+
+# OR manually
 npm install
 ```
+
+**Build System**: This project uses [justfile](https://github.com/casey/just) for build automation. Install with `brew install just` (macOS) or see [installation instructions](https://github.com/casey/just#installation).
 
 ### 2. Configure Your Data
 
@@ -103,10 +110,12 @@ RESUME_DATA_GIST_URL=https://gist.githubusercontent.com/[user]/[hash]/raw/resume
 ### 5. Run Locally
 
 ```bash
-npm run dev
+just dev
 ```
 
 Visit [http://localhost:3000](http://localhost:3000)
+
+**Available Commands**: Run `just` to see all available commands (40+ automation targets including dev, build, test, wasm, data management, type generation, and more).
 
 **Routes**:
 - `/` - Landing page with contact links
@@ -303,7 +312,7 @@ The GitHub Action (`.github/workflows/gist-deploy-trigger.yml`) will:
 - ✅ Environment variables set in Vercel (no newlines!)
 - ✅ `.env.local` is gitignored
 - ✅ No secrets in repository
-- ✅ Build succeeds: `npm run build`
+- ✅ Build succeeds: `just build`
 - ✅ Turnstile working on production
 - ✅ GitHub Action secrets configured
 
@@ -333,19 +342,14 @@ Your resume data (`data/resume-data.json`) is **gitignored** for privacy. To edi
 ### Workflow
 
 ```bash
-# Pull latest from gist to local
-npm run data:pull
-
-# Push local changes to gist
-npm run data:push
-
-# View gist content in terminal
-npm run data:view
+just data-pull    # Pull latest from gist to local
+just data-push    # Push local changes to gist
+just data-view    # View gist content in terminal
 ```
 
 **Edit from anywhere**: Visit https://gist.github.com/[your-username], find your gist, click "Edit". Changes sync automatically.
 
-**Build-time fetch**: Vercel automatically pulls from gist during `npm run build` (via `prebuild` hook).
+**Build-time fetch**: Vercel automatically pulls from gist during builds (via `prebuild` hook).
 
 **Auto-deploy**: GitHub Action checks gist hourly and triggers Vercel deploy when changes detected.
 

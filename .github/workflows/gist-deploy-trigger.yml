@@ -14,8 +14,8 @@ jobs:
       - name: Fetch gist metadata
         id: gist
         run: |
-          # Extract gist ID from URL
-          GIST_ID="64d226d47825c6b346f6640a9dd7c262"
+          # Use gist ID from secrets
+          GIST_ID="${{ secrets.RESUME_DATA_GIST_ID }}"
 
           # Fetch gist metadata from GitHub API
           GIST_DATA=$(curl -s -H "Accept: application/vnd.github.v3+json" \
@@ -29,9 +29,11 @@ jobs:
       - name: Validate gist JSON format
         id: validate
         run: |
-          # Fetch the gist content
-          GIST_ID="64d226d47825c6b346f6640a9dd7c262"
-          GIST_URL="https://gist.githubusercontent.com/olliegilbey/${GIST_ID}/raw/resume-data.json"
+          # Fetch the gist content using secret
+          GIST_ID="${{ secrets.RESUME_DATA_GIST_ID }}"
+          # Extract username from repository (format: owner/repo)
+          USERNAME="${{ github.repository_owner }}"
+          GIST_URL="https://gist.githubusercontent.com/${USERNAME}/${GIST_ID}/raw/resume-data.json"
 
           echo "Fetching gist content for validation..."
           GIST_CONTENT=$(curl -s "$GIST_URL")

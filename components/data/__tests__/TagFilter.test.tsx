@@ -8,19 +8,19 @@ describe('TagFilter', () => {
   const mockBullets: BulletPoint[] = [
     {
       id: 'bullet-1',
-      text: 'First achievement',
+      description: 'First achievement',
       tags: ['leadership', 'blockchain'],
       priority: 10,
     },
     {
       id: 'bullet-2',
-      text: 'Second achievement',
+      description: 'Second achievement',
       tags: ['blockchain', 'machine-learning'],
       priority: 9,
     },
     {
       id: 'bullet-3',
-      text: 'Third achievement',
+      description: 'Third achievement',
       tags: ['leadership'],
       priority: 8,
     },

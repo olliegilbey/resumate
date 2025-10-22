@@ -5,7 +5,7 @@
 
 use crate::fonts;
 use crate::TypstError;
-use chrono::Datelike;  // For year(), month(), day() methods
+use chrono::Datelike; // For year(), month(), day() methods
 use ecow::eco_format;
 use typst::diag::{FileError, FileResult};
 use typst::foundations::{Bytes, Datetime};
@@ -45,8 +45,7 @@ impl ResumeWorld {
     ///
     pub fn new(template_content: String) -> Result<Self, TypstError> {
         // Load fonts
-        let (book, fonts) = fonts::load_fonts()
-            .map_err(TypstError::FontError)?;
+        let (book, fonts) = fonts::load_fonts().map_err(TypstError::FontError)?;
 
         // Create source from template content
         // FileId requires a VirtualPath for identification
@@ -71,14 +70,13 @@ impl ResumeWorld {
         let result = typst::compile(self);
 
         // Handle Warned<Result<...>> return type
-        result.output
-            .map_err(|errors| {
-                let error_msgs: Vec<String> = errors
-                    .iter()
-                    .map(|e| eco_format!("{:?}", e).to_string())
-                    .collect();
-                TypstError::CompilationError(error_msgs.join("; "))
-            })
+        result.output.map_err(|errors| {
+            let error_msgs: Vec<String> = errors
+                .iter()
+                .map(|e| eco_format!("{:?}", e).to_string())
+                .collect();
+            TypstError::CompilationError(error_msgs.join("; "))
+        })
     }
 }
 
@@ -99,13 +97,17 @@ impl World for ResumeWorld {
         if id == self.main.id() {
             Ok(self.main.clone())
         } else {
-            Err(FileError::NotFound(id.vpath().as_rootless_path().to_path_buf()))
+            Err(FileError::NotFound(
+                id.vpath().as_rootless_path().to_path_buf(),
+            ))
         }
     }
 
     fn file(&self, id: FileId) -> FileResult<Bytes> {
         // We don't support external file loading in resume generation
-        Err(FileError::NotFound(id.vpath().as_rootless_path().to_path_buf()))
+        Err(FileError::NotFound(
+            id.vpath().as_rootless_path().to_path_buf(),
+        ))
     }
 
     fn font(&self, index: usize) -> Option<Font> {
@@ -115,11 +117,7 @@ impl World for ResumeWorld {
     fn today(&self, _offset: Option<i64>) -> Option<Datetime> {
         // Use current date for PDF metadata
         let now = chrono::Local::now();
-        Datetime::from_ymd(
-            now.year(),
-            now.month() as u8,
-            now.day() as u8,
-        )
+        Datetime::from_ymd(now.year(), now.month() as u8, now.day() as u8)
     }
 }
 
@@ -136,7 +134,8 @@ mod tests {
             = Test Resume
 
             This is a test.
-        "#.to_string();
+        "#
+        .to_string();
 
         let world = ResumeWorld::new(template);
         assert!(world.is_ok());
@@ -176,7 +175,8 @@ mod tests {
             #set page(paper: "us-letter")
 
             Test content
-        "#.to_string();
+        "#
+        .to_string();
 
         let world = ResumeWorld::new(template).unwrap();
         let result = world.compile();
@@ -194,7 +194,8 @@ mod tests {
             #set document(title: "Test"
 
             Test content
-        "#.to_string();
+        "#
+        .to_string();
 
         let world = ResumeWorld::new(template).unwrap();
         let result = world.compile();

@@ -48,3 +48,30 @@ data/resume-data.json
 
 # Session/local files
 .claude/
+
+# ============================================
+# Rust + WASM Build Artifacts
+# ============================================
+# Generated when cargo init wasn't used, adding manually
+# See: https://github.com/github/gitignore/blob/main/Rust.gitignore
+
+# Rust build artifacts (6.6GB+ during development)
+target/
+**/target/
+
+# Rust backup files
+**/*.rs.bk
+
+# Debug symbols (Windows)
+*.pdb
+
+# WASM-specific
+pkg/
+**/pkg/
+wasm-pack.log
+
+# Rust/WASM test outputs
+doc-gen/test-outputs/
+
+# Note: Cargo.lock is intentionally tracked for workspace reproducibility
+# Only libraries should ignore Cargo.lock, applications should commit it

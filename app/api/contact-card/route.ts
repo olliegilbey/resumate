@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { generateVCard } from '@/lib/vcard'
-import resumeData from '@/data/resume-data.json'
+import type { ResumeData } from '@/types/resume'
 
 /**
  * Server-side vCard generation with Turnstile protection
@@ -48,6 +48,19 @@ async function verifyTurnstileToken(token: string): Promise<boolean> {
 }
 
 /**
+ * Load resume data from build cache
+ */
+async function loadResumeData(): Promise<ResumeData | null> {
+  try {
+    const data = await import('@/data/resume-data.json')
+    return (data.default || data) as unknown as ResumeData
+  } catch (error) {
+    console.error('Failed to load resume data:', error)
+    return null
+  }
+}
+
+/**
  * Shared function to generate and return vCard after token verification
  */
 async function generateContactCardResponse(token: string): Promise<NextResponse> {
@@ -66,6 +79,12 @@ async function generateContactCardResponse(token: string): Promise<NextResponse>
 
   // Mark token as used (one-time use only)
   usedTokens.add(token)
+
+  // Load resume data
+  const resumeData = await loadResumeData()
+  if (!resumeData) {
+    return new NextResponse('Resume data not available', { status: 500 })
+  }
 
   // Get sensitive data from environment variables (never exposed to client)
   const emailPersonal = process.env.CONTACT_EMAIL_PERSONAL
@@ -90,35 +109,36 @@ async function generateContactCardResponse(token: string): Promise<NextResponse>
   }
 
   // Parse name (handle edge cases: single names, multiple spaces)
-  const nameParts = resumeData.personal.fullName.trim().split(/\s+/).filter(Boolean)
+  const fullName = resumeData.personal.name || ''
+  const nameParts = fullName.trim().split(/\s+/).filter(Boolean)
   const firstName = nameParts[0] || ''
   const lastName = nameParts.length > 1 ? nameParts.slice(1).join(' ') : ''
 
   // Get most recent job title from first company's first position
-  const mostRecentTitle = resumeData.companies[0]?.positions[0]?.role || 'Professional'
+  const mostRecentTitle = resumeData.experience[0]?.children[0]?.name || 'Professional'
 
   // Generate vCard content on server
   const vcardContent = generateVCard({
     firstName,
     lastName,
-    fullName: resumeData.personal.fullName,
-    nickname: resumeData.personal.nickname,
+    fullName,
+    nickname: resumeData.personal.nickname ?? undefined,
     email: emails, // Pass array of emails (personal first, then professional)
     phone,
-    linkedin: resumeData.personal.linkedin,
-    github: resumeData.personal.github,
+    linkedin: resumeData.personal.linkedin ?? undefined,
+    github: resumeData.personal.github ?? undefined,
     address: {
-      city: resumeData.personal.location,
+      city: resumeData.personal.location ?? undefined,
     },
     title: mostRecentTitle,
-    note: resumeData.summary,
+    note: resumeData.summary ?? undefined,
   })
 
   // Return as downloadable file
   return new NextResponse(vcardContent, {
     headers: {
       'Content-Type': 'text/vcard;charset=utf-8',
-      'Content-Disposition': `attachment; filename="${resumeData.personal.fullName.replace(/\s+/g, '-').toLowerCase()}-contact.vcf"`,
+      'Content-Disposition': `attachment; filename="${fullName.replace(/\s+/g, '-').toLowerCase()}-contact.vcf"`,
       'Cache-Control': 'no-store, must-revalidate',
       'X-Robots-Tag': 'noindex, nofollow',
     },

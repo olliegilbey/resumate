@@ -16,14 +16,20 @@ export function CompanySection({ company, allTags, onTagClick, className }: Comp
   // Collect all bullets from all positions (already filtered by DataExplorer)
   const allBullets: BulletPoint[] = []
 
-  company.positions.forEach(position => {
-    position.bullets.forEach(bullet => {
+  company.children.forEach(position => {
+    position.children.forEach(bullet => {
       allBullets.push(bullet)
     })
   })
 
   // Sort by priority (highest first)
   const displayBullets = allBullets.sort((a, b) => b.priority - a.priority)
+
+  // Format date range from dateStart and dateEnd
+  const formatDateRange = (start: string, end?: string | null) => {
+    if (!end) return `${start} – Present`
+    return `${start} – ${end}`
+  }
 
   return (
     <div className={cn("space-y-6", className)}>
@@ -38,7 +44,7 @@ export function CompanySection({ company, allTags, onTagClick, className }: Comp
               {company.name}
             </h3>
             <div className="flex items-center gap-2 text-sm text-slate-500 dark:text-slate-400">
-              <span>{company.dateRange}</span>
+              <span>{formatDateRange(company.dateStart, company.dateEnd)}</span>
               {company.location && (
                 <>
                   <span>•</span>
@@ -46,20 +52,20 @@ export function CompanySection({ company, allTags, onTagClick, className }: Comp
                 </>
               )}
             </div>
-            {company.context && (
-              <p className="text-sm text-slate-600 dark:text-slate-300 mt-1">{company.context}</p>
+            {company.description && (
+              <p className="text-sm text-slate-600 dark:text-slate-300 mt-1">{company.description}</p>
             )}
           </div>
         </div>
 
         {/* List all positions */}
         <div className="ml-11 space-y-1">
-          {company.positions.map(position => (
+          {company.children.map(position => (
             <div key={position.id} className="flex items-center space-x-2 text-sm">
               <Briefcase className="h-3.5 w-3.5 text-slate-400 dark:text-slate-500" />
-              <span className="font-medium text-slate-700 dark:text-slate-200">{position.role}</span>
+              <span className="font-medium text-slate-700 dark:text-slate-200">{position.name}</span>
               <span className="text-slate-400 dark:text-slate-500">•</span>
-              <span className="text-slate-500 dark:text-slate-400">{position.dateRange}</span>
+              <span className="text-slate-500 dark:text-slate-400">{formatDateRange(position.dateStart, position.dateEnd)}</span>
             </div>
           ))}
         </div>

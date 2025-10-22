@@ -132,10 +132,11 @@ export function middleware(request: NextRequest) {
   // 1. External script with Script component - doesn't execute before hydration
   // 2. Script hash - would break on any code change
   // This is a calculated tradeoff: XSS risk from inline script vs FOUC user experience
+  // 'wasm-unsafe-eval' is required for WebAssembly.instantiateStreaming() (PDF generation)
   const isDev = process.env.NODE_ENV !== 'production'
   const scriptSrc = isDev
-    ? "'self' 'unsafe-inline' 'unsafe-eval' https://challenges.cloudflare.com https://va.vercel-scripts.com"
-    : "'self' 'unsafe-inline' https://challenges.cloudflare.com https://va.vercel-scripts.com"
+    ? "'self' 'unsafe-inline' 'unsafe-eval' 'wasm-unsafe-eval' https://challenges.cloudflare.com https://va.vercel-scripts.com"
+    : "'self' 'unsafe-inline' 'wasm-unsafe-eval' https://challenges.cloudflare.com https://va.vercel-scripts.com"
 
   response.headers.set(
     'Content-Security-Policy',
@@ -173,8 +174,8 @@ export const config = {
      * - _next/static (static files)
      * - _next/image (image optimization files)
      * - favicon.ico (favicon file)
-     * - public files (images and scripts)
+     * - public files (images, scripts, and WASM modules)
      */
-    '/((?!_next/static|_next/image|favicon.ico|.*\\.svg$|.*\\.png$|.*\\.jpg$|.*\\.jpeg$|.*\\.gif$|.*\\.webp$|.*\\.js$).*)',
+    '/((?!_next/static|_next/image|favicon.ico|.*\\.svg$|.*\\.png$|.*\\.jpg$|.*\\.jpeg$|.*\\.gif$|.*\\.webp$|.*\\.js$|.*\\.wasm$).*)',
   ],
 }

@@ -90,6 +90,20 @@ async function pushToGist() {
     process.exit(1);
   }
 
+  // Validate JSON schema before pushing
+  console.log('📋 Validating resume data against schema...');
+  const validateResult = spawnSync('node', ['scripts/validate-compendium.mjs', LOCAL_FILE], {
+    stdio: ['inherit', 'pipe', 'pipe'],
+    encoding: 'utf8'
+  });
+
+  if (validateResult.status !== 0) {
+    console.error('❌ Validation failed. Fix errors before pushing to gist.');
+    console.error(validateResult.stderr);
+    process.exit(1);
+  }
+  console.log('✅ Validation passed\n');
+
   // Read local content
   const localContent = fs.readFileSync(LOCAL_FILE, 'utf8');
 

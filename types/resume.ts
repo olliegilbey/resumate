@@ -1,79 +1,29 @@
+/**
+ * Resume Types - Re-exported from Generated Schema
+ *
+ * These types are generated from Rust schemas via:
+ * 1. Rust types (doc-gen/crates/core/src/types.rs)
+ * 2. JSON Schema generation (npm run schemas:emit)
+ * 3. TypeScript type generation (npm run types:gen)
+ *
+ * DO NOT manually edit. To update types:
+ * - Edit Rust types
+ * - Run: npm run schemas:emit && npm run types:gen
+ */
+
+import type { Bullet as GeneratedBullet } from '../lib/types/generated-resume'
+
+export type {
+  ResumeData,
+  Company,
+  Education,
+  PersonalInfo,
+  Position,
+  RoleProfile,
+  ScoringWeights,
+} from '../lib/types/generated-resume'
+
+// Backwards compatibility aliases
+export type Bullet = GeneratedBullet
+export type BulletPoint = GeneratedBullet
 export type Tag = string
-
-export interface BulletPoint {
-  id: string
-  text: string              // Exact written bullet
-  tags: Tag[]
-  priority: number          // 1-10, manual ranking
-  metrics?: string          // Extracted metrics for emphasis
-  context?: string          // Additional detail for future AI use
-  link?: string             // Optional link to work/recording/etc
-}
-
-export interface Position {
-  id: string
-  role: string
-  dateRange: string
-  description: string       // Main description for this role (the primary bullet)
-  descriptionTags: Tag[]
-  descriptionPriority: number
-  descriptionMetrics?: string
-  descriptionContext?: string
-  descriptionLink?: string
-  bullets: BulletPoint[]    // Additional achievement bullets for this role
-}
-
-export interface Company {
-  id: string
-  name: string
-  dateRange: string         // Overall: "Jan 2021 - Present" (earliest to latest)
-  location?: string         // e.g., "London - Remote"
-  context?: string          // Company-level context (e.g., "Web3 Cloud Infrastructure")
-  positions: Position[]     // Multiple roles at same company (chronological, newest first)
-}
-
-export interface PersonalInfo {
-  name: string
-  fullName: string
-  nickname?: string         // Preferred name (e.g., "Ollie" for "Oliver")
-  email: string
-  phone: string
-  location: string
-  citizenship: string[]
-  linkedin: string
-  github: string
-  website: string
-  calendar?: string         // Cal.com or other calendar booking link
-}
-
-export interface Education {
-  degree: string
-  degreeType: string        // BSc, BComm, etc
-  institution: string
-  location: string
-  year: string
-  coursework?: string[]
-  societies?: string[]
-}
-
-export interface Accomplishment {
-  id: string
-  title: string
-  description: string
-  year: string
-  tags?: Tag[]
-}
-
-export interface ResumeData {
-  personal: PersonalInfo
-  summary: string
-  tagline: string           // Footer motto
-  companies: Company[]      // Work experience grouped by company
-  skills: {
-    technical: string[]
-    soft: string[]
-  }
-  education: Education[]
-  accomplishments: Accomplishment[]
-  interests: string[]
-}

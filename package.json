@@ -9,9 +9,17 @@
     "build": "next build --turbopack",
     "start": "next start",
     "lint": "eslint",
+    "typecheck": "tsc --noEmit",
     "test": "vitest",
     "test:watch": "vitest --watch",
     "test:ui": "vitest --ui",
+    "schemas:emit": "cargo run --bin generate_schema -p shared-types",
+    "types:gen": "npx tsx scripts/gen-ts-from-schemas.ts --input schemas/resume.schema.json --output lib/types/generated-resume.ts",
+    "types:generate": "npm run schemas:emit && npm run types:gen",
+    "types:validate": "npm run types:generate && npm run typecheck",
+    "validate:gist": "node scripts/validate-compendium.mjs",
+    "validate:template": "node scripts/validate-compendium.mjs data/resume-data-template.json",
+    "check:drift": "npm run types:generate && git diff --exit-code schemas/resume.schema.json lib/types/generated-resume.ts",
     "data:pull": "node scripts/fetch-gist-data.js",
     "data:push": "node scripts/gist-push.js",
     "data:view": "node scripts/gist-view.js",
@@ -22,15 +30,22 @@
       "eslint --fix",
       "bash -c 'npx tsc --noEmit'"
     ],
+    "crates/shared-types/src/lib.rs": [
+      "bash -c 'cargo fmt -p shared-types'",
+      "bash -c 'cargo clippy -p shared-types -- -D warnings'",
+      "npm run types:generate",
+      "git add schemas/resume.schema.json lib/types/generated-resume.ts"
+    ],
+    "crates/shared-types/**/*.rs": [
+      "bash -c 'cargo fmt -p shared-types'",
+      "bash -c 'cargo clippy -p shared-types -- -D warnings'"
+    ],
     "doc-gen/**/*.rs": [
-      "bash -c 'cd doc-gen && cargo fmt --all'",
-      "bash -c 'cd doc-gen && cargo clippy --all -- -D warnings'"
+      "bash -c 'cargo fmt --all'",
+      "bash -c 'cargo clippy --all -- -D warnings'"
     ],
-    "data/resume-data.json": [
-      "bash -c 'node -e \"JSON.parse(require(\\\"fs\\\").readFileSync(\\\"data/resume-data.json\\\", \\\"utf8\\\"))\" && echo \"✓ resume-data.json is valid JSON\"'"
-    ],
-    "data/resume-data-template.json": [
-      "bash -c 'node -e \"JSON.parse(require(\\\"fs\\\").readFileSync(\\\"data/resume-data-template.json\\\", \\\"utf8\\\"))\" && echo \"✓ resume-data-template.json is valid JSON\"'"
+    "data/*.json": [
+      "node scripts/validate-compendium.mjs"
     ]
   },
   "dependencies": {
@@ -38,11 +53,12 @@
     "@vercel/speed-insights": "^1.2.0",
     "class-variance-authority": "^0.7.1",
     "clsx": "^2.1.1",
-    "lucide-react": "^0.544.0",
-    "next": "15.5.4",
-    "react": "^19.1.1",
-    "react-dom": "^19.1.1",
-    "tailwind-merge": "^3.3.1"
+    "lucide-react": "^0.546.0",
+    "next": "^16.0.0",
+    "react": "^19.2.0",
+    "react-dom": "^19.2.0",
+    "tailwind-merge": "^3.3.1",
+    "valibot": "^1.1.0"
   },
   "devDependencies": {
     "@eslint/eslintrc": "^3",
@@ -54,11 +70,14 @@
     "@types/react": "^19",
     "@types/react-dom": "^19",
     "@vitejs/plugin-react": "^5.0.4",
+    "ajv": "^8.17.1",
+    "ajv-formats": "^3.0.1",
     "dotenv": "^17.2.3",
-    "eslint": "^9",
-    "eslint-config-next": "15.5.4",
+    "eslint": "^9.36.0",
+    "eslint-config-next": "^16.0.0",
     "husky": "^9.1.7",
     "jsdom": "^27.0.0",
+    "json-schema-to-typescript": "^15.0.4",
     "lint-staged": "^16.2.3",
     "tailwindcss": "^4",
     "typescript": "^5.9.3",

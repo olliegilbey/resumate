@@ -4,7 +4,7 @@
 //! by loading the template JSON, deserializing to Rust, re-serializing,
 //! and validating the output matches the original structure.
 
-use docgen_core::types::ResumeData;
+use docgen_core::ResumeData;
 use std::path::PathBuf;
 
 /// Get path to resume-data-template.json in project root
@@ -74,30 +74,23 @@ fn test_resume_data_required_fields() {
         !resume_data.personal.name.is_empty(),
         "personal.name is required"
     );
-    assert!(!resume_data.summary.is_empty(), "summary is required");
-    assert!(!resume_data.tagline.is_empty(), "tagline is required");
 
-    // Validate company structure
+    // Validate experience structure (new schema)
     assert!(
-        !resume_data.companies.is_empty(),
-        "companies array should have at least one entry in template"
+        !resume_data.experience.is_empty(),
+        "experience array should have at least one entry in template"
     );
 
-    let first_company = &resume_data.companies[0];
+    let first_company = &resume_data.experience[0];
     assert!(!first_company.id.is_empty(), "company.id is required");
-    assert!(!first_company.name.is_empty(), "company.name is required");
     assert!(
-        !first_company.positions.is_empty(),
-        "company.positions should have at least one entry"
+        !first_company.children.is_empty(),
+        "company.children should have at least one entry"
     );
 
-    let first_position = &first_company.positions[0];
+    let first_position = &first_company.children[0];
     assert!(!first_position.id.is_empty(), "position.id is required");
-    assert!(!first_position.role.is_empty(), "position.role is required");
-    assert!(
-        !first_position.description.is_empty(),
-        "position.description is required"
-    );
+    assert!(!first_position.name.is_empty(), "position.name is required");
 }
 
 #[test]
@@ -110,36 +103,20 @@ fn test_camel_case_field_names() {
         serde_json::from_str(&json_content).expect("Failed to deserialize template");
     let reserialized = serde_json::to_string(&resume_data).expect("Failed to re-serialize");
 
-    // Verify camelCase field names are preserved
+    // Verify camelCase field names are preserved (new schema)
     assert!(
-        reserialized.contains("\"dateRange\""),
-        "Should use camelCase 'dateRange'"
+        reserialized.contains("\"dateStart\""),
+        "Should use camelCase 'dateStart'"
     );
     assert!(
-        reserialized.contains("\"fullName\""),
-        "Should use camelCase 'fullName'"
-    );
-    assert!(
-        reserialized.contains("\"descriptionTags\""),
-        "Should use camelCase 'descriptionTags'"
-    );
-    assert!(
-        reserialized.contains("\"descriptionPriority\""),
-        "Should use camelCase 'descriptionPriority'"
+        reserialized.contains("\"name\""),
+        "PersonalInfo should have 'name' field"
     );
 
     // Verify snake_case is NOT present
     assert!(
-        !reserialized.contains("\"date_range\""),
-        "Should NOT use snake_case 'date_range'"
-    );
-    assert!(
-        !reserialized.contains("\"full_name\""),
-        "Should NOT use snake_case 'full_name'"
-    );
-    assert!(
-        !reserialized.contains("\"description_tags\""),
-        "Should NOT use snake_case 'description_tags'"
+        !reserialized.contains("\"date_start\""),
+        "Should NOT use snake_case 'date_start'"
     );
 }
 
@@ -153,14 +130,13 @@ fn test_optional_fields_handling() {
 
     // Template should have optional fields populated for demonstration
     // but Rust should handle them as Option<T>
-    let first_company = &resume_data.companies[0];
+    let first_company = &resume_data.experience[0];
 
     // These are optional in the type system
     let _ = &first_company.location; // Should compile as Option<String>
-    let _ = &first_company.context; // Should compile as Option<String>
+    let _ = &first_company.description; // Should compile as Option<String>
 
-    let first_position = &first_company.positions[0];
-    let _ = &first_position.description_metrics; // Should compile as Option<String>
-    let _ = &first_position.description_context; // Should compile as Option<String>
-    let _ = &first_position.description_link; // Should compile as Option<String>
+    let first_position = &first_company.children[0];
+    let _ = &first_position.summary; // Should compile as Option<String>
+    let _ = &first_position.link; // Should compile as Option<String>
 }
