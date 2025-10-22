@@ -63,37 +63,61 @@
 
 ---
 
-### Step 2: Validate Gist JSON Format
+### Step 2: Validate Gist with Schema
 
 ```yaml
-- name: Validate gist JSON format
+- name: Validate gist with schema
   run: |
-    GIST_URL="https://gist.githubusercontent.com/olliegilbey/${GIST_ID}/raw/resume-data.json"
-    GIST_CONTENT=$(curl -s "$GIST_URL")
+    GIST_URL="https://gist.githubusercontent.com/.../${GIST_ID}/raw/resume-data.json"
+    curl -s "$GIST_URL" -o /tmp/gist-data.json
 
-    if echo "$GIST_CONTENT" | jq empty 2>/dev/null; then
-      echo "✅ JSON is valid"
+    # Validate JSON syntax first
+    if ! jq empty /tmp/gist-data.json 2>/dev/null; then
+      echo "❌ JSON syntax is invalid!"
+      echo "valid=false" >> $GITHUB_OUTPUT
+      exit 0
+    fi
+
+    # Validate against schema
+    if bun scripts/validate-compendium.mjs /tmp/gist-data.json; then
+      echo "✅ Schema validation passed"
       echo "valid=true" >> $GITHUB_OUTPUT
     else
-      echo "❌ JSON is invalid!"
+      echo "❌ Schema validation failed!"
       echo "valid=false" >> $GITHUB_OUTPUT
     fi
 ```
 
 **What it does:**
-- Fetches raw gist content
+- Fetches raw gist content to temp file
 - Validates JSON syntax with `jq empty`
-- Sets `valid` output flag
-- **Fail-fast**: Prevents deployment if JSON is malformed
+- **Validates against full schema** using `validate-compendium.mjs`
+- Sets `valid` output flag with detailed error messages
+- **Fail-fast**: Prevents deployment if data doesn't match schema
 
 **Why validate here:**
-- Prevents Vercel build failures from bad JSON
+- Prevents Vercel build failures from invalid data
+- Catches schema violations early (not just JSON syntax)
 - Provides clear error in GitHub Actions UI
 - Saves Vercel build minutes
+- Same validation as local `just data-validate`
+
+**Dependencies:**
+- Requires repository checkout (`actions/checkout@v4`)
+- Requires bun setup (`oven-sh/setup-bun@v2`)
+- Requires dependencies installed (`bun install --frozen-lockfile`)
 
 **Error Handling:**
-- Invalid JSON → Skip deploy, fail workflow with error annotation
+- Invalid JSON syntax → Skip deploy, fail workflow with syntax error
+- Schema validation failure → Skip deploy, fail workflow with detailed schema errors
 - Network error → Workflow fails (retry on next hourly run)
+
+**Example Errors Caught:**
+- Missing required fields (e.g., `personal.name`)
+- Invalid priority values (outside 1-10 range)
+- Malformed date formats (not YYYY or YYYY-MM)
+- Empty or invalid tag arrays
+- Type mismatches (string vs number)
 
 ---
 
@@ -194,18 +218,24 @@
 
 ---
 
-### Step 6: Notify on JSON Validation Failure
+### Step 6: Notify on Validation Failure
 
 ```yaml
-- name: Notify on JSON validation failure
+- name: Notify on validation failure
   if: steps.validate.outputs.valid == 'false'
   run: |
-    echo "::error title=Invalid JSON in Gist::Resume data gist contains invalid JSON and deploy was skipped."
+    echo "::error title=Invalid Resume Data in Gist::Resume data gist failed validation and deploy was skipped."
+    echo ""
+    echo "Validation errors:"
+    echo "${{ steps.validate.outputs.error_msg }}"
+    echo ""
+    echo "Please fix the gist data and it will be automatically deployed on the next hourly check."
     exit 1
 ```
 
 **What it does:**
-- Creates GitHub Actions error annotation
+- Creates GitHub Actions error annotation with detailed error message
+- Shows full validation errors from schema validator
 - Visible in workflow run UI
 - Fails workflow to prevent silent failures
 
@@ -214,10 +244,16 @@
 ::error title={title}::{message}
 ```
 
+**Error Details Include:**
+- JSON syntax errors (if applicable)
+- Schema validation errors (field names, expected types, constraint violations)
+- Guidance on next steps (fix gist, automatic retry)
+
 **Why fail the workflow:**
-- Alerts user to problem
+- Alerts user to problem immediately
 - Prevents silent data corruption
 - Easy to spot in GitHub Actions UI
+- Provides actionable error messages for debugging
 
 ---
 
