@@ -50,7 +50,9 @@ fn test_real_resume_data_loads() {
         Err(e) => {
             // If file doesn't exist (e.g., in CI before prebuild), skip test
             if e.to_string().contains("Resume data not found") {
-                eprintln!("⚠️  Skipping test - resume-data.json not found (run `npm run data:pull` first)");
+                eprintln!(
+                    "⚠️  Skipping test - resume-data.json not found (run `just data-pull` first)"
+                );
             } else {
                 panic!("Failed to load resume data: {}", e);
             }

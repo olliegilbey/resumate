@@ -57,7 +57,7 @@ Successfully established single source of truth architecture for type definition
 Rust Types (crates/shared-types/src/lib.rs)
   ↓ cargo run --bin generate_schema -p shared-types
 JSON Schema (schemas/resume.schema.json)
-  ↓ npm run types:gen
+  ↓ just types-ts
 Generated TypeScript (lib/types/generated-resume.ts)
   ↓ re-exported by
 Canonical Import (types/resume.ts) ← ALWAYS IMPORT FROM HERE
@@ -129,7 +129,7 @@ resumate/
 "crates/shared-types/src/lib.rs": [
   "cargo fmt -p shared-types",
   "cargo clippy -p shared-types -- -D warnings",
-  "npm run types:generate",
+  "just types-sync",
   "git add schemas/resume.schema.json lib/types/generated-resume.ts"
 ]
 ```
@@ -143,14 +143,14 @@ resumate/
 
 **Check for drift:**
 ```bash
-npm run check:drift  # Regenerates types and checks git diff
+just types-drift  # Regenerates types and checks git diff
 ```
 
 **Validation:**
 ```bash
-npm run validate:gist      # Validate resume data
-npm run validate:template  # Validate template
-npm run types:validate     # Full type validation
+just data-validate      # Validate resume data
+just data-validate-template  # Validate template
+just types-sync     # Full type validation
 ```
 
 ---
@@ -184,24 +184,24 @@ git add crates/shared-types/src/lib.rs
 git commit  # Hook runs types:generate automatically
 
 # Or manual:
-npm run types:generate  # Regenerates schema + TypeScript
-npm run typecheck       # Verify TypeScript
+just types-sync  # Regenerates schema + TypeScript
+just check-ts       # Verify TypeScript
 cargo test --all        # Verify Rust
 ```
 
 ### After Editing Data
 ```bash
-npm run data:pull       # ALWAYS pull first
+just data-pull       # ALWAYS pull first
 # Edit data/resume-data.json
-npm run validate:gist   # Validate
-npm run data:push       # Push to gist
+just data-validate   # Validate
+just data-push       # Push to gist
 ```
 
 ### Running Tests
 ```bash
 cargo test --all        # All Rust tests
-npm run test            # All TypeScript tests
-npm run typecheck       # TypeScript type-check
+just test            # All TypeScript tests
+just check-ts       # TypeScript type-check
 cargo check --all       # Rust type-check
 ```
 
@@ -239,13 +239,13 @@ cargo check --all       # Rust type-check
 ### When Refactoring
 1. Update Rust types first
 2. Run tests: `cargo test --all`
-3. Regenerate: `npm run types:generate`
+3. Regenerate: `just types-sync`
 4. Update TypeScript code
-5. Run tests: `npm run test`
+5. Run tests: `just test`
 
 ### Preventing Drift
 - Pre-commit hooks run automatically
-- CI can run `npm run check:drift` to verify
+- CI can run `just types-drift` to verify
 - Schema validation on data operations
 
 ---

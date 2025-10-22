@@ -156,13 +156,13 @@ pub fn select_bullets(
 
 2. **Schema Generation**
    ```bash
-   npm run schemas:emit  # Runs cargo run --bin schema_emitter
+   just types-schema  # Runs cargo run --bin schema_emitter
    ```
    - Outputs to `schemas/compendium.schema.json`
 
 3. **TypeScript Generation**
    ```bash
-   npm run types:gen     # Runs tsx scripts/gen-ts-from-schemas.ts
+   just types-ts     # Runs tsx scripts/gen-ts-from-schemas.ts
    ```
    - Outputs to `lib/types/generated-resume.ts`
 
@@ -260,7 +260,7 @@ cargo build --target wasm32-unknown-unknown  # WASM target
 ### Schema Generation
 ```bash
 cargo run --bin schema_emitter      # Generate JSON Schema
-npm run schemas:emit                # Same, via npm
+just types-schema                # Same, via npm
 ```
 
 ### Type Checking
@@ -461,15 +461,15 @@ impl ScoringWeights {
 3. Run `cargo fmt` to format code
 
 **After changing types.rs:**
-1. Run `npm run schemas:emit` to regenerate JSON Schema
-2. Run `npm run types:gen` to regenerate TypeScript types
-3. Run `npm run validate:template` to validate template
+1. Run `just types-schema` to regenerate JSON Schema
+2. Run `just types-ts` to regenerate TypeScript types
+3. Run `just data-validate-template` to validate template
 4. Commit both Rust changes AND generated schema/types
 
 **For hybrid work (Rust + Next.js):**
 - Also read `app/CLAUDE.md` for Next.js context
 - Follow type sync workflow carefully
-- Test both Rust (cargo test) and Next.js (npm run typecheck)
+- Test both Rust (cargo test) and Next.js (just check-ts)
 
 **Common tasks:**
 - Adding new type → Update types.rs, regenerate schema + TS

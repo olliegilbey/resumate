@@ -36,8 +36,8 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
 
     println!("✅ Schema written to: {}", output_path);
     println!("\n📝 Next steps:");
-    println!("   1. Run: npm run types:gen");
-    println!("   2. Verify: npm run typecheck");
+    println!("   1. Run: just types-ts");
+    println!("   2. Verify: just check-ts");
 
     Ok(())
 }

@@ -5,7 +5,7 @@
   "type": "module",
   "scripts": {
     "dev": "next dev --turbopack",
-    "prebuild": "node scripts/fetch-gist-data.js --force",
+    "prebuild": "bun scripts/fetch-gist-data.js --force",
     "build": "next build --turbopack",
     "start": "next start",
     "lint": "eslint",
@@ -14,26 +14,26 @@
     "test:watch": "vitest --watch",
     "test:ui": "vitest --ui",
     "schemas:emit": "cargo run --bin generate_schema -p shared-types",
-    "types:gen": "npx tsx scripts/gen-ts-from-schemas.ts --input schemas/resume.schema.json --output lib/types/generated-resume.ts",
-    "types:generate": "npm run schemas:emit && npm run types:gen",
-    "types:validate": "npm run types:generate && npm run typecheck",
-    "validate:gist": "node scripts/validate-compendium.mjs",
-    "validate:template": "node scripts/validate-compendium.mjs data/resume-data-template.json",
-    "check:drift": "npm run types:generate && git diff --exit-code schemas/resume.schema.json lib/types/generated-resume.ts",
-    "data:pull": "node scripts/fetch-gist-data.js",
-    "data:push": "node scripts/gist-push.js",
-    "data:view": "node scripts/gist-view.js",
+    "types:gen": "bun x tsx scripts/gen-ts-from-schemas.ts --input schemas/resume.schema.json --output lib/types/generated-resume.ts",
+    "types:generate": "bun schemas:emit && bun types:gen",
+    "types:validate": "bun types:generate && bun typecheck",
+    "validate:gist": "bun scripts/validate-compendium.mjs",
+    "validate:template": "bun scripts/validate-compendium.mjs data/resume-data-template.json",
+    "check:drift": "bun types:generate && git diff --exit-code schemas/resume.schema.json lib/types/generated-resume.ts",
+    "data:pull": "bun scripts/fetch-gist-data.js",
+    "data:push": "bun scripts/gist-push.js",
+    "data:view": "bun scripts/gist-view.js",
     "prepare": "husky"
   },
   "lint-staged": {
     "*.{ts,tsx}": [
       "eslint --fix",
-      "bash -c 'npx tsc --noEmit'"
+      "bash -c 'bun x tsc --noEmit'"
     ],
     "crates/shared-types/src/lib.rs": [
       "bash -c 'cargo fmt -p shared-types'",
       "bash -c 'cargo clippy -p shared-types -- -D warnings'",
-      "npm run types:generate",
+      "bun types:generate",
       "git add schemas/resume.schema.json lib/types/generated-resume.ts"
     ],
     "crates/shared-types/**/*.rs": [

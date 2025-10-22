@@ -10,8 +10,8 @@
 
 ```bash
 npm test              # Run once
-npm run test:watch    # Watch mode
-npm run test:ui       # Visual UI (install @vitest/ui if needed)
+just test-ts-watch    # Watch mode
+just test-ts-ui       # Visual UI (install @vitest/ui if needed)
 ```
 
 ## Structure

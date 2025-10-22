@@ -2,7 +2,7 @@
  * Generate TypeScript types from JSON Schemas
  *
  * Reads schemas emitted from Rust and generates TypeScript types.
- * Run with: npm run types:gen
+ * Run with: just types-ts
  *
  * Usage:
  *   tsx scripts/gen-ts-from-schemas.ts --input <schema-path> --output <output-path>
@@ -39,7 +39,7 @@ async function generateTypes() {
   const ts = await compileFromFile(absoluteInputPath, {
     bannerComment: `/**
  * Generated TypeScript types from Rust schemas
- * DO NOT EDIT MANUALLY - Generated via: npm run types:gen
+ * DO NOT EDIT MANUALLY - Generated via: just types-ts
  * Source: ${inputPath}
  */`,
     style: {

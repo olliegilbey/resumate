@@ -2,7 +2,7 @@
  * Validate resume-data.json against JSON Schema
  *
  * Uses ajv to validate the compendium JSON against the schema.
- * Run with: npm run validate:gist <path-to-json>
+ * Run with: just data-validate <path-to-json>
  */
 
 import Ajv from 'ajv'
@@ -16,7 +16,7 @@ const __dirname = path.dirname(fileURLToPath(import.meta.url))
 // Get JSON file path from command line
 const jsonPath = process.argv[2]
 if (!jsonPath) {
-  console.error('❌ Usage: npm run validate:gist <path-to-json>')
+  console.error('❌ Usage: just data-validate <path-to-json>')
   process.exit(1)
 }
 

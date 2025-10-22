@@ -1,5 +1,5 @@
 {
-  "$comment": "AUTO-GENERATED from crates/shared-types/src/lib.rs at timestamp 1761123804",
+  "$comment": "AUTO-GENERATED from crates/shared-types/src/lib.rs at timestamp 1761136986",
   "$schema": "http://json-schema.org/draft-07/schema#",
   "definitions": {
     "Bullet": {

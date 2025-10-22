@@ -35,8 +35,8 @@ scripts/
 
 **Usage:**
 ```bash
-npm run data:pull              # Interactive mode (prompts on conflicts)
-npm run data:pull -- --force   # Force mode (skip prompts, used in prebuild)
+just data-pull              # Interactive mode (prompts on conflicts)
+just data-pull -- --force   # Force mode (skip prompts, used in prebuild)
 node scripts/fetch-gist-data.js --force
 ```
 
@@ -86,8 +86,8 @@ if (!forceMode) {
 
 **Usage:**
 ```bash
-npm run data:push              # Interactive mode (prompts on conflicts)
-npm run data:push -- --force   # Force mode (skip prompts)
+just data-push              # Interactive mode (prompts on conflicts)
+just data-push -- --force   # Force mode (skip prompts)
 node scripts/gist-push.js --force
 ```
 
@@ -139,7 +139,7 @@ if (!forceMode && gistContent !== localContent) {
 
 **Usage:**
 ```bash
-npm run data:view
+just data-view
 node scripts/gist-view.js
 ```
 
@@ -158,7 +158,7 @@ node scripts/gist-view.js
 
 **Usage:**
 ```bash
-npm run types:gen
+just types-ts
 npx tsx scripts/gen-ts-from-schemas.ts
 ```
 
@@ -180,7 +180,7 @@ import { compile } from 'json-schema-to-typescript'
 const schema = JSON.parse(fs.readFileSync('schemas/compendium.schema.json', 'utf-8'))
 
 const ts = await compile(schema, 'ResumeData', {
-  bannerComment: '/* This file is auto-generated. DO NOT EDIT. Run `npm run types:gen` to regenerate. */',
+  bannerComment: '/* This file is auto-generated. DO NOT EDIT. Run `just types-ts` to regenerate. */',
   style: {
     singleQuote: true,
     semi: false,
@@ -195,7 +195,7 @@ fs.writeFileSync('lib/types/generated-resume.ts', ts)
 Rust types (doc-gen/crates/core/src/types.rs)
   ↓ cargo run --bin schema_emitter
 JSON Schema (schemas/compendium.schema.json)
-  ↓ npm run types:gen
+  ↓ just types-ts
 Generated TS (lib/types/generated-resume.ts)
   ↓ re-exported by
 Canonical types (types/resume.ts) ← ALWAYS IMPORT FROM HERE
@@ -253,11 +253,11 @@ fs.writeFileSync('data/resume-data.json', JSON.stringify(transformed, null, 2))
 ```
 
 **Workflow:**
-1. Pull latest gist: `npm run data:pull`
+1. Pull latest gist: `just data-pull`
 2. Run transformation: `npx tsx scripts/transform-resume-data.ts`
-3. Validate: `npm run validate:gist`
-4. Test in app: `npm run dev`
-5. Push to gist: `npm run data:push`
+3. Validate: `just data-validate`
+4. Test in app: `just dev`
+5. Push to gist: `just data-push`
 
 ---
 
@@ -270,7 +270,7 @@ fs.writeFileSync('data/resume-data.json', JSON.stringify(transformed, null, 2))
   "scripts": {
     "validate:gist": "node -e \"JSON.parse(require('fs').readFileSync('data/resume-data.json', 'utf-8'))\"",
     "validate:template": "node -e \"JSON.parse(require('fs').readFileSync('data/resume-data-template.json', 'utf-8'))\"",
-    "check:drift": "npm run schemas:emit && npm run types:gen && git diff --exit-code schemas/ lib/types/"
+    "check:drift": "just types-schema && just types-ts && git diff --exit-code schemas/ lib/types/"
   }
 }
 ```
@@ -294,7 +294,7 @@ fs.writeFileSync('data/resume-data.json', JSON.stringify(transformed, null, 2))
 
 ### Prebuild Hook
 
-**When it runs:** Before every production build (Vercel, local `npm run build`)
+**When it runs:** Before every production build (Vercel, local `just build`)
 
 ```json
 {
@@ -322,13 +322,13 @@ fs.writeFileSync('data/resume-data.json', JSON.stringify(transformed, null, 2))
 ```yaml
 # .github/workflows/gist-deploy-trigger.yml
 - name: Fetch gist data
-  run: npm run data:pull -- --force
+  run: just data-pull -- --force
 
 - name: Validate JSON
   run: jq empty data/resume-data.json
 
 - name: Build
-  run: npm run build
+  run: just build
 ```
 
 **Key Points:**
@@ -371,16 +371,16 @@ Solution: Check RESUME_DATA_GIST_URL is correct raw URL
 ## Notes for AI Assistants
 
 **Before editing data/resume-data.json:**
-1. **ALWAYS** run `npm run data:pull` first to fetch latest from gist
+1. **ALWAYS** run `just data-pull` first to fetch latest from gist
 2. Edit the local file
-3. Validate with `npm run validate:gist`
-4. Test in Next.js app (`npm run dev`)
-5. Push to gist with `npm run data:push`
+3. Validate with `just data-validate`
+4. Test in Next.js app (`just dev`)
+5. Push to gist with `just data-push`
 
 **After changing Rust types:**
-1. Run `npm run schemas:emit` to regenerate JSON Schema
-2. Run `npm run types:gen` to regenerate TypeScript types
-3. Run `npm run validate:gist` to ensure data matches new schema
+1. Run `just types-schema` to regenerate JSON Schema
+2. Run `just types-ts` to regenerate TypeScript types
+3. Run `just data-validate` to ensure data matches new schema
 4. Commit both Rust changes AND generated files
 
 **For hybrid work (scripts + app):**
@@ -389,8 +389,8 @@ Solution: Check RESUME_DATA_GIST_URL is correct raw URL
 - Environment variables from `.env.local` auto-loaded by Node scripts
 
 **Common tasks:**
-- Sync gist data → `npm run data:pull`
-- Push local changes → `npm run data:push`
-- Regenerate types → `npm run types:gen`
-- Validate data → `npm run validate:gist`
+- Sync gist data → `just data-pull`
+- Push local changes → `just data-push`
+- Regenerate types → `just types-ts`
+- Validate data → `just data-validate`
 - Transform data → Create script in `scripts/`, run with `npx tsx`

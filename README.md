@@ -65,7 +65,7 @@ cd resumate
 just install
 
 # OR manually
-npm install
+bun install
 ```
 
 **Build System**: This project uses [justfile](https://github.com/casey/just) for build automation. Install with `brew install just` (macOS) or see [installation instructions](https://github.com/casey/just#installation).
@@ -209,7 +209,7 @@ This project uses [CodeRabbit](https://coderabbit.ai) for AI-powered code review
 
 **Installation**:
 ```bash
-npm install -g @coderabbit/cli
+bun install -g @coderabbit/cli
 coderabbit auth
 ```
 

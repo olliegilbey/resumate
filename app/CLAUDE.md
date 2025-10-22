@@ -224,8 +224,8 @@ components/__tests__/    # Component tests
 
 ### Running Tests
 ```bash
-npm run test        # Run all tests
-npm run test:watch  # Watch mode
+just test        # Run all tests
+just test-ts-watch  # Watch mode
 ```
 
 ---
@@ -252,18 +252,18 @@ npm run test:watch  # Watch mode
 ⚙️ next.config.js changes
 ⚙️ tailwind.config.ts changes
 ⚙️ New environment variables added
-⚙️ Package installations (npm install)
+⚙️ Package installations (bun install)
 
 ---
 
 ## Common Commands
 
 ```bash
-npm run dev              # Start dev server (Turbopack)
-npm run build            # Production build
-npm run lint             # ESLint
-npm run test             # Run tests
-npm run typecheck        # TypeScript check (npx tsc --noEmit)
+just dev              # Start dev server (Turbopack)
+just build            # Production build
+just check-ts             # ESLint
+just test             # Run tests
+just check-ts        # TypeScript check (just check-ts)
 ```
 
 ---
@@ -345,17 +345,17 @@ export async function POST(request: NextRequest) {
 ## Notes for AI Assistants
 
 **Before making changes:**
-1. Run `npm run typecheck` for TypeScript validation
-2. Run `npm run lint` for code quality
-3. Test in browser with `npm run dev`
+1. Run `just check-ts` for TypeScript validation
+2. Run `just check-ts` for code quality
+3. Test in browser with `just dev`
 
 **Common tasks:**
 - Adding new page → Create in `app/` with page.tsx
 - Adding new API route → Create in `app/api/` with route.ts
 - Adding new component → Create in `components/ui/` or `components/data/`
-- Styling changes → Use Tailwind classes, run `npx prettier --write` after
+- Styling changes → Use Tailwind classes, run `just fmt --write` after
 
 **For hybrid work (Next.js + Rust types):**
 - Also read `doc-gen/CLAUDE.md` for Rust context
 - Follow type sync patterns (Rust → Schema → TS)
-- Run `npm run schemas:emit && npm run types:gen` after Rust changes
+- Run `just types-schema && just types-ts` after Rust changes

@@ -309,7 +309,7 @@ Vercel Build Process:
 
 **Simulate gist fetch:**
 ```bash
-npm run data:pull -- --force
+just data-pull -- --force
 ```
 
 **Validate JSON:**
@@ -319,7 +319,7 @@ jq empty data/resume-data.json
 
 **Test build:**
 ```bash
-npm run build
+just build
 ```
 
 ---
@@ -404,8 +404,8 @@ npm run build
    ```yaml
    - name: Validate against schema
      run: |
-       npm ci
-       npm run validate:gist
+       bun install --frozen-lockfile
+       just data-validate
    ```
 
 3. **Diff Detection:**

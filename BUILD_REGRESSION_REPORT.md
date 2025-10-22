@@ -275,7 +275,7 @@ To prevent similar regressions:
 - [ ] Run `cargo clean` periodically (weekly in active dev)
 - [ ] Monitor `target/` size: `du -sh target/`
 - [ ] Check for stale test outputs: `find target/ -mtime +30`
-- [ ] Benchmark builds: `time npm run build`
+- [ ] Benchmark builds: `time just build`
 
 ### IDE Configuration
 - [ ] Add `target/` to IDE's excluded folders

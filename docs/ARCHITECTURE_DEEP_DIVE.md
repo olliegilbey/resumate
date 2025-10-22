@@ -122,7 +122,7 @@ ResumeData (root)
 **Inputs:** Rust types from `shared-types/src/lib.rs`
 **Outputs:** `schemas/resume.schema.json`
 **Key Function:** Uses `schemars::schema_for!(ResumeData)` to generate schema
-**Execution:** `cargo run --bin generate_schema` or `npm run schemas:emit`
+**Execution:** `cargo run --bin generate_schema` or `just types-schema`
 **Metadata:** Adds $comment with timestamp for auditability
 
 **Critical Role:** This is the ONE place where Rust→JSON Schema conversion happens.
@@ -328,7 +328,7 @@ This is a **TypeScript reimplementation** of the Rust scoring/selection algorith
 **Input:** `schemas/resume.schema.json` (from Rust schema_emitter)
 **Output:** `lib/types/generated-resume.ts`
 **Library:** `json-schema-to-typescript`
-**Execution:** `npm run types:gen` or `npx tsx scripts/gen-ts-from-schemas.ts`
+**Execution:** `just types-ts` or `npx tsx scripts/gen-ts-from-schemas.ts`
 
 **Process:**
 1. Read JSON Schema from `schemas/resume.schema.json`
@@ -341,7 +341,7 @@ This is a **TypeScript reimplementation** of the Rust scoring/selection algorith
 ```typescript
 /**
  * Generated TypeScript types from Rust schemas
- * DO NOT EDIT MANUALLY - Generated via: npm run types:gen
+ * DO NOT EDIT MANUALLY - Generated via: just types-ts
  * Source: schemas/resume.schema.json
  */
 ```
@@ -354,7 +354,7 @@ This is a **TypeScript reimplementation** of the Rust scoring/selection algorith
 **Critical Role:** This is step 2 of 3 in the type synchronization flow:
 ```
 1. Rust types → JSON Schema (cargo run --bin generate_schema)
-2. JSON Schema → TypeScript (npm run types:gen) ← THIS FILE
+2. JSON Schema → TypeScript (just types-ts) ← THIS FILE
 3. Re-export for app (types/resume.ts)
 ```
 
@@ -362,7 +362,7 @@ This is a **TypeScript reimplementation** of the Rust scoring/selection algorith
 - Depends on: `schemas/resume.schema.json` (from Rust)
 - Generates: `lib/types/generated-resume.ts`
 - Used by: `types/resume.ts` (re-exports)
-- Triggers: `npm run types:gen` after schema changes
+- Triggers: `just types-ts` after schema changes
 
 
 ---
@@ -389,7 +389,7 @@ This is a **TypeScript reimplementation** of the Rust scoring/selection algorith
 │ - Used for TypeScript generation                               │
 └────────────────┬────────────────────────────────────────────────┘
                  │
-                 │ npm run types:gen
+                 │ just types-ts
                  ↓
 ┌─────────────────────────────────────────────────────────────────┐
 │ GENERATED TYPESCRIPT TYPES                                      │
@@ -429,7 +429,7 @@ This is a **TypeScript reimplementation** of the Rust scoring/selection algorith
 │ - Auto-triggers Vercel deploy via webhook                      │
 └────────────────┬────────────────────────────────────────────────┘
                  │
-                 │ npm run data:pull (or prebuild hook)
+                 │ just data-pull (or prebuild hook)
                  ↓
 ┌─────────────────────────────────────────────────────────────────┐
 │ LOCAL DATA FILE                                                 │
@@ -513,11 +513,11 @@ This is a **TypeScript reimplementation** of the Rust scoring/selection algorith
                  ↓
 ┌─────────────────────────────────────────────────────────────────┐
 │ VERCEL BUILD                                                    │
-│ 1. Install dependencies (npm install)                          │
+│ 1. Install dependencies (bun install)                          │
 │ 2. Prebuild: npm run prebuild                                  │
 │    └─> scripts/fetch-gist-data.js --force                      │
 │        └─> Downloads latest resume data from gist              │
-│ 3. Build: npm run build                                        │
+│ 3. Build: just build                                        │
 │    └─> Next.js production build                                │
 │    └─> Bundles resume data into static chunks                  │
 │ 4. Deploy to Vercel CDN                                        │
@@ -583,7 +583,7 @@ This is a **TypeScript reimplementation** of the Rust scoring/selection algorith
 - `.vercel/project.json`: Vercel project config
 - `Cargo.toml`: Rust workspace config (root)
 - `package.json`: NPM scripts, dependencies
-- `package-lock.json`: NPM lockfile (auto-generated)
+- `bun.lock`: NPM lockfile (auto-generated)
 - `tsconfig.json`: TypeScript compiler config
 - `next.config.ts`: Next.js configuration
 - `vitest.config.ts`: Vitest test runner config
@@ -764,7 +764,7 @@ These files exist but have minimal implementation (placeholders for Phase 5):
 ⚠️ **AUTO-GENERATED - Do not modify:**
 1. `lib/types/generated-resume.ts`: From JSON Schema
 2. `schemas/resume.schema.json`: From Rust types
-3. `package-lock.json`: From npm
+3. `bun.lock`: From npm
 4. `Cargo.lock`: From cargo
 5. `doc-gen/pkg/*`: From wasm-pack build
 
@@ -804,7 +804,7 @@ graph TB
         
         JSON_SCHEMA["<b>schemas/resume.schema.json</b><br/>━━━━━━━━━━━━<br/>Generated JSON Schema<br/>• $comment with timestamp<br/>• Used for TS generation"]
         
-        TS_GEN["<b>gen-ts-from-schemas.ts</b><br/>━━━━━━━━━━━━<br/>TypeScript Generator<br/>• json-schema-to-typescript<br/>• npm run types:gen"]
+        TS_GEN["<b>gen-ts-from-schemas.ts</b><br/>━━━━━━━━━━━━<br/>TypeScript Generator<br/>• json-schema-to-typescript<br/>• just types-ts"]
         
         GEN_TS["<b>lib/types/generated-resume.ts</b><br/>━━━━━━━━━━━━<br/>Generated TypeScript<br/>• AUTO-GENERATED<br/>• Never edit manually"]
         
@@ -932,8 +932,8 @@ graph TB
     subgraph SCRIPTS["🔧 Scripts & Tooling"]
         direction TB
         
-        FETCH_SCRIPT["fetch-gist-data.js<br/>━━━━━━━━━━━━<br/>Gist → Local<br/>npm run data:pull"]
-        PUSH_SCRIPT["gist-push.js<br/>━━━━━━━━━━━━<br/>Local → Gist<br/>npm run data:push"]
+        FETCH_SCRIPT["fetch-gist-data.js<br/>━━━━━━━━━━━━<br/>Gist → Local<br/>just data-pull"]
+        PUSH_SCRIPT["gist-push.js<br/>━━━━━━━━━━━━<br/>Local → Gist<br/>just data-push"]
         VIEW_SCRIPT["gist-view.js<br/>View gist in terminal"]
     end
 
@@ -972,10 +972,10 @@ graph TB
     %% =============================================================================
     
     %% External to Internal
-    GIST -->|npm run data:pull| FETCH_SCRIPT
+    GIST -->|just data-pull| FETCH_SCRIPT
     FETCH_SCRIPT -->|Writes| LOCAL_DATA
     LOCAL_DATA -->|Build time import| NEXTJS
-    PUSH_SCRIPT -->|npm run data:push| GIST
+    PUSH_SCRIPT -->|just data-push| GIST
     
     %% Vercel Build Pipeline
     VERCEL -->|Prebuild: fetch gist| FETCH_SCRIPT

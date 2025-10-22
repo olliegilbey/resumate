@@ -23,7 +23,7 @@ fn load_resume_data() -> ResumeData {
 
     let json = std::fs::read_to_string(&data_path).unwrap_or_else(|e| {
         panic!(
-            "Failed to read resume-data.json from {:?}: {}. Run npm run data:pull first",
+            "Failed to read resume-data.json from {:?}: {}. Run just data-pull first",
             data_path, e
         )
     });

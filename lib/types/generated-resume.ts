@@ -1,6 +1,6 @@
 /**
  * Generated TypeScript types from Rust schemas
- * DO NOT EDIT MANUALLY - Generated via: npm run types:gen
+ * DO NOT EDIT MANUALLY - Generated via: just types-ts
  * Source: schemas/resume.schema.json
  */
 

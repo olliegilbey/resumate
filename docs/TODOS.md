@@ -241,7 +241,7 @@
 - ⚠️ **ALWAYS** `just data-pull` before editing data/resume-data.json
 - ⚠️ **ALWAYS** run `just types-sync` after changing Rust types
 - ⚠️ **NEVER** import from `lib/types/generated-resume.ts` (use `types/resume.ts`)
-- ⚠️ **NEVER** run `npm run build` unnecessarily (slow, only for production)
+- ⚠️ **NEVER** run `just build` unnecessarily (slow, only for production)
 - ⚠️ Use `just` commands for all common tasks (40+ targets available)
 
 ### Quick Reference

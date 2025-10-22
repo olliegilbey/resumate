@@ -6,8 +6,8 @@
  * Extracts gist ID from RESUME_DATA_GIST_URL and pushes data/resume-data.json
  *
  * Usage:
- *   npm run data:push           # Interactive (warns if gist is newer)
- *   npm run data:push -- --force # Skip prompts (for automation)
+ *   just data-push           # Interactive (warns if gist is newer)
+ *   just data-push -- --force # Skip prompts (for automation)
  */
 
 import { spawnSync } from 'child_process';
@@ -128,7 +128,7 @@ async function pushToGist() {
 
         if (!confirmed) {
           console.log('❌ Aborted. Gist unchanged.');
-          console.log('💡 Tip: Run "npm run data:pull" to sync gist → local first.');
+          console.log('💡 Tip: Run "just data-pull" to sync gist → local first.');
           process.exit(0);
         }
       }

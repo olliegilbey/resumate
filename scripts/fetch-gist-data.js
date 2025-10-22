@@ -7,8 +7,8 @@
  * If RESUME_DATA_GIST_URL is not set, it skips (uses local data/resume-data.json).
  *
  * Usage:
- *   npm run data:pull           # Interactive (prompts if local differs)
- *   npm run data:pull -- --force # Skip prompts (for automation)
+ *   just data-pull           # Interactive (prompts if local differs)
+ *   just data-pull -- --force # Skip prompts (for automation)
  *
  * Environment:
  *   - Local: Set RESUME_DATA_GIST_URL in .env.local

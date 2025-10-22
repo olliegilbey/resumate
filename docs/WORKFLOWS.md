@@ -4,12 +4,12 @@
 **Key principle**: Claude proactively catches errors before user testing whenever possible.
 
 **When Claude makes changes:**
-- **Automatic type-checking** before major refactors: `npx tsc --noEmit`
-- **Lint checks** when modifying multiple files: `npm run lint`
+- **Automatic type-checking** before major refactors: `just check-ts`
+- **Lint checks** when modifying multiple files: `just check-ts`
 - **Proactive validation** for TypeScript interface changes, new imports, or dependency updates
 
 **User's role:**
-- Keep `npm run dev` running in terminal (monitor for errors)
+- Keep `just dev` running in terminal (monitor for errors)
 - Watch browser for error overlay (Next.js shows red screen with stack trace)
 - Report any errors to Claude with terminal output or browser console logs
 
@@ -31,14 +31,14 @@
 - 💪 Static assets not updating
 - 💪 Cloudflare Turnstile widget issues
 
-**Requires dev server restart** (`Ctrl+C` then `npm run dev`):
+**Requires dev server restart** (`Ctrl+C` then `just dev`):
 - ⚙️ next.config.js changes
 - ⚙️ tailwind.config.ts changes
 - ⚙️ New environment variables added
-- ⚙️ Package installations (npm install)
+- ⚙️ Package installations (bun install)
 
 **NEVER needed in development:**
-- ❌ `npm run build` (only for production testing/deployment)
+- ❌ `just build` (only for production testing/deployment)
 - ❌ Vercel handles builds automatically on deploy
 
 ### Claude's Responsibilities

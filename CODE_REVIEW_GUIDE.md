@@ -314,7 +314,7 @@ apply_diversity_constraints()       # Enforces limits
 Rust types (doc-gen/crates/core/src/types.rs)
   ↓ cargo run --bin schema_emitter
 JSON Schema (schemas/compendium.schema.json)
-  ↓ npm run types:gen
+  ↓ just types-ts
 Generated TS (lib/types/generated-resume.ts)
   ↓ re-exported by
 Canonical (types/resume.ts) ← ALWAYS IMPORT FROM HERE
@@ -353,7 +353,7 @@ Canonical (types/resume.ts) ← ALWAYS IMPORT FROM HERE
 #### C. Package Updates
 **Files:**
 - `package.json` (added proptest, updated test scripts)
-- `package-lock.json` (auto-generated)
+- `bun.lock` (auto-generated)
 - `Cargo.toml` (workspace config)
 - `Cargo.lock` (auto-generated)
 
@@ -581,9 +581,9 @@ Rust: No warnings
 ## ✅ Pre-Merge Checklist
 
 - [ ] All 361 tests passing locally
-- [ ] TypeScript compilation clean (`npm run typecheck`)
+- [ ] TypeScript compilation clean (`just check-ts`)
 - [ ] Rust compilation clean (`cargo check --all`)
-- [ ] Production build succeeds (`npm run build`)
+- [ ] Production build succeeds (`just build`)
 - [ ] No security vulnerabilities in new dependencies
 - [ ] Documentation is up to date
 - [ ] Generated files are not manually edited

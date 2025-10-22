@@ -137,21 +137,21 @@ pub scoring_weights: ScoringWeights
 ### 2. Regenerate Schema & Types
 
 ```bash
-npm run schemas:emit  # Generate JSON Schema from Rust
-npm run types:gen     # Generate TypeScript from JSON Schema
+just types-schema  # Generate JSON Schema from Rust
+just types-ts     # Generate TypeScript from JSON Schema
 ```
 
 ### 3. Update Data (if schema changed)
 
 ```bash
 # Add new fields to data/resume-data.json
-npm run validate:gist data/resume-data.json
+just data-validate data/resume-data.json
 ```
 
 ### 4. Check for Drift
 
 ```bash
-npm run check:drift  # Ensures schemas/types are in sync with Rust
+just types-drift  # Ensures schemas/types are in sync with Rust
 ```
 
 ### 5. Commit
@@ -184,7 +184,7 @@ pub struct Company {
 **Step 2**: Regenerate
 
 ```bash
-npm run schemas:emit && npm run types:gen
+just types-schema && just types-ts
 ```
 
 **Step 3**: Update Data
@@ -231,8 +231,8 @@ npm run schemas:emit && npm run types:gen
 ### ❌ Don't forget to validate after changes
 
 ```bash
-npm run validate:gist data/resume-data.json
-npm run validate:template
+just data-validate data/resume-data.json
+just data-validate-template
 ```
 
 ### ✅ Do use descriptive field names
@@ -250,7 +250,7 @@ pub co_pri: Option<u8>
 -   **Schema emitter**: `cargo run --bin schema_emitter`
 -   **Type generator**: `tsx scripts/gen-ts-from-schemas.ts`
 -   **Validator**: `node scripts/validate-compendium.mjs <file>`
--   **Drift checker**: `npm run check:drift`
+-   **Drift checker**: `just types-drift`
 
 ## Migration from Old Approach
 

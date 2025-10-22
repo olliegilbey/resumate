@@ -18,7 +18,7 @@ default:
 # Start Next.js dev server with Turbopack
 dev:
     @echo "🚀 Starting dev server..."
-    npm run dev
+    bun dev
 
 # ============================================
 # Building
@@ -28,9 +28,9 @@ dev:
 build:
     @echo "📦 Building production bundle..."
     @echo "  → Fetching resume data from gist..."
-    node scripts/fetch-gist-data.js --force
+    bun scripts/fetch-gist-data.js --force
     @echo "  → Building Next.js with Turbopack..."
-    npm run build
+    bun run build
     @echo "✅ Build complete"
 
 # Build WASM with fonts (release mode)
@@ -66,19 +66,19 @@ wasm-fonts:
 # Generate JSON Schema from Rust types
 types-schema:
     @echo "🔧 Generating JSON Schema from Rust..."
-    cargo run --bin schema_emitter -p shared-types
+    cargo run --bin generate_schema -p shared-types
     @echo "  → schemas/resume.schema.json"
 
 # Generate TypeScript types from JSON Schema
 types-ts:
     @echo "🔧 Generating TypeScript types..."
-    npm run types:gen
+    bun types:gen
     @echo "  → lib/types/generated-resume.ts"
 
 # Full type sync pipeline: Rust → Schema → TypeScript
 types-sync: types-schema types-ts
     @echo "✓ Validating type synchronization..."
-    npm run typecheck
+    bun typecheck
     cargo check --all
     @echo "✅ Types synchronized and validated"
 
@@ -102,37 +102,37 @@ types-drift:
 # Pull resume data from GitHub Gist
 data-pull:
     @echo "📥 Fetching resume data from gist..."
-    node scripts/fetch-gist-data.js
+    bun scripts/fetch-gist-data.js
 
 # Pull resume data (force overwrite local changes)
 data-pull-force:
     @echo "📥 Fetching resume data (force overwrite)..."
     @echo "⚠️  This will overwrite any local changes"
-    node scripts/fetch-gist-data.js --force
+    bun scripts/fetch-gist-data.js --force
 
 # Push resume data to GitHub Gist
 data-push:
     @echo "📤 Pushing resume data to gist..."
     @echo "  → Validating data..."
-    node scripts/validate-compendium.mjs data/resume-data.json
+    bun scripts/validate-compendium.mjs data/resume-data.json
     @echo "  → Uploading..."
-    node scripts/gist-push.js
+    bun scripts/gist-push.js
     @echo "✅ Data pushed successfully"
 
 # View current gist URL
 data-view:
     @echo "🔗 Current gist URL:"
-    @node scripts/gist-view.js
+    @bun scripts/gist-view.js
 
 # Validate resume data against schema
 data-validate:
     @echo "✓ Validating resume data..."
-    node scripts/validate-compendium.mjs data/resume-data.json
+    bun scripts/validate-compendium.mjs data/resume-data.json
 
 # Validate template file
 data-validate-template:
     @echo "✓ Validating template..."
-    node scripts/validate-compendium.mjs data/resume-data-template.json
+    bun scripts/validate-compendium.mjs data/resume-data-template.json
 
 # ============================================
 # Testing
@@ -155,17 +155,17 @@ test-rust-verbose:
 # Run TypeScript tests with Vitest
 test-ts:
     @echo "🧪 Running TypeScript tests..."
-    npm run test
+    bun test
 
 # Run TypeScript tests in watch mode
 test-ts-watch:
     @echo "🧪 Running TypeScript tests (watch mode)..."
-    npm run test:watch
+    bun test:watch
 
 # Run TypeScript tests with UI
 test-ts-ui:
     @echo "🧪 Opening Vitest UI..."
-    npm run test:ui
+    bun test:ui
 
 # Run specific Rust test by name
 test-rust-filter PATTERN:
@@ -183,9 +183,9 @@ check: check-ts check-rust
 # Run TypeScript type checking and linting
 check-ts:
     @echo "✓ Type checking TypeScript..."
-    npm run typecheck
+    bun typecheck
     @echo "✓ Running ESLint..."
-    npm run lint
+    bun lint
 
 # Run Rust clippy and formatting checks
 check-rust:
@@ -201,7 +201,7 @@ fmt:
     @echo "🎨 Formatting Rust code..."
     cargo fmt --all
     @echo "🎨 Formatting TypeScript code..."
-    npx prettier --write "**/*.{ts,tsx,js,jsx,json,md}"
+    bun x prettier --write "**/*.{ts,tsx,js,jsx,json,md}"
     @echo "✅ Code formatted"
 
 # ============================================
@@ -219,8 +219,8 @@ outdated:
     @echo "📦 Checking for outdated Rust dependencies..."
     @cargo outdated --workspace --root-deps-only
     @echo ""
-    @echo "📦 Checking for outdated npm dependencies..."
-    @npm outdated || true
+    @echo "📦 Checking for outdated bun dependencies..."
+    @bun pm outdated || true
 
 # Show dependency status (audit + outdated)
 deps-status: audit outdated
@@ -253,13 +253,13 @@ clean-wasm:
 # Clean node_modules (nuclear option)
 clean-node:
     @echo "🧹 Cleaning node_modules (500MB+)..."
-    @echo "⚠️  Run npm install to restore"
+    @echo "⚠️  Run bun install to restore"
     rm -rf node_modules
 
 # Clean everything including dependencies
 clean-all: clean clean-node
     @echo "✅ Everything cleaned"
-    @echo "   Run: npm install && just wasm"
+    @echo "   Run: bun install && just wasm"
 
 # ============================================
 # Utilities
@@ -319,8 +319,8 @@ health:
 # Install all dependencies (fresh setup)
 install:
     @echo "📦 Installing dependencies..."
-    @echo "  → NPM packages..."
-    npm install
+    @echo "  → Bun packages..."
+    bun install
     @echo "  → Cargo dependencies..."
     cargo fetch
     @echo ""
@@ -351,7 +351,7 @@ pre-commit:
     @echo "  → Formatting code..."
     @cargo fmt --all
     @echo "  → Type checking..."
-    @npm run typecheck
+    @bun typecheck
     @echo "  → Cargo check..."
     @cargo check --all
     @echo "✅ Pre-commit checks passed"

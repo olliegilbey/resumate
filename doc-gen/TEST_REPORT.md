@@ -229,7 +229,7 @@ Tests       236 passed (236)
 Duration    ~0.02s
 ```
 
-**TypeScript (npm run test):**
+**TypeScript (just test):**
 ```
 Test Files  7 passed (7)
 Tests       125 passed (125)
@@ -259,7 +259,7 @@ Duration    ~2.1s
 ## Continuous Improvement
 
 ### Test Maintenance Guidelines
-- Run full test suite before commits: `cargo test --all && npm run test`
+- Run full test suite before commits: `cargo test --all && just test`
 - Add tests for new features before implementation (TDD)
 - Update test data when schema changes
 - Keep test documentation current
@@ -280,10 +280,10 @@ Duration    ~2.1s
 cargo test --all
 
 # TypeScript
-npm run test
+just test
 
 # Watch mode
-npm run test:watch
+just test-ts-watch
 
 # With output
 cargo test --all -- --nocapture
@@ -298,7 +298,7 @@ cargo test --test pdf_permutation
 cargo test --test integration_test
 
 # API route tests only
-npm run test -- app/api/resume/select
+just test -- app/api/resume/select
 
 # Property-based tests
 cargo test -p docgen-core proptests

@@ -194,7 +194,7 @@ Each level uses the generic `children` field to contain the next level, creating
 Rust types (doc-gen/crates/core/src/types.rs)
   ↓ cargo run --bin schema_emitter
 JSON Schema (schemas/compendium.schema.json)
-  ↓ npm run types:gen
+  ↓ just types-ts
 Generated TypeScript (lib/types/generated-resume.ts)
   ↓ re-exported by
 Canonical types (types/resume.ts) ← ALWAYS IMPORT FROM HERE
@@ -247,7 +247,7 @@ All levels use consistent patterns:
 
 The resume data is stored in a GitHub Gist and automatically deployed to production:
 1. Edit `resume-data.json` in your gist
-2. Push changes with `npm run data:push`
+2. Push changes with `just data-push`
 3. Hourly GitHub Action checks for updates
 4. If changed, triggers Vercel deployment
 5. New role profiles appear in the UI automatically

@@ -17,8 +17,8 @@
 
 **5.0.1: Install Dependencies**
 ```bash
-npm install valibot
-npm install -D typeshare-cli  # OR cargo install typeshare-cli (verify method)
+bun install valibot
+bun install -D typeshare-cli  # OR cargo install typeshare-cli (verify method)
 ```
 
 **5.0.2: Create `schema/resume.ts`**
@@ -112,7 +112,7 @@ console.log('✅ Resume data is valid');
     ],
     "*.{ts,tsx}": [
       "eslint --fix",
-      "bash -c 'npx tsc --noEmit'"
+      "bash -c 'just check-ts'"
     ],
     "doc-gen/**/*.rs": [
       "bash -c 'cd doc-gen && cargo fmt --all'",
@@ -146,14 +146,14 @@ console.log('✅ Resume data is valid');
 - Run validation to ensure template is valid
 
 **5.0.13: Migrate Actual Data**
-- Run `npm run data:pull` to get latest
+- Run `just data-pull` to get latest
 - Add hierarchy fields to your actual `data/resume-data.json`:
   - Add `companyTags` and `companyPriority` to each company
   - Add `scoringWeights: { tagRelevance: 0.6, priority: 0.4 }` to each roleProfile
 - Run validation locally
 
 **5.0.14: Test Validation**
-- Run `npm run validate:template` - should pass
+- Run `just data-validate-template` - should pass
 - Run `npm run validate:data` - should pass
 - Test with intentionally broken data (weights sum to 0.8) - should fail with good error
 
@@ -168,13 +168,13 @@ console.log('✅ Resume data is valid');
 - Update any direct type definitions to use generated types
 
 **5.0.17: Test Full Build**
-- `npm run dev` - should start without errors
-- `npx tsc --noEmit` - should pass
-- `npm run build` - should complete (will fetch gist and validate)
+- `just dev` - should start without errors
+- `just check-ts` - should pass
+- `just build` - should complete (will fetch gist and validate)
 - Browse app - should work normally
 
 **5.0.18: Push to Gist**
-- Run `npm run data:push` - validation should pass, push to gist
+- Run `just data-push` - validation should pass, push to gist
 - Verify gist contains new hierarchy fields
 
 **5.0.19: Document Conventions**
