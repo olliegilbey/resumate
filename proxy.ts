@@ -75,7 +75,7 @@ function checkRateLimit(ip: string, maxRequests: number = 30, windowMs: number =
   return true
 }
 
-export function middleware(request: NextRequest) {
+export function proxy(request: NextRequest) {
   const userAgent = request.headers.get('user-agent') || ''
 
   // Get IP from trusted sources only (prevents header spoofing)
