@@ -5,7 +5,7 @@
 
 use chrono::NaiveDate;
 use docgen_core::scoring::ScoredBullet;
-use docgen_pdf::GenerationPayload;  // Temporary: using pdf's payload definition
+use docgen_core::GenerationPayload;
 use serde_json::Value as JsonValue;
 use std::collections::HashMap;
 
@@ -86,11 +86,13 @@ fn group_bullets_by_hierarchy(bullets: &[ScoredBullet]) -> Vec<CompanyData> {
         let position_id = &scored_bullet.position_id;
 
         // Get or create company entry
-        let company_data = companies_map.entry(company_id.clone()).or_insert_with(|| CompanyData {
-            name: scored_bullet.company_name.clone().unwrap_or_default(),
-            location: scored_bullet.bullet.location.clone().unwrap_or_default(),
-            positions: HashMap::new(),
-        });
+        let company_data = companies_map
+            .entry(company_id.clone())
+            .or_insert_with(|| CompanyData {
+                name: scored_bullet.company_name.clone().unwrap_or_default(),
+                location: scored_bullet.bullet.location.clone().unwrap_or_default(),
+                positions: HashMap::new(),
+            });
 
         // Get or create position entry within company
         let position_data = company_data
@@ -104,7 +106,9 @@ fn group_bullets_by_hierarchy(bullets: &[ScoredBullet]) -> Vec<CompanyData> {
             });
 
         // Add bullet description to position
-        position_data.bullets.push(scored_bullet.bullet.description.clone());
+        position_data
+            .bullets
+            .push(scored_bullet.bullet.description.clone());
     }
 
     // Convert HashMap to sorted Vec (preserving order from scored bullets)
@@ -224,19 +228,34 @@ mod tests {
 
     #[test]
     fn test_format_date_range_no_end() {
-        assert_eq!(format_date_range(Some("2020-01"), None), "Jan 2020 - Present");
+        assert_eq!(
+            format_date_range(Some("2020-01"), None),
+            "Jan 2020 - Present"
+        );
     }
 
     #[test]
     fn test_format_date_range_present_string() {
-        assert_eq!(format_date_range(Some("2020-01"), Some("present")), "Jan 2020 - Present");
-        assert_eq!(format_date_range(Some("2020-01"), Some("Present")), "Jan 2020 - Present");
-        assert_eq!(format_date_range(Some("2020-01"), Some("PRESENT")), "Jan 2020 - Present");
+        assert_eq!(
+            format_date_range(Some("2020-01"), Some("present")),
+            "Jan 2020 - Present"
+        );
+        assert_eq!(
+            format_date_range(Some("2020-01"), Some("Present")),
+            "Jan 2020 - Present"
+        );
+        assert_eq!(
+            format_date_range(Some("2020-01"), Some("PRESENT")),
+            "Jan 2020 - Present"
+        );
     }
 
     #[test]
     fn test_format_date_range_empty_end() {
-        assert_eq!(format_date_range(Some("2020-01"), Some("")), "Jan 2020 - Present");
+        assert_eq!(
+            format_date_range(Some("2020-01"), Some("")),
+            "Jan 2020 - Present"
+        );
     }
 
     #[test]

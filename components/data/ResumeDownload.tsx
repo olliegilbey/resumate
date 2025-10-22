@@ -236,31 +236,26 @@ export function ResumeDownload({ resumeData }: ResumeDownloadProps) {
   return (
     <div className="space-y-4">
       {/* Role Selection Dropdown */}
-      <div>
-        <label
-          htmlFor="role-select"
-          className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2"
-        >
-          Select Role Profile
-        </label>
-        <select
-          id="role-select"
-          value={selectedRoleId}
-          onChange={(e) => {
-            setSelectedRoleId(e.target.value)
-            setErrorMessage(null)
-          }}
-          disabled={isLoading}
-          className="w-full px-4 py-2 bg-white dark:bg-slate-800 border border-slate-300 dark:border-slate-600 rounded-lg text-slate-900 dark:text-slate-100 focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
-        >
-          <option value="">Choose a role...</option>
-          {roleProfiles.map((profile: RoleProfile) => (
-            <option key={profile.id} value={profile.id}>
-              {profile.name}
-            </option>
-          ))}
-        </select>
-      </div>
+      <select
+        id="role-select"
+        value={selectedRoleId}
+        onChange={(e) => {
+          setSelectedRoleId(e.target.value)
+          setErrorMessage(null)
+        }}
+        disabled={isLoading}
+        className="w-full pl-4 pr-12 py-2 bg-white dark:bg-slate-800 border border-slate-300 dark:border-slate-600 rounded-lg text-slate-900 dark:text-slate-100 focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-colors disabled:opacity-50 disabled:cursor-not-allowed appearance-none bg-[length:1.5rem] bg-[position:right_0.75rem_center] bg-no-repeat"
+        style={{
+          backgroundImage: `url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 20 20'%3e%3cpath stroke='%236b7280' stroke-linecap='round' stroke-linejoin='round' stroke-width='1.5' d='M6 8l4 4 4-4'/%3e%3c/svg%3e")`
+        }}
+      >
+        <option value="">Choose a role...</option>
+        {roleProfiles.map((profile: RoleProfile) => (
+          <option key={profile.id} value={profile.id}>
+            {profile.name}
+          </option>
+        ))}
+      </select>
 
       {/* Download Button */}
       <Button

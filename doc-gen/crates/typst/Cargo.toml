@@ -25,7 +25,6 @@ ecow = { workspace = true }
 
 # Local dependencies
 docgen-core = { workspace = true }
-docgen-pdf = { workspace = true }  # Temporary: for GenerationPayload type
 
 # Additional utilities
 chrono = "0.4"

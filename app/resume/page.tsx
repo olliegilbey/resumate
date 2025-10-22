@@ -55,7 +55,7 @@ export default function ResumePage() {
 
         <div className="grid md:grid-cols-2 gap-8 mb-12">
           {/* Download Resume Card */}
-          <GlassPanel padding="lg" align="center">
+          <GlassPanel padding="lg" align="center" className="flex flex-col">
             <div className="w-16 h-16 bg-blue-100 dark:bg-blue-900/30 rounded-xl flex items-center justify-center mx-auto mb-6">
               <Download className="h-8 w-8 text-blue-600 dark:text-blue-400" />
             </div>
@@ -65,11 +65,13 @@ export default function ResumePage() {
             <p className="text-slate-600 dark:text-slate-300 mb-6">
               Role-tailored PDF with intelligent bullet selection and scoring.
             </p>
-            <ResumeDownload resumeData={resumeData as unknown as ResumeData} />
+            <div className="mt-auto w-full">
+              <ResumeDownload resumeData={resumeData as unknown as ResumeData} />
+            </div>
           </GlassPanel>
 
           {/* Explore Experience Card */}
-          <GlassPanel padding="lg" align="center">
+          <GlassPanel padding="lg" align="center" className="flex flex-col">
             <div className="w-16 h-16 bg-purple-100 dark:bg-purple-900/30 rounded-xl flex items-center justify-center mx-auto mb-6">
               <Eye className="h-8 w-8 text-purple-600 dark:text-purple-400" />
             </div>
@@ -79,12 +81,14 @@ export default function ResumePage() {
             <p className="text-slate-600 dark:text-slate-300 mb-6">
               Interactive data explorer with filtering, search, and detailed context.
             </p>
-            <Link href="/resume/view">
-              <Button size="lg" variant="secondary" className="w-full">
-                View Experience
-                <Eye className="ml-2 h-4 w-4" />
-              </Button>
-            </Link>
+            <div className="mt-auto w-full">
+              <Link href="/resume/view">
+                <Button size="lg" variant="secondary" className="w-full">
+                  View Experience
+                  <Eye className="ml-2 h-4 w-4" />
+                </Button>
+              </Link>
+            </div>
           </GlassPanel>
         </div>
 

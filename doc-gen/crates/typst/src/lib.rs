@@ -9,7 +9,7 @@
 //!
 //! ```no_run
 //! use docgen_typst::render_resume;
-//! use docgen_pdf::GenerationPayload;
+//! use docgen_core::GenerationPayload;
 //!
 //! # fn main() -> Result<(), Box<dyn std::error::Error>> {
 //! let payload: GenerationPayload = serde_json::from_str("{...}")?;
@@ -26,7 +26,7 @@ pub mod compiler;
 pub mod fonts;
 pub mod template;
 
-use docgen_pdf::GenerationPayload;
+use docgen_core::GenerationPayload;
 use thiserror::Error;
 
 /// Errors that can occur during Typst PDF generation
@@ -67,10 +67,7 @@ pub enum TypstError {
 /// # Ok(())
 /// # }
 /// ```
-pub fn render_resume(
-    payload: &GenerationPayload,
-    dev_mode: bool,
-) -> Result<Vec<u8>, TypstError> {
+pub fn render_resume(payload: &GenerationPayload, dev_mode: bool) -> Result<Vec<u8>, TypstError> {
     // 1. Prepare data for template
     let template_data = template::prepare_template_data(payload);
 
@@ -113,8 +110,14 @@ fn render_template(
 
     // Document settings
     output.push_str("#set document(\n");
-    output.push_str(&format!("  title: \"Resume - {}\",\n", personal["name"].as_str().unwrap_or("Unknown")));
-    output.push_str(&format!("  author: (\"{}\",),\n", personal["name"].as_str().unwrap_or("Unknown")));
+    output.push_str(&format!(
+        "  title: \"Resume - {}\",\n",
+        personal["name"].as_str().unwrap_or("Unknown")
+    ));
+    output.push_str(&format!(
+        "  author: (\"{}\",),\n",
+        personal["name"].as_str().unwrap_or("Unknown")
+    ));
     output.push_str(")\n\n");
 
     output.push_str("#set page(\n");
@@ -129,7 +132,10 @@ fn render_template(
 
     // Header
     output.push_str("#align(center)[\n");
-    output.push_str(&format!("  #text(size: 18pt, weight: \"bold\")[{}]\n", personal["name"].as_str().unwrap_or("Unknown")));
+    output.push_str(&format!(
+        "  #text(size: 18pt, weight: \"bold\")[{}]\n",
+        personal["name"].as_str().unwrap_or("Unknown")
+    ));
     output.push_str("\n  #v(0.3em)\n\n");
     output.push_str("  #text(size: 9pt)[\n");
     // Use raw text for email to avoid Typst auto-link/label interpretation
@@ -264,4 +270,3 @@ mod tests {
         assert_eq!(&pdf_bytes[0..4], b"%PDF");
     }
 }
-
