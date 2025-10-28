@@ -1,264 +1,141 @@
-# Active Tasks & Todos
-
-**Last Updated:** 2025-10-20
-
+---
+last_updated: 2025-10-28
+category: Active Tasks & Todos
+update_frequency: Daily
+retention_policy: Delete completed tasks >7 days old (history preserved in git)
 ---
 
-## 🎯 Current Sprint: Build Optimization & Documentation
+# Active Tasks & Todos
 
-### ✅ Recently Completed (2025-10-20)
-
-- [x] **Build Performance Optimization**
-  - Root caused 3x build regression (24s → 7.5s, 66% improvement!)
-  - Added Rust patterns to .gitignore (target/, *.rs.bk, pkg/)
-  - Updated tsconfig.json to exclude target/ from TypeScript scanning
-
-- [x] **Build Automation with justfile**
-  - Created comprehensive justfile with 40+ targets
-  - Covers development, building, testing, cleaning, data management
-  - Justfile is now canonical build system (documented everywhere)
-
-- [x] **Documentation Updates**
-  - Updated STATUS.md with Typst migration and build fix
-  - Rewrote COMMANDS.md to feature justfile commands first
-  - Updated ARCHITECTURE.md to remove DOCX references
-  - Updated .claude/CLAUDE.md and README.md to mention justfile
-  - Updated doc-gen/CLAUDE.md to reflect Typst-only approach
-
-### ✅ Previously Completed (2025-10-18)
-
-- [x] **Typst PDF Generation Migration**
-  - Migrated from manual pdf-writer to Typst typesetting system
-  - Automatic pagination and professional typography
-  - Template-based design (resume.typ)
-  - Removed DOCX generation (focus on high-quality PDF)
-  - Sub-1s generation time in WASM
-
-### ✅ Previously Completed (2025-10-14)
-
-- [x] **Schema Infrastructure Migration**
-  - Rust types as source of truth with schemars
-  - JSON Schema generation from Rust
-  - TypeScript codegen from JSON Schema
-  - Complete validation pipeline
-
-- [x] **Scoring & Selection Algorithms**
-  - Hierarchical bullet scoring (company × position × bullet)
-  - Diversity-constrained selection
-  - 30+ tests passing
-  - API route integration
+> **📍 Retention Directive:**
+> Completed tasks older than 7 days are automatically deleted from this file.
+> Full history is preserved in git log. Run `git log -p docs/TODOS.md` to view historical tasks.
+> This keeps the file focused on current work while maintaining complete audit trail.
 
 ---
 
 ## 🚧 In Progress
 
-**None** - Documentation cleanup complete, ready for next feature phase
+**Documentation System Rearchitecture (Started: 2025-10-28)**
+- Establishing single sources of truth
+- Automating metrics generation
+- Preventing documentation drift
+- Completing systematic cleanup of 20 discrepancies
 
 ---
 
-## 📋 Next Up
+## 📋 Queued - Next Up
 
-### Phase 5.6: WASM Integration with Typst
+### Phase 2: Continue Refactoring (3 remaining)
+- [ ] Rename `docs/DEPLOYMENT.md` → `docs/DEPLOYMENT_GUIDE.md` (Date queued: 2025-10-28)
+  - Make prescriptive (how to deploy), not descriptive (current status)
+  - Remove "Status: ✅ Deployed" → move to CURRENT_PHASE.md
+  - Keep: Environment setup, Vercel config, deployment commands
 
-**Goal:** Integrate Typst PDF generation into WASM bundle for browser use
+- [ ] Clean `docs/ARCHITECTURE.md` of temporary status notes (Date queued: 2025-10-28)
+  - Keep only: Immutable system design, data flow, security model
+  - Remove: Any metrics, current phase info, temporary notes
+  - No timestamps (timeless architecture)
 
-**Tasks:**
-1. **Update WASM bindings** (`doc-gen/crates/wasm/src/lib.rs`)
-   - Export `generate_pdf_typst` function
-   - Accept GenerationPayload JSON + dev_mode flag
-   - Return PDF bytes via wasm-bindgen
+- [ ] Delete `docs/STATUS.md` (Date queued: 2025-10-28)
+  - Content already migrated to CURRENT_PHASE.md + METRICS.md
+  - Simple deletion
 
-2. **Build WASM with Typst**
-   ```bash
-   just wasm        # Build with fonts
-   ```
-   - Ensure fonts are embedded
-   - Test bundle size (target: <20MB uncompressed)
-   - Verify gzipped size for production
+### Phase 3: Automation Scripts (3 tasks)
+- [ ] Create `scripts/verify-docs.sh` with 5 checks (Date queued: 2025-10-28)
+  - No test counts in .claude/CLAUDE.md
+  - docs/METRICS.md is <24h old
+  - All timestamps are date-only (except METRICS.md = date+time)
+  - No duplicate headers across docs
+  - Exit non-zero if any check fails
 
-3. **Test WASM Integration**
-   - Create simple HTML test page
-   - Load WASM module
-   - Call `generate_pdf_typst` with test data
-   - Verify PDF output
+- [ ] Create `scripts/archive-todos.sh` (Date queued: 2025-10-28)
+  - Scan docs/TODOS.md for completed tasks with dates
+  - Delete entries completed >7 days ago
+  - Exit with message: "History preserved in git log"
 
-**Estimated Time:** 2-3 hours
+- [ ] Add justfile targets: metrics-generate, docs-verify, docs-health (Date queued: 2025-10-28)
 
-**Blockers:** None
+### Phase 4: Pre-Commit Integration (1 task)
+- [ ] Update `package.json` lint-staged for markdown files (Date queued: 2025-10-28)
+  - Run metrics + verify + archive scripts on markdown changes
 
----
+### Phase 5: Component CLAUDE.md Updates (2 tasks)
+- [ ] Update `app/CLAUDE.md` to remove duplication (Date queued: 2025-10-28)
+- [ ] Update `doc-gen/CLAUDE.md` to remove duplication (Date queued: 2025-10-28)
 
-### Phase 5.7: Next.js UI Integration
-
-**Goal:** Build resume generation UI in Next.js
-
-**Components to Create:**
-1. **`RoleSelector`** - Dropdown from roleProfiles
-   - Fetch available profiles from server
-   - Display with descriptions
-   - Pass selected role to generation flow
-
-2. **`TurnstileGate`** - CAPTCHA modal
-   - Cloudflare Turnstile widget
-   - Block generation until verification
-   - Pass token to server API
-
-3. **`GenerationProgress`** - Animated progress UI
-   - 4-5 step progress indicator
-   - Educational messaging during generation
-   - Smooth transitions
-
-4. **`ResumeDownload`** - Main orchestration component
-   - Call `/api/resume/prepare` with role + turnstile token
-   - Receive GenerationPayload
-   - Load WASM module
-   - Generate PDF client-side
-   - Trigger download
-
-**Estimated Time:** 12-15 hours (~2 days)
+### Phase 6: Verification & Testing (6 tasks)
+- [ ] Run `just metrics-generate` and verify accuracy (Date queued: 2025-10-28)
+- [ ] Run `just docs-verify` and fix any issues (Date queued: 2025-10-28)
+- [ ] Search all .md files for "361 tests" duplication (Date queued: 2025-10-28)
+- [ ] Test pre-commit hook with markdown change (Date queued: 2025-10-28)
+- [ ] Update README.md with documentation section (Date queued: 2025-10-28)
+- [ ] Final verification: Resolve all 20 original discrepancies (Date queued: 2025-10-28)
 
 ---
 
-### Phase 5.8: Observability & Tracking
+## ✅ Recently Completed (Last 7 Days)
 
-**Goal:** Add analytics and reconstruction capability
-
-**Tasks:**
-1. **PostHog Integration**
-   - Track generation events
-   - Log role selections
-   - Monitor download completion
-   - Session replay for debugging
-
-2. **N8N Webhook** (optional)
-   - Send generation metadata to N8N
-   - Store in Airtable/Notion
-   - Slack notifications for new generations
-
-3. **Reconstruction CLI** (future)
-   - CLI tool to regenerate PDF from stored generation IDs
-   - Fetch original payload from database
-   - Recreate exact PDF
-
-**Estimated Time:** 6-8 hours
-
----
-
-### Phase 5.9: Testing & Polish
-
-**Goal:** End-to-end testing and optimization
-
-**Tasks:**
-1. **E2E Tests** (Playwright)
-   - Test full generation flow
-   - Verify CAPTCHA works
-   - Test PDF download
-   - Test error states
-
-2. **Performance Profiling**
-   - Measure WASM load time
-   - Measure PDF generation time
-   - Target: <3s total (from click to download)
-
-3. **Visual Testing**
-   - Verify PDF output matches expectations
-   - Test with different role profiles
-   - Check ATS compliance (parseable structure)
-
-4. **Error Handling**
-   - Rate limit exceeded
-   - CAPTCHA failure
-   - WASM load failure
-   - Generation timeout
-
-**Estimated Time:** 8-10 hours
-
----
-
-## 📅 Timeline Summary
-
-| Phase | Description | Time | Status |
-|-------|-------------|------|--------|
-| **5.0-5.3** | Types, scoring, selection | Complete | ✅ Done |
-| **5.4** | Typst PDF migration | Complete | ✅ Done (Oct 18) |
-| **5.5** | Build automation | Complete | ✅ Done (Oct 20) |
-| **5.6** | WASM integration | 2-3 hours | 📋 Next |
-| **5.7** | Next.js UI | 12-15 hours | 📋 Queued |
-| **5.8** | Observability | 6-8 hours | 📋 Queued |
-| **5.9** | Testing & polish | 8-10 hours | 📋 Queued |
-| **TOTAL Phase 5** | **28-36 hours remaining** | **~1 week** | 🚧 In progress |
-
----
-
-## 🚀 Future Phases (Post Phase 5)
-
-### Phase 6: Claude API Integration
-- AI-powered bullet selection from job descriptions
-- Prompt engineering for context extraction
-- Rate limiting (5 req/hour/IP)
-- Cost management (<$10/month with Claude Haiku)
-- Sanitization of job description inputs
-
-### Phase 7: Enhanced Analytics
-- Full PostHog event tracking
-- Session replay for UX optimization
-- Recruiter behavior analysis
-- A/B testing for UI improvements
-
-### Phase 8: Advanced Features
-- Custom PDF themes/templates
-- Multi-language support
-- PDF preview before download
-- Bulk generation for multiple roles
-
----
-
-## 📝 Notes for AI Assistants
-
-### Before Starting Work
-1. ✅ Check `docs/STATUS.md` for current phase progress
-2. ✅ Check this file (TODOS.md) for active tasks
-3. ✅ Read relevant component CLAUDE.md (app/, doc-gen/, scripts/)
-4. ✅ Run `just health` to verify environment
-5. ✅ Pull latest data if editing resume-data.json: `just data-pull`
-
-### During Work
-1. ✅ Use `just` commands as primary build system
-2. ✅ Run tests frequently: `just test`
-3. ✅ Check types after Rust changes: `just types-sync`
-4. ✅ Test in browser after UI changes: `just dev`
-
-### After Completing Tasks
-1. ✅ Mark tasks as [x] completed in this file
-2. ✅ Update `docs/STATUS.md` if major milestone reached
-3. ✅ Run full validation: `just check && just test`
-4. ✅ Commit with descriptive message
-
-### Critical Reminders
-- ⚠️ **ALWAYS** `just data-pull` before editing data/resume-data.json
-- ⚠️ **ALWAYS** run `just types-sync` after changing Rust types
-- ⚠️ **NEVER** import from `lib/types/generated-resume.ts` (use `types/resume.ts`)
-- ⚠️ **NEVER** run `just build` unnecessarily (slow, only for production)
-- ⚠️ Use `just` commands for all common tasks (40+ targets available)
-
-### Quick Reference
-```bash
-just              # List all commands
-just dev          # Start dev server
-just test         # Run all tests
-just wasm         # Rebuild WASM
-just types-sync   # Sync Rust → TS types
-just data-pull    # Pull resume data
-just clean        # Clean artifacts
-just health       # Check environment
-```
+### Documentation System Foundation (2025-10-28)
+- [x] Created `docs/archive/` directory for historical reports
+- [x] Created `scripts/update-metrics-from-logs.sh` (tested, working)
+- [x] Generated initial `docs/METRICS.md` with real counts (133 Rust + 200 TypeScript = 333)
+- [x] Created `docs/CURRENT_PHASE.md` from STATUS.md content
+- [x] Created `docs/TESTING_STRATEGY.md` with TDD philosophy
+- [x] Created `docs/META_DOCUMENTATION.md` (244 lines, directive-focused)
+- [x] Refactored `.claude/CLAUDE.md` to pure router (323 lines)
+  - Removed all metrics → links to METRICS.md
+  - Added documentation first principles section
+  - Fixed: Next.js 16 (not 15), Bun 1.3 mentioned
+  - Fixed: All timestamps to date-only format
+  - Fixed: Removed specific timings, use targets only
 
 ---
 
 ## 🎯 Current Focus
 
-**Primary:** Complete Phase 5.6 (WASM integration with Typst)
-**Secondary:** Plan Phase 5.7 UI components
-**Maintenance:** Keep documentation up-to-date as changes occur
+**Primary:** Phase 2 - Continue documentation refactoring (TODOS.md, DEPLOYMENT_GUIDE.md, ARCHITECTURE.md)
+**Secondary:** Phase 3 - Build automation scripts (verify-docs.sh, archive-todos.sh)
+**Target:** Complete all 16 remaining tasks (~2 hours estimated)
 
-**Last Updated:** 2025-10-20
+---
+
+## 📝 Quick Reference
+
+**For current test counts & coverage:** See [docs/METRICS.md](./METRICS.md) (auto-generated)
+**For current project phase:** See [docs/CURRENT_PHASE.md](./CURRENT_PHASE.md)
+**For testing philosophy:** See [docs/TESTING_STRATEGY.md](./TESTING_STRATEGY.md)
+**For documentation system rules:** See [docs/META_DOCUMENTATION.md](./META_DOCUMENTATION.md)
+
+---
+
+## 🚨 AI Assistant Reminders
+
+**Before Starting Work:**
+- Read [docs/CURRENT_PHASE.md](./CURRENT_PHASE.md) - Active phase
+- Read this file (TODOS.md) - Current tasks
+- Read component CLAUDE.md if in subdirectory
+- Run `just data-pull` if editing `data/resume-data.json`
+
+**During Work:**
+- Run `just test` frequently (fast feedback loop)
+- Run `just check` after code changes
+- Run `just types-sync` after Rust type changes
+- Use `just` commands (never raw npm/cargo when just target exists)
+
+**After Completing Tasks:**
+1. Mark tasks complete in this file (add completion date)
+2. Update [docs/CURRENT_PHASE.md](./CURRENT_PHASE.md) if major milestone
+3. Run `just test` (auto-regenerates METRICS.md)
+4. Commit (pre-commit hooks verify everything)
+
+**Critical Rules:**
+- ⚠️ NEVER edit METRICS.md manually
+- ⚠️ NEVER duplicate information
+- ⚠️ ALWAYS link to canonical source
+- ⚠️ ALWAYS use date-only timestamps (except metrics)
+- ⚠️ ALWAYS verify before claiming numbers
+
+---
+
+**Last Updated:** 2025-10-28

@@ -25,12 +25,19 @@ dev:
 # ============================================
 
 # Build Next.js production bundle
+# Note: This runs the same steps as Vercel's build process
 build:
     @echo "📦 Building production bundle..."
-    @echo "  → Fetching resume data from gist..."
+    @echo ""
+    @echo "  Step 1/3: Building WASM..."
+    bash scripts/build-wasm.sh
+    @echo ""
+    @echo "  Step 2/3: Fetching resume data from gist..."
     bun scripts/fetch-gist-data.js --force
-    @echo "  → Building Next.js with Turbopack..."
-    bun run build
+    @echo ""
+    @echo "  Step 3/3: Building Next.js with Turbopack..."
+    bun x next build --turbopack
+    @echo ""
     @echo "✅ Build complete"
 
 # Build WASM with fonts (release mode)
@@ -135,6 +142,25 @@ data-validate-template:
     bun scripts/validate-compendium.mjs data/resume-data-template.json
 
 # ============================================
+# Documentation
+# ============================================
+
+# Generate METRICS.md from test logs
+metrics-generate:
+    @echo "📊 Generating METRICS.md from test logs..."
+    bash scripts/update-metrics-from-logs.sh
+
+# Verify documentation consistency
+docs-verify:
+    @echo "🔍 Verifying documentation system..."
+    bash scripts/verify-docs.sh
+
+# Full documentation health check (generate + verify)
+docs-health: metrics-generate docs-verify
+    @echo ""
+    @echo "✅ Documentation system is healthy"
+
+# ============================================
 # Testing
 # ============================================
 
@@ -160,12 +186,12 @@ test-ts:
 # Run TypeScript tests in watch mode
 test-ts-watch:
     @echo "🧪 Running TypeScript tests (watch mode)..."
-    bun test:watch
+    bun run test:watch
 
 # Run TypeScript tests with UI
 test-ts-ui:
     @echo "🧪 Opening Vitest UI..."
-    bun test:ui
+    bun run test:ui
 
 # Run specific Rust test by name
 test-rust-filter PATTERN:
@@ -198,7 +224,7 @@ coverage-rust-lcov:
 # Generate TypeScript coverage with Vitest
 coverage-ts:
     @echo "📊 Generating TypeScript coverage..."
-    bun test:coverage
+    bun run test:coverage
     @echo "✅ TypeScript coverage: coverage/index.html"
 
 # Open Rust coverage report in browser

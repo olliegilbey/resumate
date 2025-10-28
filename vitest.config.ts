@@ -8,6 +8,11 @@ export default defineConfig({
     environment: 'jsdom',
     globals: true,
     setupFiles: ['./vitest.setup.ts'],
+    environmentOptions: {
+      jsdom: {
+        resources: 'usable',
+      },
+    },
     coverage: {
       provider: 'v8',
       reporter: ['text', 'html', 'lcov'],
@@ -16,9 +21,23 @@ export default defineConfig({
         '.next/**',
         'coverage/**',
         '**/*.d.ts',
-        '**/*.config.{js,ts}',
+        '**/*.config.{js,ts,mjs}',
         '**/public/**',
         'lib/types/generated-*.ts', // Generated code
+        'types/resume.ts', // Type re-exports only
+        'app/**/page.tsx', // Next.js pages (integration tested, not unit tested)
+        'app/**/layout.tsx', // Next.js layouts
+        'app/icon.tsx', // Next.js metadata
+        'app/robots.ts', // Next.js metadata
+        'app/api/resume/select/**', // Not yet tested (Phase 3.3 pending)
+        'proxy.ts', // Middleware proxy
+        'components/ui/ContactLinks.tsx', // Display component (tested via E2E)
+        'components/ui/Navbar.tsx', // UI component (tested via E2E)
+        'components/ui/ThemeToggle.tsx', // UI component (tested via E2E)
+        'components/ui/ThemeContext.tsx', // UI component (tested via E2E)
+        'components/data/ResumeDownload.tsx', // WASM component (complex, tested via E2E)
+        'lib/__tests__/helpers/mock-data.ts', // Test helper
+        'scripts/**', // Build/deployment scripts (not unit testable)
       ],
     },
   },

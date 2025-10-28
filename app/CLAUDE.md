@@ -6,14 +6,17 @@
 - TypeScript/React components
 - API routes
 
-**Shared project context already loaded via root CLAUDE.md:**
-- Architecture, workflows, status, todos, deployment, commands
+**Core Documentation (Read First):**
+- **[.claude/CLAUDE.md](../.claude/CLAUDE.md)** - Project router, first principles, critical paths
+- **[docs/CURRENT_PHASE.md](../docs/CURRENT_PHASE.md)** - Active phase, current status
+- **[docs/TESTING_STRATEGY.md](../docs/TESTING_STRATEGY.md)** - Testing philosophy
+- **[docs/METRICS.md](../docs/METRICS.md)** - Test counts, coverage (auto-generated)
 
-**This file contains Next.js-specific patterns and conventions.**
+**This file contains Next.js 16-specific patterns and conventions.**
 
 ---
 
-## Next.js 15 App Router Patterns
+## Next.js 16 App Router Patterns
 
 ### Directory Structure
 
@@ -178,17 +181,19 @@ import type { ResumeData, BulletPoint, Company, RoleProfile } from '@/types/resu
 ### Framework
 - **Test Runner:** Vitest
 - **React Testing:** @testing-library/react
-- **Current Coverage:** 48 tests passing
+- **Current Metrics:** See [docs/METRICS.md](../docs/METRICS.md) for test counts and coverage
 
 ### Test Locations
 ```
 lib/__tests__/           # Unit tests for utilities
 components/__tests__/    # Component tests
+app/api/**/__tests__/    # API route tests
 ```
 
 ### Running Tests
 ```bash
-just test        # Run all tests
+just test           # Run all tests (Rust + TypeScript)
+just test-ts        # TypeScript tests only
 just test-ts-watch  # Watch mode
 ```
 
@@ -225,9 +230,9 @@ just test-ts-watch  # Watch mode
 ```bash
 just dev              # Start dev server (Turbopack)
 just build            # Production build
-just check-ts             # ESLint
-just test             # Run tests
-just check-ts        # TypeScript check (just check-ts)
+just lint             # Run ESLint
+just typecheck        # TypeScript validation
+just test             # Run all tests
 ```
 
 ---
@@ -309,17 +314,18 @@ export async function POST(request: NextRequest) {
 ## Notes for AI Assistants
 
 **Before making changes:**
-1. Run `just check-ts` for TypeScript validation
-2. Run `just check-ts` for code quality
+1. Run `just typecheck` for TypeScript validation
+2. Run `just lint` for code quality
 3. Test in browser with `just dev`
+4. Run `just test` frequently during development
 
 **Common tasks:**
 - Adding new page → Create in `app/` with page.tsx
 - Adding new API route → Create in `app/api/` with route.ts
 - Adding new component → Create in `components/ui/` or `components/data/`
-- Styling changes → Use Tailwind classes, run `just fmt --write` after
+- Styling changes → Use Tailwind classes
 
 **For hybrid work (Next.js + Rust types):**
 - Also read `doc-gen/CLAUDE.md` for Rust context
 - Follow type sync patterns (Rust → Schema → TS)
-- Run `just types-schema && just types-ts` after Rust changes
+- Run `just types-sync` after Rust changes (combines schema + ts generation)

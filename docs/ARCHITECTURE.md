@@ -1,6 +1,15 @@
+---
+category: System Architecture & Design
+update_frequency: Never (only on major architectural changes)
+retention_policy: All versions preserved in git
+---
+
 # WASM PDF Generation Architecture
 
-**Rust → WASM → Browser PDF generation pipeline. Verified 2025-10-22.**
+> **📍 Purpose:** Immutable system design and data flow documentation.
+> For current status and deployment issues, see [CURRENT_PHASE.md](./CURRENT_PHASE.md)
+
+**Rust → WASM → Browser PDF generation pipeline**
 
 ---
 
@@ -83,8 +92,6 @@ strip = true           # Remove debug symbols
 [package.metadata.wasm-pack.profile.release]
 wasm-opt = ["-Oz", "--enable-bulk-memory", "--enable-nontrapping-float-to-int"]
 ```
-
-**Verified:** Build output shows "[INFO]: Optimizing wasm binaries with `wasm-opt`..." (tested 2025-10-22).
 
 **Effect:**
 - Pre-optimization: ~18-20MB (estimated)
@@ -221,110 +228,25 @@ ecow = "0.2"               # Efficient clone-on-write strings
 
 ---
 
-## Critical Deployment Issue
-
-**Problem:** `public/wasm/.gitignore` contains `*` → All WASM files gitignored
-
-**Impact:**
-- Works locally (files exist on disk)
-- **Fails on Vercel** (files not in git, returns 404)
-- User sees: "Failed to fetch /wasm/docgen_wasm_bg.wasm"
-
-**Verification:**
-```bash
-git ls-files public/wasm/  # Returns empty (no files tracked)
-```
-
-**Solutions:**
-
-### Option A: Commit WASM Files (Quick Fix)
-```bash
-rm public/wasm/.gitignore
-git add public/wasm/
-git commit -m "feat: Add pre-built WASM for deployment"
-```
-- **Pros:** Immediate fix, works on any static host
-- **Cons:** 16MB in git history, manual rebuilds
-
-### Option B: Build WASM on Vercel (Recommended)
-
-Update `vercel.json`:
-```json
-{
-  "buildCommand": "curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh -s -- -y && source $HOME/.cargo/env && cd doc-gen && bash crates/typst/download-fonts.sh && bash build-wasm.sh && cd .. && npm run build"
-}
-```
-
-- **Pros:** Always up-to-date, no git bloat, guaranteed sync
-- **Cons:** +2-3min build time (acceptable per user)
-- **Status:** User preference stated: "on vercel the compilation should happen, build times don't really matter there"
-
-### Option C: GitHub Actions Pre-Build
-
-```yaml
-# .github/workflows/wasm-build.yml
-on:
-  push:
-    paths: ['doc-gen/crates/**']
-jobs:
-  build:
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v3
-      - uses: dtolnay/rust-toolchain@stable
-      - run: cd doc-gen && bash crates/typst/download-fonts.sh && bash build-wasm.sh
-      - uses: stefanzweifel/git-auto-commit-action@v4
-        with:
-          file_pattern: public/wasm/*
-```
-
-- **Pros:** Automated, only rebuilds on Rust changes, clean workflow
-- **Cons:** Complexity, requires CI/CD setup
-
----
-
 ## Local Development
 
-### Current Commands
+### Build Commands
 
 ```bash
 just wasm    # Build WASM only (doc-gen/build-wasm.sh)
-just build   # Build Next.js only (fetches gist, runs next build)
+just build   # Full build (WASM + Next.js)
 just dev     # Dev server (uses cached WASM if exists)
 ```
-
-### Planned: Full Build Command
-
-**User Requirement:** "have a local full build process to run a single just command and everything gets fully done, end-to-end"
-
-**Proposal:** `just build-all`
-
-```makefile
-build-all:
-    cd doc-gen && bash crates/typst/download-fonts.sh
-    cd doc-gen && bash build-wasm.sh
-    npm run build
-```
-
-**Effect:** Single command rebuilds WASM + Next.js (full end-to-end).
 
 ---
 
 ## Font Directory Status
 
-### Active Directory: `doc-gen/crates/typst/fonts/`
+### Font Directory: `doc-gen/crates/typst/fonts/`
 - `LiberationSerif-Regular.ttf` (394KB)
 - `LiberationSerif-Bold.ttf` (370KB)
 - `README.md` (936B)
 - **Used by:** `fonts.rs:12-13` via `include_bytes!()`
-- **Status:** ✅ KEEP
-
-### Obsolete Directory: `crates/typst/fonts/`
-- `liberation-fonts-ttf-2.1.5.tar.gz` (9 bytes - empty placeholder)
-- **Used by:** Nothing
-- **Status:** ❌ DELETE
-
-**Action:** `rm -rf crates/typst/fonts/`
 
 ---
 
@@ -365,46 +287,39 @@ just dev
 # Check browser console for: "✅ PDF generated successfully with Typst"
 ```
 
-**Verify Optimizer Runs:**
+**Verify WASM Build:**
 ```bash
 cd doc-gen && bash build-wasm.sh
-# Check output for: "[INFO]: Optimizing wasm binaries with `wasm-opt`..."
-# Verify size: ls -lh ../public/wasm/docgen_wasm_bg.wasm (should be ~16M)
+# Expected output: "[INFO]: Optimizing wasm binaries with `wasm-opt`..."
+# Expected size: ~16MB raw, ~6.28MB gzipped
 ```
 
 ---
 
-## Next Steps
+## Related Documentation
 
-### Immediate (Required for Production)
-1. **Fix deployment issue:** Implement Vercel WASM compilation (Option B)
-2. **Delete obsolete fonts:** `rm -rf crates/typst/fonts/`
-3. **Create `just build-all`:** Single command for full build
-4. **Update docs/STATUS.md:** Mark Phase 5.6, 5.7 as ✅ DONE
-
-### Optimization (Future)
-1. **Tree-shake Typst:** Disable unused features (bibliography, math, SVG)
-   - Investigate: `cargo tree -i typst -e features`
-   - Target: <14MB raw, <5MB gzipped
-2. **Profile WASM:** Measure actual bottlenecks with `wasm-profile`
-3. **Lazy-load fonts:** Download fonts on-demand (non-WASM approach)
+- **[CURRENT_PHASE.md](./CURRENT_PHASE.md)** - Current status, deployment issues, next steps
+- **[DEPLOYMENT_GUIDE.md](./DEPLOYMENT_GUIDE.md)** - How to deploy and configure
+- **[TESTING_STRATEGY.md](./TESTING_STRATEGY.md)** - Testing philosophy and patterns
+- **[DATA_SCHEMA.md](./DATA_SCHEMA.md)** - Type system and validation
 
 ---
 
-## Summary for AI Agents
+## Key File References
 
-**Key Files:**
+**WASM Pipeline:**
 - WASM exports: `doc-gen/crates/wasm/src/lib.rs:54-68`
 - Font embedding: `doc-gen/crates/typst/src/fonts.rs:12-13`
-- TS integration: `components/data/ResumeDownload.tsx:116-174`
 - Build script: `doc-gen/build-wasm.sh`
 - Optimization: `doc-gen/crates/wasm/Cargo.toml:10-11`
 
+**TypeScript Integration:**
+- Component: `components/data/ResumeDownload.tsx:116-174`
+- Dynamic loading: ES module script injection
+- Type safety: wasm-bindgen generates `.d.ts` files
+
 **Critical Facts:**
-- WASM IS working locally (verified 2025-10-22)
-- WASM will NOT work on Vercel (gitignored files)
-- wasm-opt IS running (verified in build output)
 - Fonts embedded at compile-time (not runtime)
 - Size: 16MB raw, 6.28MB gzipped
-
-**User Requirement:** Build WASM on Vercel (Option B), create `just build-all`, tree-shake Typst.
+- First load: ~2-5s, subsequent: ~500ms (cached)
+- wasm-opt runs automatically during build

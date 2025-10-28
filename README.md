@@ -2,9 +2,9 @@
 
 **Your career story, authentically presented.**
 
-Resumate helps you curate your human-written professional experiences for different audiences. You write your career history once; AI helps you select and organize what's most relevant for each opportunity.
+Resumate helps you curate and present your human-written professional experiences for different audiences. You write your career history once; AI helps you select and organize what's most relevant for each opportunity.
 
-[![Next.js](https://img.shields.io/badge/Next.js-15.5-black)](https://nextjs.org/)
+[![Next.js](https://img.shields.io/badge/Next.js-16-black)](https://nextjs.org/)
 [![TypeScript](https://img.shields.io/badge/TypeScript-5-blue)](https://www.typescriptlang.org/)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 
@@ -17,7 +17,7 @@ Resumate helps you curate your human-written professional experiences for differ
 This framework follows [Anthropic's AI guidance principles](https://www.anthropic.com/candidate-ai-guidance):
 
 ✅ **All experiences**: Human-written by you
-✅ **All selection**: AI-assisted curation
+✅ **All selection**: Heuristic-based, or AI-assisted curation
 ✅ **All content**: Authentic and real
 ❌ **Never fabricates** career history or achievements
 
@@ -359,7 +359,7 @@ just data-view    # View gist content in terminal
 
 ```
 resumate/
-├── app/                      # Next.js 15 app (pages, API routes)
+├── app/                      # Next.js 16 app (pages, API routes)
 ├── components/               # React components (data + ui)
 ├── crates/shared-types/      # Rust types (source of truth)
 ├── doc-gen/                  # Rust/WASM (PDF generation via Typst)
@@ -375,9 +375,43 @@ See `.claude/CLAUDE.md` for detailed structure.
 
 ---
 
+## Documentation System
+
+This project uses a hierarchical documentation system designed to prevent drift and maintain single sources of truth.
+
+### Key Documentation Files
+
+- **[.claude/CLAUDE.md](.claude/CLAUDE.md)** - Project router and entry point for AI agents
+- **[docs/CURRENT_PHASE.md](docs/CURRENT_PHASE.md)** - Current development phase and status
+- **[docs/METRICS.md](docs/METRICS.md)** - Auto-generated test counts and coverage
+- **[docs/TESTING_STRATEGY.md](docs/TESTING_STRATEGY.md)** - TDD philosophy and patterns
+- **[docs/ARCHITECTURE.md](docs/ARCHITECTURE.md)** - System design and WASM pipeline
+- **[docs/DEPLOYMENT_GUIDE.md](docs/DEPLOYMENT_GUIDE.md)** - Deployment instructions
+- **[docs/META_DOCUMENTATION.md](docs/META_DOCUMENTATION.md)** - How the documentation system works
+
+### Documentation Principles
+
+1. **Single Source of Truth** - Every fact has exactly one canonical location
+2. **Temporal Separation** - Files organized by update frequency (never, quarterly, per phase, daily, per commit)
+3. **Auto-Generated Facts** - Test counts and coverage generated from actual test runs
+4. **Manual Observations** - Strategic decisions and philosophy documented manually
+5. **Automated Verification** - Pre-commit hooks ensure documentation consistency
+
+### Documentation Commands
+
+```bash
+just docs-health     # Generate metrics + verify documentation
+just docs-verify     # Check documentation consistency
+just metrics-generate # Update METRICS.md from test logs
+```
+
+**For details:** See [docs/META_DOCUMENTATION.md](docs/META_DOCUMENTATION.md)
+
+---
+
 ## Tech Stack
 
-- **Framework**: Next.js 15.5.4 (Turbopack)
+- **Framework**: Next.js 16 (Turbopack, bleeding edge)
 - **Language**: TypeScript 5
 - **Styling**: Tailwind CSS v4
 - **Security**: Cloudflare Turnstile

@@ -5,7 +5,7 @@
   "type": "module",
   "scripts": {
     "dev": "next dev --turbopack",
-    "prebuild": "bun scripts/fetch-gist-data.js --force",
+    "prebuild": "bash scripts/build-wasm.sh && bun scripts/fetch-gist-data.js --force",
     "build": "next build --turbopack",
     "start": "next start",
     "lint": "eslint",
@@ -27,26 +27,39 @@
     "prepare": "husky"
   },
   "lint-staged": {
-    "*.{ts,tsx}": [
+    "*.{ts,tsx,js,jsx}": [
       "eslint --fix",
-      "bash -c 'bun x tsc --noEmit'"
+      "bash -c 'bun x tsc --noEmit'",
+      "bash -c 'bun run test --run --reporter=dot'",
+      "bash -c 'bun run test:coverage --run --reporter=dot'",
+      "bash -c 'just build'"
     ],
     "crates/shared-types/src/lib.rs": [
       "bash -c 'cargo fmt -p shared-types'",
       "bash -c 'cargo clippy -p shared-types -- -D warnings'",
       "bun types:generate",
-      "git add schemas/resume.schema.json lib/types/generated-resume.ts"
+      "git add schemas/resume.schema.json lib/types/generated-resume.ts",
+      "bash -c 'cargo test --all'",
+      "bash -c 'just build'"
     ],
     "crates/shared-types/**/*.rs": [
       "bash -c 'cargo fmt -p shared-types'",
-      "bash -c 'cargo clippy -p shared-types -- -D warnings'"
+      "bash -c 'cargo clippy -p shared-types -- -D warnings'",
+      "bash -c 'cargo test -p shared-types'"
     ],
     "doc-gen/**/*.rs": [
       "bash -c 'cargo fmt --all'",
-      "bash -c 'cargo clippy --all -- -D warnings'"
+      "bash -c 'cargo clippy --all -- -D warnings'",
+      "bash -c 'cargo test --all'"
     ],
     "data/*.json": [
       "node scripts/validate-compendium.mjs"
+    ],
+    "docs/**/*.md": [
+      "bash scripts/verify-docs.sh"
+    ],
+    ".claude/**/*.md": [
+      "bash scripts/verify-docs.sh"
     ]
   },
   "dependencies": {

@@ -5,8 +5,12 @@
 - Rust code (types, scoring, selection, PDF generation via Typst, WASM)
 - Cargo workspace
 
-**Shared project context already loaded via root CLAUDE.md:**
-- Architecture, workflows, status, todos, deployment
+**Core Documentation (Read First):**
+- **[../.claude/CLAUDE.md](../.claude/CLAUDE.md)** - Project router, first principles, critical paths
+- **[../docs/CURRENT_PHASE.md](../docs/CURRENT_PHASE.md)** - Active phase, current status
+- **[../docs/TESTING_STRATEGY.md](../docs/TESTING_STRATEGY.md)** - Testing philosophy
+- **[../docs/METRICS.md](../docs/METRICS.md)** - Test counts, coverage (auto-generated)
+- **[../docs/ARCHITECTURE.md](../docs/ARCHITECTURE.md)** - WASM pipeline architecture
 
 **This file contains Rust/WASM-specific patterns and conventions.**
 
