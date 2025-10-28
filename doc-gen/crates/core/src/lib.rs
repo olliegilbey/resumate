@@ -46,6 +46,18 @@ pub struct GenerationPayload {
     #[serde(skip_serializing_if = "Option::is_none")]
     pub summary: Option<String>,
 
+    /// Optional: Meta footer text for PDF
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub meta_footer: Option<String>,
+
+    /// Total bullets available in database (for meta footer template variables)
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub total_bullets_available: Option<usize>,
+
+    /// Total companies in database (for meta footer template variables)
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub total_companies_available: Option<usize>,
+
     /// Metadata for tracking and reconstruction
     #[serde(skip_serializing_if = "Option::is_none")]
     pub metadata: Option<GenerationMetadata>,

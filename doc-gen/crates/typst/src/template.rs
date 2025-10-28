@@ -90,7 +90,11 @@ fn group_bullets_by_hierarchy(bullets: &[ScoredBullet]) -> Vec<CompanyData> {
             .entry(company_id.clone())
             .or_insert_with(|| CompanyData {
                 name: scored_bullet.company_name.clone().unwrap_or_default(),
-                location: scored_bullet.bullet.location.clone().unwrap_or_default(),
+                description: scored_bullet.company_description.clone(),
+                link: scored_bullet.company_link.clone(),
+                location: scored_bullet.company_location.clone().unwrap_or_default(),
+                date_start: scored_bullet.company_date_start.clone(),
+                date_end: scored_bullet.company_date_end.clone(),
                 positions: HashMap::new(),
             });
 
@@ -100,19 +104,33 @@ fn group_bullets_by_hierarchy(bullets: &[ScoredBullet]) -> Vec<CompanyData> {
             .entry(position_id.clone())
             .or_insert_with(|| PositionData {
                 title: scored_bullet.position_name.clone(),
-                date_start: scored_bullet.bullet.date_start.clone(),
-                date_end: scored_bullet.bullet.date_end.clone(),
+                description: scored_bullet.position_description.clone(),
+                date_start: scored_bullet.position_date_start.clone(),
+                date_end: scored_bullet.position_date_end.clone(),
                 bullets: Vec::new(),
             });
 
-        // Add bullet description to position
-        position_data
-            .bullets
-            .push(scored_bullet.bullet.description.clone());
+        // Add bullet description and score to position
+        position_data.bullets.push((
+            scored_bullet.bullet.description.clone(),
+            scored_bullet.score,
+        ));
     }
 
-    // Convert HashMap to sorted Vec (preserving order from scored bullets)
-    companies_map.into_values().collect()
+    // Convert HashMap to Vec
+    let mut companies: Vec<CompanyData> = companies_map.into_values().collect();
+
+    // Sort companies: Present first, then reverse chronological by end date
+    companies.sort_by(|a, b| {
+        match (&a.date_end, &b.date_end) {
+            (None, Some(_)) => std::cmp::Ordering::Less, // Present (None) comes first
+            (Some(_), None) => std::cmp::Ordering::Greater, // Present (None) comes first
+            (None, None) => b.date_start.cmp(&a.date_start), // Both present: reverse chron by start
+            (Some(a_end), Some(b_end)) => b_end.cmp(a_end), // Reverse chronological by end
+        }
+    });
+
+    companies
 }
 
 /// Prepare data for Typst template injection
@@ -127,27 +145,61 @@ pub fn prepare_template_data(payload: &GenerationPayload) -> JsonValue {
     let companies_json: Vec<JsonValue> = companies
         .iter()
         .map(|company| {
-            let positions_json: Vec<JsonValue> = company
-                .positions
-                .values()
+            // Convert positions HashMap to Vec and sort
+            let mut positions: Vec<&PositionData> = company.positions.values().collect();
+
+            // Sort positions: Present first, then reverse chronological by end date
+            positions.sort_by(|a, b| {
+                match (&a.date_end, &b.date_end) {
+                    (None, Some(_)) => std::cmp::Ordering::Less, // Present (None) comes first
+                    (Some(_), None) => std::cmp::Ordering::Greater, // Present (None) comes first
+                    (None, None) => b.date_start.cmp(&a.date_start), // Both present: reverse chron by start
+                    (Some(a_end), Some(b_end)) => b_end.cmp(a_end),  // Reverse chronological by end
+                }
+            });
+
+            let positions_json: Vec<JsonValue> = positions
+                .iter()
                 .map(|pos| {
+                    // Convert bullets from Vec<(String, f32)> to JSON array
+                    let bullets_json: Vec<JsonValue> = pos
+                        .bullets
+                        .iter()
+                        .map(|(description, score)| {
+                            serde_json::json!({
+                                "description": description,
+                                "score": score,
+                            })
+                        })
+                        .collect();
+
                     serde_json::json!({
                         "title": pos.title,
-                        "date_start": pos.date_start.as_deref().unwrap_or(""),
-                        "date_end": pos.date_end.as_deref().unwrap_or(""),
+                        "description": pos.description, // Position context/summary - can be removed if too verbose
+                        "date_start": &pos.date_start,
+                        "date_end": pos.date_end.as_ref(),
                         "date_range": format_date_range(
-                            pos.date_start.as_deref(),
+                            Some(&pos.date_start),
                             pos.date_end.as_deref()
                         ),
-                        "bullets": pos.bullets,
+                        "bullets": bullets_json,
                     })
                 })
                 .collect();
 
             serde_json::json!({
                 "name": company.name,
+                "description": company.description,
+                "link": company.link,
                 "location": company.location,
+                "date_start": company.date_start,
+                "date_end": company.date_end,
+                "date_range": format_date_range(
+                    Some(&company.date_start),
+                    company.date_end.as_deref()
+                ),
                 "positions": positions_json,
+                "position_count": company.positions.len(),
             })
         })
         .collect();
@@ -171,6 +223,9 @@ pub fn prepare_template_data(payload: &GenerationPayload) -> JsonValue {
             "name": payload.role_profile.name,
             "description": payload.role_profile.description,
         },
+        "metaFooter": payload.meta_footer,
+        "totalBulletsAvailable": payload.total_bullets_available,
+        "totalCompaniesAvailable": payload.total_companies_available,
     })
 }
 
@@ -181,16 +236,21 @@ pub fn prepare_template_data(payload: &GenerationPayload) -> JsonValue {
 #[derive(Debug)]
 struct CompanyData {
     name: String,
+    description: Option<String>, // Company context/industry
+    link: Option<String>,        // Company website
     location: String,
+    date_start: String,
+    date_end: Option<String>,
     positions: HashMap<String, PositionData>,
 }
 
 #[derive(Debug)]
 struct PositionData {
     title: String,
-    date_start: Option<String>,
+    description: Option<String>, // Position summary/context
+    date_start: String,
     date_end: Option<String>,
-    bullets: Vec<String>,
+    bullets: Vec<(String, f32)>, // (description, score)
 }
 
 // ====================

@@ -15,8 +15,16 @@ pub struct ScoredBullet {
     pub score: f32,
     pub company_id: String,
     pub company_name: Option<String>,
+    pub company_description: Option<String>, // Company context/industry
+    pub company_link: Option<String>,        // Company website/link
+    pub company_date_start: String,
+    pub company_date_end: Option<String>,
+    pub company_location: Option<String>,
     pub position_id: String,
     pub position_name: String,
+    pub position_description: Option<String>, // Role summary/context (NOT RENDERED)
+    pub position_date_start: String,
+    pub position_date_end: Option<String>,
 }
 
 /// Score a single bullet given role profile and context
@@ -477,7 +485,7 @@ mod tests {
             #[test]
             fn prop_company_multiplier_in_range(company in arb_company()) {
                 let multiplier = calculate_company_multiplier(&company);
-                prop_assert!(multiplier >= 0.8 && multiplier <= 1.2,
+                prop_assert!((0.8..=1.2).contains(&multiplier),
                     "Company multiplier should be in [0.8, 1.2]: {}", multiplier);
             }
 
@@ -488,7 +496,7 @@ mod tests {
             ) {
                 let multiplier = calculate_position_multiplier(&position, &tag_weights);
                 // Position multiplier combines priority (0.8-1.2) with tag (0.9-1.1)
-                prop_assert!(multiplier >= 0.7 && multiplier <= 1.4,
+                prop_assert!((0.7..=1.4).contains(&multiplier),
                     "Position multiplier should be reasonable: {}", multiplier);
             }
 
@@ -498,7 +506,7 @@ mod tests {
                 tag_weights in prop::collection::hash_map("[a-z]{3,10}", 0.0f32..=1.0, 0..10),
             ) {
                 let score = calculate_tag_relevance(&tags, &tag_weights);
-                prop_assert!(score >= 0.0 && score <= 1.0,
+                prop_assert!((0.0..=1.0).contains(&score),
                     "Tag relevance should be in [0.0, 1.0]: {}", score);
             }
 

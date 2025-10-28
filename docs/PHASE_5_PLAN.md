@@ -104,7 +104,7 @@ console.log('✅ Resume data is valid');
   "lint-staged": {
     "schema/resume.ts": [
       "eslint --fix",
-      "npm run generate:rust-types",
+      "just types-schema",
       "git add doc-gen/crates/core/src/types.rs"
     ],
     "data/*.json": [
@@ -134,7 +134,7 @@ console.log('✅ Resume data is valid');
 ```
 
 **5.0.11: Generate Initial Rust Types**
-- Run `npm run generate:rust-types`
+- Run `just types-schema`
 - Verify output in `doc-gen/crates/core/src/types.rs`
 - Check `#[serde(rename_all = "camelCase")]` is present
 - Manually add if missing
@@ -154,7 +154,7 @@ console.log('✅ Resume data is valid');
 
 **5.0.14: Test Validation**
 - Run `just data-validate-template` - should pass
-- Run `npm run validate:data` - should pass
+- Run `just data-validate` - should pass
 - Test with intentionally broken data (weights sum to 0.8) - should fail with good error
 
 **5.0.15: Test Roundtrip**
@@ -433,10 +433,10 @@ cargo run --example reconstruct -- \
 
 **Tasks:**
 
-**5.10.1: Remove Old Crates**
-- Delete `doc-gen/crates/pdf/` entirely
-- Delete `doc-gen/crates/docx/` entirely
-- Update `doc-gen/Cargo.toml` workspace members
+**5.10.1: Remove Old Crates** ✅ COMPLETED
+- ✅ Deleted `doc-gen/crates/pdf/` entirely
+- ✅ Deleted `doc-gen/crates/docx/` entirely
+- ✅ Updated `doc-gen/Cargo.toml` workspace members (never included)
 
 **5.10.2: Create Typst Crate**
 - Create `doc-gen/crates/typst/` structure

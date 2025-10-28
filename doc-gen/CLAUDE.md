@@ -2,7 +2,7 @@
 
 **You're reading this because you're working with:**
 - Files in `doc-gen/`
-- Rust code (types, scoring, selection, PDF, DOCX, WASM)
+- Rust code (types, scoring, selection, PDF generation via Typst, WASM)
 - Cargo workspace
 
 **Shared project context already loaded via root CLAUDE.md:**
@@ -14,48 +14,12 @@
 
 ## Cargo Workspace Structure
 
-```
-doc-gen/
-├── Cargo.toml                # Workspace config
-├── crates/
-│   ├── core/                 # Core types & algorithms (UNCHANGED)
-│   │   ├── Cargo.toml
-│   │   ├── src/
-│   │   │   ├── lib.rs        # Module exports
-│   │   │   ├── types.rs      # Data structures (source of truth)
-│   │   │   ├── scoring.rs    # Hierarchical bullet scoring
-│   │   │   ├── selector.rs   # Bullet selection algorithm
-│   │   │   └── bin/
-│   │   │       └── schema_emitter.rs  # JSON Schema generator
-│   │   └── tests/
-│   │       └── integration_test.rs    # Real data tests
-│   │
-│   ├── typst/                # Typst PDF generation (NEW - replaces pdf/docx)
-│   │   ├── Cargo.toml
-│   │   ├── src/
-│   │   │   ├── lib.rs        # Public API
-│   │   │   ├── compiler.rs   # Typst compiler wrapper (World implementation)
-│   │   │   ├── template.rs   # Template data preparation & rendering
-│   │   │   └── fonts.rs      # Embedded font management
-│   │   ├── templates/
-│   │   │   └── resume.typ    # Main Typst resume template
-│   │   └── fonts/
-│   │       └── *.ttf         # Embedded fonts (Linux Libertine, etc.)
-│   │
-│   └── wasm/                 # WASM bindings (UPDATED for Typst)
-│       ├── Cargo.toml
-│       ├── build.rs          # Build-time git hash/timestamp
-│       └── src/
-│           └── lib.rs        # wasm_bindgen exports (generate_pdf_typst)
-│
-├── examples/
-│   └── reconstruct.rs        # CLI reconstruction tool
-│
-└── fixtures/
-    └── sample_resume.json    # Test data
-```
+See root `.claude/CLAUDE.md` for complete project structure.
 
-**Note:** The `pdf/` and `docx/` crates have been removed and replaced with the `typst/` crate which uses the Typst typesetting system for professional PDF generation. See `docs/TYPST_MIGRATION.md` for details.
+**Key crates:**
+- `doc-gen/crates/core/` - Types, scoring, selection algorithms
+- `doc-gen/crates/typst/` - Typst PDF generation (replaced old pdf/docx crates)
+- `doc-gen/crates/wasm/` - WASM bindings (wasm-bindgen exports)
 
 ---
 
@@ -150,15 +114,15 @@ pub fn select_bullets(
 
 ### Rust → JSON Schema → TypeScript
 
-1. **Rust Types** (doc-gen/crates/core/src/types.rs)
+1. **Rust Types** (crates/shared-types/src/lib.rs)
    - Define with `#[derive(JsonSchema)]`
    - Add schemars annotations
 
 2. **Schema Generation**
    ```bash
-   just types-schema  # Runs cargo run --bin schema_emitter
+   just types-schema  # Runs cargo run --bin generate_schema
    ```
-   - Outputs to `schemas/compendium.schema.json`
+   - Outputs to `schemas/resume.schema.json`
 
 3. **TypeScript Generation**
    ```bash
@@ -259,8 +223,8 @@ cargo build --target wasm32-unknown-unknown  # WASM target
 
 ### Schema Generation
 ```bash
-cargo run --bin schema_emitter      # Generate JSON Schema
-just types-schema                # Same, via npm
+cargo run --bin generate_schema     # Generate JSON Schema
+just types-schema                   # Same, via justfile
 ```
 
 ### Type Checking
@@ -288,8 +252,6 @@ pub fn generate_pdf_typst(
     // 3. Return bytes
 }
 ```
-
-**Note:** DOCX generation has been removed. Only PDF generation via Typst is supported.
 
 ### Build Process
 ```bash
@@ -381,8 +343,6 @@ pub fn generate_pdf(payload: &GenerationPayload, dev_mode: bool) -> Result<Vec<u
 - **Font embedding:** Linux Libertine fonts embedded in WASM
 - **Dev mode:** Optional metadata page with build info (localhost only)
 - **ATS-friendly:** Plain text bullets, clear hierarchy
-
-**Note:** DOCX generation has been removed in favor of focusing on high-quality PDF output via Typst. Users can convert PDF to DOCX if needed.
 
 ---
 

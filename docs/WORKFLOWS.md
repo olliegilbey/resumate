@@ -58,7 +58,7 @@
 ### Testing Philosophy
 - **TDD for Rust** - Write tests first, then implementation
 - **Property-based tests** for type validation (proptest)
-- **Integration tests** for full PDF/DOCX generation
-- **Visual parity tests** - Compare PDF and DOCX output
+- **Integration tests** for full PDF generation (Typst)
+- **Visual regression tests** - Compare PDF output across changes
 
 ---

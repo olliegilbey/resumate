@@ -359,38 +359,19 @@ just data-view    # View gist content in terminal
 
 ```
 resumate/
-├── app/
-│   ├── page.tsx              # Landing page
-│   ├── layout.tsx            # Root layout
-│   ├── robots.ts             # Dynamic robots.txt
-│   ├── api/
-│   │   └── contact-card/
-│   │       └── route.ts      # vCard generation (server-side)
-│   └── resume/
-│       ├── page.tsx          # Resume overview
-│       └── view/
-│           └── page.tsx      # Data explorer
-├── components/
-│   ├── ui/                   # Reusable UI components
-│   └── data/                 # Data visualization components
-├── scripts/
-│   ├── fetch-gist-data.js    # Pull gist → local (prebuild hook)
-│   ├── gist-push.js          # Push local → gist
-│   └── gist-view.js          # View gist content
-├── lib/
-│   ├── vcard.ts              # vCard 3.0 generation
-│   └── utils.ts              # Utilities
-├── types/
-│   └── resume.ts             # TypeScript types
-├── data/
-│   ├── resume-data.json      # YOUR data (gitignored)
-│   └── resume-data-template.json  # Template
-├── .github/
-│   └── workflows/
-│       └── gist-deploy-trigger.yml  # Hourly gist → deploy automation
-├── middleware.ts             # Security & rate limiting
-└── .env.local                # Secrets (gitignored)
+├── app/                      # Next.js 15 app (pages, API routes)
+├── components/               # React components (data + ui)
+├── crates/shared-types/      # Rust types (source of truth)
+├── doc-gen/                  # Rust/WASM (PDF generation via Typst)
+├── lib/                      # TypeScript utilities
+├── scripts/                  # Gist sync + type generation
+├── data/                     # Resume data (gitignored)
+├── docs/                     # Architecture docs
+├── .github/workflows/        # CI/CD (hourly gist auto-deploy)
+└── justfile                  # Build automation (40+ commands)
 ```
+
+See `.claude/CLAUDE.md` for detailed structure.
 
 ---
 

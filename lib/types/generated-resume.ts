@@ -19,6 +19,10 @@ export interface ResumeData {
    */
   experience: Company[]
   /**
+   * Meta footer text for PDF (supports {bullet_count} and {company_count} template variables)
+   */
+  metaFooter?: string | null
+  /**
    * Personal information (required)
    */
   personal: PersonalInfo

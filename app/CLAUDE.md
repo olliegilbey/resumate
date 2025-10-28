@@ -16,44 +16,8 @@
 ## Next.js 15 App Router Patterns
 
 ### Directory Structure
-```
-app/
-├── layout.tsx               # Root layout
-├── page.tsx                 # Landing page
-├── globals.css              # Tailwind styles
-├── api/
-│   ├── contact-card/
-│   │   └── route.ts         # vCard generation
-│   └── resume/
-│       ├── select/
-│       │   └── route.ts     # Bullet selection API
-│       └── prepare/
-│           └── route.ts     # Resume generation prep
-├── resume/
-│   ├── page.tsx             # Resume overview
-│   └── view/
-│       └── page.tsx         # Experience explorer
-└── icon.tsx                 # Dynamic favicon
 
-components/
-├── ui/                      # Reusable UI components (CVA-based)
-│   ├── Badge.tsx
-│   ├── Button.tsx
-│   └── ContactLinks.tsx
-└── data/                    # Data-specific components
-    ├── DataExplorer.tsx
-    ├── CompanySection.tsx
-    ├── BulletCard.tsx
-    ├── TagFilter.tsx
-    └── SearchBar.tsx
-
-lib/
-├── utils.ts                 # Utility functions (cn, etc.)
-├── vcard.ts                 # vCard 3.0 generation
-└── rate-limit.ts            # IP-based rate limiting
-
-middleware.ts                # Security, bot detection, rate limiting
-```
+See root `.claude/CLAUDE.md` for complete project structure.
 
 ### Routing Conventions
 - `/` - Landing page
@@ -186,8 +150,8 @@ import type { ResumeData, BulletPoint, Company, RoleProfile } from '@/types/resu
 **DO NOT import directly from** `lib/types/generated-resume.ts` (that's generated code)
 
 ### Type Flow
-1. Rust types (doc-gen/crates/core/src/types.rs)
-2. JSON Schema (schemas/compendium.schema.json)
+1. Rust types (crates/shared-types/src/lib.rs)
+2. JSON Schema (schemas/resume.schema.json)
 3. Generated TS (lib/types/generated-resume.ts)
 4. Re-exported (types/resume.ts) ← Import from here
 

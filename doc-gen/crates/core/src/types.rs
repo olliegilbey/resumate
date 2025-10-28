@@ -259,6 +259,10 @@ pub struct ResumeData {
     #[serde(skip_serializing_if = "Option::is_none")]
     #[schemars(description = "Role profiles for bullet selection algorithm")]
     pub role_profiles: Option<Vec<RoleProfile>>,
+    /// Meta footer text for PDF (supports {bullet_count} and {company_count} variables)
+    #[serde(skip_serializing_if = "Option::is_none")]
+    #[schemars(description = "Meta footer text for PDF (supports {bullet_count} and {company_count} variables)")]
+    pub meta_footer: Option<String>,
 }
 
 #[cfg(test)]

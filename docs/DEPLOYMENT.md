@@ -1,6 +1,6 @@
 ## Deployment
 
-**Status:** Deployed to ollie.gg via Vercel with full gist integration and auto-deploy.
+**Status:** Deployed to site via Vercel with full gist integration and auto-deploy.
 
 ### Environment Variables
 
@@ -78,7 +78,7 @@ Required environment variables (see `.env.example` for template):
 - **JSON validation is strict** - malformed JSON blocks deployment to prevent build failures
 
 ### Checklist
-- ✅ Deployed to ollie.gg
+- ✅ Deployed to site
 - ✅ Environment variables set correctly (no newlines!)
 - ✅ GitHub Action running hourly
 - ✅ JSON validation in workflow

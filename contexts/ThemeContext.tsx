@@ -13,13 +13,28 @@ type ThemeContextType = {
 const ThemeContext = createContext<ThemeContextType | undefined>(undefined)
 
 export function ThemeProvider({ children }: { children: ReactNode }) {
-  const [systemTheme, setSystemTheme] = useState<Theme>("light")
-  const [overrideTheme, setOverrideTheme] = useState<Theme | null>(null)
+  // Initialize system theme from media query
+  const [systemTheme, setSystemTheme] = useState<Theme>(() => {
+    if (typeof window !== 'undefined') {
+      return window.matchMedia("(prefers-color-scheme: dark)").matches ? "dark" : "light"
+    }
+    return "light"
+  })
 
-  // Detect system theme
+  // Initialize override from localStorage
+  const [overrideTheme, setOverrideTheme] = useState<Theme | null>(() => {
+    if (typeof window !== 'undefined') {
+      const stored = localStorage.getItem("theme-override")
+      if (stored === "light" || stored === "dark") {
+        return stored
+      }
+    }
+    return null
+  })
+
+  // Detect system theme changes
   useEffect(() => {
     const mediaQuery = window.matchMedia("(prefers-color-scheme: dark)")
-    setSystemTheme(mediaQuery.matches ? "dark" : "light")
 
     const handleChange = (e: MediaQueryListEvent) => {
       const newSystemTheme = e.matches ? "dark" : "light"
@@ -35,14 +50,6 @@ export function ThemeProvider({ children }: { children: ReactNode }) {
 
     mediaQuery.addEventListener("change", handleChange)
     return () => mediaQuery.removeEventListener("change", handleChange)
-  }, [])
-
-  // Load override from localStorage
-  useEffect(() => {
-    const stored = localStorage.getItem("theme-override")
-    if (stored === "light" || stored === "dark") {
-      setOverrideTheme(stored)
-    }
   }, [])
 
   // Apply theme to document

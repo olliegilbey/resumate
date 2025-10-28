@@ -7,7 +7,6 @@
 //! 4. Required fields are enforced
 //! 5. Optional fields work correctly
 
-use serde_json;
 use shared_types::*;
 
 #[test]
@@ -296,6 +295,7 @@ fn test_resume_data_roundtrip() {
         skills: None,
         education: None,
         role_profiles: None,
+        meta_footer: None,
     };
 
     let json = serde_json::to_string_pretty(&resume).expect("Failed to serialize ResumeData");

@@ -1,6 +1,98 @@
-## Data Structure
+# Data Schema & Type System
 
-### Hierarchical Resume Schema
+## Overview
+
+Resumate uses **Rust types as the single source of truth**, automatically generating both JSON Schema and TypeScript types. This ensures type safety across the entire stack while maintaining readability and validation.
+
+---
+
+## Type Generation Flow
+
+```
+Rust Types (source of truth)
+    ↓ cargo run --bin generate_schema
+JSON Schema (validation)
+    ↓ just types-ts
+TypeScript Types (frontend)
+```
+
+**Implementation:**
+```
+crates/shared-types/src/lib.rs (Rust with schemars)
+  ↓ cargo run --bin generate_schema
+schemas/resume.schema.json
+  ↓ just types-ts
+lib/types/generated-resume.ts
+  ↓ re-exported by
+types/resume.ts ← ALWAYS IMPORT FROM HERE
+```
+
+**Why this approach:**
+- ✅ Single source of truth (Rust types)
+- ✅ Type safety across Rust and TypeScript
+- ✅ Runtime validation via JSON Schema
+- ✅ Automatic type synchronization
+- ✅ Schema documentation in Rust code
+
+---
+
+## Naming Conventions
+
+### By Language
+
+**TypeScript & JSON:**
+- Style: `camelCase`
+- Examples: `companyTags`, `companyPriority`, `scoringWeights`, `tagRelevance`
+
+**Rust:**
+- Style: `snake_case`
+- Examples: `company_tags`, `company_priority`, `scoring_weights`, `tag_relevance`
+
+### Automatic Conversion
+
+Rust types use `#[serde(rename_all = "camelCase")]` to automatically serialize to camelCase JSON:
+
+```rust
+#[derive(Serialize, Deserialize, JsonSchema)]
+#[serde(rename_all = "camelCase")]
+pub struct Company {
+    pub company_tags: Option<Vec<Tag>>,  // Rust: snake_case
+    pub company_priority: Option<u8>,    // → JSON: camelCase
+}
+```
+
+```json
+{
+    "companyTags": ["blockchain"],
+    "companyPriority": 8
+}
+```
+
+### Field Naming Patterns
+
+**Hierarchy Fields:**
+- **Company-level**: `companyTags: string[]`, `companyPriority: number (1-10)`
+- **Position-level**: `descriptionTags`, `descriptionPriority`
+- **Bullet-level**: `tags`, `priority`
+
+**Scoring Weights:**
+```typescript
+interface ScoringWeights {
+    tagRelevance: number // 0.0-1.0, typically 0.6 (60%)
+    priority: number     // 0.0-1.0, typically 0.4 (40%)
+    // Must sum to 1.0 (validated in Rust)
+}
+```
+
+**ID Field Conventions:**
+- Format: Kebab-case, descriptive
+- Examples: `"interchain-foundation"`, `"developer-relations-lead"`, `"icf-001"`
+
+---
+
+## Hierarchical Resume Schema
+
+### Data Structure
 
 The resume data follows a strict 3-level hierarchy:
 - **Company** (top level) - Organizations where you worked
@@ -87,29 +179,11 @@ Each level uses the generic `children` field to contain the next level, creating
       "tagWeights": {
         "product-management": 1.0,
         "data-driven": 0.9,
-        "strategic-planning": 0.8,
-        "team-leadership": 0.7,
-        "cross-functional": 0.6
+        "strategic-planning": 0.8
       },
       "scoringWeights": {
         "tagRelevance": 0.6,
         "priority": 0.4
-      }
-    },
-    {
-      "id": "developer-relations",
-      "name": "Developer Relations",
-      "description": "Technical advocacy and community building",
-      "tagWeights": {
-        "developer-relations": 1.0,
-        "community-building": 0.95,
-        "public-speaking": 0.9,
-        "technical-writing": 0.85,
-        "event-management": 0.7
-      },
-      "scoringWeights": {
-        "tagRelevance": 0.65,
-        "priority": 0.35
       }
     }
   ]
@@ -183,61 +257,153 @@ Each level uses the generic `children` field to contain the next level, creating
 
 ---
 
-## Data Structure & Type System
+## Schema Maintenance Workflow
 
-### Current Approach: Rust Types as Source of Truth
+### 1. Edit Rust Types
 
-**Design Decision**: We use Rust types with schemars for JSON Schema generation, which then generates TypeScript types.
-
-**Type Flow:**
-```
-Rust types (doc-gen/crates/core/src/types.rs)
-  ↓ cargo run --bin schema_emitter
-JSON Schema (schemas/compendium.schema.json)
-  ↓ just types-ts
-Generated TypeScript (lib/types/generated-resume.ts)
-  ↓ re-exported by
-Canonical types (types/resume.ts) ← ALWAYS IMPORT FROM HERE
+```bash
+# Edit crates/shared-types/src/lib.rs
+nvim crates/shared-types/src/lib.rs
 ```
 
-**How it works:**
-- Rust types define the schema with `#[derive(JsonSchema)]`
-- JSON Schema generated from Rust using schemars
-- TypeScript types generated from JSON Schema using json-schema-to-typescript
-- Runtime validation in CI/CD and pre-commit hooks
+### 2. Regenerate Schema & Types
 
-**Why this approach:**
-- ✅ Single source of truth (Rust types)
-- ✅ Type safety across Rust and TypeScript
-- ✅ Runtime validation via JSON Schema
-- ✅ Automatic type synchronization
-- ✅ Schema documentation in Rust code
+```bash
+just types-schema  # Generate JSON Schema from Rust
+just types-ts      # Generate TypeScript from JSON Schema
+```
 
-**Validation Points:**
-- Pre-commit: Validates `data/*.json` against schema
-- Gist push: Validates before uploading
-- Build: Validates during prebuild (blocks deploy if invalid)
-- Rust compilation: Type-checks at compile time
+### 3. Update Data (if schema changed)
+
+```bash
+# Add new fields to data/resume-data.json
+just data-validate data/resume-data.json
+```
+
+### 4. Check for Drift
+
+```bash
+just types-drift  # Ensures schemas/types are in sync with Rust
+```
+
+### 5. Commit
+
+Pre-commit hooks automatically:
+- Re-emit schemas if Rust types changed
+- Validate all JSON data files
+- Format Rust code (`cargo fmt`, `cargo clippy`)
 
 ---
 
-## Naming Conventions
+## Validation Strategy
 
-### Field Naming
-- **JSON/TypeScript**: camelCase (`dateStart`, `tagWeights`, `scoringWeights`)
-- **Rust**: snake_case (`date_start`, `tag_weights`, `scoring_weights`)
-- **Automatic conversion**: `#[serde(rename_all = "camelCase")]` handles mapping
+### Build-time Validation
+- **Pre-commit hooks**: Validate JSON against schema before commit
+- **CI/GitHub Actions**: Block builds if gist data is malformed
+- **Gist push**: Validate before uploading to prevent bad data
 
-### Hierarchy Fields
-All levels use consistent patterns:
-- **children**: Generic field for hierarchical relationships
-  - Company.children → Position[]
-  - Position.children → Bullet[]
-- **name**: Display name at all levels (company name, position name, bullet can have optional name)
-- **description**: Text content at all levels
-- **tags**: Category tags at all levels
-- **priority**: Importance ranking (1-10) at all levels
-- **dateStart/dateEnd**: Date ranges at all levels
+### Runtime Validation
+- **Rust**: Normalize `ScoringWeights` if sum ≠ 1.0 (with warning)
+- **Rust**: Validate ranges (priority 1-10, weights 0.0-1.0)
+
+### Validation Points
+1. **Pre-commit**: `lint-staged` runs `validate-compendium.mjs` on `data/*.json`
+2. **Gist push**: `scripts/gist-push.js` validates before upload
+3. **Gist pull**: `scripts/fetch-gist-data.js` validates after download
+4. **Build**: `prebuild` script fetches and validates
+
+---
+
+## Optional vs Required Fields
+
+### Optional Fields (Rust `Option<T>`)
+
+```rust
+#[serde(skip_serializing_if = "Option::is_none")]
+pub company_tags: Option<Vec<Tag>>
+```
+
+- Omitted from JSON when `null`
+- Used for new hierarchy fields to maintain backward compatibility
+
+### Required Fields
+
+```rust
+pub scoring_weights: ScoringWeights
+```
+
+- Must be present in all new `roleProfiles`
+
+---
+
+## Example: Adding a New Field
+
+**Step 1: Add to Rust types**
+
+```rust
+#[derive(Serialize, Deserialize, JsonSchema)]
+#[serde(rename_all = "camelCase")]
+pub struct Company {
+    // Existing fields...
+
+    /// Industry classification tags
+    #[serde(skip_serializing_if = "Option::is_none")]
+    #[schemars(description = "Industry tags (e.g., ['fintech', 'b2b'])")]
+    pub industry_tags: Option<Vec<String>>,
+}
+```
+
+**Step 2: Regenerate**
+
+```bash
+just types-schema && just types-ts
+```
+
+**Step 3: Update Data**
+
+```json
+{
+    "companies": [
+        {
+            "id": "example-corp",
+            "name": "Example Corp",
+            "industryTags": ["fintech", "b2b"]
+        }
+    ]
+}
+```
+
+---
+
+## Common Pitfalls
+
+### ❌ Don't manually edit generated files
+- `schemas/resume.schema.json` - Generated from Rust
+- `lib/types/generated-resume.ts` - Generated from schema
+
+### ❌ Don't mix naming styles
+```typescript
+// Bad
+{ "company_tags": [...] }
+
+// Good
+{ "companyTags": [...] }
+```
+
+### ❌ Don't forget to validate after changes
+```bash
+just data-validate data/resume-data.json
+just data-validate-template
+```
+
+### ✅ Do use descriptive field names
+```rust
+// Good
+pub company_priority: Option<u8>
+
+// Bad
+pub co_pri: Option<u8>
+```
 
 ---
 
@@ -254,9 +420,19 @@ The resume data is stored in a GitHub Gist and automatically deployed to product
 
 ---
 
+## Tools Reference
+
+- **Schema emitter**: `cargo run --bin generate_schema`
+- **Type generator**: `tsx scripts/gen-ts-from-schemas.ts`
+- **Validator**: `node scripts/validate-compendium.mjs <file>`
+- **Drift checker**: `just types-drift`
+
+---
+
 ## Migration Notes
 
 ### From Old Schema (Pre-2025-10)
+
 If migrating from the old schema format:
 
 **Field Renames:**
@@ -285,3 +461,21 @@ If migrating from the old schema format:
 - `targetBulletCount` → removed (use selection config instead)
 - Added `scoringWeights` (required)
 
+---
+
+## FAQ
+
+**Q: Why Rust as source of truth instead of TypeScript?**
+- Rust provides stronger type safety (u8 for 1-10 ranges, HashMap for tag weights)
+- Rust validation logic (ScoringWeights.normalize()) closer to business logic
+- Demonstrates systems programming skills (meta-resume principle)
+
+**Q: Why not JSON Schema as source of truth?**
+- Rust is more expressive (methods, trait impls, compile-time checks)
+- schemars generates excellent schemas from Rust automatically
+- Single source of truth in language closest to domain logic
+
+---
+
+**Last Updated:** 2025-10-22
+**Schema Version:** 1.0.0 (resume.schema.json)

@@ -16,3 +16,5 @@ schemars = { workspace = true }
 [dev-dependencies]
 proptest = { workspace = true }
 docgen-typst = { workspace = true }
+chrono = { workspace = true }
+pdf-extract = "0.10.0"

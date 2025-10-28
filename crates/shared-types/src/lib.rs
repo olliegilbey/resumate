@@ -507,6 +507,12 @@ pub struct ResumeData {
         description = "List of RoleProfile objects for targeted resume generation (optional)"
     )]
     pub role_profiles: Option<Vec<RoleProfile>>,
+
+    #[serde(skip_serializing_if = "Option::is_none")]
+    #[schemars(
+        description = "Meta footer text for PDF (supports {bullet_count} and {company_count} template variables)"
+    )]
+    pub meta_footer: Option<String>,
 }
 
 impl ResumeData {

@@ -176,8 +176,16 @@ mod tests {
                 score: 0.95,
                 company_id: "company1".to_string(),
                 company_name: Some("Tech Corp".to_string()),
+                company_description: None,
+                company_link: None,
+                company_date_start: "2020-01".to_string(),
+                company_date_end: None,
+                company_location: None,
                 position_id: "pos1".to_string(),
                 position_name: "Senior Engineer".to_string(),
+                position_description: None,
+                position_date_start: "2020-01".to_string(),
+                position_date_end: None,
             }],
             role_profile: RoleProfile {
                 id: "test-role".to_string(),
@@ -192,6 +200,9 @@ mod tests {
             education: None,
             skills: None,
             summary: None,
+            meta_footer: None,
+            total_bullets_available: None,
+            total_companies_available: None,
             metadata: None,
         }
     }
@@ -273,8 +284,16 @@ mod tests {
                 score: 0.5,
                 company_id: "company1".to_string(),
                 company_name: Some("Company".to_string()),
+                company_description: None,
+                company_link: None,
+                company_date_start: "2020-01".to_string(),
+                company_date_end: None,
+                company_location: None,
                 position_id: "pos1".to_string(),
                 position_name: "Position".to_string(),
+                position_description: None,
+                position_date_start: "2020-01".to_string(),
+                position_date_end: None,
             })
             .collect();
 
@@ -542,8 +561,16 @@ mod tests {
                 score: 0.5,
                 company_id: "company1".to_string(),
                 company_name: Some("Company".to_string()),
+                company_description: None,
+                company_link: None,
+                company_date_start: "2020-01".to_string(),
+                company_date_end: None,
+                company_location: None,
                 position_id: "pos1".to_string(),
                 position_name: "Position".to_string(),
+                position_description: None,
+                position_date_start: "2020-01".to_string(),
+                position_date_end: None,
             })
             .collect();
 
@@ -679,8 +706,16 @@ mod tests {
                     score: 0.95,
                     company_id: "company1".to_string(),
                     company_name: Some("Tech Corp".to_string()),
+                    company_description: Some("Leading technology company".to_string()),
+                    company_link: Some("https://techcorp.example.com".to_string()),
+                    company_date_start: "2020-01".to_string(),
+                    company_date_end: Some("2024-01".to_string()),
+                    company_location: Some("San Francisco, CA".to_string()),
                     position_id: "pos1".to_string(),
                     position_name: "Senior Engineer".to_string(),
+                    position_description: Some("Leading technical initiatives".to_string()),
+                    position_date_start: "2020-01".to_string(),
+                    position_date_end: Some("2024-01".to_string()),
                 },
                 ScoredBullet {
                     bullet: Bullet {
@@ -698,8 +733,16 @@ mod tests {
                     score: 0.5,
                     company_id: "company2".to_string(),
                     company_name: None,
+                    company_description: None,
+                    company_link: None,
+                    company_date_start: "2018-01".to_string(),
+                    company_date_end: None,
+                    company_location: None,
                     position_id: "pos2".to_string(),
                     position_name: "Engineer".to_string(),
+                    position_description: None,
+                    position_date_start: "2018-01".to_string(),
+                    position_date_end: None,
                 },
             ],
             role_profile: RoleProfile {
@@ -747,6 +790,11 @@ mod tests {
                 map
             }),
             summary: Some("Experienced software engineer with focus on infrastructure".to_string()),
+            meta_footer: Some(
+                "Generated with {bullet_count} bullets from {company_count} companies".to_string(),
+            ),
+            total_bullets_available: Some(42),
+            total_companies_available: Some(5),
             metadata: None,
         };
 

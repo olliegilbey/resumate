@@ -76,7 +76,7 @@ mod tests {
 
         // Should have at least 1 font loaded
         assert!(
-            fonts.len() >= 1,
+            !fonts.is_empty(),
             "Should have at least 1 font loaded, got {}",
             fonts.len()
         );

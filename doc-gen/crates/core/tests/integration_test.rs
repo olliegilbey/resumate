@@ -3,33 +3,11 @@
 //! These tests load the actual resume-data.json and validate
 //! that scoring and selection work correctly for all role profiles.
 
-use docgen_core::selector::{select_bullets, SelectionConfig};
-use docgen_core::ResumeData;
+mod common;
+
+use common::load_resume_data;
+use docgen_core::selector::{count_selectable_items, select_bullets, SelectionConfig};
 use std::collections::HashSet;
-
-/// Load resume data from project root
-fn load_resume_data() -> ResumeData {
-    // CARGO_MANIFEST_DIR = /path/to/resumate/doc-gen/crates/core
-    // Need to go up 3 levels: core -> crates -> doc-gen -> resumate
-    let data_path = std::path::Path::new(env!("CARGO_MANIFEST_DIR"))
-        .parent() // crates
-        .unwrap()
-        .parent() // doc-gen
-        .unwrap()
-        .parent() // resumate
-        .unwrap()
-        .join("data")
-        .join("resume-data.json");
-
-    let json = std::fs::read_to_string(&data_path).unwrap_or_else(|e| {
-        panic!(
-            "Failed to read resume-data.json from {:?}: {}. Run just data-pull first",
-            data_path, e
-        )
-    });
-
-    serde_json::from_str(&json).expect("Failed to parse resume-data.json")
-}
 
 #[test]
 fn test_all_role_profiles_produce_valid_selections() {
@@ -42,13 +20,11 @@ fn test_all_role_profiles_produce_valid_selections() {
 
         let selected = select_bullets(&resume, role_profile, &config);
 
-        // Basic validation
+        // Basic validation - should have selected some bullets
         assert!(
-            selected.len() <= config.max_bullets,
-            "Profile '{}' selected {} bullets, max is {}",
-            role_profile.name,
-            selected.len(),
-            config.max_bullets
+            !selected.is_empty(),
+            "Profile '{}' selected 0 bullets",
+            role_profile.name
         );
 
         // All bullets should have valid scores
@@ -91,8 +67,8 @@ fn test_all_role_profiles_produce_valid_selections() {
 fn test_diversity_constraints_across_all_profiles() {
     let resume = load_resume_data();
     let config = SelectionConfig {
-        max_bullets: 18,
         max_per_company: Some(6),
+        min_per_company: None,
         max_per_position: Some(4),
     };
 
@@ -232,7 +208,7 @@ fn test_all_profiles_include_position_descriptions() {
 
         // At least some profiles should include descriptions
         // (this is a soft check - not all profiles might include them if scores are very low)
-        if selected.len() > 0 && has_description {
+        if !selected.is_empty() && has_description {
             println!(
                 "  ✅ Profile '{}' includes position descriptions",
                 role_profile.name
@@ -276,8 +252,8 @@ fn test_selection_is_deterministic_for_all_profiles() {
 fn test_tag_weights_affect_selection() {
     let resume = load_resume_data();
     let config = SelectionConfig {
-        max_bullets: 10,
         max_per_company: None,
+        min_per_company: None,
         max_per_position: None,
     };
 
@@ -366,6 +342,10 @@ fn test_generation_payload_from_real_data() {
     let resume = load_resume_data();
     let config = SelectionConfig::default();
 
+    // Calculate total selectable items once
+    let (_bullet_count, _position_desc_count, total_selectable) = count_selectable_items(&resume);
+    let total_companies = resume.experience.len();
+
     for role_profile in resume.role_profiles.as_ref().unwrap() {
         let selected = select_bullets(&resume, role_profile, &config);
 
@@ -376,6 +356,9 @@ fn test_generation_payload_from_real_data() {
             education: resume.education.clone(),
             skills: resume.skills.clone(),
             summary: resume.summary.clone(),
+            meta_footer: resume.meta_footer.clone(),
+            total_bullets_available: Some(total_selectable),
+            total_companies_available: Some(total_companies),
             metadata: None,
         };
 

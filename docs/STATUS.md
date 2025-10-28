@@ -1,6 +1,6 @@
 # Project Status
 
-**Last Updated:** 2025-10-20
+**Last Updated:** 2025-10-22
 
 ---
 
@@ -94,33 +94,53 @@ Building professional PDF resume generation with Rust compiled to WebAssembly, f
   - ATS-optimized output with proper hierarchy
   - Template-based design (resume.typ)
   - Sub-1s generation time in WASM
-  - See: docs/TYPST_MIGRATION.md
 
 - ✅ **Phase 5.5:** Build Automation & Performance (2025-10-20)
   - Created comprehensive justfile with 40+ targets
   - Fixed build performance regression (24s → 7.5s, 66% faster!)
   - Added Rust patterns to .gitignore (target/, *.rs.bk, pkg/)
   - Excluded target/ from TypeScript scanning (tsconfig.json)
-  - Documented root cause: Next.js scanning 6.6GB Rust build cache
-  - See: BUILD_REGRESSION_REPORT.md
+  - Root cause: Next.js scanning 6.6GB Rust build cache
+
+- ✅ **Phase 5.6:** WASM Bindings with Typst Integration (2025-10-22)
+  - wasm-bindgen exports for browser integration
+  - generate_pdf_typst(payload_json, dev_mode) → PDF bytes
+  - Utility exports: validate_payload_json, version, build_info, estimate_pdf_size
+  - 32 WASM-specific tests (validation, edge cases, complex payloads)
+  - wasm-opt automatic optimization (-Oz, bulk-memory, nontrapping-float-to-int)
+  - 16MB WASM binary (6.28MB gzipped) with embedded Liberation Serif fonts
+  - Font embedding at compile-time via include_bytes!() (~764KB total)
+
+- ✅ **Phase 5.7:** Next.js Integration + UX (2025-10-22)
+  - Dynamic WASM loading via module script injection (ResumeDownload.tsx)
+  - Browser-side PDF generation (client receives only selected bullets)
+  - Progress UI with 5-step generation flow
+  - Automatic PDF download with timestamped filename
+  - Dev mode detection (localhost adds build metadata page)
+  - Browser caching (6.28MB first load, instant subsequent loads)
+  - Full end-to-end working: User confirmed PDF downloads functional
 
 ### Currently Working On
-- 📝 **Documentation updates in progress**
-  - Updating docs to reflect Typst migration
-  - Adding justfile usage as canonical build process
-  - Cleaning up obsolete references
+- 📝 **Deployment & Optimization**
+  - Critical: Fix WASM deployment (public/wasm/.gitignore blocks Vercel)
+  - Solution: Build WASM on Vercel (user preference stated)
+  - Tree-shake Typst dependencies (target: <5MB gzipped)
+  - Create `just build-all` for full end-to-end local builds
+  - Delete obsolete crates/typst/fonts/ directory
 
 ### Next Up
-- **Phase 5.6:** WASM Bindings with Typst integration
-- **Phase 5.7:** Next.js Integration + UX
 - **Phase 5.8:** Observability + CLI
 - **Phase 5.9:** Testing + Polish
 
 ### Blockers/Considerations
-- None currently - Typst migration resolved previous PDF layout issues
+- **CRITICAL:** `public/wasm/.gitignore` contains `*` → WASM files not tracked in git
+  - Works locally (files exist on disk)
+  - Will FAIL on Vercel (404 on /wasm/docgen_wasm_bg.wasm)
+  - Solution: Build WASM on Vercel (Rust toolchain + wasm-pack in buildCommand)
+  - See docs/ARCHITECTURE.md for detailed deployment options
 
-### Test Results (as of 2025-10-16)
-- **Rust Tests:** 236 passing
+### Test Results (as of 2025-10-27)
+- **Rust Tests:** 236 passing (~5s)
   - Core library: 75 tests
   - PDF generation: 132 tests
   - WASM bindings: 20 tests
@@ -129,13 +149,37 @@ Building professional PDF resume generation with Rust compiled to WebAssembly, f
   - Real data validation: 8 tests
   - Roundtrip: 12 tests
   - Schema validation: 11 tests
-- **TypeScript Tests:** 125 passing
+- **TypeScript Tests:** 125 passing (~1s)
   - API route tests: 13 tests
   - vCard utility: 34 tests
   - Rate limiting: 30 tests
   - Component tests: ~48 tests
-- **Total:** **361 tests passing**
+- **Total:** **361 tests passing (~6-7s full suite)**
 - **Performance:** PDF generation <1ms average, CV=1.91% (excellent consistency)
+
+### Code Coverage (as of 2025-10-27)
+
+**Rust Coverage: 88.91% line coverage** (`cargo llvm-cov --workspace`)
+- scoring.rs: 100.00% (243/243 lines) - ✅ Perfect coverage
+- selector.rs: 99.21% (375/378 lines) - ✅ Near perfect
+- typst/template.rs: 96.41% (161/167 lines) - ✅ Excellent
+- typst/compiler.rs: 95.97% (119/124 lines) - ✅ Excellent
+- wasm/lib.rs: 92.33% (373/404 lines) - ✅ Good
+- typst/lib.rs: 92.41% (341/369 lines) - ✅ Good
+- typst/fonts.rs: 84.62% (33/39 lines) - ⚠️ Acceptable
+- shared-types/lib.rs: 35.39% (63/178 lines) - ⚠️ Mostly validation code
+
+**TypeScript Coverage: 23.5% overall** (`bun test:coverage`)
+- Components: 50.89% - ✅ Well-tested (DataExplorer, TagFilter, SearchBar)
+- lib utilities: 76.55% - ✅ Excellent (rate-limit, tags, vcard)
+- API routes: 0% - ⚠️ Need integration tests
+- Scripts: 0% - ⚠️ Tooling, acceptable
+- UI components: 41.21% - ⚠️ Need more component tests
+
+**Coverage Reports:**
+- Rust: `open target/llvm-cov/html/index.html` (after `just coverage-rust`)
+- TypeScript: `open coverage/index.html` (after `just coverage-ts`)
+- Combined: `just coverage` (generates both)
 
 ---
 

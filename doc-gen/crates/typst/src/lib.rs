@@ -91,113 +91,451 @@ pub fn render_resume(payload: &GenerationPayload, dev_mode: bool) -> Result<Vec<
 
 /// Render Typst template with data injection
 ///
-/// For now, this is a simplified implementation that will evolve.
-/// In Phase 3.4, we'll implement proper data injection.
+/// Generates professional ATS-optimized resume layout using Typst markup language.
+/// The template is built dynamically from the payload data.
 ///
 fn render_template(
     _template: &str,
     data: &serde_json::Value,
-    _dev_mode: bool,
+    dev_mode: bool,
 ) -> Result<String, TypstError> {
-    // Simplified template for initial testing
-    // Full template rendering will be implemented in Phase 3.4
-
     let personal = &data["personal"];
     let empty_companies = vec![];
     let companies = data["companies"].as_array().unwrap_or(&empty_companies);
 
     let mut output = String::new();
 
-    // Document settings
+    // ====================
+    // DOCUMENT SETTINGS
+    // ====================
+
     output.push_str("#set document(\n");
     output.push_str(&format!(
         "  title: \"Resume - {}\",\n",
-        personal["name"].as_str().unwrap_or("Unknown")
+        escape_typst_string(personal["name"].as_str().unwrap_or("Resume"))
     ));
     output.push_str(&format!(
         "  author: (\"{}\",),\n",
-        personal["name"].as_str().unwrap_or("Unknown")
+        escape_typst_string(personal["name"].as_str().unwrap_or(""))
     ));
     output.push_str(")\n\n");
 
     output.push_str("#set page(\n");
     output.push_str("  paper: \"us-letter\",\n");
     output.push_str("  margin: (top: 0.75in, bottom: 0.75in, x: 0.75in),\n");
+    output.push_str("  numbering: none,\n");
     output.push_str(")\n\n");
 
     output.push_str("#set text(\n");
     output.push_str("  font: \"Liberation Serif\",\n");
     output.push_str("  size: 10pt,\n");
+    output.push_str("  hyphenate: false,\n");
     output.push_str(")\n\n");
 
-    // Header
+    output.push_str("#set par(\n");
+    output.push_str("  leading: 0.55em,\n");
+    output.push_str("  justify: false,\n");
+    output.push_str("  first-line-indent: 0pt,\n");
+    output.push_str(")\n\n");
+
+    // Heading styles (section headers) - LARGER for better hierarchy
+    output.push_str("#show heading.where(level: 1): set text(size: 12pt, weight: \"bold\")\n");
+    output.push_str("#show heading.where(level: 1): set block(above: 1.2em, below: 0.6em)\n");
+    output.push_str("#show heading.where(level: 2): set text(size: 10.5pt, weight: \"bold\")\n");
+    output.push_str(
+        "#show heading.where(level: 2): set block(above: 0.8em, below: 0.4em, breakable: false)\n",
+    );
+    output.push_str("#show heading.where(level: 3): set text(size: 10pt, weight: \"regular\", style: \"italic\")\n");
+    output.push_str("#show heading.where(level: 3): set block(above: 0.5em, below: 0.3em)\n\n");
+
+    // List styling (bullets)
+    output.push_str("#set list(marker: [•], indent: 1em, body-indent: 0.5em, spacing: 0.4em)\n\n");
+
+    // ====================
+    // HEADER
+    // ====================
+
     output.push_str("#align(center)[\n");
-    output.push_str(&format!(
-        "  #text(size: 18pt, weight: \"bold\")[{}]\n",
-        personal["name"].as_str().unwrap_or("Unknown")
-    ));
-    output.push_str("\n  #v(0.3em)\n\n");
-    output.push_str("  #text(size: 9pt)[\n");
-    // Use raw text for email to avoid Typst auto-link/label interpretation
+
+    // Name and role on same line
+    let name = personal["name"].as_str().unwrap_or("");
+    let role_name = data["role_profile"]["name"].as_str().unwrap_or("");
+
+    if !role_name.is_empty() {
+        output.push_str(&format!(
+            "  #text(size: 20pt, weight: \"bold\")[{}] #h(0.5em) #text(size: 14pt, style: \"italic\")[– {}]\n",
+            escape_typst_string(name),
+            escape_typst_string(role_name)
+        ));
+    } else {
+        output.push_str(&format!(
+            "  #text(size: 20pt, weight: \"bold\")[{}]\n",
+            escape_typst_string(name)
+        ));
+    }
+
+    output.push_str("  #v(0.4em)\n");
+
+    // Contact line with better spacing
+    output.push_str("  #text(size: 10pt)[\n");
+    let mut contact_parts = Vec::new();
+
     if let Some(email) = personal["email"].as_str() {
         if !email.is_empty() {
-            output.push_str(&format!("    `{}`", email));
+            let mailto_url = format!("mailto:{}", email);
+            // Raw text (backticks) doesn't need escaping in Typst
+            contact_parts.push(format!(
+                "#link(\"{}\")[`{}`]",
+                escape_typst_string(&mailto_url),
+                email
+            ));
         }
     }
     if let Some(phone) = personal["phone"].as_str() {
-        output.push_str(&format!(" • {}", phone));
+        if !phone.is_empty() {
+            contact_parts.push(escape_typst_string(phone));
+        }
     }
     if let Some(location) = personal["location"].as_str() {
-        output.push_str(&format!(" • {}", location));
+        if !location.is_empty() {
+            contact_parts.push(escape_typst_string(location));
+        }
     }
-    output.push_str("\n  ]\n");
+    if let Some(website) = personal["website"].as_str() {
+        if !website.is_empty() {
+            let url = if website.starts_with("http://") || website.starts_with("https://") {
+                website.to_string()
+            } else {
+                format!("https://{}", website)
+            };
+            contact_parts.push(format!(
+                "#link(\"{}\")[{}]",
+                escape_typst_string(&url),
+                escape_typst_string(website)
+            ));
+        }
+    }
+    if let Some(linkedin) = personal["linkedin"].as_str() {
+        if !linkedin.is_empty() {
+            let url = format!("https://linkedin.com/in/{}", linkedin);
+            contact_parts.push(format!(
+                "#link(\"{}\")[linkedin.com/in/{}]",
+                escape_typst_string(&url),
+                escape_typst_string(linkedin)
+            ));
+        }
+    }
+    if let Some(github) = personal["github"].as_str() {
+        if !github.is_empty() {
+            let url = format!("https://github.com/{}", github);
+            contact_parts.push(format!(
+                "#link(\"{}\")[github.com/{}]",
+                escape_typst_string(&url),
+                escape_typst_string(github)
+            ));
+        }
+    }
+
+    if !contact_parts.is_empty() {
+        output.push_str("    ");
+        output.push_str(&contact_parts.join(" #h(0.6em)•#h(0.6em) ")); // Better spacing between items
+        output.push('\n');
+    }
+
+    output.push_str("  ]\n");
     output.push_str("]\n\n");
 
-    output.push_str("#v(0.8em)\n\n");
+    output.push_str("#v(0.5em)\n\n");
 
-    // Summary
+    // ====================
+    // SUMMARY
+    // ====================
+
     if let Some(summary) = data["summary"].as_str() {
-        output.push_str("= SUMMARY\n\n");
-        output.push_str(summary);
-        output.push_str("\n\n");
+        if !summary.is_empty() {
+            output.push_str("= PROFESSIONAL SUMMARY\n\n");
+            output.push_str(&escape_typst_string(summary));
+            output.push_str("\n\n");
+        }
     }
 
-    // Experience
+    // ====================
+    // EXPERIENCE
+    // ====================
+
     if !companies.is_empty() {
         output.push_str("= EXPERIENCE\n\n");
 
         for company in companies {
-            let company_name = company["name"].as_str().unwrap_or("Unknown Company");
-            let company_location = company["location"].as_str().unwrap_or("");
+            let company_name = company["name"].as_str().unwrap_or("");
+            let company_description = company["description"].as_str();
+            let company_link = company["link"].as_str();
+            let company_date_range = company["date_range"].as_str().unwrap_or("");
+            let position_count = company["position_count"].as_u64().unwrap_or(0);
 
-            output.push_str(&format!("== {}\n", company_name));
-            if !company_location.is_empty() {
-                output.push_str(&format!("_{}_\n\n", company_location));
-            } else {
-                output.push('\n');
+            if !company_name.is_empty() {
+                // Company name - clickable if link available
+                if let Some(link) = company_link {
+                    if !link.is_empty() {
+                        let url = if link.starts_with("http://") || link.starts_with("https://") {
+                            link.to_string()
+                        } else {
+                            format!("https://{}", link)
+                        };
+                        output.push_str(&format!(
+                            "== #link(\"{}\")[{}]",
+                            escape_typst_string(&url),
+                            escape_typst_string(company_name)
+                        ));
+                    } else {
+                        output.push_str(&format!("== {}", escape_typst_string(company_name)));
+                    }
+                } else {
+                    output.push_str(&format!("== {}", escape_typst_string(company_name)));
+                }
+
+                // Show date range if available
+                if !company_date_range.is_empty() {
+                    output.push_str(&format!(
+                        " #h(1fr) _{}_",
+                        escape_typst_string(company_date_range)
+                    ));
+                }
+                output.push_str("\n\n");
+
+                // Company description (context/industry) - Show if available
+                if let Some(desc) = company_description {
+                    if !desc.is_empty() {
+                        output.push_str(&format!("_{}_\n\n", escape_typst_string(desc)));
+                    }
+                }
             }
 
             if let Some(positions) = company["positions"].as_array() {
                 for position in positions {
-                    let title = position["title"].as_str().unwrap_or("Unknown Position");
+                    let title = position["title"].as_str().unwrap_or("");
                     let date_range = position["date_range"].as_str().unwrap_or("");
 
-                    output.push_str(&format!("=== {} #h(1fr) _{}_\n\n", title, date_range));
+                    if !title.is_empty() {
+                        output.push_str(&format!("=== {}", escape_typst_string(title)));
+
+                        // Only show position dates if company has multiple positions (avoid redundancy)
+                        if position_count > 1 && !date_range.is_empty() {
+                            output.push_str(&format!(
+                                " #h(1fr) _{}_",
+                                escape_typst_string(date_range)
+                            ));
+                        }
+                        output.push_str("\n\n");
+                    }
+
+                    // Position description removed - company description is enough context
 
                     if let Some(bullets) = position["bullets"].as_array() {
                         for bullet in bullets {
-                            if let Some(bullet_str) = bullet.as_str() {
-                                output.push_str(&format!("- {}\n", bullet_str));
+                            if let Some(bullet_obj) = bullet.as_object() {
+                                let description = bullet_obj
+                                    .get("description")
+                                    .and_then(|v| v.as_str())
+                                    .unwrap_or("");
+
+                                if !description.is_empty() {
+                                    output.push_str(&format!(
+                                        "- {}\n",
+                                        escape_typst_string(description)
+                                    ));
+                                }
                             }
                         }
+                        output.push('\n');
                     }
-                    output.push('\n');
                 }
             }
         }
     }
 
+    // ====================
+    // EDUCATION
+    // ====================
+
+    if let Some(education) = data["education"].as_array() {
+        if !education.is_empty() {
+            output.push_str("= EDUCATION\n\n");
+
+            for edu in education {
+                let degree = edu["degree"].as_str().unwrap_or("");
+                let institution = edu["institution"].as_str().unwrap_or("");
+                let year = edu["year"].as_str().unwrap_or("");
+
+                if !degree.is_empty() || !institution.is_empty() {
+                    output.push_str(&format!("== {}", escape_typst_string(degree)));
+
+                    if !year.is_empty() {
+                        output.push_str(&format!(" #h(1fr) _{}_", escape_typst_string(year)));
+                    }
+                    output.push_str("\n\n");
+
+                    if !institution.is_empty() {
+                        output.push_str(&format!("_{}_\n\n", escape_typst_string(institution)));
+                    }
+                }
+            }
+        }
+    }
+
+    // ====================
+    // SKILLS
+    // ====================
+
+    if let Some(skills) = data["skills"].as_object() {
+        if !skills.is_empty() {
+            output.push_str("= SKILLS\n\n");
+
+            for (category, skill_list) in skills {
+                if let Some(skills_array) = skill_list.as_array() {
+                    if !skills_array.is_empty() {
+                        // Capitalize category
+                        let category_display = category
+                            .split('-')
+                            .map(|word| {
+                                let mut chars = word.chars();
+                                match chars.next() {
+                                    None => String::new(),
+                                    Some(first) => {
+                                        first.to_uppercase().collect::<String>() + chars.as_str()
+                                    }
+                                }
+                            })
+                            .collect::<Vec<_>>()
+                            .join(" ");
+
+                        output.push_str(&format!("*{}:* ", escape_typst_string(&category_display)));
+
+                        let skill_strings: Vec<String> = skills_array
+                            .iter()
+                            .filter_map(|s| s.as_str())
+                            .map(escape_typst_string)
+                            .collect();
+
+                        output.push_str(&skill_strings.join(", "));
+                        output.push_str("\n\n");
+                    }
+                }
+            }
+        }
+    }
+
+    // ====================
+    // META FOOTER (dedicated page with formatting)
+    // ====================
+
+    if let Some(meta_footer) = data["metaFooter"].as_str() {
+        if !meta_footer.is_empty() {
+            // Get totals from database (not selected output)
+            let total_bullets = data["totalBulletsAvailable"]
+                .as_u64()
+                .map(|n| n as usize)
+                .unwrap_or(0);
+            let total_companies = data["totalCompaniesAvailable"]
+                .as_u64()
+                .map(|n| n as usize)
+                .unwrap_or(0);
+
+            // Replace template variables in meta footer text
+            let footer_text = meta_footer
+                .replace("{bullet_count}", &total_bullets.to_string())
+                .replace("{company_count}", &total_companies.to_string());
+
+            // Format for ATS/AI readability: Break into logical sections with line breaks
+            let formatted_footer = format_footer_for_ats(&footer_text);
+
+            // Add footer on page 3 with heading
+            output.push_str("\n\n#pagebreak(weak: true)\n\n");
+            output.push_str("= ABOUT THIS RESUME\n\n");
+            output.push_str(&escape_typst_string(&formatted_footer));
+            output.push('\n');
+        }
+    }
+
+    // ====================
+    // DEV MODE METADATA
+    // ====================
+
+    if dev_mode {
+        output.push_str("\n#pagebreak()\n\n");
+        output.push_str("= BUILD METADATA (DEV MODE)\n\n");
+        output.push_str(&format!(
+            "*Build Time:* {}\n\n",
+            chrono::Local::now().format("%Y-%m-%d %H:%M:%S")
+        ));
+        output.push_str(&format!(
+            "*Typst Version:* {}\n\n",
+            env!("CARGO_PKG_VERSION")
+        ));
+
+        if let Some(role_profile) = data["role_profile"].as_object() {
+            if let Some(role_name) = role_profile["name"].as_str() {
+                output.push_str(&format!(
+                    "*Role Profile:* {}\n\n",
+                    escape_typst_string(role_name)
+                ));
+            }
+            if let Some(role_desc) = role_profile["description"].as_str() {
+                output.push_str(&format!(
+                    "*Description:* {}\n\n",
+                    escape_typst_string(role_desc)
+                ));
+            }
+        }
+
+        output.push_str(&format!("*Companies:* {}\n\n", companies.len()));
+
+        let total_bullets: usize = companies
+            .iter()
+            .filter_map(|c| c["positions"].as_array())
+            .flat_map(|positions| positions.iter())
+            .filter_map(|p| p["bullets"].as_array())
+            .map(|bullets| bullets.len())
+            .sum();
+
+        output.push_str(&format!("*Total Bullets:* {}\n\n", total_bullets));
+    }
+
     Ok(output)
+}
+
+/// Format meta footer text for optimal ATS/AI readability
+///
+/// Breaks long paragraph text into logical sections with line breaks between
+/// key concepts to help automated systems parse the information clearly.
+///
+fn format_footer_for_ats(text: &str) -> String {
+    // Break after key sentence endings to create logical paragraphs
+    text.replace(
+        ". A hierarchical scoring engine",
+        ".\n\nA hierarchical scoring engine",
+    )
+    .replace(". The system is built", ".\n\nThe system is built")
+    .replace(". Deployed on", ".\n\nDeployed on")
+    .replace(". Explore the full", ".\n\nExplore the full")
+}
+
+/// Escape special characters for Typst strings
+///
+/// Typst has special meaning for certain characters:
+/// - `#` starts a Typst expression
+/// - `$` starts math mode
+/// - `@` creates a reference
+/// - `[` and `]` delimit content blocks
+/// - `\` is the escape character
+///
+fn escape_typst_string(s: &str) -> String {
+    s.replace('\\', "\\\\")
+        .replace('#', "\\#")
+        .replace('$', "\\$")
+        .replace('@', "\\@")
+        .replace('[', "\\[")
+        .replace(']', "\\]")
 }
 
 #[cfg(test)]
@@ -234,6 +572,9 @@ mod tests {
             education: None,
             skills: None,
             summary: Some("Test summary".to_string()),
+            meta_footer: None,
+            total_bullets_available: None,
+            total_companies_available: None,
             metadata: None,
         }
     }

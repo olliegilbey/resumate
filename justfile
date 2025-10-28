@@ -155,7 +155,7 @@ test-rust-verbose:
 # Run TypeScript tests with Vitest
 test-ts:
     @echo "🧪 Running TypeScript tests..."
-    bun test
+    bun run test
 
 # Run TypeScript tests in watch mode
 test-ts-watch:
@@ -171,6 +171,51 @@ test-ts-ui:
 test-rust-filter PATTERN:
     @echo "🧪 Running Rust tests matching: {{PATTERN}}"
     cargo test {{PATTERN}}
+
+# ============================================
+# Test Coverage
+# ============================================
+
+# Run all coverage reports (Rust + TypeScript)
+coverage: coverage-rust coverage-ts
+    @echo "✅ Coverage reports generated"
+    @echo "  📊 Rust: target/llvm-cov/html/index.html"
+    @echo "  📊 TypeScript: coverage/index.html"
+
+# Generate Rust test coverage with llvm-cov (requires: cargo install cargo-llvm-cov)
+coverage-rust:
+    @echo "📊 Generating Rust coverage report..."
+    @echo "  (Install: cargo install cargo-llvm-cov)"
+    cargo llvm-cov --all --html --output-dir target/llvm-cov/html
+    @echo "✅ Rust coverage: target/llvm-cov/html/index.html"
+
+# Generate Rust coverage in lcov format (for CI/GitHub)
+coverage-rust-lcov:
+    @echo "📊 Generating Rust coverage (lcov format)..."
+    cargo llvm-cov --all --lcov --output-path target/llvm-cov/lcov.info
+    @echo "✅ Rust coverage: target/llvm-cov/lcov.info"
+
+# Generate TypeScript coverage with Vitest
+coverage-ts:
+    @echo "📊 Generating TypeScript coverage..."
+    bun test:coverage
+    @echo "✅ TypeScript coverage: coverage/index.html"
+
+# Open Rust coverage report in browser
+coverage-rust-open:
+    @echo "🌐 Opening Rust coverage report..."
+    open target/llvm-cov/html/index.html || xdg-open target/llvm-cov/html/index.html
+
+# Open TypeScript coverage report in browser
+coverage-ts-open:
+    @echo "🌐 Opening TypeScript coverage report..."
+    open coverage/index.html || xdg-open coverage/index.html
+
+# Clean coverage artifacts
+coverage-clean:
+    @echo "🧹 Cleaning coverage artifacts..."
+    rm -rf target/llvm-cov coverage
+    @echo "✅ Coverage artifacts cleaned"
 
 # ============================================
 # Code Quality

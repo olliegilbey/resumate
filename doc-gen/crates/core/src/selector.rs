@@ -7,10 +7,10 @@ use crate::{Company, Position, ResumeData, RoleProfile};
 
 /// Configuration for bullet selection
 pub struct SelectionConfig {
-    /// Maximum bullets to select
-    pub max_bullets: usize,
     /// Maximum bullets per company (for diversity)
     pub max_per_company: Option<usize>,
+    /// Minimum bullets per company (avoid single-bullet companies)
+    pub min_per_company: Option<usize>,
     /// Maximum bullets per position
     pub max_per_position: Option<usize>,
 }
@@ -18,11 +18,33 @@ pub struct SelectionConfig {
 impl Default for SelectionConfig {
     fn default() -> Self {
         SelectionConfig {
-            max_bullets: 18,
             max_per_company: Some(6),
+            min_per_company: Some(2), // Avoid standalone single bullets
             max_per_position: Some(4),
         }
     }
+}
+
+/// Calculate total selectable items from resume data
+///
+/// Returns (bullet_count, position_desc_count, total)
+pub fn count_selectable_items(resume_data: &ResumeData) -> (usize, usize, usize) {
+    let bullet_count: usize = resume_data
+        .experience
+        .iter()
+        .flat_map(|company| &company.children)
+        .flat_map(|position| &position.children)
+        .count();
+
+    let position_desc_count: usize = resume_data
+        .experience
+        .iter()
+        .flat_map(|company| &company.children)
+        .filter(|position| position.description.is_some())
+        .count();
+
+    let total = bullet_count + position_desc_count;
+    (bullet_count, position_desc_count, total)
 }
 
 /// Select top bullets from resume data for given role profile
@@ -50,8 +72,16 @@ pub fn select_bullets(
                     score,
                     company_id: company.id.clone(),
                     company_name: company.name.clone(),
+                    company_description: company.description.clone(),
+                    company_link: company.link.clone(),
+                    company_date_start: company.date_start.clone(),
+                    company_date_end: company.date_end.clone(),
+                    company_location: company.location.clone(),
                     position_id: position.id.clone(),
                     position_name: position.name.clone(),
+                    position_description: position.description.clone(),
+                    position_date_start: position.date_start.clone(),
+                    position_date_end: position.date_end.clone(),
                 });
             }
         }
@@ -92,8 +122,16 @@ fn score_description_as_bullet(
         score,
         company_id: company.id.clone(),
         company_name: company.name.clone(),
+        company_description: company.description.clone(),
+        company_link: company.link.clone(),
+        company_date_start: company.date_start.clone(),
+        company_date_end: company.date_end.clone(),
+        company_location: company.location.clone(),
         position_id: position.id.clone(),
         position_name: position.name.clone(),
+        position_description: position.description.clone(),
+        position_date_start: position.date_start.clone(),
+        position_date_end: position.date_end.clone(),
     }
 }
 
@@ -109,11 +147,6 @@ fn apply_diversity_constraints(
     let mut position_counts: HashMap<String, usize> = HashMap::new();
 
     for bullet in sorted_bullets {
-        // Check total limit
-        if selected.len() >= config.max_bullets {
-            break;
-        }
-
         // Check per-company limit
         if let Some(max_per_company) = config.max_per_company {
             let company_count = company_counts.get(&bullet.company_id).unwrap_or(&0);
@@ -136,6 +169,23 @@ fn apply_diversity_constraints(
             .entry(bullet.position_id.clone())
             .or_insert(0) += 1;
         selected.push(bullet);
+    }
+
+    // Enforce minimum bullets per company (avoid single-bullet companies)
+    if let Some(min_per_company) = config.min_per_company {
+        // Count bullets per company in selected set
+        let mut final_company_counts: HashMap<String, usize> = HashMap::new();
+        for bullet in &selected {
+            *final_company_counts
+                .entry(bullet.company_id.clone())
+                .or_insert(0) += 1;
+        }
+
+        // Filter out companies with fewer than minimum bullets
+        selected.retain(|bullet| {
+            let count = final_company_counts.get(&bullet.company_id).unwrap_or(&0);
+            *count >= min_per_company
+        });
     }
 
     selected
@@ -266,6 +316,7 @@ mod tests {
                     priority: 0.4,
                 },
             }]),
+            meta_footer: None,
         }
     }
 
@@ -274,15 +325,15 @@ mod tests {
         let resume = create_test_resume();
         let role_profile = &resume.role_profiles.as_ref().unwrap()[0];
         let config = SelectionConfig {
-            max_bullets: 5,
             max_per_company: None,
+            min_per_company: None,
             max_per_position: None,
         };
 
         let selected = select_bullets(&resume, role_profile, &config);
 
-        // Should select top 5 bullets
-        assert_eq!(selected.len(), 5);
+        // Should select some bullets
+        assert!(!selected.is_empty());
 
         // First should be highest scored (b1 from Company 1, high priority company)
         assert!(selected[0].score > selected[1].score);
@@ -293,8 +344,8 @@ mod tests {
         let resume = create_test_resume();
         let role_profile = &resume.role_profiles.as_ref().unwrap()[0];
         let config = SelectionConfig {
-            max_bullets: 10,
             max_per_company: Some(2),
+            min_per_company: None,
             max_per_position: None,
         };
 
@@ -328,24 +379,28 @@ mod tests {
     }
 
     #[test]
-    fn test_selection_respects_max_bullets() {
+    fn test_selection_respects_diversity_constraints() {
         let resume = create_test_resume();
         let role_profile = &resume.role_profiles.as_ref().unwrap()[0];
 
-        for max in [1, 5, 10, 20] {
-            let config = SelectionConfig {
-                max_bullets: max,
-                max_per_company: None,
-                max_per_position: None,
-            };
+        let config = SelectionConfig {
+            max_per_company: Some(2),
+            min_per_company: Some(2),
+            max_per_position: Some(2),
+        };
 
-            let selected = select_bullets(&resume, role_profile, &config);
-            assert!(
-                selected.len() <= max,
-                "Selected {} bullets, expected <= {}",
-                selected.len(),
-                max
-            );
+        let selected = select_bullets(&resume, role_profile, &config);
+
+        // Count bullets per company
+        let mut company_counts: HashMap<String, usize> = HashMap::new();
+        for bullet in &selected {
+            *company_counts.entry(bullet.company_id.clone()).or_insert(0) += 1;
+        }
+
+        // Check constraints
+        for count in company_counts.values() {
+            assert!(*count <= 2, "Company has {} bullets, max is 2", count);
+            assert!(*count >= 2, "Company has {} bullets, min is 2", count);
         }
     }
 
@@ -370,8 +425,8 @@ mod tests {
         let resume = create_test_resume();
         let role_profile = &resume.role_profiles.as_ref().unwrap()[0];
         let config = SelectionConfig {
-            max_bullets: 100, // No limit
             max_per_company: None,
+            min_per_company: None,
             max_per_position: None,
         };
 
@@ -420,6 +475,7 @@ mod tests {
                     priority: 0.4,
                 },
             }]),
+            meta_footer: None,
         };
 
         let config = SelectionConfig::default();

@@ -12,7 +12,6 @@
   - Root caused 3x build regression (24s → 7.5s, 66% improvement!)
   - Added Rust patterns to .gitignore (target/, *.rs.bk, pkg/)
   - Updated tsconfig.json to exclude target/ from TypeScript scanning
-  - Documented investigation in BUILD_REGRESSION_REPORT.md
 
 - [x] **Build Automation with justfile**
   - Created comprehensive justfile with 40+ targets
@@ -25,7 +24,6 @@
   - Updated ARCHITECTURE.md to remove DOCX references
   - Updated .claude/CLAUDE.md and README.md to mention justfile
   - Updated doc-gen/CLAUDE.md to reflect Typst-only approach
-  - Created comprehensive DOCUMENTATION_AUDIT.md
 
 ### ✅ Previously Completed (2025-10-18)
 
@@ -35,7 +33,6 @@
   - Template-based design (resume.typ)
   - Removed DOCX generation (focus on high-quality PDF)
   - Sub-1s generation time in WASM
-  - See: docs/TYPST_MIGRATION.md
 
 ### ✅ Previously Completed (2025-10-14)
 
