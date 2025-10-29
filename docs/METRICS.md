@@ -1,8 +1,8 @@
 ---
-Generated: 2025-10-28T17:50
+Generated: 2025-10-29T01:39
 Generator: scripts/update-metrics-from-logs.sh
 Source: Parsed from test execution logs
-Valid Until: 2025-10-29T17:50 (24h expiry)
+Valid Until: 2025-10-30T01:39 (24h expiry)
 ---
 
 # Project Metrics (Auto-Generated)
@@ -20,8 +20,8 @@ To update: Run `just test` again
 | Language | Tests | Ignored | Time | Status |
 |----------|-------|---------|------|--------|
 | **Rust** | 133 | 1 | 1.43s | ✅ Passing |
-| **TypeScript** | 200 | 0 | 1.67s | ✅ Passing |
-| **TOTAL** | **333** | **1** | 1.43s + 1.67s | ✅ All Passing |
+| **TypeScript** | 200 | 0 | 1.74s | ✅ Passing |
+| **TOTAL** | **333** | **1** | 1.43s + 1.74s | ✅ All Passing |
 
 ### Rust Tests (By Crate)
 
@@ -39,9 +39,9 @@ To update: Run `just test` again
 |--------|-------|
 | Total Tests | 200 |
 | Test Files | 11 |
-| Execution Time | 1.67s |
+| Execution Time | 1.74s |
 
-**Test files breakdown available in log:** `/tmp/resumate-ts-tests.log`
+**Test files breakdown available in log:** `/Users/olliegilbey/code/resumate/.logs/ts-tests.log`
 
 ---
 
@@ -57,9 +57,15 @@ just coverage-rust        # Generate HTML report
 just coverage-rust-open   # Open in browser
 ```
 
-**Last coverage snapshot:** See docs/TESTING_INFRASTRUCTURE_ANALYSIS.md for detailed breakdown
+**Detailed breakdown:** Run `just coverage-rust-open` to view HTML report with per-module coverage
 
 ### TypeScript Coverage
+
+**Line Coverage:** Run 'just coverage-ts' to generate
+
+**Breakdown:**
+- Overall: See coverage-summary.json
+- Per-file: Run `just coverage-ts-open`
 
 **Command to generate detailed report:**
 ```bash
@@ -73,14 +79,14 @@ just coverage-ts-open     # Open in browser
 
 **Rust Tests:**
 - Command: `cargo test --all`
-- Log: `/tmp/resumate-rust-tests.log`
+- Log: `/Users/olliegilbey/code/resumate/.logs/rust-tests.log`
 - Duration: 1.43s
 - Suites: Multiple (core, typst, wasm, shared-types, integration, doc-tests)
 
 **TypeScript Tests:**
 - Command: `bun run test --run`
-- Log: `/tmp/resumate-ts-tests.log`
-- Duration: 1.67s
+- Log: `/Users/olliegilbey/code/resumate/.logs/ts-tests.log`
+- Duration: 1.74s
 - Files: 11 test files
 
 ---
@@ -103,25 +109,25 @@ just coverage-ts       # TypeScript coverage report
 
 **View logs:**
 ```bash
-cat /tmp/resumate-rust-tests.log     # View Rust test output
-cat /tmp/resumate-ts-tests.log       # View TypeScript test output
+cat /Users/olliegilbey/code/resumate/.logs/rust-tests.log     # View Rust test output
+cat /Users/olliegilbey/code/resumate/.logs/ts-tests.log       # View TypeScript test output
 ```
 
 ---
 
 ## Verification
 
-**Last Generated:** 2025-10-28T17:50
+**Last Generated:** 2025-10-29T01:39
 **Next Update:** Automatically on next `just test` run
 **Logs Valid For:** Current session (stored in /tmp)
 
 **To verify counts:**
 ```bash
 # Check Rust
-grep "test result: ok" /tmp/resumate-rust-tests.log | grep -oE "[0-9]+ passed"
+grep "test result: ok" /Users/olliegilbey/code/resumate/.logs/rust-tests.log | grep -oE "[0-9]+ passed"
 
 # Check TypeScript
-grep "Tests.*passed" /tmp/resumate-ts-tests.log
+grep "Tests.*passed" /Users/olliegilbey/code/resumate/.logs/ts-tests.log
 ```
 
 ---

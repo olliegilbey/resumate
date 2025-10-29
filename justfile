@@ -167,11 +167,13 @@ docs-health: metrics-generate docs-verify
 # Run all tests (Rust + TypeScript)
 test: test-rust test-ts
     @echo "✅ All tests passed"
+    @bash scripts/update-metrics-from-logs.sh
 
 # Run Rust tests
 test-rust:
     @echo "🧪 Running Rust tests..."
-    cargo test --all
+    @mkdir -p .logs
+    @cargo test --all 2>&1 | tee .logs/rust-tests.log
 
 # Run Rust tests with output
 test-rust-verbose:
@@ -181,7 +183,8 @@ test-rust-verbose:
 # Run TypeScript tests with Vitest
 test-ts:
     @echo "🧪 Running TypeScript tests..."
-    bun run test
+    @mkdir -p .logs
+    @bun run test 2>&1 | tee .logs/ts-tests.log
 
 # Run TypeScript tests in watch mode
 test-ts-watch:

@@ -16,15 +16,17 @@ retention_policy: Delete completed tasks >7 days old (history preserved in git)
 
 ## 🚧 In Progress
 
-**Documentation System Rearchitecture (Started: 2025-10-28)**
-- Establishing single sources of truth
-- Automating metrics generation
-- Preventing documentation drift
-- Completing systematic cleanup of 20 discrepancies
+*No tasks currently in progress*
 
 ---
 
 ## 📋 Queued - Next Up
+
+### Phase 5.9: Testing & Polish (From CURRENT_PHASE.md)
+- [ ] E2E Tests (Playwright) - 8-10 hours (Date queued: 2025-10-28)
+- [ ] Performance Profiling - 2-3 hours (Date queued: 2025-10-28)
+- [ ] Visual Testing - 2-3 hours (Date queued: 2025-10-28)
+- [ ] Error Handling Polish - 2-3 hours (Date queued: 2025-10-28)
 
 ### Phase 2: Continue Refactoring (3 remaining)
 - [ ] Rename `docs/DEPLOYMENT.md` → `docs/DEPLOYMENT_GUIDE.md` (Date queued: 2025-10-28)

@@ -11,9 +11,10 @@ else
   EXPIRY=$(date -u -d "+1 day" +"%Y-%m-%dT%H:%M")
 fi
 
-# Temp log files (written by justfile)
-RUST_LOG="/tmp/resumate-rust-tests.log"
-TS_LOG="/tmp/resumate-ts-tests.log"
+# Project-local log files (written by justfile)
+PROJECT_ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
+RUST_LOG="$PROJECT_ROOT/.logs/rust-tests.log"
+TS_LOG="$PROJECT_ROOT/.logs/ts-tests.log"
 
 # Verify logs exist
 if [[ ! -f "$RUST_LOG" ]]; then
@@ -57,9 +58,17 @@ SHARED_TESTS="See log"
 # Get TypeScript breakdown (count tests per file)
 TS_FILE_COUNT=$(grep -cE "✓.*\([0-9]+ tests\)" "$TS_LOG" || echo "0")
 
-# Get coverage if llvm-cov is installed
+# TypeScript coverage (from vitest)
+if [ -f "coverage/coverage-summary.json" ]; then
+  TS_COVERAGE=$(jq -r '.total.lines.pct' coverage/coverage-summary.json 2>/dev/null || echo "Run 'just coverage-ts' to generate")
+  TS_COVERAGE="${TS_COVERAGE}%"
+else
+  TS_COVERAGE="Run 'just coverage-ts' to generate"
+fi
+
+# Rust coverage (from cargo-llvm-cov)
 if command -v cargo-llvm-cov &>/dev/null; then
-  RUST_COVERAGE=$(cargo llvm-cov --workspace --summary-only 2>&1 | grep -E "TOTAL" | awk '{print $10}' || echo "Not available")
+  RUST_COVERAGE=$(cargo llvm-cov --workspace --summary-only 2>&1 | grep -E "TOTAL" | awk '{print $10}' || echo "Run 'just coverage-rust' to generate")
 else
   RUST_COVERAGE="Not installed (cargo install cargo-llvm-cov)"
 fi
@@ -125,9 +134,15 @@ just coverage-rust        # Generate HTML report
 just coverage-rust-open   # Open in browser
 \`\`\`
 
-**Last coverage snapshot:** See docs/TESTING_INFRASTRUCTURE_ANALYSIS.md for detailed breakdown
+**Detailed breakdown:** Run \`just coverage-rust-open\` to view HTML report with per-module coverage
 
 ### TypeScript Coverage
+
+**Line Coverage:** $TS_COVERAGE
+
+**Breakdown:**
+- Overall: See coverage-summary.json
+- Per-file: Run \`just coverage-ts-open\`
 
 **Command to generate detailed report:**
 \`\`\`bash

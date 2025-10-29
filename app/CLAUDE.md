@@ -1,7 +1,7 @@
 # Next.js Application Context
 
 **You're reading this because you're working with:**
-- Files in `app/`, `components/`, `lib/`, `middleware.ts`
+- Files in `app/`, `components/`, `lib/`, `proxy.ts`
 - Next.js application code
 - TypeScript/React components
 - API routes
@@ -192,68 +192,26 @@ app/api/**/__tests__/    # API route tests
 
 ### Running Tests
 ```bash
-just test           # Run all tests (Rust + TypeScript)
-just test-ts        # TypeScript tests only
+just test-ts        # TypeScript only
 just test-ts-watch  # Watch mode
 ```
 
 ---
 
-## Development Server Behavior
+## Dev Server Behavior
 
-### Hot Module Replacement (HMR) - Auto-updates
-✅ React components (.tsx, .jsx)
-✅ Tailwind CSS classes
-✅ Page routes (app/ directory)
-✅ Most TypeScript changes
-
-### Requires Browser Refresh (`Cmd + R`)
-🔄 API route changes (app/api/)
-🔄 Middleware changes (middleware.ts)
-🔄 Environment variable changes (.env.local)
-
-### Requires Hard Refresh (`Cmd + Shift + R`)
-💪 CSS seems stuck/cached
-💪 Static assets not updating
-💪 Cloudflare Turnstile widget issues
-
-### Requires Dev Server Restart
-⚙️ next.config.js changes
-⚙️ tailwind.config.ts changes
-⚙️ New environment variables added
-⚙️ Package installations (bun install)
-
----
-
-## Common Commands
-
-```bash
-just dev              # Start dev server (Turbopack)
-just build            # Production build
-just lint             # Run ESLint
-just typecheck        # TypeScript validation
-just test             # Run all tests
-```
+**Auto-updates (HMR):** React components, Tailwind, pages, TypeScript
+**Refresh needed:** API routes, proxy.ts, .env.local
+**Hard refresh:** CSS cache, static assets, Turnstile
+**Restart needed:** next.config.js, tailwind.config.ts, bun install
 
 ---
 
 ## Security Patterns
 
-### Rate Limiting
-See `lib/rate-limit.ts` for implementation:
-- In-memory store (consider Redis for multi-instance)
-- IP-based limits
-- Per-route configuration
-
-### Middleware
-See `middleware.ts`:
-- Bot detection with allowlist (Googlebot, etc.)
-- Security headers (CSP, X-Frame-Options)
-- Rate limiting enforcement
-
-### Turnstile Integration
-- **Development:** Auto-skipped (NODE_ENV === 'development')
-- **Production:** Required for /api/contact-card and /api/resume/*
+**Rate Limiting:** `lib/rate-limit.ts` - In-memory, IP-based, per-route
+**Proxy:** `proxy.ts` - Bot detection, security headers, rate limiting (Next.js 16 pattern)
+**Turnstile:** Auto-skipped in dev, required in prod for /api/contact-card and /api/resume/*
 
 ---
 
@@ -311,21 +269,12 @@ export async function POST(request: NextRequest) {
 
 ---
 
-## Notes for AI Assistants
-
-**Before making changes:**
-1. Run `just typecheck` for TypeScript validation
-2. Run `just lint` for code quality
-3. Test in browser with `just dev`
-4. Run `just test` frequently during development
+## AI Assistant Notes
 
 **Common tasks:**
-- Adding new page → Create in `app/` with page.tsx
-- Adding new API route → Create in `app/api/` with route.ts
-- Adding new component → Create in `components/ui/` or `components/data/`
-- Styling changes → Use Tailwind classes
+- New page → `app/*/page.tsx`
+- New API → `app/api/*/route.ts`
+- New component → `components/ui/` or `components/data/`
+- Styling → Tailwind classes
 
-**For hybrid work (Next.js + Rust types):**
-- Also read `doc-gen/CLAUDE.md` for Rust context
-- Follow type sync patterns (Rust → Schema → TS)
-- Run `just types-sync` after Rust changes (combines schema + ts generation)
+**Hybrid work (Next.js + Rust):** Read `doc-gen/CLAUDE.md`, run `just types-sync` after Rust changes

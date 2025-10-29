@@ -1,3 +1,10 @@
+---
+last_updated: 2025-10-22
+category: Data Schema & Type System
+update_frequency: Never (only when schema architecture changes)
+retention_policy: All versions preserved in git
+---
+
 # Data Schema & Type System
 
 ## Overview

@@ -31,11 +31,11 @@ export default defineConfig({
         'app/robots.ts', // Next.js metadata
         'app/api/resume/select/**', // Not yet tested (Phase 3.3 pending)
         'proxy.ts', // Middleware proxy
-        'components/ui/ContactLinks.tsx', // Display component (tested via E2E)
-        'components/ui/Navbar.tsx', // UI component (tested via E2E)
-        'components/ui/ThemeToggle.tsx', // UI component (tested via E2E)
-        'components/ui/ThemeContext.tsx', // UI component (tested via E2E)
-        'components/data/ResumeDownload.tsx', // WASM component (complex, tested via E2E)
+        'components/ui/ContactLinks.tsx', // Display component (E2E tests planned - Phase 5.9)
+        'components/ui/Navbar.tsx', // UI component (E2E tests planned - Phase 5.9)
+        'components/ui/ThemeToggle.tsx', // UI component (E2E tests planned - Phase 5.9)
+        'components/ui/ThemeContext.tsx', // UI component (E2E tests planned - Phase 5.9)
+        'components/data/ResumeDownload.tsx', // WASM component (E2E tests planned - Phase 5.9)
         'lib/__tests__/helpers/mock-data.ts', // Test helper
         'scripts/**', // Build/deployment scripts (not unit testable)
       ],

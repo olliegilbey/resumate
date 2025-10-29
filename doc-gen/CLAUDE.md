@@ -29,9 +29,27 @@ See root `.claude/CLAUDE.md` for complete project structure.
 
 ## Core Modules
 
-### types.rs - Source of Truth
-All Rust types use schemars for JSON Schema generation:
+### Type System Architecture
 
+**IMPORTANT:** There is NO `types.rs` in `doc-gen/crates/core/src/`
+
+**Pattern:** Re-export shared-types crate:
+```rust
+// doc-gen/crates/core/src/lib.rs
+pub use shared_types::*;  // All types from canonical source
+```
+
+**Canonical source:** `crates/shared-types/src/lib.rs` (project root)
+
+**Type Flow:**
+```
+crates/shared-types/src/lib.rs (edit here ONLY)
+  ↓ pub use in doc-gen/crates/core/src/lib.rs (re-export)
+  ↓ just types-schema (generate JSON Schema)
+  ↓ just types-ts (generate TypeScript)
+```
+
+**Shared Types Use Schemars for JSON Schema Generation:**
 ```rust
 use schemars::JsonSchema;
 use serde::{Deserialize, Serialize};
@@ -145,97 +163,31 @@ pub fn select_bullets(
 
 ---
 
-## Testing Philosophy
+## Testing
 
-### TDD (Test-Driven Development)
-1. Write tests first
-2. Implement to make tests pass
-3. Refactor while keeping tests green
+**Philosophy:** See [../docs/TESTING_STRATEGY.md](../docs/TESTING_STRATEGY.md)
 
-### Test Types
-
-**Unit Tests** (in module files):
-```rust
-#[cfg(test)]
-mod tests {
-    use super::*;
-
-    #[test]
-    fn test_tag_relevance_perfect_match() {
-        let tags = vec!["engineering".to_string()];
-        let mut weights = HashMap::new();
-        weights.insert("engineering".to_string(), 1.0);
-
-        let score = calculate_tag_relevance(&tags, &weights);
-        assert_eq!(score, 1.0);
-    }
-}
-```
-
-**Integration Tests** (tests/ directory):
-```rust
-// tests/integration_test.rs
-#[test]
-fn test_all_role_profiles_produce_valid_selections() {
-    let resume = load_resume_data();  // Real data!
-
-    for role_profile in &resume.role_profiles {
-        let selected = select_bullets(&resume, role_profile, &config);
-        assert!(selected.len() <= config.max_bullets);
-        // ... more assertions
-    }
-}
-```
-
-**Property-Based Tests** (with proptest):
-```rust
-use proptest::prelude::*;
-
-proptest! {
-    #[test]
-    fn test_scoring_is_deterministic(
-        priority in 1u8..=10,
-        tags in prop::collection::vec(any::<String>(), 0..5)
-    ) {
-        // Test with random valid inputs
-        let score1 = score_bullet(...);
-        let score2 = score_bullet(...);
-        assert_eq!(score1, score2);
-    }
-}
-```
+**Test Types:**
+- Unit: `#[cfg(test)] mod tests` in module files
+- Integration: `tests/` directory
+- Property-based: `proptest!` macro
 
 ---
 
 ## Common Commands
 
-### Testing
 ```bash
-cargo test --all                    # Run all tests
-cargo test -p docgen-core           # Test core only
-cargo test --test integration_test  # Integration tests only
-cargo test -- --nocapture          # Show println! output
-```
+# Use just commands (defined in root justfile)
+just test-rust         # All Rust tests
+just wasm              # Build WASM
+just types-schema      # Generate JSON Schema
+just check             # Type check (cargo check)
 
-### Building
-```bash
-cargo build                         # Debug build
-cargo build --release               # Release build
-cargo build --target wasm32-unknown-unknown  # WASM target
-./build-wasm.sh                     # WASM build script
-```
-
-### Schema Generation
-```bash
-cargo run --bin generate_schema     # Generate JSON Schema
-just types-schema                   # Same, via justfile
-```
-
-### Type Checking
-```bash
-cargo check                         # Fast type check
+# Direct cargo (when debugging specific issues)
+cargo test -p docgen-core           # Test specific crate
+cargo test -- --nocapture           # Show println! output
 cargo clippy                        # Linter
-cargo fmt                           # Format code
+cargo fmt                           # Format
 ```
 
 ---

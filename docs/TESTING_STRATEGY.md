@@ -247,7 +247,7 @@ doc-gen/crates/core/tests/
 | **Core Business Logic** | 100% | Scoring, selection - mission critical |
 | **API Routes** | 80%+ | User-facing, security critical |
 | **Utilities** | 75%+ | Reusable, high leverage |
-| **Components** | 60%+ | UI tested via E2E + unit |
+| **Components** | 60%+ | UI will be tested via E2E (planned - Phase 5.9) + unit |
 | **Generated Code** | 0% | Don't test generated files |
 | **Scripts** | 0% | Deployment tools, not production |
 
@@ -260,7 +260,7 @@ doc-gen/crates/core/tests/
 - Build scripts (`scripts/**`)
 - WASM display components (browser tested)
 
-**Rationale:** Not all code needs unit tests. UI components better tested with E2E. Deployment scripts tested in production.
+**Rationale:** Not all code needs unit tests. UI components will be better tested with E2E (Phase 5.9 - Playwright). Deployment scripts tested in production.
 
 ---
 

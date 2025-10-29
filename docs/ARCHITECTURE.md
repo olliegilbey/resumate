@@ -1,4 +1,5 @@
 ---
+last_updated: 2025-10-28
 category: System Architecture & Design
 update_frequency: Never (only on major architectural changes)
 retention_policy: All versions preserved in git

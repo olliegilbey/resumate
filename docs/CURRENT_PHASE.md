@@ -118,6 +118,24 @@ updated_by: System (migrated from STATUS.md)
 
 ## Next Phase Preview
 
+### Phase 5.8: Observability & Analytics (Next Up)
+**Goal:** Track resume generation events and user analytics
+
+**Key Features:**
+- PostHog event tracking (resume_generated, resume_prepared events)
+- Server-side generation metadata logging (/api/resume/log route)
+- N8N webhook integration for notifications
+- Analytics dashboard for usage patterns
+
+**Estimated Duration:** 6-8 hours
+
+**Prerequisites:**
+- ✅ Phase 5.9 complete (testing & polish)
+- ✅ PDF generation stable
+- ✅ Production deployment working
+
+---
+
 ### Phase 6: Claude API Integration (Planned)
 **Goal:** AI-powered bullet selection from job descriptions
 
@@ -131,10 +149,9 @@ updated_by: System (migrated from STATUS.md)
 **Estimated Duration:** 20-25 hours (1 week)
 
 **Prerequisites:**
-- ✅ Phase 5 complete
-- ✅ PDF generation working
-- ✅ Security model validated
-- ⏳ E2E tests passing
+- ⏳ Phase 5.8 complete (observability in place)
+- ⏳ Analytics tracking working
+- ⏳ E2E tests passing (Phase 5.9)
 
 ---
 
