@@ -1,20 +1,44 @@
 ---
-last_updated: 2025-10-28
-category: Active Tasks & Todos
+last_updated: 2025-10-29
+category: Active Tasks & Todos (MIGRATED TO LINEAR)
 update_frequency: Daily
 retention_policy: Delete completed tasks >7 days old (history preserved in git)
 ---
 
 # Active Tasks & Todos
 
-> **📍 Retention Directive:**
-> Completed tasks older than 7 days are automatically deleted from this file.
-> Full history is preserved in git log. Run `git log -p docs/TODOS.md` to view historical tasks.
-> This keeps the file focused on current work while maintaining complete audit trail.
+> **🔄 MIGRATED TO LINEAR (2025-10-29)**
+>
+> All active tasks now tracked in Linear for better project management across sessions.
+>
+> **Linear Project:** https://linear.app/olliegg/project/resumate-66ec0bda8b63
+>
+> This file preserved for historical reference. See git history for full task audit trail.
 
 ---
 
-## 🚧 In Progress
+## Current Sprint (Linear)
+
+**Priority 1 (Urgent):**
+- [OLL-26](https://linear.app/olliegg/issue/OLL-26) - Add PDF text extraction validation tests
+- [OLL-27](https://linear.app/olliegg/issue/OLL-27) - Fix and verify Vercel deployment pipeline
+- [OLL-29](https://linear.app/olliegg/issue/OLL-29) - Integrate PostHog event tracking and N8N webhooks
+
+**Phase 5.9 (High):**
+- [OLL-30](https://linear.app/olliegg/issue/OLL-30) - Add E2E tests with Playwright
+- [OLL-31](https://linear.app/olliegg/issue/OLL-31) - Profile WASM load and PDF generation performance
+- [OLL-32](https://linear.app/olliegg/issue/OLL-32) - Add visual regression tests for PDF output
+- [OLL-33](https://linear.app/olliegg/issue/OLL-33) - Polish error handling UI and messaging
+
+**Documentation (Medium):**
+- [OLL-34](https://linear.app/olliegg/issue/OLL-34) - Refactor documentation structure and naming
+- [OLL-35](https://linear.app/olliegg/issue/OLL-35) - Add documentation automation scripts
+
+---
+
+## Historical Tasks (Pre-Linear Migration)
+
+### 🚧 In Progress
 
 *No tasks currently in progress*
 
