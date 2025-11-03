@@ -8,7 +8,8 @@
 - Automation tooling
 
 **Shared project context already loaded via root CLAUDE.md:**
-- Architecture, workflows, status, todos, deployment
+- Architecture, workflows, status, deployment
+- Linear project for active tasks
 
 **This file contains scripts-specific patterns and conventions.**
 

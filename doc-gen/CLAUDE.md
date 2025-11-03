@@ -11,6 +11,7 @@
 - **[../docs/TESTING_STRATEGY.md](../docs/TESTING_STRATEGY.md)** - Testing philosophy
 - **[../docs/METRICS.md](../docs/METRICS.md)** - Test counts, coverage (auto-generated)
 - **[../docs/ARCHITECTURE.md](../docs/ARCHITECTURE.md)** - WASM pipeline architecture
+- **Linear project** - Active tasks and issues
 
 **This file contains Rust/WASM-specific patterns and conventions.**
 

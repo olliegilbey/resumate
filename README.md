@@ -388,6 +388,7 @@ This project uses a hierarchical documentation system designed to prevent drift 
 - **[docs/ARCHITECTURE.md](docs/ARCHITECTURE.md)** - System design and WASM pipeline
 - **[docs/DEPLOYMENT_GUIDE.md](docs/DEPLOYMENT_GUIDE.md)** - Deployment instructions
 - **[docs/META_DOCUMENTATION.md](docs/META_DOCUMENTATION.md)** - How the documentation system works
+- **Linear project** - Active tasks, issues, and milestones
 
 ### Documentation Principles
 

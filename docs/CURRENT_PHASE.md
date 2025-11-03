@@ -1,5 +1,5 @@
 ---
-last_updated: 2025-10-28
+last_updated: 2025-10-29
 phase: Phase 5 - WASM Integration & Testing
 phase_started: 2025-10-08
 completion: 92%
@@ -11,6 +11,8 @@ updated_by: System (migrated from STATUS.md)
 > **📍 System Directive:**
 > This file tracks the current development phase only. Historical phases are preserved in git history.
 > **Update frequency:** On phase transitions or significant milestones.
+>
+> **📋 Task Tracking:** All detailed tasks now in [Linear](https://linear.app/olliegg/project/resumate-66ec0bda8b63)
 
 ---
 
@@ -163,8 +165,7 @@ For current test counts, coverage, and performance metrics, see:
 For testing philosophy and strategy, see:
 - **[TESTING_STRATEGY.md](./TESTING_STRATEGY.md)** - TDD principles and patterns
 
-For active tasks and todos, see:
-- **[TODOS.md](./TODOS.md)** - Current work (timestamped)
+For active tasks, see Linear project.
 
 ---
 

@@ -11,6 +11,7 @@
 - **[docs/CURRENT_PHASE.md](../docs/CURRENT_PHASE.md)** - Active phase, current status
 - **[docs/TESTING_STRATEGY.md](../docs/TESTING_STRATEGY.md)** - Testing philosophy
 - **[docs/METRICS.md](../docs/METRICS.md)** - Test counts, coverage (auto-generated)
+- **Linear project** - Active tasks and issues
 
 **This file contains Next.js 16-specific patterns and conventions.**
 
