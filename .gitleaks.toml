@@ -1,0 +1,72 @@
+# Gitleaks configuration for Resumate
+# Extends default gitleaks rules with PII detection (phone, email)
+#
+# This file is automatically detected by gitleaks when running in this repo
+# No changes needed to your global pre-commit hook
+
+title = "Resumate Security Rules"
+
+# ============================================
+# Custom Rules: PII Detection
+# ============================================
+
+[[rules]]
+id = "phone-number-international"
+description = "Phone number (international format)"
+regex = '''\+[0-9]{1,3}[\s\-]?(\([0-9]{1,4}\)|[0-9]{1,4})[\s\-]?[0-9]{3,4}[\s\-]?[0-9]{3,4}'''
+tags = ["pii", "phone"]
+
+[[rules]]
+id = "phone-number-us"
+description = "US phone number"
+regex = '''(\([0-9]{3}\)|[0-9]{3})[\s\-\.]?[0-9]{3}[\s\-\.]?[0-9]{4}'''
+tags = ["pii", "phone"]
+
+[[rules]]
+id = "email-address"
+description = "Email address (excludes common test patterns)"
+regex = '''[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}'''
+tags = ["pii", "email"]
+
+# ============================================
+# Allowlist: Legitimate Use Cases
+# ============================================
+
+[allowlist]
+description = "Allowlist for test files and safe patterns"
+
+# Paths to ignore completely
+paths = [
+  '''\.test\.ts$''',
+  '''\.test\.tsx$''',
+  '''\.spec\.ts$''',
+  '''__tests__/''',
+  '''/fixtures/''',
+  '''/mocks/''',
+  '''^data/resume-data\.json$''',  # Gitignored personal data
+  '''^\.env\.local$''',             # Gitignored env vars
+  '''^target/''',                   # Build artifacts
+  '''^node_modules/''',
+]
+
+# Regex patterns to ignore (common false positives)
+regexes = [
+  '''example\.com''',
+  '''test@test\.com''',
+  '''user@example\.com''',
+  '''foo@bar\.com''',
+  '''noreply@''',
+  '''support@github\.com''',
+  '''123-456-7890''',               # Example phone
+  '''\+1-555-''',                   # Example international
+  '''555-0100''',                   # Reserved test numbers
+]
+
+# Stop words (if line contains these, ignore the match)
+stopwords = [
+  "example",
+  "test",
+  "mock",
+  "fixture",
+  "placeholder",
+]

@@ -73,6 +73,15 @@ wasm-pack.log
 
 # Rust/WASM test outputs
 doc-gen/test-outputs/
+target/test-pdfs/
+
+# Generated PDFs (never commit)
+*.pdf
+
+# Temp/backup files
+*.bak
+*.tmp
+*~
 
 # Note: Cargo.lock is intentionally tracked for workspace reproducibility
 # Only libraries should ignore Cargo.lock, applications should commit it
