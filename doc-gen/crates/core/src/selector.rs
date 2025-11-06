@@ -7,6 +7,8 @@ use crate::{Company, Position, ResumeData, RoleProfile};
 
 /// Configuration for bullet selection
 pub struct SelectionConfig {
+    /// Maximum total bullets (ceiling - may select fewer based on content length)
+    pub max_bullets: Option<usize>,
     /// Maximum bullets per company (for diversity)
     pub max_per_company: Option<usize>,
     /// Minimum bullets per company (avoid single-bullet companies)
@@ -18,6 +20,7 @@ pub struct SelectionConfig {
 impl Default for SelectionConfig {
     fn default() -> Self {
         SelectionConfig {
+            max_bullets: Some(28), // Ceiling - algorithm may choose fewer
             max_per_company: Some(6),
             min_per_company: Some(2), // Avoid standalone single bullets
             max_per_position: Some(4),
@@ -147,6 +150,13 @@ fn apply_diversity_constraints(
     let mut position_counts: HashMap<String, usize> = HashMap::new();
 
     for bullet in sorted_bullets {
+        // Check max_bullets limit (ceiling)
+        if let Some(max_bullets) = config.max_bullets {
+            if selected.len() >= max_bullets {
+                break;
+            }
+        }
+
         // Check per-company limit
         if let Some(max_per_company) = config.max_per_company {
             let company_count = company_counts.get(&bullet.company_id).unwrap_or(&0);
@@ -325,6 +335,7 @@ mod tests {
         let resume = create_test_resume();
         let role_profile = &resume.role_profiles.as_ref().unwrap()[0];
         let config = SelectionConfig {
+            max_bullets: None,
             max_per_company: None,
             min_per_company: None,
             max_per_position: None,
@@ -344,6 +355,7 @@ mod tests {
         let resume = create_test_resume();
         let role_profile = &resume.role_profiles.as_ref().unwrap()[0];
         let config = SelectionConfig {
+            max_bullets: None,
             max_per_company: Some(2),
             min_per_company: None,
             max_per_position: None,
@@ -384,6 +396,7 @@ mod tests {
         let role_profile = &resume.role_profiles.as_ref().unwrap()[0];
 
         let config = SelectionConfig {
+            max_bullets: None,
             max_per_company: Some(2),
             min_per_company: Some(2),
             max_per_position: Some(2),
@@ -425,6 +438,7 @@ mod tests {
         let resume = create_test_resume();
         let role_profile = &resume.role_profiles.as_ref().unwrap()[0];
         let config = SelectionConfig {
+            max_bullets: None,
             max_per_company: None,
             min_per_company: None,
             max_per_position: None,

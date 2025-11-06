@@ -15,10 +15,10 @@ default:
 # Development
 # ============================================
 
-# Start Next.js dev server with Turbopack
+# Start Next.js dev server with Turbopack (port 3002)
 dev:
-    @echo "🚀 Starting dev server..."
-    bun dev
+    @echo "🚀 Starting dev server on port 3002..."
+    PORT=3002 bun dev
 
 # ============================================
 # Building

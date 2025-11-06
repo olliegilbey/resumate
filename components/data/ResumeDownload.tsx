@@ -117,13 +117,12 @@ export function ResumeDownload({ resumeData }: ResumeDownloadProps) {
             script.type = 'module'
             script.setAttribute('data-wasm-loader', 'true')
             script.textContent = `
-              import init, { generate_pdf, generate_pdf_typst } from '/wasm/docgen_wasm.js';
+              import init, { generate_pdf_typst } from '/wasm/docgen_wasm.js';
               await init('/wasm/docgen_wasm_bg.wasm');
 
               console.log('✅ WASM loaded and cached');
 
               window.__wasmReady = true;
-              window.__generatePdf = generate_pdf;
               window.__generatePdfTypst = generate_pdf_typst;
             `
             document.head.appendChild(script)
@@ -162,10 +161,9 @@ export function ResumeDownload({ resumeData }: ResumeDownloadProps) {
             throw new Error('Typst WASM module not initialized')
           }
 
-          // Detect dev mode (localhost or 127.0.0.1)
-          const isDevMode = typeof window !== 'undefined' &&
-            (window.location.hostname === 'localhost' ||
-             window.location.hostname === '127.0.0.1')
+          // Dev mode based on build environment, not hostname
+          // This ensures production builds don't show metadata even on localhost
+          const isDevMode = process.env.NODE_ENV === 'development'
 
           console.log('🎨 Generating PDF with Typst...')
           // Type assertion: we checked above that it's defined

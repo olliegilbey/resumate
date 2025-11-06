@@ -212,21 +212,25 @@ fn test_pdf_permutation_varied_bullet_counts() {
     // Test with different diversity constraint settings
     let configs = [
         SelectionConfig {
+            max_bullets: None,
             max_per_company: Some(3),
             min_per_company: Some(2),
             max_per_position: Some(2),
         },
         SelectionConfig {
+            max_bullets: None,
             max_per_company: Some(5),
             min_per_company: Some(2),
             max_per_position: Some(3),
         },
         SelectionConfig {
+            max_bullets: None,
             max_per_company: Some(6),
             min_per_company: Some(2),
             max_per_position: Some(4),
         },
         SelectionConfig {
+            max_bullets: None,
             max_per_company: None,
             min_per_company: None,
             max_per_position: None,

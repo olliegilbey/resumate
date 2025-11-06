@@ -124,7 +124,7 @@ export async function POST(request: NextRequest) {
 
     // Run bullet selection algorithm (TypeScript version until WASM is ready)
     const selectionConfig = {
-      maxBullets: config?.maxBullets ?? 18,
+      maxBullets: config?.maxBullets ?? 28,  // Ceiling - may select fewer based on content
       maxPerCompany: config?.maxPerCompany ?? 6,
       maxPerPosition: config?.maxPerPosition ?? 4,
     }
@@ -180,8 +180,16 @@ interface ScoredBullet {
   score: number
   companyId: string
   companyName: string | null | undefined
+  companyDescription: string | null | undefined
+  companyLink: string | null | undefined
+  companyDateStart: string
+  companyDateEnd: string | null | undefined
+  companyLocation: string | null | undefined
   positionId: string
   positionName: string
+  positionDescription: string | null | undefined
+  positionDateStart: string
+  positionDateEnd: string | null | undefined
 }
 
 /**
@@ -215,8 +223,16 @@ function selectBullets(resumeData: ResumeData, roleProfile: RoleProfile, config:
           score: descScore,
           companyId: company.id,
           companyName: company.name,
+          companyDescription: company.description,
+          companyLink: company.link,
+          companyDateStart: company.dateStart,
+          companyDateEnd: company.dateEnd,
+          companyLocation: company.location,
           positionId: position.id,
           positionName: position.name,
+          positionDescription: position.description,
+          positionDateStart: position.dateStart,
+          positionDateEnd: position.dateEnd,
         })
       }
 
@@ -229,8 +245,16 @@ function selectBullets(resumeData: ResumeData, roleProfile: RoleProfile, config:
           score,
           companyId: company.id,
           companyName: company.name,
+          companyDescription: company.description,
+          companyLink: company.link,
+          companyDateStart: company.dateStart,
+          companyDateEnd: company.dateEnd,
+          companyLocation: company.location,
           positionId: position.id,
           positionName: position.name,
+          positionDescription: position.description,
+          positionDateStart: position.dateStart,
+          positionDateEnd: position.dateEnd,
         })
       }
     }

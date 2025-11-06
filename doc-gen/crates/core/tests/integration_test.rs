@@ -67,6 +67,7 @@ fn test_all_role_profiles_produce_valid_selections() {
 fn test_diversity_constraints_across_all_profiles() {
     let resume = load_resume_data();
     let config = SelectionConfig {
+        max_bullets: None,
         max_per_company: Some(6),
         min_per_company: None,
         max_per_position: Some(4),
@@ -252,6 +253,7 @@ fn test_selection_is_deterministic_for_all_profiles() {
 fn test_tag_weights_affect_selection() {
     let resume = load_resume_data();
     let config = SelectionConfig {
+        max_bullets: None,
         max_per_company: None,
         min_per_company: None,
         max_per_position: None,
