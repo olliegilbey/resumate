@@ -75,8 +75,9 @@ wasm-pack.log
 doc-gen/test-outputs/
 target/test-pdfs/
 
-# Generated PDFs (never commit)
+# Generated PDFs (never commit - contains PII)
 *.pdf
+pdf-logs/
 
 # Temp/backup files
 *.bak

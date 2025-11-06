@@ -318,6 +318,8 @@ clean-rust:
     @echo "🧹 Cleaning Rust artifacts (6.6GB+)..."
     @echo "⚠️  This will require a full rebuild next time"
     cargo clean
+    @# Also clean nested cargo workspaces
+    @find . -type d -name "target" -not -path "*/node_modules/*" -exec rm -rf {} + 2>/dev/null || true
 
 # Clean WASM build outputs
 clean-wasm:
