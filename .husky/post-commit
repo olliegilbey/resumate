@@ -11,7 +11,7 @@ if [ ! -f "data/resume-data.json" ]; then
 fi
 
 # Only run if WASM is built
-if [ ! -f "public/wasm/docgen_wasm_bg.wasm" ]; then
+if [ ! -f "public/wasm/resume_wasm_bg.wasm" ]; then
   echo "⚠️  Skipping PDF generation: WASM not built"
   exit 0
 fi
@@ -30,7 +30,7 @@ PDF_PATH="pdf-logs/${COMMIT_DATE}_${COMMIT_HASH}_${PROFILE_ID}.pdf"
 echo "📸 Generating PDF snapshot: ${COMMIT_DATE}_${COMMIT_HASH}"
 
 # Generate PDF using binary (writes to stdout)
-cargo run --bin pdf-snapshot --release -p docgen-typst 2>/dev/null > "$PDF_PATH" && {
+cargo run --bin pdf-snapshot --release -p resume-typst 2>/dev/null > "$PDF_PATH" && {
   echo "✅ PDF snapshot saved: $PDF_PATH ($(du -h "$PDF_PATH" | cut -f1))"
 } || {
   echo "⚠️  PDF generation failed (check cargo/data availability)"
