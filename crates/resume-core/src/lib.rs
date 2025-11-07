@@ -1,4 +1,4 @@
-//! # docgen-core
+//! # resume-core
 //!
 //! Core selection algorithms and types for resume document generation.
 //!

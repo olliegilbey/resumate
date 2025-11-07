@@ -1,4 +1,4 @@
-//! # docgen-typst
+//! # resume-typst
 //!
 //! Typst-based PDF generation for Resumate.
 //!

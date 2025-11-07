@@ -1,4 +1,4 @@
-//! # docgen-wasm
+//! # resume-wasm
 //!
 //! WebAssembly bindings for browser-based resume generation.
 //!
