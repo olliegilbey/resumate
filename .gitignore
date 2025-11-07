@@ -73,10 +73,21 @@ wasm-pack.log
 
 # Rust/WASM test outputs
 target/test-pdfs/
+test-outputs/
 
 # Generated PDFs (never commit - contains PII)
 *.pdf
 pdf-logs/
+
+# TypeScript build artifacts
+tsconfig.tsbuildinfo
+
+# Bun lockfile (similar to package-lock.json)
+bun.lock
+
+# macOS artifacts
+.DS_Store
+**/.DS_Store
 
 # Temp/backup files
 *.bak
