@@ -91,6 +91,7 @@ bun.lock
 
 # Temp/backup files
 *.bak
+*.backup
 *.tmp
 *~
 

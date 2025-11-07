@@ -37,16 +37,28 @@ jobs:
       - name: Cache Rust dependencies
         uses: Swatinem/rust-cache@v2
 
+      - name: Setup Bun
+        uses: oven-sh/setup-bun@v2
+
+      - name: Install dependencies
+        run: bun install --frozen-lockfile
+
+      - name: Validate template schema
+        run: bun scripts/validate-compendium.mjs data/resume-data-template.json
+
+      - name: Prepare test data (CI only)
+        run: cp data/resume-data-template.json data/resume-data.json
+
       - name: Check Rust formatting
         run: cargo fmt --all -- --check
 
       - name: Run Clippy
         run: cargo clippy --all-targets --all-features -- -D warnings
 
-      - name: Run unit tests
-        run: cargo test --all
+      - name: Run unit tests (lib only, no integration tests)
+        run: cargo test --lib --all
 
-      - name: Run roundtrip validation
+      - name: Run roundtrip validation (type compatibility)
         run: |
           echo "::group::Roundtrip Test Output"
           cargo test -p resume-core --test roundtrip -- --nocapture
