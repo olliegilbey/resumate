@@ -104,9 +104,9 @@ To update: Run \`just test\` again
 
 | Crate | Tests | Notes |
 |-------|-------|-------|
-| docgen-core | $CORE_TESTS | Scoring, selection, validation |
-| docgen-typst | $TYPST_TESTS | PDF generation, Typst rendering |
-| docgen-wasm | $WASM_TESTS | WASM bindings, JS interop |
+| resume-core | $CORE_TESTS | Scoring, selection, validation |
+| resume-typst | $TYPST_TESTS | PDF generation, Typst rendering |
+| resume-wasm | $WASM_TESTS | WASM bindings, JS interop |
 | shared-types | $SHARED_TESTS | Type validation, schema |
 | **Total** | **$RUST_COUNT** | All Rust tests |
 

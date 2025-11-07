@@ -1,8 +1,8 @@
 ---
-Generated: 2025-10-29T01:39
+Generated: 2025-11-07T00:40
 Generator: scripts/update-metrics-from-logs.sh
 Source: Parsed from test execution logs
-Valid Until: 2025-10-30T01:39 (24h expiry)
+Valid Until: 2025-11-08T00:40 (24h expiry)
 ---
 
 # Project Metrics (Auto-Generated)
@@ -19,19 +19,19 @@ To update: Run `just test` again
 
 | Language | Tests | Ignored | Time | Status |
 |----------|-------|---------|------|--------|
-| **Rust** | 133 | 1 | 1.43s | ✅ Passing |
+| **Rust** | 140 | 1 | 2.00s | ✅ Passing |
 | **TypeScript** | 200 | 0 | 1.74s | ✅ Passing |
-| **TOTAL** | **333** | **1** | 1.43s + 1.74s | ✅ All Passing |
+| **TOTAL** | **340** | **1** | 2.00s + 1.74s | ✅ All Passing |
 
 ### Rust Tests (By Crate)
 
 | Crate | Tests | Notes |
 |-------|-------|-------|
-| docgen-core | See log | Scoring, selection, validation |
-| docgen-typst | See log | PDF generation, Typst rendering |
-| docgen-wasm | See log | WASM bindings, JS interop |
+| resume-core | See log | Scoring, selection, validation |
+| resume-typst | See log | PDF generation, Typst rendering |
+| resume-wasm | See log | WASM bindings, JS interop |
 | shared-types | See log | Type validation, schema |
-| **Total** | **133** | All Rust tests |
+| **Total** | **140** | All Rust tests |
 
 ### TypeScript Tests
 
@@ -49,7 +49,7 @@ To update: Run `just test` again
 
 ### Rust Coverage
 
-**Line Coverage:** 88.92%
+**Line Coverage:** 87.54%
 
 **Command to generate detailed report:**
 ```bash
@@ -80,7 +80,7 @@ just coverage-ts-open     # Open in browser
 **Rust Tests:**
 - Command: `cargo test --all`
 - Log: `/Users/olliegilbey/code/resumate/.logs/rust-tests.log`
-- Duration: 1.43s
+- Duration: 2.00s
 - Suites: Multiple (core, typst, wasm, shared-types, integration, doc-tests)
 
 **TypeScript Tests:**
@@ -117,7 +117,7 @@ cat /Users/olliegilbey/code/resumate/.logs/ts-tests.log       # View TypeScript 
 
 ## Verification
 
-**Last Generated:** 2025-10-29T01:39
+**Last Generated:** 2025-11-07T00:40
 **Next Update:** Automatically on next `just test` run
 **Logs Valid For:** Current session (stored in /tmp)
 
