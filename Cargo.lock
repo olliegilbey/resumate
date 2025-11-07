@@ -501,53 +501,6 @@ dependencies = [
 ]
 
 [[package]]
-name = "docgen-core"
-version = "0.1.0"
-dependencies = [
- "chrono",
- "docgen-typst",
- "pdf-extract",
- "proptest",
- "schemars 1.0.4",
- "serde",
- "serde_json",
- "shared-types",
-]
-
-[[package]]
-name = "docgen-typst"
-version = "0.1.0"
-dependencies = [
- "chrono",
- "comemo",
- "docgen-core",
- "ecow",
- "proptest",
- "serde",
- "serde_json",
- "thiserror 2.0.17",
- "typst",
- "typst-pdf",
- "typst-syntax",
- "typst-utils",
-]
-
-[[package]]
-name = "docgen-wasm"
-version = "0.1.0"
-dependencies = [
- "chrono",
- "console_error_panic_hook",
- "docgen-core",
- "docgen-typst",
- "proptest",
- "serde",
- "serde_json",
- "thiserror 2.0.17",
- "wasm-bindgen",
-]
-
-[[package]]
 name = "downcast-rs"
 version = "1.2.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -1959,6 +1912,53 @@ name = "regex-syntax"
 version = "0.8.8"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "7a2d987857b319362043e95f5353c0535c1f58eec5336fdfcf626430af7def58"
+
+[[package]]
+name = "resume-core"
+version = "0.1.0"
+dependencies = [
+ "chrono",
+ "pdf-extract",
+ "proptest",
+ "resume-typst",
+ "schemars 1.0.4",
+ "serde",
+ "serde_json",
+ "shared-types",
+]
+
+[[package]]
+name = "resume-typst"
+version = "0.1.0"
+dependencies = [
+ "chrono",
+ "comemo",
+ "ecow",
+ "proptest",
+ "resume-core",
+ "serde",
+ "serde_json",
+ "thiserror 2.0.17",
+ "typst",
+ "typst-pdf",
+ "typst-syntax",
+ "typst-utils",
+]
+
+[[package]]
+name = "resume-wasm"
+version = "0.1.0"
+dependencies = [
+ "chrono",
+ "console_error_panic_hook",
+ "proptest",
+ "resume-core",
+ "resume-typst",
+ "serde",
+ "serde_json",
+ "thiserror 2.0.17",
+ "wasm-bindgen",
+]
 
 [[package]]
 name = "resvg"

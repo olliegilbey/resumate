@@ -3,8 +3,8 @@
 //! Generates PDF for developer-relations-lead profile.
 //! Usage: cargo run --bin pdf-snapshot --release -p docgen-typst > output.pdf
 
-use docgen_core::{selector, GenerationPayload, ResumeData};
-use docgen_typst::render_resume;
+use resume_core::{selector, GenerationPayload, ResumeData};
+use resume_typst::render_resume;
 use std::io::{self, Write};
 
 fn main() -> Result<(), Box<dyn std::error::Error>> {

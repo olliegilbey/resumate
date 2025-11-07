@@ -2,9 +2,9 @@
 resolver = "2"
 members = [
     "crates/shared-types",
-    "doc-gen/crates/core",
-    "doc-gen/crates/typst",
-    "doc-gen/crates/wasm",
+    "crates/resume-core",
+    "crates/resume-typst",
+    "crates/resume-wasm",
 ]
 
 [workspace.package]
@@ -43,8 +43,8 @@ proptest = "1.8.0"
 
 # Internal workspace crates
 shared-types = { path = "crates/shared-types" }
-docgen-core = { path = "doc-gen/crates/core" }
-docgen-typst = { path = "doc-gen/crates/typst" }
+resume-core = { path = "crates/resume-core" }
+resume-typst = { path = "crates/resume-typst" }
 
 [profile.release]
 # Optimize for size (WASM bundle)

@@ -10,13 +10,13 @@
 mod common;
 
 use common::load_resume_data;
-use docgen_core::selector::{count_selectable_items, select_bullets, SelectionConfig};
-use docgen_core::GenerationPayload;
-use docgen_typst::TypstError;
+use resume_core::selector::{count_selectable_items, select_bullets, SelectionConfig};
+use resume_core::GenerationPayload;
+use resume_typst::TypstError;
 
 /// Generate PDF using Typst
 fn generate_pdf(payload: &GenerationPayload) -> Result<Vec<u8>, TypstError> {
-    docgen_typst::render_resume(payload, false)
+    resume_typst::render_resume(payload, false)
 }
 
 /// Extract text from PDF bytes

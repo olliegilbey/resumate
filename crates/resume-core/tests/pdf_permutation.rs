@@ -15,15 +15,15 @@
 mod common;
 
 use common::load_resume_data;
-use docgen_core::selector::{count_selectable_items, select_bullets, SelectionConfig};
-use docgen_core::GenerationPayload;
-use docgen_typst::TypstError;
+use resume_core::selector::{count_selectable_items, select_bullets, SelectionConfig};
+use resume_core::GenerationPayload;
+use resume_typst::TypstError;
 use std::collections::HashMap;
 use std::time::Instant;
 
 /// Generate PDF using Typst
 fn generate_pdf(payload: &GenerationPayload) -> Result<Vec<u8>, TypstError> {
-    docgen_typst::render_resume(payload, false)
+    resume_typst::render_resume(payload, false)
 }
 
 /// Get output directory for baseline PDFs
@@ -645,7 +645,7 @@ fn test_pdf_page_count_estimates() {
 
 #[test]
 fn test_developer_relations_verbose_scoring() {
-    use docgen_core::scoring::ScoredBullet;
+    use resume_core::scoring::ScoredBullet;
 
     println!("\n🔍 Verbose Scoring Analysis: Developer Relations Lead");
     println!("═════════════════════════════════════════════════════════");
@@ -675,7 +675,7 @@ fn test_developer_relations_verbose_scoring() {
         for position in &company.children {
             // Score position description if it exists
             if position.description.is_some() {
-                use docgen_core::{scoring::score_bullet, Bullet};
+                use resume_core::{scoring::score_bullet, Bullet};
 
                 let desc_bullet = Bullet {
                     id: format!("{}-description", position.id),
@@ -711,7 +711,7 @@ fn test_developer_relations_verbose_scoring() {
 
             // Score all regular bullets
             for bullet in &position.children {
-                use docgen_core::scoring::score_bullet;
+                use resume_core::scoring::score_bullet;
                 let score = score_bullet(bullet, position, company, role_profile);
                 all_bullets.push(ScoredBullet {
                     bullet: bullet.clone(),

@@ -30,7 +30,7 @@ build:
     @echo "📦 Building production bundle..."
     @echo ""
     @echo "  Step 1/3: Building WASM..."
-    bash scripts/build-wasm.sh
+    @just wasm
     @echo ""
     @echo "  Step 2/3: Fetching resume data from gist..."
     bun scripts/fetch-gist-data.js --force
@@ -43,25 +43,25 @@ build:
 # Build WASM with fonts (release mode)
 wasm: wasm-fonts
     @echo "🦀 Building WASM (release mode)..."
-    cd doc-gen && bash build-wasm.sh --release
+    wasm-pack build crates/resume-wasm --target web --out-dir ../../public/wasm --release
     @echo ""
     @echo "📦 WASM bundle:"
     @ls -lh public/wasm/*.wasm public/wasm/*.js 2>/dev/null | head -5 || true
     @echo ""
     @echo "📏 Gzipped size:"
-    @gzip -c public/wasm/docgen_wasm_bg.wasm | wc -c | awk '{printf "  %.1f MB\n", $$1/1024/1024}'
+    @gzip -c public/wasm/resume_wasm_bg.wasm | wc -c | awk '{printf "  %.1f MB\n", $$1/1024/1024}'
 
 # Build WASM in dev mode (faster, larger)
 wasm-dev: wasm-fonts
     @echo "🦀 Building WASM (dev mode)..."
     @echo "⚠️  Dev mode: faster build, larger bundle, no optimizations"
-    cd doc-gen && bash build-wasm.sh --dev
+    wasm-pack build crates/resume-wasm --target web --out-dir ../../public/wasm --dev
 
 # Download fonts for Typst PDF generation
 wasm-fonts:
-    @if [ ! -d "doc-gen/crates/typst/fonts" ] || [ -z "$(ls -A doc-gen/crates/typst/fonts 2>/dev/null)" ]; then \
+    @if [ ! -d "typst/fonts" ] || [ -z "$(ls -A typst/fonts 2>/dev/null)" ]; then \
         echo "📥 Downloading Typst fonts..."; \
-        cd doc-gen/crates/typst && bash download-fonts.sh; \
+        cd crates/resume-typst && bash download-fonts.sh; \
     else \
         echo "✓ Fonts already downloaded"; \
     fi

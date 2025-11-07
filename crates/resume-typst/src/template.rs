@@ -4,8 +4,8 @@
 //! content for injection into the Typst template.
 
 use chrono::NaiveDate;
-use docgen_core::scoring::ScoredBullet;
-use docgen_core::GenerationPayload;
+use resume_core::scoring::ScoredBullet;
+use resume_core::GenerationPayload;
 use serde_json::Value as JsonValue;
 use std::collections::HashMap;
 

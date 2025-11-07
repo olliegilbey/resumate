@@ -8,8 +8,8 @@
 //! # Example
 //!
 //! ```no_run
-//! use docgen_typst::render_resume;
-//! use docgen_core::GenerationPayload;
+//! use resume_typst::render_resume;
+//! use resume_core::GenerationPayload;
 //!
 //! # fn main() -> Result<(), Box<dyn std::error::Error>> {
 //! let payload: GenerationPayload = serde_json::from_str("{...}")?;
@@ -26,7 +26,7 @@ pub mod compiler;
 pub mod fonts;
 pub mod template;
 
-use docgen_core::GenerationPayload;
+use resume_core::GenerationPayload;
 use thiserror::Error;
 
 /// Errors that can occur during Typst PDF generation
@@ -57,8 +57,8 @@ pub enum TypstError {
 ///
 /// # Example
 /// ```no_run
-/// use docgen_typst::render_resume;
-/// use docgen_core::GenerationPayload;
+/// use resume_typst::render_resume;
+/// use resume_core::GenerationPayload;
 ///
 /// # fn main() -> Result<(), Box<dyn std::error::Error>> {
 /// let payload: GenerationPayload = serde_json::from_str("{...}")?;
@@ -72,7 +72,7 @@ pub fn render_resume(payload: &GenerationPayload, dev_mode: bool) -> Result<Vec<
     let template_data = template::prepare_template_data(payload);
 
     // 2. Load template and inject data
-    let template_source = include_str!("../templates/resume.typ");
+    let template_source = include_str!("../../../typst/templates/resume.typ");
     let rendered_template = render_template(template_source, &template_data, dev_mode)?;
 
     // 3. Create Typst World
@@ -541,7 +541,7 @@ fn escape_typst_string(s: &str) -> String {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use docgen_core::{PersonalInfo, RoleProfile, ScoringWeights};
+    use resume_core::{PersonalInfo, RoleProfile, ScoringWeights};
     use std::collections::HashMap;
 
     fn create_minimal_payload() -> GenerationPayload {

@@ -4,17 +4,15 @@
 //! by loading the template JSON, deserializing to Rust, re-serializing,
 //! and validating the output matches the original structure.
 
-use docgen_core::ResumeData;
+use resume_core::ResumeData;
 use std::path::PathBuf;
 
 /// Get path to resume-data-template.json in project root
 fn template_path() -> PathBuf {
     PathBuf::from(env!("CARGO_MANIFEST_DIR"))
-        .parent()
+        .parent() // crates
         .unwrap()
-        .parent()
-        .unwrap()
-        .parent()
+        .parent() // resumate
         .unwrap()
         .join("data/resume-data-template.json")
 }

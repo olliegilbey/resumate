@@ -9,8 +9,8 @@ use typst::text::{Font, FontBook};
 // Embed minimal font files at compile time
 // Liberation Serif: Open source, ~350KB per weight
 // Total: ~700KB vs 5MB+ for full Typst assets
-const FONT_REGULAR: &[u8] = include_bytes!("../fonts/LiberationSerif-Regular.ttf");
-const FONT_BOLD: &[u8] = include_bytes!("../fonts/LiberationSerif-Bold.ttf");
+const FONT_REGULAR: &[u8] = include_bytes!("../../../typst/fonts/LiberationSerif-Regular.ttf");
+const FONT_BOLD: &[u8] = include_bytes!("../../../typst/fonts/LiberationSerif-Bold.ttf");
 
 /// Load fonts for Typst compilation
 ///

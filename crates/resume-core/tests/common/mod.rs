@@ -3,19 +3,17 @@
 //! This module provides common functionality used across multiple test files,
 //! eliminating code duplication and ensuring consistent test setup.
 
-use docgen_core::ResumeData;
+use resume_core::ResumeData;
 use std::path::PathBuf;
 
 /// Get the path to the project root (resumate/)
 ///
 /// Works from any test file in the workspace by navigating up from CARGO_MANIFEST_DIR
 pub fn get_project_root() -> PathBuf {
-    // CARGO_MANIFEST_DIR = /path/to/resumate/doc-gen/crates/core
-    // Need to go up 3 levels: core -> crates -> doc-gen -> resumate
+    // CARGO_MANIFEST_DIR = /path/to/resumate/crates/resume-core
+    // Need to go up 2 levels: resume-core -> crates -> resumate
     std::path::Path::new(env!("CARGO_MANIFEST_DIR"))
         .parent() // crates
-        .unwrap()
-        .parent() // doc-gen
         .unwrap()
         .parent() // resumate
         .unwrap()

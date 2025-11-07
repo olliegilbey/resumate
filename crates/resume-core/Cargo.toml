@@ -1,5 +1,5 @@
 [package]
-name = "docgen-core"
+name = "resume-core"
 version.workspace = true
 edition.workspace = true
 rust-version.workspace = true
@@ -15,6 +15,6 @@ schemars = { workspace = true }
 
 [dev-dependencies]
 proptest = { workspace = true }
-docgen-typst = { workspace = true }
+resume-typst = { workspace = true }
 chrono = { workspace = true }
 pdf-extract = "0.10.0"

@@ -1,5 +1,5 @@
 [package]
-name = "docgen-typst"
+name = "resume-typst"
 version.workspace = true
 edition.workspace = true
 rust-version.workspace = true
@@ -24,7 +24,7 @@ comemo = { workspace = true }
 ecow = { workspace = true }
 
 # Local dependencies
-docgen-core = { workspace = true }
+resume-core = { workspace = true }
 
 # Additional utilities
 chrono = "0.4"

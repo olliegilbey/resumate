@@ -7,7 +7,7 @@
 mod common;
 
 use common::{PdfValidator, TestDataBuilder};
-use docgen_typst::render_resume;
+use resume_typst::render_resume;
 use std::fs;
 
 #[test]

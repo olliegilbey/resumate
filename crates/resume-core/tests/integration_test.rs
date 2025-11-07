@@ -6,7 +6,7 @@
 mod common;
 
 use common::load_resume_data;
-use docgen_core::selector::{count_selectable_items, select_bullets, SelectionConfig};
+use resume_core::selector::{count_selectable_items, select_bullets, SelectionConfig};
 use std::collections::HashSet;
 
 #[test]
@@ -339,7 +339,7 @@ fn test_expected_role_profiles_exist() {
 
 #[test]
 fn test_generation_payload_from_real_data() {
-    use docgen_core::GenerationPayload;
+    use resume_core::GenerationPayload;
 
     let resume = load_resume_data();
     let config = SelectionConfig::default();

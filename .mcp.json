@@ -1,8 +1,4 @@
 {
   "mcpServers": {
-    "next-devtools": {
-      "command": "bunx",
-      "args": ["next-devtools-mcp@latest"]
-    }
   }
 }

@@ -1,7 +1,7 @@
 //! Common test utilities and helpers for Typst PDF generation testing
 
-use docgen_core::scoring::ScoredBullet;
-use docgen_core::{
+use resume_core::scoring::ScoredBullet;
+use resume_core::{
     Bullet, Education, GenerationPayload, PersonalInfo, RoleProfile, ScoringWeights,
 };
 use std::collections::HashMap;

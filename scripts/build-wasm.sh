@@ -45,13 +45,11 @@ fi
 
 # Step 4: Build WASM
 echo "🔨 Building WASM (release mode)..."
-cd doc-gen
-wasm-pack build crates/wasm \
+wasm-pack build crates/resume-wasm \
     --target web \
     --out-dir "$OUTPUT_DIR" \
     --release \
     --no-pack
-cd ..
 
 echo ""
 echo "✅ WASM build complete!"
@@ -63,7 +61,7 @@ ls -lh "$OUTPUT_DIR"/*.wasm "$OUTPUT_DIR"/*.js 2>/dev/null | awk '{print "  " $9
 
 echo ""
 echo "📊 Gzipped size (production delivery):"
-gzip -c "$OUTPUT_DIR/docgen_wasm_bg.wasm" | wc -c | awk '{printf "  docgen_wasm_bg.wasm: %.1f MB\n", $1/1024/1024}'
+gzip -c "$OUTPUT_DIR/resume_wasm_bg.wasm" | wc -c | awk '{printf "  resume_wasm_bg.wasm: %.1f MB\n", $1/1024/1024}'
 
 echo ""
 echo "🎯 Build timestamp: $(date -u +"%Y-%m-%d %H:%M:%S UTC")"
