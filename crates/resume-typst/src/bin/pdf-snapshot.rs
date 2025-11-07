@@ -1,7 +1,7 @@
 //! PDF Snapshot Generator
 //!
 //! Generates PDF for developer-relations-lead profile.
-//! Usage: cargo run --bin pdf-snapshot --release -p docgen-typst > output.pdf
+//! Usage: cargo run --bin pdf-snapshot --release -p resume-typst > output.pdf
 
 use resume_core::{selector, GenerationPayload, ResumeData};
 use resume_typst::render_resume;

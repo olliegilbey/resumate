@@ -4,14 +4,14 @@ on:
   push:
     branches: [main]
     paths:
-      - 'doc-gen/**'
+      - 'crates/**'
       - 'data/resume-data-template.json'
       - 'types/resume.ts'
       - '.github/workflows/rust-type-validation.yml'
   pull_request:
     branches: [main]
     paths:
-      - 'doc-gen/**'
+      - 'crates/**'
       - 'data/resume-data-template.json'
       - 'types/resume.ts'
       - '.github/workflows/rust-type-validation.yml'
@@ -36,30 +36,23 @@ jobs:
 
       - name: Cache Rust dependencies
         uses: Swatinem/rust-cache@v2
-        with:
-          workspaces: doc-gen
 
       - name: Check Rust formatting
-        working-directory: doc-gen
         run: cargo fmt --all -- --check
 
       - name: Run Clippy
-        working-directory: doc-gen
         run: cargo clippy --all-targets --all-features -- -D warnings
 
       - name: Run unit tests
-        working-directory: doc-gen
         run: cargo test --all
 
       - name: Run roundtrip validation
-        working-directory: doc-gen
         run: |
           echo "::group::Roundtrip Test Output"
-          cargo test -p docgen-core --test roundtrip -- --nocapture
+          cargo test -p resume-core --test roundtrip -- --nocapture
           echo "::endgroup::"
 
       - name: Verify type compatibility
-        working-directory: doc-gen
         run: |
           echo "✅ TypeScript ↔ Rust type validation passed"
           echo "- Template JSON successfully deserializes to Rust types"

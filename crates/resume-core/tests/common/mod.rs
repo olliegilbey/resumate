@@ -1,4 +1,4 @@
-//! Shared test utilities for docgen-core integration tests
+//! Shared test utilities for resume-core integration tests
 //!
 //! This module provides common functionality used across multiple test files,
 //! eliminating code duplication and ensuring consistent test setup.

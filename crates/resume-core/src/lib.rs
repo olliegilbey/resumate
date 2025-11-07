@@ -20,8 +20,6 @@ pub mod selector;
 ///
 /// Contains all data needed to generate a targeted resume document.
 /// This is the data structure that generation functions receive.
-///
-/// Moved from docgen-pdf to core since it's used by multiple generators.
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
 #[serde(rename_all = "camelCase")]
 pub struct GenerationPayload {

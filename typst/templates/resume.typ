@@ -2,7 +2,7 @@
 // Professional ATS-optimized resume template using Typst
 //
 // This template will receive data injected from Rust via JSON
-// The data structure matches GenerationPayload from docgen-core
+// The data structure matches GenerationPayload from resume-core
 
 // ====================
 // DOCUMENT SETTINGS
