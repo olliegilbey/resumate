@@ -117,8 +117,8 @@ export function ResumeDownload({ resumeData }: ResumeDownloadProps) {
             script.type = 'module'
             script.setAttribute('data-wasm-loader', 'true')
             script.textContent = `
-              import init, { generate_pdf_typst } from '/wasm/docgen_wasm.js';
-              await init('/wasm/docgen_wasm_bg.wasm');
+              import init, { generate_pdf_typst } from '/wasm/resume_wasm.js';
+              await init('/wasm/resume_wasm_bg.wasm');
 
               console.log('✅ WASM loaded and cached');
 

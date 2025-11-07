@@ -80,14 +80,14 @@ strip = true           # Remove debug symbols
 ```
 
 **Output:** `public/wasm/`
-- `docgen_wasm_bg.wasm` (16MB raw, 6.28MB gzipped)
-- `docgen_wasm.js` (16KB - JS bindings)
-- `docgen_wasm.d.ts` (6KB - TypeScript types)
+- `resume_wasm_bg.wasm` (16MB raw, 6.28MB gzipped)
+- `resume_wasm.js` (16KB - JS bindings)
+- `resume_wasm.d.ts` (6KB - TypeScript types)
 - `package.json` (446B - module metadata)
 
 ### 4. WASM Optimization (Automatic)
 
-**Config:** `doc-gen/crates/wasm/Cargo.toml:10-11`
+**Config:** `crates/resume-wasm/Cargo.toml:10-11`
 
 ```toml
 [package.metadata.wasm-pack.profile.release]
@@ -121,7 +121,7 @@ pub fn generate_pdf_typst(payload_json: &str, dev_mode: bool) -> Result<Vec<u8>,
 **Implementation:**
 1. Parse JSON → `GenerationPayload` struct
 2. Validate payload (name, role, weights, bullet count ≤50)
-3. Call `docgen_typst::render_resume(&payload, dev_mode)`
+3. Call `resume_typst::render_resume(&payload, dev_mode)`
 4. Return PDF bytes
 
 ### Utility Exports
@@ -146,8 +146,8 @@ pub fn generate_pdf_typst(payload_json: &str, dev_mode: bool) -> Result<Vec<u8>,
 const script = document.createElement('script')
 script.type = 'module'
 script.textContent = `
-  import init, { generate_pdf_typst } from '/wasm/docgen_wasm.js';
-  await init('/wasm/docgen_wasm_bg.wasm');
+  import init, { generate_pdf_typst } from '/wasm/resume_wasm.js';
+  await init('/wasm/resume_wasm_bg.wasm');
 
   window.__wasmReady = true;
   window.__generatePdfTypst = generate_pdf_typst;
@@ -217,7 +217,7 @@ ecow = "0.2"               # Efficient clone-on-write strings
 | Liberation Serif fonts | 764KB | Embedded at compile-time |
 | WASM binary (raw) | 16MB | After wasm-opt -Oz |
 | WASM binary (gzipped) | 6.28MB | Browser transfer size |
-| JS bindings | 16KB | docgen_wasm.js |
+| JS bindings | 16KB | resume_wasm.js |
 | TypeScript defs | 6KB | Type safety |
 | First load time | ~2-5s | Depends on connection |
 | Subsequent loads | ~0ms | Browser cached |

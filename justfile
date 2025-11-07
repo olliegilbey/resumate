@@ -385,8 +385,8 @@ health:
     fi
     echo ""
     echo "WASM bundle:"
-    if [ -f "public/wasm/docgen_wasm_bg.wasm" ]; then
-        size=$(ls -lh public/wasm/docgen_wasm_bg.wasm | awk '{print $5}')
+    if [ -f "public/wasm/resume_wasm_bg.wasm" ]; then
+        size=$(ls -lh public/wasm/resume_wasm_bg.wasm | awk '{print $5}')
         echo "  ✓ WASM bundle exists ($size)"
     else
         echo "  ⚠️  WASM bundle missing (run: just wasm)"

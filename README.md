@@ -361,8 +361,12 @@ just data-view    # View gist content in terminal
 resumate/
 ├── app/                      # Next.js 16 app (pages, API routes)
 ├── components/               # React components (data + ui)
-├── crates/shared-types/      # Rust types (source of truth)
-├── doc-gen/                  # Rust/WASM (PDF generation via Typst)
+├── crates/                   # Rust workspace (types, core, typst, wasm)
+│   ├── shared-types/         # Type definitions (source of truth)
+│   ├── resume-core/          # Scoring + bullet selection
+│   ├── resume-typst/         # PDF generation via Typst
+│   └── resume-wasm/          # WASM bindings for browser
+├── typst/                    # Fonts + templates for PDF generation
 ├── lib/                      # TypeScript utilities
 ├── scripts/                  # Gist sync + type generation
 ├── data/                     # Resume data (gitignored)

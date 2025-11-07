@@ -72,7 +72,6 @@ pkg/
 wasm-pack.log
 
 # Rust/WASM test outputs
-doc-gen/test-outputs/
 target/test-pdfs/
 
 # Generated PDFs (never commit - contains PII)

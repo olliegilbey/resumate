@@ -1,6 +1,6 @@
 // Type declarations for WASM module
 
-declare module '/wasm/docgen_wasm.js' {
+declare module '/wasm/resume_wasm.js' {
   export default function init(): Promise<void>
 
   export function init_panic_hook(): void
