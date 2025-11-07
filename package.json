@@ -47,7 +47,7 @@
       "bash -c 'cargo clippy -p shared-types -- -D warnings'",
       "bash -c 'cargo test -p shared-types'"
     ],
-    "doc-gen/**/*.rs": [
+    "crates/resume-{core,typst,wasm}/**/*.rs": [
       "bash -c 'cargo fmt --all'",
       "bash -c 'cargo clippy --all -- -D warnings'",
       "bash -c 'cargo test --all'",
