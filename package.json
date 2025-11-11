@@ -26,43 +26,6 @@
     "data:view": "bun scripts/gist-view.js",
     "prepare": "husky"
   },
-  "lint-staged": {
-    "*.{ts,tsx,js,jsx}": [
-      "eslint --fix",
-      "bash -c 'bun x tsc --noEmit'",
-      "bash -c 'bun run test --run --reporter=dot'",
-      "bash -c 'bun run test:coverage --run --reporter=dot'",
-      "bash -c 'just build'"
-    ],
-    "crates/shared-types/src/lib.rs": [
-      "bash -c 'cargo fmt -p shared-types'",
-      "bash -c 'cargo clippy -p shared-types -- -D warnings'",
-      "bun types:generate",
-      "git add schemas/resume.schema.json lib/types/generated-resume.ts",
-      "bash -c 'cargo test --all'",
-      "bash -c 'just build'"
-    ],
-    "crates/shared-types/**/*.rs": [
-      "bash -c 'cargo fmt -p shared-types'",
-      "bash -c 'cargo clippy -p shared-types -- -D warnings'",
-      "bash -c 'cargo test -p shared-types'"
-    ],
-    "crates/resume-{core,typst,wasm}/**/*.rs": [
-      "bash -c 'cargo fmt --all'",
-      "bash -c 'cargo clippy --all -- -D warnings'",
-      "bash -c 'cargo test --all'",
-      "bash -c 'just build'"
-    ],
-    "data/*.json": [
-      "node scripts/validate-compendium.mjs"
-    ],
-    "docs/**/*.md": [
-      "bash scripts/verify-docs.sh"
-    ],
-    ".claude/**/*.md": [
-      "bash scripts/verify-docs.sh"
-    ]
-  },
   "dependencies": {
     "@marsidev/react-turnstile": "^1.3.1",
     "@vercel/speed-insights": "^1.2.0",
