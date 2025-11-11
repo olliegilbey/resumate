@@ -1,1 +1,7 @@
+#!/usr/bin/env bash
+
+# Check if WASM needs rebuild
+./scripts/check-wasm-fresh.sh
+
+# Run lint-staged
 npx lint-staged

@@ -71,6 +71,12 @@ pkg/
 **/pkg/
 wasm-pack.log
 
+# WASM build artifacts are TRACKED for fast Vercel deploys
+# Pre-commit hook ensures they're always up-to-date
+# !public/wasm/*.wasm
+# !public/wasm/*.js
+# .wasm-build-hash
+
 # Rust/WASM test outputs
 target/test-pdfs/
 test-outputs/

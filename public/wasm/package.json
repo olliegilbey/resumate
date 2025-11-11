@@ -1,0 +1,23 @@
+{
+  "name": "resume-wasm",
+  "type": "module",
+  "collaborators": [
+    "Oliver Gilbey"
+  ],
+  "version": "0.1.0",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/olliegilbey/resumate"
+  },
+  "files": [
+    "resume_wasm_bg.wasm",
+    "resume_wasm.js",
+    "resume_wasm.d.ts"
+  ],
+  "main": "resume_wasm.js",
+  "types": "resume_wasm.d.ts",
+  "sideEffects": [
+    "./snippets/*"
+  ]
+}
