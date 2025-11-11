@@ -179,8 +179,8 @@ printf "${BLUE}→ Phase 4/6: WASM-dependent tests${NC}\n"
 if [ "$WASM_REBUILT" = true ]; then
   printf "${YELLOW}  → Running WASM-dependent Rust tests${NC}\n"
 
-  # Tests that depend on WASM: pdf_validation, pdf_permutation, pdf_snapshot
-  if ! cargo test --test pdf_validation --test pdf_snapshot --quiet 2>&1; then
+  # Tests that depend on WASM: pdf_validation, pdf_permutation
+  if ! cargo test --test pdf_validation --test pdf_permutation --quiet 2>&1; then
     printf "${RED}❌ WASM tests failed${NC}\n"
     exit 1
   fi

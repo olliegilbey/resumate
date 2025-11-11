@@ -74,3 +74,4 @@ export function parseMarkdownLinks(text: string): TextPart[] {
 
   return parts.length > 0 ? parts : [{ type: 'text', content: text, key: 0 }]
 }
+// Test TS change

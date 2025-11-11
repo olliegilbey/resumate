@@ -49,7 +49,7 @@ wasm: wasm-fonts
     @ls -lh public/wasm/*.wasm public/wasm/*.js 2>/dev/null | head -5 || true
     @echo ""
     @echo "📏 Gzipped size:"
-    @sh -c 'gzip -c public/wasm/resume_wasm_bg.wasm | wc -c | awk "{printf \"  %.1f MB\\n\", \$$1/1024/1024}"'
+    @gzip -c public/wasm/resume_wasm_bg.wasm | wc -c | awk '{printf "  %.1f MB\n", $1/1024/1024}'
 
 # Build WASM in dev mode (faster, larger)
 wasm-dev: wasm-fonts
