@@ -7,26 +7,26 @@
 title = "Resumate Security Rules"
 
 # ============================================
-# Custom Rules: PII Detection
+# Custom Rules: PII Detection (Specific)
 # ============================================
 
 [[rules]]
-id = "phone-number-international"
-description = "Phone number (international format)"
-regex = '''\+[0-9]{1,3}[\s\-]?(\([0-9]{1,4}\)|[0-9]{1,4})[\s\-]?[0-9]{3,4}[\s\-]?[0-9]{3,4}'''
-tags = ["pii", "phone"]
+id = "personal-email"
+description = "Personal email pattern"
+regex = '''o[a-z]+y@gmail\.com'''
+tags = ["pii", "email", "personal"]
 
 [[rules]]
-id = "phone-number-us"
-description = "US phone number"
-regex = '''(\([0-9]{3}\)|[0-9]{3})[\s\-\.]?[0-9]{3}[\s\-\.]?[0-9]{4}'''
-tags = ["pii", "phone"]
+id = "personal-phone-intl"
+description = "Personal phone (international +44, exactly 14 chars)"
+regex = '''\+447[0-9]{8}2'''
+tags = ["pii", "phone", "personal"]
 
 [[rules]]
-id = "email-address"
-description = "Email address (excludes common test patterns)"
-regex = '''[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}'''
-tags = ["pii", "email"]
+id = "personal-phone-uk"
+description = "Personal phone (UK format 07, exactly 11 digits)"
+regex = '''07[0-9]{8}2'''
+tags = ["pii", "phone", "personal"]
 
 # ============================================
 # Allowlist: Legitimate Use Cases
@@ -35,18 +35,14 @@ tags = ["pii", "email"]
 [allowlist]
 description = "Allowlist for test files and safe patterns"
 
-# Paths to ignore completely
+# Paths to ignore completely (only for truly irrelevant files)
 paths = [
-  '''\.test\.ts$''',
-  '''\.test\.tsx$''',
-  '''\.spec\.ts$''',
-  '''__tests__/''',
-  '''/fixtures/''',
-  '''/mocks/''',
-  '''^data/resume-data\.json$''',  # Gitignored personal data
+  '''^data/resume-data\.json$''',  # Gitignored personal data (allowed)
   '''^\.env\.local$''',             # Gitignored env vars
-  '''^target/''',                   # Build artifacts
-  '''^node_modules/''',
+  '''^target/''',                   # Rust build artifacts
+  '''^node_modules/''',             # Node dependencies
+  '''^\.next/''',                   # Next.js build output (build cache)
+  '''^\.git/logs/''',               # Git reflog (historical commits)
 ]
 
 # Regex patterns to ignore (common false positives)

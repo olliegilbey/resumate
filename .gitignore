@@ -57,6 +57,7 @@ data/resume-data.json
 # See: https://github.com/github/gitignore/blob/main/Rust.gitignore
 
 # Rust build artifacts (6.6GB+ during development)
+# Includes target/llvm-cov-target/ (3.4GB coverage data)
 target/
 **/target/
 

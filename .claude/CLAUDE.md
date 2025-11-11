@@ -1,6 +1,7 @@
 DIRECTIVES:
 - Always be incredibly concise. Sacrifice grammar for the sake of concision.
 - Proactively suggest commits, before writing commit messages: "now is a good time to commit, should we?"
+- The repo is public, tread carefully, keep PII private, operate as if everyone is watching, including bad actors and bots.
 
 ---
 
