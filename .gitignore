@@ -48,7 +48,7 @@ next-env.d.ts
 data/resume-data.json
 
 # Session/local files
-.claude/
+.claude/settings.local.json
 
 # ============================================
 # Rust + WASM Build Artifacts
