@@ -45,10 +45,12 @@
 ```yaml
 - name: Fetch gist metadata
   run: |
-    GIST_ID="64d226d47825c6b346f6640a9dd7c262"
-    GIST_DATA=$(curl -s -H "Accept: application/vnd.github.v3+json" \
-      "https://api.github.com/gists/${GIST_ID}")
-    UPDATED_AT=$(echo "$GIST_DATA" | jq -r '.updated_at')
+    GIST_ID="${{ secrets.RESUME_DATA_GIST_ID }}"
+    # Use grep instead of jq to handle control characters in gist content
+    UPDATED_AT=$(curl -s -H "Accept: application/vnd.github.v3+json" \
+      "https://api.github.com/gists/${GIST_ID}" | \
+      grep -o '"updated_at":"[^"]*"' | \
+      cut -d'"' -f4)
     echo "updated_at=$UPDATED_AT" >> $GITHUB_OUTPUT
 ```
 
@@ -68,7 +70,9 @@
 ```yaml
 - name: Validate gist with schema
   run: |
-    GIST_URL="https://gist.githubusercontent.com/.../${GIST_ID}/raw/resume-data.json"
+    GIST_ID="${{ secrets.RESUME_DATA_GIST_ID }}"
+    USERNAME="${{ github.repository_owner }}"
+    GIST_URL="https://gist.githubusercontent.com/${USERNAME}/${GIST_ID}/raw/resume-data.json"
     curl -s "$GIST_URL" -o /tmp/gist-data.json
 
     # Validate JSON syntax first
