@@ -1,15 +1,17 @@
 import { Button } from "@/components/ui/Button"
 import { GlassPanel } from "@/components/ui/GlassPanel"
+import { ResumeDownload } from "@/components/data/ResumeDownload"
 import Link from "next/link"
 import { Download, Eye, Sparkles, Briefcase, Users, Calendar } from "lucide-react"
 import resumeData from "@/data/resume-data.json"
+import type { ResumeData } from "@/types/resume"
 import { getTotalBullets, getTotalPositions } from "@/lib/resume-metrics"
 
 export default function ResumePage() {
   // Calculate quick stats
   const yearsExperience = new Date().getFullYear() - 2018 // Started 2018
-  const totalCompanies = resumeData.companies.length
-  const totalBullets = getTotalBullets(resumeData.companies) + getTotalPositions(resumeData.companies)
+  const totalCompanies = resumeData.experience.length
+  const totalBullets = getTotalBullets(resumeData.experience) + getTotalPositions(resumeData.experience)
 
   return (
     <main className="min-h-screen">
@@ -53,7 +55,7 @@ export default function ResumePage() {
 
         <div className="grid md:grid-cols-2 gap-8 mb-12">
           {/* Download Resume Card */}
-          <GlassPanel padding="lg" align="center">
+          <GlassPanel padding="lg" align="center" className="flex flex-col">
             <div className="w-16 h-16 bg-blue-100 dark:bg-blue-900/30 rounded-xl flex items-center justify-center mx-auto mb-6">
               <Download className="h-8 w-8 text-blue-600 dark:text-blue-400" />
             </div>
@@ -61,19 +63,15 @@ export default function ResumePage() {
               Download Resume
             </h3>
             <p className="text-slate-600 dark:text-slate-300 mb-6">
-              Traditional PDF format, optimized for ATS systems and recruiters.
+              Role-tailored PDF with intelligent bullet selection and scoring.
             </p>
-            <Button size="lg" className="w-full" disabled>
-              Download PDF
-              <Download className="ml-2 h-4 w-4" />
-            </Button>
-            <p className="text-xs text-slate-500 dark:text-slate-400 mt-3">
-              Static PDF coming soon
-            </p>
+            <div className="mt-auto w-full">
+              <ResumeDownload resumeData={resumeData as unknown as ResumeData} />
+            </div>
           </GlassPanel>
 
           {/* Explore Experience Card */}
-          <GlassPanel padding="lg" align="center">
+          <GlassPanel padding="lg" align="center" className="flex flex-col">
             <div className="w-16 h-16 bg-purple-100 dark:bg-purple-900/30 rounded-xl flex items-center justify-center mx-auto mb-6">
               <Eye className="h-8 w-8 text-purple-600 dark:text-purple-400" />
             </div>
@@ -83,12 +81,14 @@ export default function ResumePage() {
             <p className="text-slate-600 dark:text-slate-300 mb-6">
               Interactive data explorer with filtering, search, and detailed context.
             </p>
-            <Link href="/resume/view">
-              <Button size="lg" variant="secondary" className="w-full">
-                View Experience
-                <Eye className="ml-2 h-4 w-4" />
-              </Button>
-            </Link>
+            <div className="mt-auto w-full">
+              <Link href="/resume/view">
+                <Button size="lg" variant="secondary" className="w-full">
+                  View Experience
+                  <Eye className="ml-2 h-4 w-4" />
+                </Button>
+              </Link>
+            </div>
           </GlassPanel>
         </div>
 
@@ -116,12 +116,12 @@ export default function ResumePage() {
             </p>
 
             <div className="bg-slate-50 dark:bg-slate-800/50 rounded-lg p-4 mt-6">
-              <h4 className="font-medium text-slate-900 dark:text-slate-100 mb-2">Coming Soon:</h4>
+              <h4 className="font-medium text-slate-900 dark:text-slate-100 mb-2">Now Available:</h4>
               <ul className="text-sm space-y-1">
-                <li>• AI-powered resume customization by role type</li>
-                <li>• Automatic bullet selection based on job descriptions</li>
-                <li>• Dynamic PDF generation with Rust/WASM</li>
-                <li>• Open-source framework for developers</li>
+                <li>✅ Role-based bullet selection and scoring</li>
+                <li>✅ Dynamic PDF generation with Rust/WASM</li>
+                <li>• AI-powered customization via Claude API (coming soon)</li>
+                <li>• Open-source framework for developers (coming soon)</li>
               </ul>
             </div>
           </div>

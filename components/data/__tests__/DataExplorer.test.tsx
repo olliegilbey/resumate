@@ -12,9 +12,9 @@ vi.mock('@/lib/tags', async (importOriginal) => {
     ...actual,
     getSortedTags: vi.fn((data: ResumeData) => {
       const tags = new Set<string>()
-      data.companies.forEach(company => {
-        company.positions.forEach(position => {
-          position.bullets.forEach(bullet => {
+      data.experience.forEach(company => {
+        company.children.forEach(position => {
+          position.children.forEach(bullet => {
             bullet.tags.forEach(tag => tags.add(tag))
           })
         })
@@ -180,10 +180,10 @@ describe('DataExplorer', () => {
     expect(container.firstChild).toHaveClass('custom-class')
   })
 
-  it('should handle empty companies array', () => {
+  it('should handle empty experience array', () => {
     const emptyData: ResumeData = {
       ...mockResumeData,
-      companies: [],
+      experience: [],
     }
 
     render(<DataExplorer data={emptyData} />)

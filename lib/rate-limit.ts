@@ -110,3 +110,11 @@ export function getClientIP(request: Request): string {
 
   return 'unknown'
 }
+
+/**
+ * Clear rate limit store (for testing only)
+ * @internal
+ */
+export function clearRateLimitStore(): void {
+  rateLimitStore.clear()
+}

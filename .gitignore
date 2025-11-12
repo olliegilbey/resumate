@@ -12,6 +12,7 @@
 
 # testing
 /coverage
+.logs/
 
 # next.js
 /.next/
@@ -47,4 +48,59 @@ next-env.d.ts
 data/resume-data.json
 
 # Session/local files
-.claude/
+.claude/settings.local.json
+
+# ============================================
+# Rust + WASM Build Artifacts
+# ============================================
+# Generated when cargo init wasn't used, adding manually
+# See: https://github.com/github/gitignore/blob/main/Rust.gitignore
+
+# Rust build artifacts (6.6GB+ during development)
+# Includes target/llvm-cov-target/ (3.4GB coverage data)
+target/
+**/target/
+
+# Rust backup files
+**/*.rs.bk
+
+# Debug symbols (Windows)
+*.pdb
+
+# WASM-specific
+pkg/
+**/pkg/
+wasm-pack.log
+
+# WASM build artifacts are TRACKED for fast Vercel deploys
+# Pre-commit hook ensures they're always up-to-date
+# !public/wasm/*.wasm
+# !public/wasm/*.js
+# .wasm-build-hash
+
+# Rust/WASM test outputs
+target/test-pdfs/
+test-outputs/
+
+# Generated PDFs (never commit - contains PII)
+*.pdf
+pdf-logs/
+
+# TypeScript build artifacts
+tsconfig.tsbuildinfo
+
+# Bun lockfile (similar to package-lock.json)
+bun.lock
+
+# macOS artifacts
+.DS_Store
+**/.DS_Store
+
+# Temp/backup files
+*.bak
+*.backup
+*.tmp
+*~
+
+# Note: Cargo.lock is intentionally tracked for workspace reproducibility
+# Only libraries should ignore Cargo.lock, applications should commit it

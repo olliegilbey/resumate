@@ -43,19 +43,19 @@ export function getSortedTagsWithMetrics(data: ResumeData): TagMetrics[] {
   const tagData = new Map<string, { count: number; totalPriority: number }>()
 
   // Collect tag counts and total priorities
-  data.companies.forEach(company => {
-    company.positions.forEach(position => {
-      // Description tags
-      position.descriptionTags.forEach(tag => {
+  data.experience.forEach(company => {
+    company.children.forEach(position => {
+      // Position tags (from description)
+      position.tags.forEach(tag => {
         const existing = tagData.get(tag) || { count: 0, totalPriority: 0 }
         tagData.set(tag, {
           count: existing.count + 1,
-          totalPriority: existing.totalPriority + (position.descriptionPriority || 5), // Default priority: 5
+          totalPriority: existing.totalPriority + (position.priority || 5), // Default priority: 5
         })
       })
 
       // Bullet tags
-      position.bullets.forEach(bullet => {
+      position.children.forEach(bullet => {
         bullet.tags.forEach(tag => {
           const existing = tagData.get(tag) || { count: 0, totalPriority: 0 }
           tagData.set(tag, {
@@ -63,17 +63,6 @@ export function getSortedTagsWithMetrics(data: ResumeData): TagMetrics[] {
             totalPriority: existing.totalPriority + (bullet.priority || 5), // Default priority: 5
           })
         })
-      })
-    })
-  })
-
-  // Add accomplishment tags if they exist
-  data.accomplishments?.forEach(accomplishment => {
-    accomplishment.tags?.forEach(tag => {
-      const existing = tagData.get(tag) || { count: 0, totalPriority: 0 }
-      tagData.set(tag, {
-        count: existing.count + 1,
-        totalPriority: existing.totalPriority + 5, // Default priority for accomplishments: 5
       })
     })
   })
@@ -125,21 +114,16 @@ export function getSortedTags(data: ResumeData): string[] {
 export function extractAllTags(data: ResumeData): string[] {
   const tagSet = new Set<string>()
 
-  data.companies.forEach(company => {
-    company.positions.forEach(position => {
-      // Add description tags
-      position.descriptionTags.forEach(tag => tagSet.add(tag))
+  data.experience.forEach(company => {
+    company.children.forEach(position => {
+      // Add position tags
+      position.tags.forEach(tag => tagSet.add(tag))
 
       // Add bullet tags
-      position.bullets.forEach(bullet => {
+      position.children.forEach(bullet => {
         bullet.tags.forEach(tag => tagSet.add(tag))
       })
     })
-  })
-
-  // Add accomplishment tags if they exist
-  data.accomplishments?.forEach(accomplishment => {
-    accomplishment.tags?.forEach(tag => tagSet.add(tag))
   })
 
   return Array.from(tagSet).sort()

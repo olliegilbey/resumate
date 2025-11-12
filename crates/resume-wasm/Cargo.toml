@@ -1,0 +1,32 @@
+[package]
+name = "resume-wasm"
+version.workspace = true
+edition.workspace = true
+rust-version.workspace = true
+authors.workspace = true
+license.workspace = true
+repository.workspace = true
+
+[package.metadata.wasm-pack.profile.release]
+wasm-opt = ["-Oz", "--enable-bulk-memory", "--enable-nontrapping-float-to-int"]  # Aggressive size optimization
+
+[lib]
+crate-type = ["cdylib", "rlib"]
+
+[features]
+default = ["console_error_panic_hook"]
+
+[dependencies]
+console_error_panic_hook = { version = "0.1.7", optional = true }
+resume-core = { workspace = true }
+resume-typst = { workspace = true }
+serde = { workspace = true }
+serde_json = { workspace = true }
+wasm-bindgen = { workspace = true }
+thiserror = { workspace = true }
+
+[build-dependencies]
+chrono = "0.4"
+
+[dev-dependencies]
+proptest = { workspace = true }

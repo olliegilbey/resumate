@@ -1,7 +1,8 @@
 import type { NextConfig } from "next";
 
 const nextConfig: NextConfig = {
-  /* config options here */
+  // Turbopack automatically respects .gitignore - no additional config needed
+  // Rust build artifacts (target/) are excluded via .gitignore and tsconfig.json
 };
 
 export default nextConfig;

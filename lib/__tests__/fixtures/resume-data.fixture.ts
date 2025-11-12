@@ -7,44 +7,41 @@ import { ResumeData } from '@/types/resume'
 export const mockResumeData: ResumeData = {
   personal: {
     name: 'Test User',
-    fullName: 'Test User',
     email: 'test@example.com',
     phone: '+1234567890',
     location: 'San Francisco, CA',
-    citizenship: ['US'],
-    linkedin: 'https://linkedin.com/in/testuser',
-    github: 'https://github.com/testuser',
+    linkedin: 'testuser',
+    github: 'testuser',
     website: 'https://testuser.com',
-    calendar: 'https://cal.com/testuser',
   },
   summary: 'Experienced professional with diverse background',
-  tagline: 'Build things that matter',
-  companies: [
+  experience: [
     {
       id: 'company-1',
       name: 'Tech Corp',
-      dateRange: 'Jan 2022 – Present',
+      dateStart: '2022-01',
       location: 'Remote',
-      context: 'Cloud Infrastructure',
-      positions: [
+      description: 'Cloud Infrastructure',
+      priority: 10,
+      tags: ['tech', 'cloud'],
+      children: [
         {
           id: 'pos-1',
-          role: 'Senior Engineer',
-          dateRange: 'Jan 2022 – Present',
+          name: 'Senior Engineer',
+          dateStart: '2022-01',
           description: 'Led infrastructure initiatives',
-          descriptionTags: ['leadership', 'cloud'],
-          descriptionPriority: 9,
-          bullets: [
+          tags: ['leadership', 'cloud'],
+          priority: 9,
+          children: [
             {
               id: 'bullet-1',
-              text: 'Reduced deployment time by 50%',
+              description: 'Reduced deployment time by 50%',
               tags: ['performance', 'devops'],
               priority: 10,
-              metrics: '50%',
             },
             {
               id: 'bullet-2',
-              text: 'Mentored 5 junior engineers',
+              description: 'Mentored 5 junior engineers',
               tags: ['leadership', 'mentorship'],
               priority: 8,
             },
@@ -55,29 +52,31 @@ export const mockResumeData: ResumeData = {
     {
       id: 'company-2',
       name: 'Startup Inc',
-      dateRange: 'Jun 2020 – Dec 2021',
-      positions: [
+      dateStart: '2020-06',
+      dateEnd: '2021-12',
+      priority: 8,
+      tags: ['startup'],
+      children: [
         {
           id: 'pos-2',
-          role: 'Full Stack Developer',
-          dateRange: 'Jun 2020 – Dec 2021',
+          name: 'Full Stack Developer',
+          dateStart: '2020-06',
+          dateEnd: '2021-12',
           description: 'Built product from scratch',
-          descriptionTags: ['full-stack', 'product'],
-          descriptionPriority: 7,
-          bullets: [
+          tags: ['full-stack', 'product'],
+          priority: 7,
+          children: [
             {
               id: 'bullet-3',
-              text: 'Launched MVP in 3 months',
+              description: 'Launched MVP in 3 months',
               tags: ['product', 'full-stack'],
               priority: 9,
-              metrics: '3 months',
             },
             {
               id: 'bullet-4',
-              text: 'Scaled to 10k users',
+              description: 'Scaled to 10k users',
               tags: ['scalability', 'backend'],
               priority: 8,
-              metrics: '10k',
             },
           ],
         },
@@ -90,21 +89,29 @@ export const mockResumeData: ResumeData = {
   },
   education: [
     {
-      degree: 'Computer Science',
+      degree: 'Bachelor of Science in Computer Science',
       degreeType: 'BSc',
       institution: 'State University',
-      location: 'California',
+      location: 'California, USA',
       year: '2020',
+      coursework: ['Data Structures', 'Algorithms', 'Systems'],
     },
   ],
-  accomplishments: [
+  roleProfiles: [
     {
-      id: 'acc-1',
-      title: 'Open Source Contributor',
-      description: 'Contributed to major open source projects',
-      year: '2021',
-      tags: ['open-source', 'community'],
+      id: 'software-engineer',
+      name: 'Software Engineer',
+      description: 'Full-stack engineering role',
+      tagWeights: {
+        engineering: 1.0,
+        'full-stack': 0.9,
+        backend: 0.8,
+        performance: 0.7,
+      },
+      scoringWeights: {
+        tagRelevance: 0.6,
+        priority: 0.4,
+      },
     },
   ],
-  interests: ['Rock Climbing', 'Photography', 'Open Source'],
 }

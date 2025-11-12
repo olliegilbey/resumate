@@ -6,8 +6,8 @@
  * Extracts gist ID from RESUME_DATA_GIST_URL and pushes data/resume-data.json
  *
  * Usage:
- *   npm run data:push           # Interactive (warns if gist is newer)
- *   npm run data:push -- --force # Skip prompts (for automation)
+ *   just data-push           # Interactive (warns if gist is newer)
+ *   just data-push -- --force # Skip prompts (for automation)
  */
 
 import { spawnSync } from 'child_process';
@@ -90,6 +90,20 @@ async function pushToGist() {
     process.exit(1);
   }
 
+  // Validate JSON schema before pushing
+  console.log('📋 Validating resume data against schema...');
+  const validateResult = spawnSync('node', ['scripts/validate-compendium.mjs', LOCAL_FILE], {
+    stdio: ['inherit', 'pipe', 'pipe'],
+    encoding: 'utf8'
+  });
+
+  if (validateResult.status !== 0) {
+    console.error('❌ Validation failed. Fix errors before pushing to gist.');
+    console.error(validateResult.stderr);
+    process.exit(1);
+  }
+  console.log('✅ Validation passed\n');
+
   // Read local content
   const localContent = fs.readFileSync(LOCAL_FILE, 'utf8');
 
@@ -114,7 +128,7 @@ async function pushToGist() {
 
         if (!confirmed) {
           console.log('❌ Aborted. Gist unchanged.');
-          console.log('💡 Tip: Run "npm run data:pull" to sync gist → local first.');
+          console.log('💡 Tip: Run "just data-pull" to sync gist → local first.');
           process.exit(0);
         }
       }

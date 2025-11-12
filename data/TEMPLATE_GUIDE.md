@@ -189,7 +189,7 @@ Side projects, awards, certifications:
 ## Validation
 
 After creating your `resume-data.json`:
-1. Run `npm run build` to check for TypeScript errors
-2. Start dev server with `npm run dev`
+1. Run `just build` to check for TypeScript errors
+2. Start dev server with `just dev`
 3. Visit `/resume/view` to see your data
 4. Test search and filtering functionality

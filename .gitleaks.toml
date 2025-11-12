@@ -1,0 +1,68 @@
+# Gitleaks configuration for Resumate
+# Extends default gitleaks rules with PII detection (phone, email)
+#
+# This file is automatically detected by gitleaks when running in this repo
+# No changes needed to your global pre-commit hook
+
+title = "Resumate Security Rules"
+
+# ============================================
+# Custom Rules: PII Detection (Specific)
+# ============================================
+
+[[rules]]
+id = "personal-email"
+description = "Personal email pattern"
+regex = '''o[a-z]+y@gmail\.com'''
+tags = ["pii", "email", "personal"]
+
+[[rules]]
+id = "personal-phone-intl"
+description = "Personal phone (international +44, exactly 14 chars)"
+regex = '''\+447[0-9]{8}2'''
+tags = ["pii", "phone", "personal"]
+
+[[rules]]
+id = "personal-phone-uk"
+description = "Personal phone (UK format 07, exactly 11 digits)"
+regex = '''07[0-9]{8}2'''
+tags = ["pii", "phone", "personal"]
+
+# ============================================
+# Allowlist: Legitimate Use Cases
+# ============================================
+
+[allowlist]
+description = "Allowlist for test files and safe patterns"
+
+# Paths to ignore completely (only for truly irrelevant files)
+paths = [
+  '''^data/resume-data\.json$''',  # Gitignored personal data (allowed)
+  '''^\.env\.local$''',             # Gitignored env vars
+  '''^target/''',                   # Rust build artifacts
+  '''^node_modules/''',             # Node dependencies
+  '''^\.next/''',                   # Next.js build output (build cache)
+  '''^\.git/logs/''',               # Git reflog (historical commits)
+]
+
+# Regex patterns to ignore (common false positives)
+regexes = [
+  '''example\.com''',
+  '''test@test\.com''',
+  '''user@example\.com''',
+  '''foo@bar\.com''',
+  '''noreply@''',
+  '''support@github\.com''',
+  '''123-456-7890''',               # Example phone
+  '''\+1-555-''',                   # Example international
+  '''555-0100''',                   # Reserved test numbers
+]
+
+# Stop words (if line contains these, ignore the match)
+stopwords = [
+  "example",
+  "test",
+  "mock",
+  "fixture",
+  "placeholder",
+]

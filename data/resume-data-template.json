@@ -1,55 +1,70 @@
 {
   "personal": {
-    "name": "Your Name",
-    "fullName": "Your Full Legal Name",
+    "name": "Your Full Legal Name",
     "nickname": "Nick",
     "email": "your.email@example.com",
     "phone": "+1234567890",
     "location": "City, Country",
-    "citizenship": ["Country 1", "Country 2"],
     "linkedin": "your-linkedin-username",
     "github": "your-github-username",
     "website": "yourwebsite.com",
-    "calendar": "https://cal.com/username"
+    "tagline": "Optional: A memorable motto or phrase that represents your professional philosophy"
   },
   "summary": "Your professional summary highlighting your expertise, experience, and value proposition. 2-3 sentences that capture your career focus and key strengths.",
-  "tagline": "Optional: A memorable motto or phrase that represents your professional philosophy",
-  "companies": [
+  "experience": [
     {
       "id": "company-short-name",
       "name": "Company Name",
-      "dateRange": "Month Year – Month Year",
       "location": "City, Country (or Remote)",
-      "context": "Optional: Company description or context (e.g., 'Web3 Cloud Infrastructure')",
-      "positions": [
+      "description": "Optional: Company description or context (e.g., 'Web3 Cloud Infrastructure')",
+      "priority": 8,
+      "tags": [
+        "blockchain",
+        "startup"
+      ],
+      "children": [
         {
           "id": "company-role-id",
-          "role": "Your Role/Title",
-          "dateRange": "Month Year – Month Year",
+          "name": "Your Role/Title",
           "description": "Primary description of this role - what you did and your key responsibility. This is the main bullet that defines the position.",
-          "descriptionTags": ["tag1", "tag2", "tag3"],
-          "descriptionPriority": 10,
-          "descriptionMetrics": "Optional: extracted metric like '10x increase' or '1M users'",
-          "descriptionContext": "Optional: additional context for AI curation",
-          "descriptionLink": "Optional: URL to relevant work",
-          "bullets": [
+          "priority": 10,
+          "tags": [
+            "tag1",
+            "tag2",
+            "tag3"
+          ],
+          "summary": "Optional: additional context for AI curation",
+          "link": "Optional: URL to relevant work",
+          "children": [
             {
               "id": "unique-bullet-id",
-              "text": "Additional achievement or responsibility bullet. Keep original wording.",
-              "tags": ["tag1", "tag2"],
+              "description": "Additional achievement or responsibility bullet. Keep original wording.",
+              "tags": [
+                "tag1",
+                "tag2"
+              ],
               "priority": 8,
-              "metrics": "Optional: extracted metric",
-              "context": "Optional: additional context",
+              "summary": "Optional: additional context",
               "link": "Optional: URL"
             }
-          ]
+          ],
+          "dateStart": "2022-01"
         }
-      ]
+      ],
+      "dateStart": "2022-01"
     }
   ],
   "skills": {
-    "technical": ["Skill 1", "Skill 2", "Skill 3"],
-    "soft": ["Skill 1", "Skill 2", "Skill 3"]
+    "technical": [
+      "Skill 1",
+      "Skill 2",
+      "Skill 3"
+    ],
+    "soft": [
+      "Skill 1",
+      "Skill 2",
+      "Skill 3"
+    ]
   },
   "education": [
     {
@@ -58,20 +73,17 @@
       "institution": "University Name",
       "location": "City, Country",
       "year": "YYYY",
-      "coursework": ["Course 1", "Course 2", "Course 3"],
-      "societies": ["Society 1", "Society 2"]
+      "coursework": [
+        "Course 1",
+        "Course 2",
+        "Course 3"
+      ],
+      "societies": [
+        "Society 1",
+        "Society 2"
+      ]
     }
   ],
-  "accomplishments": [
-    {
-      "id": "unique-accomplishment-id",
-      "title": "Award or Achievement Title",
-      "description": "Brief description of the accomplishment",
-      "year": "YYYY",
-      "tags": ["optional-tag"]
-    }
-  ],
-  "interests": ["Interest 1", "Interest 2", "Interest 3"],
   "roleProfiles": [
     {
       "id": "software-engineer",
@@ -85,6 +97,10 @@
         "api-design": 0.7,
         "testing": 0.6,
         "ci-cd": 0.5
+      },
+      "scoringWeights": {
+        "tagRelevance": 0.6,
+        "priority": 0.4
       }
     },
     {
@@ -100,6 +116,10 @@
         "team-leadership": 0.7,
         "cross-functional": 0.7,
         "engineering": 0.5
+      },
+      "scoringWeights": {
+        "tagRelevance": 0.7,
+        "priority": 0.3
       }
     },
     {
@@ -115,6 +135,10 @@
         "engineering": 0.7,
         "education": 0.7,
         "product-management": 0.5
+      },
+      "scoringWeights": {
+        "tagRelevance": 0.6,
+        "priority": 0.4
       }
     }
   ]

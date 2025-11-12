@@ -47,7 +47,7 @@ export function BulletCard({ bullet, allTags, onTagClick, className }: BulletCar
         <div className="flex-1">
           <div className="mb-3">
             <p className="text-base leading-7 text-slate-700 dark:text-slate-200">
-              {parseMarkdownLinks(bullet.text).map((part) => {
+              {parseMarkdownLinks(bullet.description).map((part) => {
                 if (part.type === 'link' && part.url) {
                   return (
                     <a
@@ -64,19 +64,12 @@ export function BulletCard({ bullet, allTags, onTagClick, className }: BulletCar
                 return <span key={part.key}>{part.content}</span>
               })}
             </p>
-
-            {/* Hidden metrics for SEO */}
-            {bullet.metrics && (
-              <span className="sr-only">
-                Metrics: {bullet.metrics}
-              </span>
-            )}
           </div>
 
-          {bullet.context && (
+          {bullet.summary && (
             <div className="mt-3 pt-3 border-t border-slate-200 dark:border-slate-700">
               <p className="text-sm text-slate-500 dark:text-slate-400 italic">
-                {bullet.context}
+                {bullet.summary}
               </p>
             </div>
           )}

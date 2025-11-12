@@ -2,9 +2,9 @@
 
 **Your career story, authentically presented.**
 
-Resumate helps you curate your human-written professional experiences for different audiences. You write your career history once; AI helps you select and organize what's most relevant for each opportunity.
+Resumate helps you curate and present your human-written professional experiences for different audiences. You write your career history once; AI helps you select and organize what's most relevant for each opportunity.
 
-[![Next.js](https://img.shields.io/badge/Next.js-15.5-black)](https://nextjs.org/)
+[![Next.js](https://img.shields.io/badge/Next.js-16-black)](https://nextjs.org/)
 [![TypeScript](https://img.shields.io/badge/TypeScript-5-blue)](https://www.typescriptlang.org/)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 
@@ -17,7 +17,7 @@ Resumate helps you curate your human-written professional experiences for differ
 This framework follows [Anthropic's AI guidance principles](https://www.anthropic.com/candidate-ai-guidance):
 
 ✅ **All experiences**: Human-written by you
-✅ **All selection**: AI-assisted curation
+✅ **All selection**: Heuristic-based, or AI-assisted curation
 ✅ **All content**: Authentic and real
 ❌ **Never fabricates** career history or achievements
 
@@ -60,8 +60,15 @@ Resumate is **not** an AI resume generator. It's a curation system that helps yo
 ```bash
 git clone https://github.com/yourusername/resumate.git
 cd resumate
-npm install
+
+# Install dependencies (recommended - uses justfile)
+just install
+
+# OR manually
+bun install
 ```
+
+**Build System**: This project uses [justfile](https://github.com/casey/just) for build automation. Install with `brew install just` (macOS) or see [installation instructions](https://github.com/casey/just#installation).
 
 ### 2. Configure Your Data
 
@@ -103,10 +110,12 @@ RESUME_DATA_GIST_URL=https://gist.githubusercontent.com/[user]/[hash]/raw/resume
 ### 5. Run Locally
 
 ```bash
-npm run dev
+just dev
 ```
 
 Visit [http://localhost:3000](http://localhost:3000)
+
+**Available Commands**: Run `just` to see all available commands (40+ automation targets including dev, build, test, wasm, data management, type generation, and more).
 
 **Routes**:
 - `/` - Landing page with contact links
@@ -200,7 +209,7 @@ This project uses [CodeRabbit](https://coderabbit.ai) for AI-powered code review
 
 **Installation**:
 ```bash
-npm install -g @coderabbit/cli
+bun install -g @coderabbit/cli
 coderabbit auth
 ```
 
@@ -303,7 +312,7 @@ The GitHub Action (`.github/workflows/gist-deploy-trigger.yml`) will:
 - ✅ Environment variables set in Vercel (no newlines!)
 - ✅ `.env.local` is gitignored
 - ✅ No secrets in repository
-- ✅ Build succeeds: `npm run build`
+- ✅ Build succeeds: `just build`
 - ✅ Turnstile working on production
 - ✅ GitHub Action secrets configured
 
@@ -333,19 +342,14 @@ Your resume data (`data/resume-data.json`) is **gitignored** for privacy. To edi
 ### Workflow
 
 ```bash
-# Pull latest from gist to local
-npm run data:pull
-
-# Push local changes to gist
-npm run data:push
-
-# View gist content in terminal
-npm run data:view
+just data-pull    # Pull latest from gist to local
+just data-push    # Push local changes to gist
+just data-view    # View gist content in terminal
 ```
 
 **Edit from anywhere**: Visit https://gist.github.com/[your-username], find your gist, click "Edit". Changes sync automatically.
 
-**Build-time fetch**: Vercel automatically pulls from gist during `npm run build` (via `prebuild` hook).
+**Build-time fetch**: Vercel automatically pulls from gist during builds (via `prebuild` hook).
 
 **Auto-deploy**: GitHub Action checks gist hourly and triggers Vercel deploy when changes detected.
 
@@ -355,44 +359,64 @@ npm run data:view
 
 ```
 resumate/
-├── app/
-│   ├── page.tsx              # Landing page
-│   ├── layout.tsx            # Root layout
-│   ├── robots.ts             # Dynamic robots.txt
-│   ├── api/
-│   │   └── contact-card/
-│   │       └── route.ts      # vCard generation (server-side)
-│   └── resume/
-│       ├── page.tsx          # Resume overview
-│       └── view/
-│           └── page.tsx      # Data explorer
-├── components/
-│   ├── ui/                   # Reusable UI components
-│   └── data/                 # Data visualization components
-├── scripts/
-│   ├── fetch-gist-data.js    # Pull gist → local (prebuild hook)
-│   ├── gist-push.js          # Push local → gist
-│   └── gist-view.js          # View gist content
-├── lib/
-│   ├── vcard.ts              # vCard 3.0 generation
-│   └── utils.ts              # Utilities
-├── types/
-│   └── resume.ts             # TypeScript types
-├── data/
-│   ├── resume-data.json      # YOUR data (gitignored)
-│   └── resume-data-template.json  # Template
-├── .github/
-│   └── workflows/
-│       └── gist-deploy-trigger.yml  # Hourly gist → deploy automation
-├── middleware.ts             # Security & rate limiting
-└── .env.local                # Secrets (gitignored)
+├── app/                      # Next.js 16 app (pages, API routes)
+├── components/               # React components (data + ui)
+├── crates/                   # Rust workspace (types, core, typst, wasm)
+│   ├── shared-types/         # Type definitions (source of truth)
+│   ├── resume-core/          # Scoring + bullet selection
+│   ├── resume-typst/         # PDF generation via Typst
+│   └── resume-wasm/          # WASM bindings for browser
+├── typst/                    # Fonts + templates for PDF generation
+├── lib/                      # TypeScript utilities
+├── scripts/                  # Gist sync + type generation
+├── data/                     # Resume data (gitignored)
+├── docs/                     # Architecture docs
+├── .github/workflows/        # CI/CD (hourly gist auto-deploy)
+└── justfile                  # Build automation (40+ commands)
 ```
+
+See `.claude/CLAUDE.md` for detailed structure.
+
+---
+
+## Documentation System
+
+This project uses a hierarchical documentation system designed to prevent drift and maintain single sources of truth.
+
+### Key Documentation Files
+
+- **[.claude/CLAUDE.md](.claude/CLAUDE.md)** - Project router and entry point for AI agents
+- **[docs/CURRENT_PHASE.md](docs/CURRENT_PHASE.md)** - Current development phase and status
+- **[docs/METRICS.md](docs/METRICS.md)** - Auto-generated test counts and coverage
+- **[docs/TESTING_STRATEGY.md](docs/TESTING_STRATEGY.md)** - TDD philosophy and patterns
+- **[docs/ARCHITECTURE.md](docs/ARCHITECTURE.md)** - System design and WASM pipeline
+- **[docs/DEPLOYMENT_GUIDE.md](docs/DEPLOYMENT_GUIDE.md)** - Deployment instructions
+- **[docs/META_DOCUMENTATION.md](docs/META_DOCUMENTATION.md)** - How the documentation system works
+- **Linear project** - Active tasks, issues, and milestones
+
+### Documentation Principles
+
+1. **Single Source of Truth** - Every fact has exactly one canonical location
+2. **Temporal Separation** - Files organized by update frequency (never, quarterly, per phase, daily, per commit)
+3. **Auto-Generated Facts** - Test counts and coverage generated from actual test runs
+4. **Manual Observations** - Strategic decisions and philosophy documented manually
+5. **Automated Verification** - Pre-commit hooks ensure documentation consistency
+
+### Documentation Commands
+
+```bash
+just docs-health     # Generate metrics + verify documentation
+just docs-verify     # Check documentation consistency
+just metrics-generate # Update METRICS.md from test logs
+```
+
+**For details:** See [docs/META_DOCUMENTATION.md](docs/META_DOCUMENTATION.md)
 
 ---
 
 ## Tech Stack
 
-- **Framework**: Next.js 15.5.4 (Turbopack)
+- **Framework**: Next.js 16 (Turbopack, bleeding edge)
 - **Language**: TypeScript 5
 - **Styling**: Tailwind CSS v4
 - **Security**: Cloudflare Turnstile

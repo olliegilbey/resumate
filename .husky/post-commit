@@ -1,0 +1,37 @@
+#!/usr/bin/env bash
+# Post-commit hook: Generate PDF snapshot for rollback reference
+# Runs after successful commit, hash is available
+
+set -e
+
+# Only run if resume data exists
+if [ ! -f "data/resume-data.json" ]; then
+  echo "⚠️  Skipping PDF generation: data/resume-data.json not found"
+  exit 0
+fi
+
+# Only run if WASM is built
+if [ ! -f "public/wasm/resume_wasm_bg.wasm" ]; then
+  echo "⚠️  Skipping PDF generation: WASM not built"
+  exit 0
+fi
+
+# Get commit info
+COMMIT_HASH=$(git rev-parse --short HEAD)
+COMMIT_DATE=$(date -u +"%Y-%m-%dT%H:%M")
+
+# Profile to generate
+PROFILE_ID="developer-relations-lead"
+
+# Output path
+mkdir -p pdf-logs
+PDF_PATH="pdf-logs/${COMMIT_DATE}_${COMMIT_HASH}_${PROFILE_ID}.pdf"
+
+echo "📸 Generating PDF snapshot: ${COMMIT_DATE}_${COMMIT_HASH}"
+
+# Generate PDF using binary (writes to stdout)
+cargo run --bin pdf-snapshot --release -p resume-typst 2>/dev/null > "$PDF_PATH" && {
+  echo "✅ PDF snapshot saved: $PDF_PATH ($(du -h "$PDF_PATH" | cut -f1))"
+} || {
+  echo "⚠️  PDF generation failed (check cargo/data availability)"
+}

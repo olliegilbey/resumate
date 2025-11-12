@@ -1,0 +1,33 @@
+[package]
+name = "resume-typst"
+version.workspace = true
+edition.workspace = true
+rust-version.workspace = true
+authors.workspace = true
+license.workspace = true
+repository.workspace = true
+
+[dependencies]
+# Workspace dependencies
+serde = { workspace = true }
+serde_json = { workspace = true }
+thiserror = { workspace = true }
+
+# Typst dependencies (for PDF generation)
+typst = { workspace = true }
+typst-pdf = { workspace = true }
+typst-syntax = { workspace = true }
+typst-utils = { workspace = true }
+# Don't use typst-assets fonts - too large (5MB+)
+# We'll embed our own minimal font set instead
+comemo = { workspace = true }
+ecow = { workspace = true }
+
+# Local dependencies
+resume-core = { workspace = true }
+
+# Additional utilities
+chrono = "0.4"
+
+[dev-dependencies]
+proptest = { workspace = true }

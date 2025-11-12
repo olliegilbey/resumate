@@ -1,0 +1,635 @@
+{
+  "$comment": "AUTO-GENERATED from crates/shared-types/src/lib.rs at timestamp 1761610302",
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "definitions": {
+    "Bullet": {
+      "description": "Bullet - leaf level of hierarchy (individual achievement/responsibility)\n\nRepresents a single resume bullet point. This is the atomic unit of experience that gets selected for targeted resumes.",
+      "properties": {
+        "dateEnd": {
+          "description": "End date for time-bound achievements (optional)",
+          "examples": [
+            "December 2023"
+          ],
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "dateStart": {
+          "description": "Start date for time-bound achievements (optional)",
+          "examples": [
+            "January 2020"
+          ],
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "description": {
+          "description": "The actual bullet text that appears on resume (required)",
+          "examples": [
+            "Built distributed system handling 10M requests/day with 99.9% uptime"
+          ],
+          "type": "string"
+        },
+        "id": {
+          "description": "Unique identifier (required)",
+          "examples": [
+            "anthropic-launched-claude"
+          ],
+          "type": "string"
+        },
+        "link": {
+          "description": "Link to work, recording, demo, or additional context (optional)",
+          "examples": [
+            "https://example.com"
+          ],
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "location": {
+          "description": "Physical location, rarely used at bullet level (optional)",
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "name": {
+          "description": "Optional heading or label, rarely used (optional)",
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "priority": {
+          "description": "Bullet importance ranking 1-10, higher = more impressive/relevant (required)",
+          "examples": [
+            "9"
+          ],
+          "format": "uint8",
+          "maximum": 10.0,
+          "minimum": 1.0,
+          "type": "integer"
+        },
+        "summary": {
+          "description": "Brief context for this achievement (optional)",
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "tags": {
+          "description": "Category tags for filtering and scoring (required)",
+          "examples": [
+            [
+              "engineering",
+              "leadership"
+            ]
+          ],
+          "items": {
+            "type": "string"
+          },
+          "type": "array"
+        }
+      },
+      "required": [
+        "description",
+        "id",
+        "priority",
+        "tags"
+      ],
+      "type": "object"
+    },
+    "Company": {
+      "description": "Company - top level of experience hierarchy\n\nRepresents a company/organization where you worked. Contains positions (roles) held at this company.",
+      "properties": {
+        "children": {
+          "description": "List of Position objects - roles held at this company (required)",
+          "items": {
+            "$ref": "#/definitions/Position"
+          },
+          "type": "array"
+        },
+        "dateEnd": {
+          "description": "End date or null for Present (optional)",
+          "examples": [
+            "December 2023"
+          ],
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "dateStart": {
+          "description": "Start date (required)",
+          "examples": [
+            "January 2020"
+          ],
+          "type": "string"
+        },
+        "description": {
+          "description": "Detailed description, rarely used at company level (optional)",
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "id": {
+          "description": "Unique identifier (required)",
+          "examples": [
+            "anthropic"
+          ],
+          "type": "string"
+        },
+        "link": {
+          "description": "Link to company website (optional)",
+          "examples": [
+            "https://example.com"
+          ],
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "location": {
+          "description": "Physical location (optional)",
+          "examples": [
+            "San Francisco, CA"
+          ],
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "name": {
+          "description": "Company name (optional)",
+          "examples": [
+            "Anthropic"
+          ],
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "priority": {
+          "description": "Company importance ranking 1-10, higher = more prestigious (required)",
+          "examples": [
+            "9"
+          ],
+          "format": "uint8",
+          "maximum": 10.0,
+          "minimum": 1.0,
+          "type": "integer"
+        },
+        "summary": {
+          "description": "Brief company context (optional)",
+          "examples": [
+            "AI safety research company"
+          ],
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "tags": {
+          "description": "Category tags for filtering and scoring (required)",
+          "examples": [
+            [
+              "engineering",
+              "leadership"
+            ]
+          ],
+          "items": {
+            "type": "string"
+          },
+          "type": "array"
+        }
+      },
+      "required": [
+        "children",
+        "dateStart",
+        "id",
+        "priority",
+        "tags"
+      ],
+      "type": "object"
+    },
+    "Education": {
+      "description": "Education entry",
+      "properties": {
+        "coursework": {
+          "description": "Relevant coursework (optional)",
+          "items": {
+            "type": "string"
+          },
+          "type": [
+            "array",
+            "null"
+          ]
+        },
+        "degree": {
+          "description": "Full degree name (required)",
+          "type": "string"
+        },
+        "degreeType": {
+          "description": "Degree type (required)",
+          "type": "string"
+        },
+        "institution": {
+          "description": "Institution name (required)",
+          "type": "string"
+        },
+        "location": {
+          "description": "Institution location (required)",
+          "type": "string"
+        },
+        "societies": {
+          "description": "Clubs, societies, and activities (optional)",
+          "items": {
+            "type": "string"
+          },
+          "type": [
+            "array",
+            "null"
+          ]
+        },
+        "year": {
+          "description": "Year graduated (required)",
+          "type": "string"
+        }
+      },
+      "required": [
+        "degree",
+        "degreeType",
+        "institution",
+        "location",
+        "year"
+      ],
+      "type": "object"
+    },
+    "PersonalInfo": {
+      "description": "Personal information",
+      "properties": {
+        "email": {
+          "description": "Email address (optional)",
+          "examples": [
+            "jane@example.com"
+          ],
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "github": {
+          "description": "GitHub profile URL (optional)",
+          "examples": [
+            "https://example.com"
+          ],
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "linkedin": {
+          "description": "LinkedIn profile URL (optional)",
+          "examples": [
+            "https://example.com"
+          ],
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "location": {
+          "description": "Current location (optional)",
+          "examples": [
+            "San Francisco, CA"
+          ],
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "name": {
+          "description": "Full name (required)",
+          "examples": [
+            "Jane Doe"
+          ],
+          "type": "string"
+        },
+        "nickname": {
+          "description": "Nickname or preferred name (optional)",
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "phone": {
+          "description": "Phone number (optional)",
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "tagline": {
+          "description": "Professional tagline or motto (optional)",
+          "examples": [
+            "Building the future of AI"
+          ],
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "twitter": {
+          "description": "Twitter/X profile URL (optional)",
+          "examples": [
+            "https://example.com"
+          ],
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "website": {
+          "description": "Personal website URL (optional)",
+          "examples": [
+            "https://example.com"
+          ],
+          "type": [
+            "string",
+            "null"
+          ]
+        }
+      },
+      "required": [
+        "name"
+      ],
+      "type": "object"
+    },
+    "Position": {
+      "description": "Position - middle level of hierarchy (role within a company)\n\nRepresents a specific role/title at a company. Contains bullets (achievements/responsibilities) for this role.",
+      "properties": {
+        "children": {
+          "description": "List of Bullet objects - achievements/responsibilities for this role (required)",
+          "items": {
+            "$ref": "#/definitions/Bullet"
+          },
+          "type": "array"
+        },
+        "dateEnd": {
+          "description": "End date or null for Present (optional)",
+          "examples": [
+            "December 2023"
+          ],
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "dateStart": {
+          "description": "Start date (required)",
+          "examples": [
+            "January 2020"
+          ],
+          "type": "string"
+        },
+        "description": {
+          "description": "Detailed role description shown in resume (optional)",
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "id": {
+          "description": "Unique identifier (required)",
+          "examples": [
+            "anthropic-swe"
+          ],
+          "type": "string"
+        },
+        "link": {
+          "description": "Link to position-specific work or context (optional)",
+          "examples": [
+            "https://example.com"
+          ],
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "location": {
+          "description": "Physical location if different from company (optional)",
+          "examples": [
+            "San Francisco, CA"
+          ],
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "name": {
+          "description": "Job title or role name (required)",
+          "examples": [
+            "Software Engineer"
+          ],
+          "type": "string"
+        },
+        "priority": {
+          "description": "Position importance ranking 1-10, higher = more senior/relevant (required)",
+          "examples": [
+            "9"
+          ],
+          "format": "uint8",
+          "maximum": 10.0,
+          "minimum": 1.0,
+          "type": "integer"
+        },
+        "summary": {
+          "description": "Brief role summary (optional)",
+          "examples": [
+            "Led team of 5 engineers building developer tools"
+          ],
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "tags": {
+          "description": "Category tags for filtering and scoring (required)",
+          "examples": [
+            [
+              "engineering",
+              "leadership"
+            ]
+          ],
+          "items": {
+            "type": "string"
+          },
+          "type": "array"
+        }
+      },
+      "required": [
+        "children",
+        "dateStart",
+        "id",
+        "name",
+        "priority",
+        "tags"
+      ],
+      "type": "object"
+    },
+    "RoleProfile": {
+      "description": "Role profile for targeted resume generation\n\nDefines which tags/skills are most relevant for a specific role type, and how to weight different scoring components when selecting bullets.",
+      "properties": {
+        "description": {
+          "description": "Optional description of this role type (optional)",
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "id": {
+          "description": "Unique identifier (required)",
+          "examples": [
+            "software-engineer"
+          ],
+          "type": "string"
+        },
+        "name": {
+          "description": "Display name for this role type (required)",
+          "examples": [
+            "Software Engineer"
+          ],
+          "type": "string"
+        },
+        "scoringWeights": {
+          "allOf": [
+            {
+              "$ref": "#/definitions/ScoringWeights"
+            }
+          ],
+          "description": "Weights for scoring algorithm components (required)"
+        },
+        "tagWeights": {
+          "additionalProperties": {
+            "format": "float",
+            "type": "number"
+          },
+          "description": "Map of tag names to relevance weights 0.0-1.0, higher = more relevant (required)",
+          "type": "object"
+        }
+      },
+      "required": [
+        "id",
+        "name",
+        "scoringWeights",
+        "tagWeights"
+      ],
+      "type": "object"
+    },
+    "ScoringWeights": {
+      "description": "Scoring weights for bullet selection algorithm\n\nDefines how to weight different factors when scoring bullets. All weights should sum to approximately 1.0.",
+      "properties": {
+        "priority": {
+          "description": "Weight for manual priority 0.0-1.0 (required)",
+          "examples": [
+            "0.4"
+          ],
+          "format": "float",
+          "maximum": 1.0,
+          "minimum": 0.0,
+          "type": "number"
+        },
+        "tagRelevance": {
+          "description": "Weight for tag relevance 0.0-1.0 (required)",
+          "examples": [
+            "0.6"
+          ],
+          "format": "float",
+          "maximum": 1.0,
+          "minimum": 0.0,
+          "type": "number"
+        }
+      },
+      "required": [
+        "priority",
+        "tagRelevance"
+      ],
+      "type": "object"
+    }
+  },
+  "description": "Complete resume data structure\n\nTop-level container for all resume information. This is the root object stored in resume-data.json.",
+  "properties": {
+    "education": {
+      "description": "List of Education objects - degrees earned (optional)",
+      "items": {
+        "$ref": "#/definitions/Education"
+      },
+      "type": [
+        "array",
+        "null"
+      ]
+    },
+    "experience": {
+      "description": "List of Company objects - work experience (required)",
+      "items": {
+        "$ref": "#/definitions/Company"
+      },
+      "type": "array"
+    },
+    "metaFooter": {
+      "description": "Meta footer text for PDF (supports {bullet_count} and {company_count} template variables)",
+      "type": [
+        "string",
+        "null"
+      ]
+    },
+    "personal": {
+      "allOf": [
+        {
+          "$ref": "#/definitions/PersonalInfo"
+        }
+      ],
+      "description": "Personal information (required)"
+    },
+    "roleProfiles": {
+      "description": "List of RoleProfile objects for targeted resume generation (optional)",
+      "items": {
+        "$ref": "#/definitions/RoleProfile"
+      },
+      "type": [
+        "array",
+        "null"
+      ]
+    },
+    "skills": {
+      "additionalProperties": {
+        "items": {
+          "type": "string"
+        },
+        "type": "array"
+      },
+      "description": "Skills grouped by category (optional)",
+      "type": [
+        "object",
+        "null"
+      ]
+    },
+    "summary": {
+      "description": "Professional summary 2-3 sentences (optional)",
+      "type": [
+        "string",
+        "null"
+      ]
+    }
+  },
+  "required": [
+    "experience",
+    "personal"
+  ],
+  "title": "ResumeData",
+  "type": "object"
+}
