@@ -196,67 +196,80 @@
 
 ---
 
-### GitHub Actions (Gist Watcher)
+### GitHub Actions (Gist Watcher Only)
 
 **Purpose:** Detect gist updates → trigger deploy
 **Duration:** ~30s
-**Triggers:** Hourly cron (on the hour)
+**Triggers:** Hourly cron (on the hour) + manual
+**Workflow:** `gist-deploy-trigger.yml`
 
 **Responsibilities:**
-- ✅ Fetch gist metadata
-- ✅ Validate JSON + schema
-- ✅ Compare timestamps
-- ✅ Trigger Vercel if needed
-- ❌ NOT for code testing
-- ❌ NOT for artifact validation
-- ❌ NOT for Rust compilation
+- ✅ Fetch gist metadata (GitHub API)
+- ✅ Validate JSON syntax + schema
+- ✅ Compare timestamps (gist vs last Vercel deploy)
+- ✅ Trigger Vercel deploy if gist newer
+- ❌ NOT for code testing (pre-commit handles)
+- ❌ NOT for artifact validation (pre-commit handles)
+- ❌ NOT for Rust compilation (local only)
+- ❌ NOT for PR validation (deleted, redundant)
 
 **Why NO PR Validation Workflow:**
 
-**Current:** `rust-type-validation.yml` runs on PR
-**Problem:** Duplicates pre-commit work
-**Solution:** Delete or repurpose as manual-only
+**Decision:** Deleted entirely (Option 1)
+**Date:** 2025-11-12
 
-**Options:**
-1. **Delete entirely** (trust pre-commit + Vercel)
-2. **Make manual-only** (workflow_dispatch for investigation)
-3. **Keep for nightly deep validation** (scheduled, not PR)
+**Previous:** `rust-type-validation.yml` ran on every PR (11min)
+**Problem:** 100% redundant with pre-commit hook
+**Solution:** Deleted workflow entirely
 
-**Recommended:** Option 2 (manual-only)
-- Pre-commit already validates everything
-- Vercel build is final gate
-- Saves 11min × N PRs/month
-- Available for debugging if needed
-- GitHub Actions reserved for gist watching
+**Rationale:**
+- Pre-commit hook already validates everything (6s local)
+- Every push is blocked until validation passes
+- No external contributors (private project)
+- Husky hooks auto-install via `bun install` (if there were contributors)
+- Vercel build is final artifact gate
+- Saves 11min × N pushes/month
+- Zero value add over local validation
 
-**Acceptable risk:** Developer bypasses pre-commit
-- Vercel will catch (fail-fast in prebuild)
-- PR review catches obvious issues
-- Not worth 11min per PR to prevent
+**Validation Gates (Sufficient):**
+1. **Pre-commit** (local, 6s, blocks push)
+   - Secret scanning (gitleaks, ripsecrets, trufflehog)
+   - Lint + typecheck (ESLint, TSC, clippy, cargo fmt)
+   - WASM freshness (hash-based rebuild detection)
+   - All tests (Rust + TypeScript, 200+ tests)
+   - Type sync (if shared-types changed)
+2. **Vercel prebuild** (server, <3s, blocks deploy)
+   - WASM existence check (fail-fast if missing)
+   - Gist fetch validation (fail-fast if invalid)
+
+**Edge Cases Covered:**
+- Developer bypasses pre-commit (`--no-verify`)? → Vercel catches missing WASM/invalid gist
+- Broken code pushed? → PR review catches it (solo developer)
+- Fork contributors? → Husky hooks install automatically, same validation
 
 ---
 
 ### Pull Request Validation
 
-**Purpose:** Trust local pre-commit + Vercel build
-**Duration:** N/A (no separate workflow)
+**Strategy:** No separate workflow (deleted)
+**Duration:** 0s CI time
 
 **Philosophy:** Heavy pre-commit IS the PR validation
-- ✅ Developer runs pre-commit locally (10-60s)
+- ✅ Developer runs pre-commit locally (4-60s)
 - ✅ Vercel preview deploy validates build (2-3min)
-- ❌ NO GitHub Actions for PR testing (redundant)
+- ❌ NO GitHub Actions for PR testing (deleted, redundant)
 - ❌ NO cargo test in CI (already ran locally)
 
 **Rationale:**
-- Pre-commit enforces all quality gates
-- If someone bypasses (--no-verify), Vercel build catches it
-- Saves GitHub Actions minutes for gist watching only
-- Faster feedback loop (local > CI)
+- Pre-commit enforces all quality gates before push
+- Cannot push without passing validation
+- If bypassed → Vercel build catches it
+- Saves 11min × N pushes/month
+- Faster feedback (local >> CI)
+- GitHub Actions reserved for gist watching only
 
-**Edge case:** If developer bypasses pre-commit:
-- Vercel build will fail (fail-fast in fetch-gist/build-wasm)
-- PR cannot merge (Vercel check fails)
-- No additional CI workflow needed
+**Deleted Workflows:**
+- `rust-type-validation.yml` (2025-11-12) - 100% redundant with pre-commit
 
 ---
 
@@ -381,15 +394,16 @@ fi
 
 ### After Optimization
 
-| Environment | Duration | Rust Build | Target Size |
-|-------------|----------|------------|-------------|
-| Local | 10-60s | ✅ (if needed) | 9GB |
-| GitHub Actions | ~30s | ❌ | 0GB |
-| Vercel | ~3min | ❌ | 0GB |
+| Environment | Duration | Rust Build | Target Size | Workflows |
+|-------------|----------|------------|-------------|-----------|
+| Local | 4-60s | ✅ (if needed) | 9GB | Pre-commit hook |
+| GitHub Actions | ~30s | ❌ | 0GB | Gist watcher only |
+| Vercel | ~3min | ❌ | 0GB | N/A |
 
 **Savings:**
 - Vercel: 9min/deploy = $3.60/deploy
-- GitHub Actions: 700min/month
+- GitHub Actions: 700min/month (deleted PR workflow)
+- Local: Faster feedback (4-60s vs 11min CI)
 - Total: Significant cost + time savings
 
 ---
@@ -426,17 +440,28 @@ fi
 
 ### Why No CI Testing for PRs
 
-**Decision:** Trust local pre-commit + Vercel build
-**Date:** 2025-11-11
+**Decision:** Delete PR validation workflow entirely (Option 1)
+**Date:** 2025-11-12 (updated from 2025-11-11)
+**File Deleted:** `rust-type-validation.yml`
+
 **Rationale:**
-- Pre-commit runs all tests locally (10-60s)
-- Duplicating in CI wastes 11min per PR
-- Vercel build is final validation
+- Pre-commit runs all tests locally (4-60s, blocks push)
+- Cannot push without passing validation
+- 100% redundant to run same tests in CI (11min wasted)
+- No external contributors (private project)
+- Vercel build is final artifact gate
 - GitHub Actions reserved for gist watching
 
-**Risk:** Developer bypasses pre-commit (--no-verify)
-**Mitigation:** Vercel build will fail (fail-fast)
-**Acceptable:** Rare case, not worth 11min per PR
+**Previous workflow did:**
+- cargo fmt --check (pre-commit does this)
+- cargo clippy (pre-commit does this)
+- cargo test --all (pre-commit does this)
+- Fetched real gist (pre-commit uses template, sufficient)
+- **Total waste:** 11min × every push
+
+**Risk:** Developer bypasses pre-commit (`--no-verify`)
+**Mitigation:** Vercel prebuild fail-fast (WASM check + gist validation)
+**Acceptable:** Extremely rare, Vercel catches it, not worth 11min per push
 
 ### Why Keep WASM Binaries in Git
 
@@ -574,16 +599,13 @@ See active todo list in conversation for detailed steps.
   ☐ Test fetch-gist-data.js in prod mode (should fail-fast)
   ☐ Commit: "ci: add fail-fast validation to build scripts"
 
-### PHASE 4: GitHub Actions (Gist-Only)
-  ☐ Decide: Repurpose rust-type-validation.yml as manual-only
-  ☐ Rename rust-type-validation.yml → manual-validation.yml
-  ☐ Remove PR/push triggers from workflow
-  ☐ Add workflow_dispatch trigger only
-  ☐ Add comment explaining manual-only purpose
-  ☐ Verify gist-deploy-trigger.yml unchanged (hourly, gist only)
-  ☐ Verify RESUME_DATA_GIST_URL set in GitHub secrets
-  ☐ Test manual workflow with workflow_dispatch
-  ☐ Commit: "ci: convert PR validation to manual-only workflow"
+### PHASE 4: GitHub Actions (Gist-Only) ✅ COMPLETE
+  ✅ Decided: Delete rust-type-validation.yml entirely (Option 1)
+  ✅ Deleted rust-type-validation.yml (100% redundant with pre-commit)
+  ✅ Updated CI_CD_PRINCIPLES.md to reflect actual strategy
+  ✅ Verified gist-deploy-trigger.yml unchanged (hourly, gist only)
+  ✅ GitHub Actions now exclusively for gist watching
+  ✅ Commit: "ci: delete redundant PR validation workflow"
 
 ### PHASE 5: Vercel Configuration (Pre-Built Artifacts)
   ☐ Verify RESUME_DATA_GIST_URL set in Vercel
