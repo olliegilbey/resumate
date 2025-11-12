@@ -151,8 +151,8 @@ done
 if [ "$wasm_staged" = true ]; then
   printf "${YELLOW}  → WASM sources changed - checking freshness${NC}\n"
 
-  # Run check-wasm-fresh.sh (handles rebuild + staging)
-  if ./scripts/check-wasm-fresh.sh; then
+  # Run check-wasm.sh --fresh (handles rebuild + staging)
+  if ./scripts/check-wasm.sh --fresh; then
     WASM_REBUILT=true
     printf "${GREEN}  ✓${NC} WASM rebuilt and staged"
   else
@@ -246,8 +246,8 @@ else
   printf "${GREEN}  ✓${NC} No Rust files changed (skipped)"
 fi
 
-# TypeScript tests (always run - fast)
-if [ -n "$TS_STAGED" ]; then
+# TypeScript tests (if TS or shared-types changed)
+if [ -n "$TS_STAGED" ] || echo "$RS_STAGED" | grep -q "crates/shared-types/"; then
   printf "${YELLOW}  → Running TypeScript tests${NC}\n"
 
   if ! bun run test --run --reporter=dot 2>&1; then

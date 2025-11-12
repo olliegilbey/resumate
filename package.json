@@ -5,7 +5,7 @@
   "type": "module",
   "scripts": {
     "dev": "next dev --turbopack",
-    "prebuild": "bash scripts/build-wasm.sh && bun scripts/fetch-gist-data.js --force",
+    "prebuild": "bash scripts/check-wasm.sh --exists && bun scripts/fetch-gist-data.js --force",
     "build": "next build --turbopack",
     "start": "next start",
     "lint": "eslint",

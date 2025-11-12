@@ -160,7 +160,7 @@ git push origin main
 just build
 
 # Build includes:
-# 1. WASM compilation (scripts/build-wasm.sh)
+# 1. WASM validation (scripts/check-wasm.sh --exists)
 # 2. Gist data fetch (scripts/fetch-gist-data.js --force)
 # 3. Next.js build
 ```
@@ -172,7 +172,7 @@ Vercel runs automatically:
 ```json
 {
   "scripts": {
-    "prebuild": "bash scripts/build-wasm.sh && bun scripts/fetch-gist-data.js --force",
+    "prebuild": "bash scripts/check-wasm.sh --exists && bun scripts/fetch-gist-data.js --force",
     "build": "next build"
   }
 }
@@ -181,12 +181,14 @@ Vercel runs automatically:
 **Build Steps:**
 1. Install dependencies (`bun install`)
 2. Run prebuild hook:
-   - Compile WASM module (15MB uncompressed / 6.3MB gzipped)
+   - Validate WASM binaries exist (pre-built locally, committed to git)
    - Fetch latest gist data
 3. Build Next.js app
 4. Deploy to Vercel edge network
 
-**Build Time:** ~2-3 minutes total
+**Build Time:** ~2-3 minutes total (WASM validation: <1s, never rebuilds on server)
+
+**Philosophy:** WASM compiled locally once, validated everywhere, deployed fast
 
 ---
 
@@ -194,12 +196,22 @@ Vercel runs automatically:
 
 ### Build Failures
 
-**Problem:** WASM build fails on Vercel
+**Problem:** WASM binaries missing in build
 
-**Solution:** Ensure `scripts/build-wasm.sh` has proper Rust installation:
+**Solution:** WASM never builds on server - must be committed locally:
 ```bash
-# Script handles Rust installation automatically
-curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh -s -- -y
+# Build locally
+just wasm
+
+# Verify artifacts exist
+ls -lh public/wasm/*.wasm
+
+# Commit binaries (pre-commit will validate freshness)
+git add public/wasm/
+git commit -m "chore: update WASM binaries"
+git push
+
+# Server validates existence only (check-wasm.sh --exists)
 ```
 
 **Problem:** Gist data not updating

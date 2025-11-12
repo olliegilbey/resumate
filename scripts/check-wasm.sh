@@ -1,13 +1,19 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
-# Check if WASM binaries are up-to-date with source code
-# Used by pre-commit hook to ensure builds are fresh
+# WASM validation script with two modes:
+#   --exists: Fail-fast if WASM missing (Vercel prebuild)
+#   --fresh:  Hash check + rebuild if stale (pre-commit)
+#
+# Usage:
+#   ./scripts/check-wasm.sh --exists  # Vercel/CI (no rebuild)
+#   ./scripts/check-wasm.sh --fresh   # Pre-commit (rebuild if needed)
 
 # Colors
 RED='\033[0;31m'
 GREEN='\033[0;32m'
 YELLOW='\033[1;33m'
+BLUE='\033[0;34m'
 NC='\033[0m' # No Color
 
 # WASM source paths (relative to repo root)
@@ -29,18 +35,6 @@ WASM_OUTPUTS=(
 # Hash file to track source state
 HASH_FILE=".wasm-build-hash"
 
-# Function to compute hash of all WASM sources
-compute_source_hash() {
-  # Find all relevant files and compute combined hash
-  (
-    for source in "${WASM_SOURCES[@]}"; do
-      if [[ -d "$source" ]]; then
-        find "$source" -type f \( -name "*.rs" -o -name "*.toml" -o -name "*.typ" -o -name "*.ttf" -o -name "*.otf" \) -exec sha256sum {} \;
-      fi
-    done
-  ) | sha256sum | cut -d' ' -f1
-}
-
 # Check if WASM outputs exist
 check_wasm_exists() {
   for output in "${WASM_OUTPUTS[@]}"; do
@@ -51,8 +45,43 @@ check_wasm_exists() {
   return 0
 }
 
-# Main check
-main() {
+# Mode: --exists (Vercel prebuild - fail fast, never rebuild)
+mode_exists() {
+  if ! check_wasm_exists; then
+    echo -e "${RED}❌ WASM binaries missing!${NC}"
+    echo -e "${RED}::error::WASM binaries not found in public/wasm/${NC}"
+    echo ""
+    echo -e "${YELLOW}Required files:${NC}"
+    for output in "${WASM_OUTPUTS[@]}"; do
+      echo "  - $output"
+    done
+    echo ""
+    echo -e "${YELLOW}Action required:${NC}"
+    echo "  1. Run locally: just wasm"
+    echo "  2. Commit the generated binaries"
+    echo "  3. Push to trigger new build"
+    echo ""
+    echo -e "${RED}Build cannot proceed without pre-built WASM artifacts.${NC}"
+    exit 1
+  fi
+
+  echo -e "${GREEN}✅ WASM binaries present (using pre-built artifacts)${NC}"
+  exit 0
+}
+
+# Compute hash of all WASM sources
+compute_source_hash() {
+  (
+    for source in "${WASM_SOURCES[@]}"; do
+      if [[ -d "$source" ]]; then
+        find "$source" -type f \( -name "*.rs" -o -name "*.toml" -o -name "*.typ" -o -name "*.ttf" -o -name "*.otf" \) -exec sha256sum {} \;
+      fi
+    done
+  ) | sha256sum | cut -d' ' -f1
+}
+
+# Mode: --fresh (pre-commit - hash check + rebuild)
+mode_fresh() {
   # Check if any WASM source files are staged
   wasm_staged=false
   for source in "${WASM_SOURCES[@]}"; do
@@ -103,6 +132,26 @@ main() {
   git add "${WASM_OUTPUTS[@]}" "$HASH_FILE"
 
   echo -e "${GREEN}✅ WASM rebuilt and staged for commit${NC}"
+}
+
+# Main dispatch
+main() {
+  case "${1:-}" in
+    --exists)
+      mode_exists
+      ;;
+    --fresh)
+      mode_fresh
+      ;;
+    *)
+      echo -e "${RED}Error: Invalid mode${NC}"
+      echo ""
+      echo "Usage:"
+      echo "  $0 --exists  # Vercel: fail-fast if missing"
+      echo "  $0 --fresh   # Pre-commit: hash check + rebuild"
+      exit 1
+      ;;
+  esac
 }
 
 main "$@"
