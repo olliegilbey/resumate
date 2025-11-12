@@ -31,16 +31,17 @@ echo ""
 # ============================================
 printf "${BLUE}→ Phase 1/6: Secret scanning (gitleaks, ripsecrets, trufflehog)${NC}\n"
 
-# 1.1 Gitleaks (git-aware, uses .gitleaks.toml)
-# Use 'protect' to scan only staged changes, not entire history
-GITLEAKS_OUTPUT=$(gitleaks protect --no-banner --verbose --staged 2>&1)
+# 1.1 Gitleaks (filesystem scan, uses .gitleaks.toml)
+# Use 'detect --no-git' to scan all current files (no git history)
+# Catches secrets in: committed files, staged, unstaged, untracked
+GITLEAKS_OUTPUT=$(gitleaks detect --no-banner --verbose --no-git 2>&1)
 if ! echo "$GITLEAKS_OUTPUT" | grep -q "no leaks found"; then
-  printf "${RED}❌ Gitleaks found secrets or PII in staged files!${NC}\n"
+  printf "${RED}❌ Gitleaks found secrets or PII in repository!${NC}\n"
   echo "$GITLEAKS_OUTPUT"
-  printf "${YELLOW}Fix and retry.${NC}\n"
+  printf "${YELLOW}Fix and retry. Add to .gitignore or .gitleaks.toml allowlist if false positive.${NC}\n"
   exit 1
 fi
-printf "${GREEN}  ✓${NC} Gitleaks: 0 secrets (staged files)"
+printf "${GREEN}  ✓${NC} Gitleaks: 0 secrets (all files)"
 
 # 1.2 Ripsecrets (filesystem scan)
 if ! ripsecrets --strict-ignore . 2>&1; then
