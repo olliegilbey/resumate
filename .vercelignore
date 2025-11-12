@@ -1,0 +1,36 @@
+# Rust build artifacts (WASM pre-built, committed to git)
+target/
+Cargo.lock
+
+# Test artifacts
+coverage/
+.nyc_output/
+
+# Local data files (fetched from gist at build time)
+data/resume-data.json
+
+# Local env (secrets set in Vercel dashboard)
+.env*.local
+
+# Development
+.DS_Store
+*.log
+*.swp
+*.swo
+*~
+
+# Git
+.git/
+.github/
+
+# IDE
+.vscode/
+.idea/
+
+# Docs (not needed for deployment)
+docs/
+*.md
+!README.md
+
+# Linear project management
+.linear/
