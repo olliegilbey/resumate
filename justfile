@@ -7,6 +7,34 @@
 #   just test     # Run all tests
 #   just wasm     # Rebuild WASM
 
+# ============================================
+# Build Limits (Single Source of Truth)
+# ============================================
+
+# WASM Binary Size Limits (MB)
+wasm_max_raw_mb := "17"
+wasm_max_gzip_mb := "6.5"
+
+# Pre-commit Timing Limits (seconds)
+precommit_max_duration := "70"
+precommit_fast_target := "15"
+precommit_rebuild_target := "60"
+
+# Test Coverage Targets (%)
+rust_coverage_min := "85"
+ts_coverage_min := "85"
+
+# Test Count Baselines (for regression detection)
+rust_test_min := "140"
+ts_test_min := "200"
+
+# Build Artifact Paths
+wasm_binary_path := "public/wasm/resume_wasm_bg.wasm"
+
+# Note: Update these values only after testing + documenting reason
+
+# ============================================
+
 # Default target: list all commands
 default:
     @just --list

@@ -21,6 +21,11 @@ NC='\033[0m' # No Color
 # Track timing
 START_TIME=$(date +%s)
 
+# Source build limits from justfile (single source of truth)
+WASM_MAX_RAW_MB=$(just --evaluate wasm_max_raw_mb)
+WASM_MAX_GZIP_MB=$(just --evaluate wasm_max_gzip_mb)
+PRECOMMIT_MAX_DURATION=$(just --evaluate precommit_max_duration)
+
 echo ""
 printf "${BLUE}🔒 Pre-commit: Fail-fast validation${NC}\n"
 echo ""
@@ -29,7 +34,7 @@ echo ""
 # PHASE 1: SECRET SCANNING (~5s)
 # Fail immediately if secrets/PII detected
 # ============================================
-printf "${BLUE}→ Phase 1/6: Secret scanning (gitleaks, ripsecrets, trufflehog)${NC}\n"
+printf "${BLUE}→ Phase 1/7: Secret scanning (gitleaks, ripsecrets, trufflehog)${NC}\n"
 
 # 1.1 Gitleaks (filesystem scan, uses .gitleaks.toml)
 # Use 'detect --no-git' to scan all current files (no git history)
@@ -70,7 +75,7 @@ echo ""
 # PHASE 2: LINT + TYPECHECK (~5-10s)
 # Fast validation before expensive operations
 # ============================================
-printf "${BLUE}→ Phase 2/6: Lint & typecheck${NC}\n"
+printf "${BLUE}→ Phase 2/7: Lint & typecheck${NC}\n"
 
 # Check which files are staged
 TS_STAGED=$(git diff --cached --name-only --diff-filter=ACM | grep -E '\.(ts|tsx|js|jsx)$' || true)
@@ -127,7 +132,7 @@ echo ""
 # PHASE 3: WASM REBUILD (~1-45s, conditional)
 # Only rebuild if WASM sources changed
 # ============================================
-printf "${BLUE}→ Phase 3/6: WASM freshness check${NC}\n"
+printf "${BLUE}→ Phase 3/7: WASM freshness check${NC}\n"
 
 WASM_REBUILT=false
 
@@ -172,10 +177,24 @@ fi
 echo ""
 
 # ============================================
-# PHASE 4: WASM TESTS (~10s, conditional)
+# PHASE 4: BUNDLE SIZE CHECK (<1s)
+# Enforce WASM binary size limits (from justfile)
+# ============================================
+printf "${BLUE}→ Phase 4/7: Bundle size validation${NC}\n"
+
+if bash ./scripts/check-bundle-size.sh "$WASM_MAX_RAW_MB" "$WASM_MAX_GZIP_MB"; then
+  printf "${GREEN}✅ Phase 4 complete: Bundle size within limits${NC}\n"
+else
+  printf "${RED}❌ Bundle size check failed${NC}\n"
+  exit 1
+fi
+echo ""
+
+# ============================================
+# PHASE 5: WASM TESTS (~10s, conditional)
 # Only run if WASM was rebuilt in this commit
 # ============================================
-printf "${BLUE}→ Phase 4/6: WASM-dependent tests${NC}\n"
+printf "${BLUE}→ Phase 5/7: WASM-dependent tests${NC}\n"
 
 if [ "$WASM_REBUILT" = true ]; then
   printf "${YELLOW}  → Running WASM-dependent Rust tests${NC}\n"
@@ -191,17 +210,17 @@ else
 fi
 
 if [ "$WASM_REBUILT" = true ]; then
-  printf "${GREEN}✅ Phase 4 complete: WASM tests passed${NC}\n"
+  printf "${GREEN}✅ Phase 5 complete: WASM tests passed${NC}\n"
 else
-  printf "${GREEN}✅ Phase 4 complete: WASM tests skipped${NC}\n"
+  printf "${GREEN}✅ Phase 5 complete: WASM tests skipped${NC}\n"
 fi
 echo ""
 
 # ============================================
-# PHASE 5: TYPE SYNC (~5s, conditional)
+# PHASE 6: TYPE SYNC (~5s, conditional)
 # Only regenerate if shared-types changed
 # ============================================
-printf "${BLUE}→ Phase 5/6: Type synchronization${NC}\n"
+printf "${BLUE}→ Phase 6/7: Type synchronization${NC}\n"
 
 if echo "$RS_STAGED" | grep -q "crates/shared-types/"; then
   printf "${YELLOW}  → shared-types changed - regenerating schema + TS types${NC}\n"
@@ -226,14 +245,14 @@ else
   printf "${GREEN}  ✓${NC} shared-types unchanged (skipped)"
 fi
 
-printf "${GREEN}✅ Phase 5 complete: Types synchronized${NC}\n"
+printf "${GREEN}✅ Phase 6 complete: Types synchronized${NC}\n"
 echo ""
 
 # ============================================
-# PHASE 6: RUST TESTS (conditional)
+# PHASE 7: RUST TESTS (conditional)
 # Only run if Rust files changed (not WASM-only)
 # ============================================
-printf "${BLUE}→ Phase 6/6: Rust test suite${NC}\n"
+printf "${BLUE}→ Phase 7/7: Rust test suite${NC}\n"
 
 if [ -n "$RS_STAGED" ]; then
   printf "${YELLOW}  → Running full Rust test suite${NC}\n"
@@ -284,15 +303,37 @@ if [ -n "$DOCS_STAGED" ]; then
   printf "${GREEN}  ✓${NC} Documentation verified"
 fi
 
-printf "${GREEN}✅ Phase 6 complete: All tests passed${NC}\n"
+printf "${GREEN}✅ Phase 7 complete: All tests passed${NC}\n"
 echo ""
 
 # ============================================
-# SUMMARY
+# TIMING ENFORCEMENT (from justfile)
 # ============================================
 END_TIME=$(date +%s)
 DURATION=$((END_TIME - START_TIME))
 
+# Enforce timing SLO (sourced from justfile)
+# Based on testing: Fast path=2s, WASM rebuild=39s, threshold=70s
+if (( DURATION > PRECOMMIT_MAX_DURATION )); then
+  printf "${RED}━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━${NC}\n"
+  printf "${RED}❌ Pre-commit exceeded timing SLO!${NC}\n"
+  printf "${RED}━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━${NC}\n"
+  echo ""
+  echo "  Duration: ${DURATION}s (limit: ${PRECOMMIT_MAX_DURATION}s)"
+  echo ""
+  echo "  Investigate performance regression:"
+  echo "    - Check for excessive WASM rebuild time"
+  echo "    - Profile secret scanning (should be <5s)"
+  echo "    - Check test suite duration"
+  echo ""
+  echo "  To adjust limit: Edit justfile precommit_max_duration"
+  echo "  To bypass (emergency only): git commit --no-verify"
+  exit 1
+fi
+
+# ============================================
+# SUMMARY
+# ============================================
 printf "${GREEN}━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━${NC}\n"
 printf "${GREEN}✅ All pre-commit checks passed!${NC}\n"
 printf "${GREEN}━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━${NC}\n"
@@ -307,6 +348,7 @@ if [ "$WASM_REBUILT" = true ]; then
 else
   echo "    ✓ WASM check"
 fi
+echo "    ✓ Bundle size"
 echo "    ✓ Tests"
 echo "    ✓ Type sync"
 echo "    ✓ Validation"

@@ -73,6 +73,52 @@ else
   RUST_COVERAGE="Not installed (cargo install cargo-llvm-cov)"
 fi
 
+# WASM binary sizes
+WASM_PATH="$PROJECT_ROOT/public/wasm/resume_wasm_bg.wasm"
+
+# Source limits from justfile (single source of truth)
+cd "$PROJECT_ROOT"
+WASM_RAW_LIMIT_MB=$(just --evaluate wasm_max_raw_mb 2>/dev/null || echo "17")
+WASM_GZIP_LIMIT_MB=$(just --evaluate wasm_max_gzip_mb 2>/dev/null || echo "6.5")
+
+if [ -f "$WASM_PATH" ]; then
+  # Raw size (cross-platform stat)
+  if stat -f%z "$WASM_PATH" &>/dev/null; then
+    WASM_RAW_BYTES=$(stat -f%z "$WASM_PATH")
+  else
+    WASM_RAW_BYTES=$(stat -c%s "$WASM_PATH")
+  fi
+  WASM_RAW_MB=$(echo "scale=2; $WASM_RAW_BYTES / 1024 / 1024" | bc)
+
+  # Gzipped size
+  WASM_GZIP_BYTES=$(gzip -c "$WASM_PATH" | wc -c | tr -d ' ')
+  WASM_GZIP_MB=$(echo "scale=2; $WASM_GZIP_BYTES / 1024 / 1024" | bc)
+
+  # Convert limits to bytes for comparison
+  WASM_RAW_LIMIT_BYTES=$(echo "$WASM_RAW_LIMIT_MB * 1024 * 1024" | bc | cut -d. -f1)
+  WASM_GZIP_LIMIT_BYTES=$(echo "$WASM_GZIP_LIMIT_MB * 1024 * 1024" | bc | cut -d. -f1)
+
+  # Status checks
+  if (( WASM_RAW_BYTES <= WASM_RAW_LIMIT_BYTES )); then
+    WASM_RAW_STATUS="✅ Pass"
+  else
+    WASM_RAW_STATUS="❌ Exceeds limit"
+  fi
+
+  if (( WASM_GZIP_BYTES <= WASM_GZIP_LIMIT_BYTES )); then
+    WASM_GZIP_STATUS="✅ Pass"
+  else
+    WASM_GZIP_STATUS="❌ Exceeds limit"
+  fi
+else
+  WASM_RAW_MB="N/A"
+  WASM_GZIP_MB="N/A"
+  WASM_RAW_LIMIT_MB="17"
+  WASM_GZIP_LIMIT_MB="6.5"
+  WASM_RAW_STATUS="⚠️ Missing"
+  WASM_GZIP_STATUS="⚠️ Missing"
+fi
+
 # Generate METRICS.md
 cat > docs/METRICS.md <<EOF
 ---
@@ -92,33 +138,35 @@ To update: Run \`just test\` again
 
 ## Test Counts
 
-### Summary
-
-| Language | Tests | Ignored | Time | Status |
-|----------|-------|---------|------|--------|
-| **Rust** | $RUST_COUNT | $RUST_IGNORED | $RUST_TIME | ✅ Passing |
-| **TypeScript** | $TS_COUNT | 0 | $TS_TIME | ✅ Passing |
-| **TOTAL** | **$TOTAL_COUNT** | **$RUST_IGNORED** | $RUST_TIME + $TS_TIME | ✅ All Passing |
+**Rust:**       $RUST_COUNT tests ($RUST_IGNORED ignored) in $RUST_TIME  ✅ Passing
+**TypeScript:** $TS_COUNT tests in $TS_TIME  ✅ Passing
+**TOTAL:**      $TOTAL_COUNT tests  ✅ All Passing
 
 ### Rust Tests (By Crate)
 
-| Crate | Tests | Notes |
-|-------|-------|-------|
-| resume-core | $CORE_TESTS | Scoring, selection, validation |
-| resume-typst | $TYPST_TESTS | PDF generation, Typst rendering |
-| resume-wasm | $WASM_TESTS | WASM bindings, JS interop |
-| shared-types | $SHARED_TESTS | Type validation, schema |
-| **Total** | **$RUST_COUNT** | All Rust tests |
+- resume-core:    $CORE_TESTS  (scoring, selection, validation)
+- resume-typst:   $TYPST_TESTS  (PDF generation, Typst rendering)
+- resume-wasm:    $WASM_TESTS  (WASM bindings, JS interop)
+- shared-types:   $SHARED_TESTS  (type validation, schema)
 
 ### TypeScript Tests
 
-| Metric | Value |
-|--------|-------|
-| Total Tests | $TS_COUNT |
-| Test Files | $TS_FILE_COUNT |
-| Execution Time | $TS_TIME |
+- Total tests:  $TS_COUNT
+- Test files:   $TS_FILE_COUNT
+- Execution:    $TS_TIME
 
 **Test files breakdown available in log:** \`$TS_LOG\`
+
+---
+
+## Build Artifacts
+
+**WASM Binary:**
+- Raw size:     ${WASM_RAW_MB}MB  (limit: ≤${WASM_RAW_LIMIT_MB}MB)   $WASM_RAW_STATUS
+- Gzipped size: ${WASM_GZIP_MB}MB  (limit: ≤${WASM_GZIP_LIMIT_MB}MB)  $WASM_GZIP_STATUS
+
+**Limits configured in:** justfile (wasm_max_raw_mb, wasm_max_gzip_mb)
+**Enforcement:** Pre-commit hook blocks commits if limits exceeded
 
 ---
 
