@@ -64,7 +64,7 @@ updated_by: System (migrated from STATUS.md)
 - **Result:** Production-grade test coverage
 
 ### ✅ WASM Deployment Fix (2025-10-28)
-- Created `scripts/build-wasm.sh` for automatic WASM builds
+- Created `scripts/check-wasm.sh` for WASM validation (--exists/--fresh modes)
 - Integrated into Vercel deployment pipeline
 - No git tracking needed for WASM artifacts
 - **Result:** Reliable deployment, always fresh builds
@@ -112,7 +112,7 @@ updated_by: System (migrated from STATUS.md)
 **None** - All critical blockers resolved as of 2025-10-28
 
 **Previously Resolved:**
-- ✅ WASM deployment (fixed with build-wasm.sh in prebuild hook)
+- ✅ WASM deployment (validated with check-wasm.sh in prebuild hook)
 - ✅ Build performance (fixed by excluding Rust target/ from TypeScript scanning)
 - ✅ Type drift (fixed with automated types-sync pipeline)
 

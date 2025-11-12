@@ -101,7 +101,7 @@ describe('Feature Name', () => {
 - Tests interactions between systems
 
 **Example Locations:**
-- Rust: `doc-gen/crates/core/tests/integration_test.rs`
+- Rust: `crates/resume-core/tests/`
 - TypeScript: `app/api/**/__tests__/route.test.ts`
 
 **When to Use:**
@@ -146,7 +146,7 @@ proptest! {
 
 **Purpose:** Test all combinations of a feature
 
-**Example:** `doc-gen/crates/core/tests/pdf_permutation.rs`
+**Example:** `crates/resume-core/tests/pdf_permutation.rs`
 
 **What It Does:**
 - Generates PDFs for all 6 role profiles
@@ -199,7 +199,7 @@ components/
 ### Separate Integration Tests
 
 ```
-doc-gen/crates/core/tests/
+crates/resume-core/tests/
 ├── common/          // Shared test utilities
 │   └── mod.rs
 ├── integration_test.rs
@@ -448,7 +448,7 @@ just coverage-ts-open     # Open in browser
 
 ### Shared Test Utilities (Rust)
 
-**Location:** `doc-gen/crates/core/tests/common/mod.rs`
+**Location:** `crates/resume-core/tests/common/mod.rs`
 
 **Utilities:**
 ```rust

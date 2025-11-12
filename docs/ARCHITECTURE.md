@@ -31,7 +31,7 @@ retention_policy: All versions preserved in git
 
 ### 1. Font Acquisition
 
-**Script:** `doc-gen/crates/typst/download-fonts.sh`
+**Script:** `crates/resume-typst/download-fonts.sh`
 
 ```bash
 # Downloads Liberation Serif from Fedora Project
@@ -41,7 +41,7 @@ mv LiberationSerif-Regular.ttf fonts/
 mv LiberationSerif-Bold.ttf fonts/
 ```
 
-**Output:** `doc-gen/crates/typst/fonts/`
+**Output:** `typst/fonts/`
 - `LiberationSerif-Regular.ttf` (394KB)
 - `LiberationSerif-Bold.ttf` (370KB)
 - **Total:** ~764KB
@@ -50,7 +50,7 @@ mv LiberationSerif-Bold.ttf fonts/
 
 ### 2. Font Embedding (Compile-Time)
 
-**File:** `doc-gen/crates/typst/src/fonts.rs:12-13`
+**File:** `crates/resume-typst/src/fonts.rs`
 
 ```rust
 const FONT_REGULAR: &[u8] = include_bytes!("../fonts/LiberationSerif-Regular.ttf");
@@ -61,7 +61,7 @@ const FONT_BOLD: &[u8] = include_bytes!("../fonts/LiberationSerif-Bold.ttf");
 
 ### 3. WASM Compilation
 
-**Script:** `doc-gen/build-wasm.sh`
+**Script:** `scripts/check-wasm.sh --fresh` (pre-commit) or `just wasm` (manual)
 
 ```bash
 wasm-pack build crates/wasm \
@@ -103,7 +103,7 @@ wasm-opt = ["-Oz", "--enable-bulk-memory", "--enable-nontrapping-float-to-int"]
 
 ## WASM Exports (Rust → JavaScript)
 
-**File:** `doc-gen/crates/wasm/src/lib.rs`
+**File:** `crates/resume-wasm/src/lib.rs`
 
 ### Primary Export
 
@@ -234,7 +234,7 @@ ecow = "0.2"               # Efficient clone-on-write strings
 ### Build Commands
 
 ```bash
-just wasm    # Build WASM only (doc-gen/build-wasm.sh)
+just wasm    # Build WASM only (uses wasm-pack)
 just build   # Full build (WASM + Next.js)
 just dev     # Dev server (uses cached WASM if exists)
 ```
@@ -243,7 +243,7 @@ just dev     # Dev server (uses cached WASM if exists)
 
 ## Font Directory Status
 
-### Font Directory: `doc-gen/crates/typst/fonts/`
+### Font Directory: `typst/fonts/`
 - `LiberationSerif-Regular.ttf` (394KB)
 - `LiberationSerif-Bold.ttf` (370KB)
 - `README.md` (936B)
@@ -274,7 +274,7 @@ just dev     # Dev server (uses cached WASM if exists)
 
 ## Testing
 
-**WASM Tests:** `doc-gen/crates/wasm/src/lib.rs:142-756`
+**WASM Tests:** `crates/resume-wasm/tests/`
 
 - 32 tests (validation, JSON parsing, PDF generation, edge cases)
 - Tests run with `#[cfg(target_arch = "wasm32")]` (only on WASM target)
@@ -290,7 +290,7 @@ just dev
 
 **Verify WASM Build:**
 ```bash
-cd doc-gen && bash build-wasm.sh
+just wasm
 # Expected output: "[INFO]: Optimizing wasm binaries with `wasm-opt`..."
 # Expected size: ~16MB raw, ~6.28MB gzipped
 ```
@@ -309,10 +309,10 @@ cd doc-gen && bash build-wasm.sh
 ## Key File References
 
 **WASM Pipeline:**
-- WASM exports: `doc-gen/crates/wasm/src/lib.rs:54-68`
-- Font embedding: `doc-gen/crates/typst/src/fonts.rs:12-13`
-- Build script: `doc-gen/build-wasm.sh`
-- Optimization: `doc-gen/crates/wasm/Cargo.toml:10-11`
+- WASM exports: `crates/resume-wasm/src/lib.rs`
+- Font embedding: `crates/resume-typst/src/fonts.rs`
+- Build script: `scripts/check-wasm.sh` (validation), `justfile` (build)
+- Optimization: `crates/resume-wasm/Cargo.toml`
 
 **TypeScript Integration:**
 - Component: `components/data/ResumeDownload.tsx:116-174`

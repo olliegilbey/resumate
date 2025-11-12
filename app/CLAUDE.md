@@ -278,4 +278,4 @@ export async function POST(request: NextRequest) {
 - New component → `components/ui/` or `components/data/`
 - Styling → Tailwind classes
 
-**Hybrid work (Next.js + Rust):** Read `doc-gen/CLAUDE.md`, run `just types-sync` after Rust changes
+**Hybrid work (Next.js + Rust):** Read `scripts/CLAUDE.md`, run `just types-sync` after Rust changes

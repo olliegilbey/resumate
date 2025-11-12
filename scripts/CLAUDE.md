@@ -19,12 +19,62 @@
 
 ```
 scripts/
-├── fetch-gist-data.js          # Gist → local (prebuild hook)
+├── check-wasm.sh               # WASM validation (--exists/--fresh modes)
+├── fetch-gist-data.js          # Gist → local (prebuild hook, fail-fast)
 ├── gist-push.js                # Local → gist (with conflict detection)
 ├── gist-view.js                # View gist in terminal
 ├── gen-ts-from-schemas.ts      # JSON Schema → TypeScript types
-└── transform-resume-data.ts    # Data migration/transformation
+├── update-metrics-from-logs.sh # Generate METRICS.md from test logs
+├── validate-compendium.mjs     # Schema validation
+└── verify-docs.sh              # Documentation system verification
 ```
+
+---
+
+## WASM Validation Scripts
+
+### check-wasm.sh
+
+**Purpose:** Validate WASM binaries with two modes (build once locally, validate everywhere)
+
+**Modes:**
+- `--exists`: Fail-fast if WASM missing (Vercel/CI - never rebuilds)
+- `--fresh`: Hash check + conditional rebuild (pre-commit)
+
+**Usage:**
+```bash
+# Vercel prebuild (existence check only)
+bash scripts/check-wasm.sh --exists
+
+# Pre-commit (freshness check + rebuild if stale)
+bash scripts/check-wasm.sh --fresh
+```
+
+**--exists Mode (Vercel):**
+- Checks if WASM binaries exist in `public/wasm/`
+- Fails immediately with actionable error if missing
+- Never attempts to rebuild (requires pre-built artifacts)
+- Duration: <1s
+
+**--fresh Mode (Pre-commit):**
+- Only runs if WASM source files are staged
+- Computes hash of all WASM sources (Rust, Typst, fonts)
+- Compares to stored hash in `.wasm-build-hash`
+- Rebuilds if hash changed or WASM missing
+- Auto-stages WASM binaries + hash file
+- Duration: 1s (cached) or 13s (rebuild)
+
+**WASM Sources Tracked:**
+```bash
+crates/resume-wasm/
+crates/resume-typst/
+crates/resume-core/
+crates/shared-types/
+typst/templates/
+typst/fonts/
+```
+
+**Philosophy:** WASM compiled locally once, validated everywhere, deployed fast
 
 ---
 
@@ -32,25 +82,40 @@ scripts/
 
 ### fetch-gist-data.js
 
-**Purpose:** Fetch resume data from GitHub Gist to local file
+**Purpose:** Fetch resume data from GitHub Gist with fail-fast validation
 
 **Usage:**
 ```bash
-just data-pull              # Interactive mode (prompts on conflicts)
-just data-pull -- --force   # Force mode (skip prompts, used in prebuild)
-node scripts/fetch-gist-data.js --force
+just data-pull                        # Interactive mode
+just data-pull -- --force             # Force mode (prebuild)
+node scripts/fetch-gist-data.js --allow-template  # Dev template fallback
 ```
 
 **Environment Variables:**
-- `RESUME_DATA_GIST_URL` - Raw gist URL (e.g., `https://gist.githubusercontent.com/[user]/[hash]/raw/resume-data.json`)
+- `RESUME_DATA_GIST_URL` - Raw gist URL (required in production)
+- `NODE_ENV` - Environment mode (production/development)
 
-**Behavior:**
-- Fetches gist content from `RESUME_DATA_GIST_URL`
-- Compares with local `data/resume-data.json`
-- **Interactive mode**: Prompts if local differs from gist
-- **Force mode** (`--force`): Overwrites without prompting (used in CI/prebuild)
-- Validates JSON format
-- Creates `data/` directory if missing
+**Modes:**
+
+**Production (NODE_ENV=production):**
+- GIST_URL required (fails immediately if missing)
+- Fetch must succeed (fail-fast on network/HTTP errors)
+- JSON syntax validated
+- Schema validated against `schemas/resume.schema.json`
+- File existence verified after write
+- All failures are fatal with `::error::` markers
+
+**Development (NODE_ENV=development):**
+- GIST_URL optional
+- Template fallback with `--allow-template` flag
+- Copies `data/resume-data-template.json` if GIST_URL missing
+- Same validation as production if GIST_URL provided
+
+**Validation Steps:**
+1. ✅ JSON syntax validation (`JSON.parse`)
+2. ✅ Schema validation (`validate-compendium.mjs`)
+3. ✅ File existence check
+4. ✅ File size reporting
 
 **Conflict Detection:**
 ```javascript
@@ -68,15 +133,20 @@ if (!forceMode) {
 ```json
 {
   "scripts": {
-    "prebuild": "node scripts/fetch-gist-data.js --force",
+    "prebuild": "bash scripts/check-wasm.sh --exists && node scripts/fetch-gist-data.js --force",
     "data:pull": "node scripts/fetch-gist-data.js"
   }
 }
 ```
 
+**Prebuild Flow (Vercel):**
+1. Validate WASM exists (fail-fast if missing)
+2. Fetch gist data (fail-fast if invalid)
+3. Build Next.js
+
 **Important Notes:**
 - **ALWAYS run before editing** `data/resume-data.json` to prevent data loss
-- Used automatically in Vercel builds via `prebuild` hook
+- Production mode fails fast on any error
 - Force mode prevents blocking builds on prompts
 
 ---

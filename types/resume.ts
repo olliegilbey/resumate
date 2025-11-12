@@ -2,7 +2,7 @@
  * Resume Types - Re-exported from Generated Schema
  *
  * These types are generated from Rust schemas via:
- * 1. Rust types (doc-gen/crates/core/src/types.rs)
+ * 1. Rust types (crates/shared-types/src/lib.rs)
  * 2. JSON Schema generation (npm run schemas:emit)
  * 3. TypeScript type generation (npm run types:gen)
  *

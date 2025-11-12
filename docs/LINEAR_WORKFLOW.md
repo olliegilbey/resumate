@@ -293,7 +293,7 @@ mcp__linear__create_comment with
 - `.claude/CLAUDE.md` - Updated workflow section
 - `docs/CURRENT_PHASE.md` - Points to Linear
 - `docs/META_DOCUMENTATION.md` - Removed TODOS.md references
-- `app/CLAUDE.md`, `doc-gen/CLAUDE.md`, `scripts/CLAUDE.md` - Added Linear references
+- `app/CLAUDE.md`, `scripts/CLAUDE.md` - Added Linear references
 - `README.md` - Added Linear to docs list
 
 ---
