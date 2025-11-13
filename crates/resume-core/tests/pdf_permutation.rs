@@ -28,7 +28,7 @@ fn generate_pdf(payload: &GenerationPayload) -> Result<Vec<u8>, TypstError> {
 
 /// Get output directory for baseline PDFs
 fn get_baseline_output_dir() -> std::path::PathBuf {
-    // From doc-gen/crates/core, go to doc-gen/test-outputs/baseline
+    // From crates/resume-core, outputs go to test-outputs/baseline
     std::path::Path::new(env!("CARGO_MANIFEST_DIR")).join("../../test-outputs/baseline")
 }
 

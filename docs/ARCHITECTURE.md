@@ -210,22 +210,25 @@ ecow = "0.2"               # Efficient clone-on-write strings
 
 ---
 
-## Size Metrics (Verified)
+## Size Metrics
 
-| Metric | Size | Notes |
-|--------|------|-------|
-| Liberation Serif fonts | 764KB | Embedded at compile-time |
-| WASM binary (raw) | 16MB | After wasm-opt -Oz |
-| WASM binary (gzipped) | 6.28MB | Browser transfer size |
-| JS bindings | 16KB | resume_wasm.js |
-| TypeScript defs | 6KB | Type safety |
-| First load time | ~2-5s | Depends on connection |
-| Subsequent loads | ~0ms | Browser cached |
+**Current sizes:** See `docs/METRICS.md` (auto-generated from actual builds)
+**Size limits:** See `justfile` lines 11-34 (single source of truth)
+
+**Components:**
+- Liberation Serif fonts: 764KB (embedded at compile-time)
+- WASM binary: Raw + gzipped sizes in METRICS.md
+- JS bindings: ~16KB (resume_wasm.js)
+- TypeScript defs: ~6KB (type safety)
+
+**Browser loading:**
+- First load: ~2-5s (depends on connection)
+- Subsequent loads: ~0ms (browser cached)
 
 **Historical Context:**
-- Original approach: Full Typst assets (~8MB fonts) → 24MB WASM, ~10MB gzipped
-- Current approach: Liberation Serif only → 16MB WASM, 6.28MB gzipped
-- **Savings:** 8MB raw, 3.72MB gzipped (37% reduction)
+- Original: Full Typst assets (~8MB fonts) → 24MB WASM, ~10MB gzipped
+- Current: Liberation Serif only → Smaller binary (see METRICS.md)
+- Savings: ~37% reduction from original
 
 ---
 
@@ -253,22 +256,20 @@ just dev     # Dev server (uses cached WASM if exists)
 
 ## Performance Characteristics
 
-**WASM Initialization (First Load):**
-1. Download 6.28MB (gzipped): ~1-3s (typical connection)
-2. Parse and instantiate WASM: ~500ms
-3. **Total:** ~2-5s cold start
+**WASM size:** See `docs/METRICS.md` for current gzipped transfer size
 
-**WASM Initialization (Cached):**
-1. Browser cache hit: ~0ms download
-2. Parse and instantiate: ~500ms
-3. **Total:** ~500ms warm start
+**WASM Initialization:**
+- First load (cold): ~2-5s (download + parse + instantiate)
+- Cached (warm): ~500ms (parse + instantiate only)
 
-**PDF Generation:**
-- 10 bullets: ~200ms
-- 20 bullets: ~500ms
-- 50 bullets: ~800ms
+**PDF Generation (typical):**
+- Small resume (10 bullets): ~200ms
+- Medium resume (20 bullets): ~500ms
+- Large resume (50 bullets): ~800ms
 
-**Total Time (Cold Start):** ~2-6s first visit, ~1-2s subsequent visits
+**Total Time:**
+- First visit: ~2-6s
+- Subsequent: ~1-2s
 
 ---
 
@@ -299,8 +300,9 @@ just wasm
 
 ## Related Documentation
 
-- **[CURRENT_PHASE.md](./CURRENT_PHASE.md)** - Current status, deployment issues, next steps
-- **[DEPLOYMENT_GUIDE.md](./DEPLOYMENT_GUIDE.md)** - How to deploy and configure
+- **[BUILD_PIPELINE.md](./BUILD_PIPELINE.md)** - Build process, CI/CD, pre-commit hooks
+- **[DEPLOYMENT_GUIDE.md](./DEPLOYMENT_GUIDE.md)** - Environment setup, Vercel configuration
+- **[METRICS.md](./METRICS.md)** - Current sizes, test counts, coverage (auto-generated)
 - **[TESTING_STRATEGY.md](./TESTING_STRATEGY.md)** - Testing philosophy and patterns
 - **[DATA_SCHEMA.md](./DATA_SCHEMA.md)** - Type system and validation
 
@@ -321,6 +323,6 @@ just wasm
 
 **Critical Facts:**
 - Fonts embedded at compile-time (not runtime)
-- Size: 16MB raw, 6.28MB gzipped
+- Size: See `docs/METRICS.md` and `justfile` for limits
 - First load: ~2-5s, subsequent: ~500ms (cached)
 - wasm-opt runs automatically during build

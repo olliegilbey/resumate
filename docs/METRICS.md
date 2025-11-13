@@ -1,8 +1,8 @@
 ---
-Generated: 2025-11-07T00:47
+Generated: 2025-11-12T23:07
 Generator: scripts/update-metrics-from-logs.sh
 Source: Parsed from test execution logs
-Valid Until: 2025-11-08T00:47 (24h expiry)
+Valid Until: 2025-11-13T23:07 (24h expiry)
 ---
 
 # Project Metrics (Auto-Generated)
@@ -15,33 +15,35 @@ To update: Run `just test` again
 
 ## Test Counts
 
-### Summary
-
-| Language | Tests | Ignored | Time | Status |
-|----------|-------|---------|------|--------|
-| **Rust** | 140 | 1 | 2.15s | ✅ Passing |
-| **TypeScript** | 200 | 0 | 1.69s | ✅ Passing |
-| **TOTAL** | **340** | **1** | 2.15s + 1.69s | ✅ All Passing |
+**Rust:**       140 tests (1 ignored) in 2.15s  ✅ Passing
+**TypeScript:** 200 tests in 1.69s  ✅ Passing
+**TOTAL:**      340 tests  ✅ All Passing
 
 ### Rust Tests (By Crate)
 
-| Crate | Tests | Notes |
-|-------|-------|-------|
-| resume-core | See log | Scoring, selection, validation |
-| resume-typst | See log | PDF generation, Typst rendering |
-| resume-wasm | See log | WASM bindings, JS interop |
-| shared-types | See log | Type validation, schema |
-| **Total** | **140** | All Rust tests |
+- resume-core:    See log  (scoring, selection, validation)
+- resume-typst:   See log  (PDF generation, Typst rendering)
+- resume-wasm:    See log  (WASM bindings, JS interop)
+- shared-types:   See log  (type validation, schema)
 
 ### TypeScript Tests
 
-| Metric | Value |
-|--------|-------|
-| Total Tests | 200 |
-| Test Files | 11 |
-| Execution Time | 1.69s |
+- Total tests:  200
+- Test files:   11
+- Execution:    1.69s
 
 **Test files breakdown available in log:** `/Users/olliegilbey/code/resumate/.logs/ts-tests.log`
+
+---
+
+## Build Artifacts
+
+**WASM Binary:**
+- Raw size:     15.08MB  (limit: ≤17MB)   ✅ Pass
+- Gzipped size: 6.29MB  (limit: ≤6.5MB)  ✅ Pass
+
+**Limits configured in:** justfile (wasm_max_raw_mb, wasm_max_gzip_mb)
+**Enforcement:** Pre-commit hook blocks commits if limits exceeded
 
 ---
 
@@ -117,7 +119,7 @@ cat /Users/olliegilbey/code/resumate/.logs/ts-tests.log       # View TypeScript 
 
 ## Verification
 
-**Last Generated:** 2025-11-07T00:47
+**Last Generated:** 2025-11-12T23:07
 **Next Update:** Automatically on next `just test` run
 **Logs Valid For:** Current session (stored in /tmp)
 

@@ -1,5 +1,5 @@
 ---
-last_updated: 2025-10-28
+last_updated: 2025-11-13
 category: Deployment & Infrastructure
 update_frequency: When deployment process changes
 retention_policy: All versions preserved in git
@@ -7,8 +7,9 @@ retention_policy: All versions preserved in git
 
 # Deployment Guide
 
-> **📍 Purpose:** Prescriptive guide for deploying the Resumate application.
-> For current deployment status, see [CURRENT_PHASE.md](./CURRENT_PHASE.md)
+> **Purpose:** Environment setup and Vercel deployment configuration.
+> **For build process:** See [BUILD_PIPELINE.md](./BUILD_PIPELINE.md)
+> **For current status:** See [CURRENT_PHASE.md](./CURRENT_PHASE.md)
 
 ---
 
@@ -134,61 +135,29 @@ git push origin main
 
 ### Hourly Gist Check Process
 
-```
-1. Fetch gist metadata from GitHub API
-2. Validate JSON format with `jq` (fail-fast if invalid)
-3. Query Vercel API for last deployment timestamp
-4. Compare gist `updated_at` vs Vercel last deploy time
-5. If gist newer → trigger Vercel deploy hook
-6. If JSON invalid → fail with error, skip deploy
-```
+**Workflow:** `.github/workflows/gist-deploy-trigger.yml`
 
-**Key Features:**
-- No git commits required (timestamps tracked via Vercel API)
-- Prebuild always fetches gist: `package.json` → `"prebuild": "node scripts/fetch-gist-data.js --force"`
-- Gist filename must be `resume-data.json`
-- JSON validation is strict (malformed JSON blocks deployment)
+**Process:**
+1. Fetch gist metadata (GitHub API)
+2. Validate JSON syntax + schema
+3. Query Vercel API for last deployment
+4. Compare timestamps
+5. If gist newer → trigger deploy
+
+**For complete details:** See [BUILD_PIPELINE.md](./BUILD_PIPELINE.md#github-actions-gist-watcher-only)
 
 ---
 
 ## Build Process
 
-### Local Build
+**For complete build details:** See [BUILD_PIPELINE.md](./BUILD_PIPELINE.md)
 
-```bash
-# Full production build
-just build
+**Quick reference:**
+- Local: `just build` (full build)
+- Vercel: Automatic (prebuild hook validates WASM + fetches gist)
+- Philosophy: WASM compiled locally once, validated everywhere
 
-# Build includes:
-# 1. WASM validation (scripts/check-wasm.sh --exists)
-# 2. Gist data fetch (scripts/fetch-gist-data.js --force)
-# 3. Next.js build
-```
-
-### Vercel Build Process
-
-Vercel runs automatically:
-
-```json
-{
-  "scripts": {
-    "prebuild": "bash scripts/check-wasm.sh --exists && bun scripts/fetch-gist-data.js --force",
-    "build": "next build"
-  }
-}
-```
-
-**Build Steps:**
-1. Install dependencies (`bun install`)
-2. Run prebuild hook:
-   - Validate WASM binaries exist (pre-built locally, committed to git)
-   - Fetch latest gist data
-3. Build Next.js app
-4. Deploy to Vercel edge network
-
-**Build Time:** ~2-3 minutes total (WASM validation: <1s, never rebuilds on server)
-
-**Philosophy:** WASM compiled locally once, validated everywhere, deployed fast
+**Current build times:** See [METRICS.md](./METRICS.md) (auto-generated)
 
 ---
 
@@ -198,21 +167,17 @@ Vercel runs automatically:
 
 **Problem:** WASM binaries missing in build
 
-**Solution:** WASM never builds on server - must be committed locally:
+**Solution:**
 ```bash
-# Build locally
-just wasm
-
-# Verify artifacts exist
-ls -lh public/wasm/*.wasm
-
-# Commit binaries (pre-commit will validate freshness)
+just wasm                        # Build locally
+ls -lh public/wasm/*.wasm       # Verify artifacts
 git add public/wasm/
 git commit -m "chore: update WASM binaries"
-git push
-
-# Server validates existence only (check-wasm.sh --exists)
 ```
+
+**Note:** Pre-commit validates freshness automatically. Server validates existence only.
+
+**For build details:** See [BUILD_PIPELINE.md](./BUILD_PIPELINE.md#wasm-build-strategy)
 
 **Problem:** Gist data not updating
 
@@ -275,11 +240,12 @@ After deployment, verify:
 
 ## Related Documentation
 
+- **[BUILD_PIPELINE.md](./BUILD_PIPELINE.md)** - Build process, CI/CD, pre-commit hooks
+- **[ARCHITECTURE.md](./ARCHITECTURE.md)** - WASM pipeline, system design
+- **[METRICS.md](./METRICS.md)** - Current build times, sizes (auto-generated)
 - **[CURRENT_PHASE.md](./CURRENT_PHASE.md)** - Current deployment status
-- **[ARCHITECTURE.md](./ARCHITECTURE.md)** - System design and data flow
-- **[TESTING_STRATEGY.md](./TESTING_STRATEGY.md)** - Testing requirements
 
 ---
 
-**Last Updated:** 2025-10-28
+**Last Updated:** 2025-11-13
 **Next Review:** When deployment process changes

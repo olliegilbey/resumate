@@ -152,7 +152,9 @@ Tests are mandatory. Pre-commit enforces.
 ## Documentation Hierarchy
 
 - `.claude/CLAUDE.md` - This file (entry point)
+- `docs/BUILD_PIPELINE.md` - Build process, CI/CD, pre-commit hooks
 - `docs/ARCHITECTURE.md` - WASM pipeline details
+- `docs/DEPLOYMENT_GUIDE.md` - Environment setup, Vercel configuration
 - `docs/CURRENT_PHASE.md` - Current development status
 - `docs/METRICS.md` - Auto-generated test counts
 - `README.md` - User-facing quick start
@@ -222,7 +224,7 @@ just metrics-generate # Update from logs
 
 Don't write commit messages preemptively, consistently suggest commits at every relevant point after testing and assessing working code. Always implement extensive pre-commit hooks for guardrails.
 
-**Discovery:** Use `just`, `just health`, explore codebase, `rg` ripgrep. Explore systematically before implementing - don't waste tokens, explore deliberately by reading only relevant sections of files, or exploring with tools like ripgrep, find, bash.
+**Discovery:** Use `just`, `just health`, explore codebase, `rg` ripgrep. Explore systematically before implementing - don't waste tokens, explore deliberately by reading only relevant sections of files, or exploring with tools like ripgrep, find, bash. You also have access to the vercel CLI and gh CLI.
 
 ---
 

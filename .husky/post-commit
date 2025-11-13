@@ -1,8 +1,21 @@
 #!/usr/bin/env bash
 # Post-commit hook: Generate PDF snapshot for rollback reference
 # Runs after successful commit, hash is available
+# Only generates if PDF-affecting files changed
 
 set -e
+
+# Check if PDF-affecting files changed in this commit
+# PDF output changes if:
+# - WASM binary changed (Rust PDF logic, templates, fonts all embedded)
+# - Typst templates changed (though embedded in WASM at compile-time)
+# - PDF generation Rust code changed
+PDF_FILES=$(git diff-tree --no-commit-id --name-only -r HEAD | grep -E '(^public/wasm/.*\.wasm$|^typst/templates/|^crates/resume-typst/|^crates/resume-core/)' || true)
+
+if [ -z "$PDF_FILES" ]; then
+  echo "⏭️  Skipping PDF snapshot: No PDF-affecting files changed"
+  exit 0
+fi
 
 # Only run if resume data exists
 if [ ! -f "data/resume-data.json" ]; then

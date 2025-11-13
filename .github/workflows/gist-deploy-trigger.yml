@@ -29,11 +29,9 @@ jobs:
           GIST_ID="${{ secrets.RESUME_DATA_GIST_ID }}"
 
           # Fetch gist metadata from GitHub API
-          # Use grep instead of jq to handle control characters in gist content
           UPDATED_AT=$(curl -s -H "Accept: application/vnd.github.v3+json" \
             "https://api.github.com/gists/${GIST_ID}" | \
-            grep -o '"updated_at":"[^"]*"' | \
-            cut -d'"' -f4)
+            jq -r '.updated_at')
 
           echo "Gist last updated: $UPDATED_AT"
           echo "updated_at=$UPDATED_AT" >> $GITHUB_OUTPUT
