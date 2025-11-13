@@ -152,7 +152,9 @@ Tests are mandatory. Pre-commit enforces.
 ## Documentation Hierarchy
 
 - `.claude/CLAUDE.md` - This file (entry point)
+- `docs/BUILD_PIPELINE.md` - Build process, CI/CD, pre-commit hooks
 - `docs/ARCHITECTURE.md` - WASM pipeline details
+- `docs/DEPLOYMENT_GUIDE.md` - Environment setup, Vercel configuration
 - `docs/CURRENT_PHASE.md` - Current development status
 - `docs/METRICS.md` - Auto-generated test counts
 - `README.md` - User-facing quick start
