@@ -17,7 +17,6 @@ const eslintConfig = defineConfig([
     'lib/types/generated-*.ts',
     // WASM outputs
     'public/wasm/**',
-    'doc-gen/crates/public/wasm/**',
   ]),
 ])
 

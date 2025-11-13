@@ -332,7 +332,7 @@ fn test_expected_role_profiles_exist() {
 }
 
 // ========== PDF Generation Integration Tests ==========
-// NOTE: PDF generation tests have been moved to doc-gen/crates/typst/tests/typst_generation_test.rs
+// NOTE: PDF generation tests are in crates/resume-typst/tests/
 // This keeps generation-specific tests separate from core selection/scoring tests.
 
 // ========== Generation Payload Validation Tests ==========
