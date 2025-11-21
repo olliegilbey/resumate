@@ -15,7 +15,7 @@ export default function ResumePage() {
 
   return (
     <main className="min-h-screen">
-      <div className="max-w-4xl mx-auto px-4 md:px-8 py-16">
+      <div className="max-w-5xl mx-auto px-4 md:px-8 py-16">
         {/* Header */}
         <div className="text-center mb-8">
           <h1 className="text-4xl font-bold tracking-tight text-slate-900 dark:text-slate-100 mb-4">
@@ -34,8 +34,8 @@ export default function ResumePage() {
           </p>
         </GlassPanel>
 
-        {/* Quick Stats */}
-        <div className="grid grid-cols-3 gap-4 mb-12">
+        {/* Quick Stats + Explore Experience */}
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-8">
           <GlassPanel padding="md" align="center">
             <Calendar className="h-8 w-8 text-blue-600 dark:text-blue-400 mx-auto mb-2" />
             <div className="text-2xl font-bold text-slate-900 dark:text-slate-100">{yearsExperience}+</div>
@@ -51,46 +51,32 @@ export default function ResumePage() {
             <div className="text-2xl font-bold text-slate-900 dark:text-slate-100">{totalBullets}</div>
             <div className="text-sm text-slate-600 dark:text-slate-400">Achievements</div>
           </GlassPanel>
+          <Link href="/resume/view" className="block group">
+            <GlassPanel padding="md" align="center" className="h-full transition-all hover:border-purple-500 dark:hover:border-purple-400 hover:shadow-lg hover:shadow-purple-500/20 dark:hover:shadow-purple-400/20 cursor-pointer hover:-translate-y-0.5 bg-gradient-to-br from-purple-50 to-transparent dark:from-purple-950/20">
+              <Eye className="h-8 w-8 text-purple-600 dark:text-purple-400 mx-auto mb-2 group-hover:scale-110 transition-transform" />
+              <div className="text-2xl font-bold text-slate-900 dark:text-slate-100 group-hover:text-purple-600 dark:group-hover:text-purple-400 transition-colors">View All</div>
+              <div className="text-sm text-slate-600 dark:text-slate-400">Experience</div>
+            </GlassPanel>
+          </Link>
         </div>
 
-        <div className="grid md:grid-cols-2 gap-8 mb-12">
-          {/* Download Resume Card */}
-          <GlassPanel padding="lg" align="center" className="flex flex-col">
-            <div className="w-16 h-16 bg-blue-100 dark:bg-blue-900/30 rounded-xl flex items-center justify-center mx-auto mb-6">
-              <Download className="h-8 w-8 text-blue-600 dark:text-blue-400" />
+        {/* Download Resume - Full Width */}
+        <GlassPanel padding="lg" className="mb-12">
+          <div className="flex items-center mb-6">
+            <div className="w-10 h-10 bg-blue-100 dark:bg-blue-900/30 rounded-lg flex items-center justify-center mr-3">
+              <Download className="h-5 w-5 text-blue-600 dark:text-blue-400" />
             </div>
-            <h3 className="text-xl font-semibold text-slate-900 dark:text-slate-100 mb-4">
-              Download Resume
-            </h3>
-            <p className="text-slate-600 dark:text-slate-300 mb-6">
-              Role-tailored PDF with intelligent bullet selection and scoring.
-            </p>
-            <div className="mt-auto w-full">
-              <ResumeDownload resumeData={resumeData as unknown as ResumeData} />
+            <div>
+              <h3 className="text-xl font-semibold text-slate-900 dark:text-slate-100">
+                Download Resume
+              </h3>
+              <p className="text-sm text-slate-600 dark:text-slate-300">
+                Role-tailored PDF with intelligent bullet selection
+              </p>
             </div>
-          </GlassPanel>
-
-          {/* Explore Experience Card */}
-          <GlassPanel padding="lg" align="center" className="flex flex-col">
-            <div className="w-16 h-16 bg-purple-100 dark:bg-purple-900/30 rounded-xl flex items-center justify-center mx-auto mb-6">
-              <Eye className="h-8 w-8 text-purple-600 dark:text-purple-400" />
-            </div>
-            <h3 className="text-xl font-semibold text-slate-900 dark:text-slate-100 mb-4">
-              Explore Full Experience
-            </h3>
-            <p className="text-slate-600 dark:text-slate-300 mb-6">
-              Interactive data explorer with filtering, search, and detailed context.
-            </p>
-            <div className="mt-auto w-full">
-              <Link href="/resume/view">
-                <Button size="lg" variant="secondary" className="w-full">
-                  View Experience
-                  <Eye className="ml-2 h-4 w-4" />
-                </Button>
-              </Link>
-            </div>
-          </GlassPanel>
-        </div>
+          </div>
+          <ResumeDownload resumeData={resumeData as unknown as ResumeData} />
+        </GlassPanel>
 
         {/* What is Resumate Section */}
         <GlassPanel padding="lg">

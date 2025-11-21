@@ -3,6 +3,7 @@ import { Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
 import { Navbar } from "@/components/ui/Navbar";
 import { ThemeProvider } from "@/contexts/ThemeContext";
+import { PostHogProvider } from "@/lib/posthog-client";
 import { SpeedInsights } from "@vercel/speed-insights/next";
 import resumeData from "@/data/resume-data.json";
 
@@ -55,11 +56,13 @@ export default function RootLayout({
       <body
         className={`${geistSans.variable} ${geistMono.variable} antialiased`}
       >
-        <ThemeProvider>
-          <Navbar />
-          {children}
-        </ThemeProvider>
-        <SpeedInsights />
+        <PostHogProvider>
+          <ThemeProvider>
+            <Navbar />
+            {children}
+          </ThemeProvider>
+          <SpeedInsights />
+        </PostHogProvider>
       </body>
     </html>
   );

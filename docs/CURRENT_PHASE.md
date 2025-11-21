@@ -1,9 +1,9 @@
 ---
-last_updated: 2025-10-29
+last_updated: 2025-11-21
 phase: Phase 5 - WASM Integration & Testing
 phase_started: 2025-10-08
-completion: 92%
-updated_by: System (migrated from STATUS.md)
+completion: 95%
+updated_by: Claude (OLL-70 analytics complete)
 ---
 
 # Current Phase Status
@@ -20,7 +20,7 @@ updated_by: System (migrated from STATUS.md)
 
 **Goal:** End-to-end testing and optimization before Phase 6 (Claude API Integration)
 
-**Status:** 92% complete (estimated)
+**Status:** 95% complete (estimated)
 
 **Started:** 2025-10-08
 
@@ -68,6 +68,17 @@ updated_by: System (migrated from STATUS.md)
 - Integrated into Vercel deployment pipeline
 - No git tracking needed for WASM artifacts
 - **Result:** Reliable deployment, always fresh builds
+
+### ✅ Phase 5.8: Observability & Analytics (2025-11-21) - OLL-70
+- PostHog event tracking: resume_prepared, resume_downloaded, resume_generated, resume_failed
+- Server-side /api/resume/log endpoint for client events
+- Performance metrics: WASM load, generation, total duration
+- Error stage tracking: bullet_selection, wasm_load, pdf_generation
+- Contact info collection (optional email/LinkedIn)
+- Session tracking via sessionStorage UUID
+- N8N webhook integration ready (Phase 2 pending)
+- Comprehensive test coverage (see METRICS.md)
+- **Result:** Complete analytics funnel, production-ready tracking
 
 ---
 
@@ -120,21 +131,21 @@ updated_by: System (migrated from STATUS.md)
 
 ## Next Phase Preview
 
-### Phase 5.8: Observability & Analytics (Next Up)
-**Goal:** Track resume generation events and user analytics
+### Phase 5.8.2: N8N Workflow Integration (OLL-71)
+**Goal:** Complete notification system for resume downloads
 
 **Key Features:**
-- PostHog event tracking (resume_generated, resume_prepared events)
-- Server-side generation metadata logging (/api/resume/log route)
-- N8N webhook integration for notifications
-- Analytics dashboard for usage patterns
+- N8N workflow configuration
+- ntfy.sh notification setup
+- Webhook testing and validation
+- Production deployment
 
-**Estimated Duration:** 6-8 hours
+**Estimated Duration:** 2-3 hours
 
 **Prerequisites:**
-- ✅ Phase 5.9 complete (testing & polish)
-- ✅ PDF generation stable
-- ✅ Production deployment working
+- ✅ Phase 5.8 complete (PostHog tracking)
+- ✅ Webhook infrastructure ready
+- ⏳ N8N instance setup
 
 ---
 
@@ -151,8 +162,8 @@ updated_by: System (migrated from STATUS.md)
 **Estimated Duration:** 20-25 hours (1 week)
 
 **Prerequisites:**
-- ⏳ Phase 5.8 complete (observability in place)
-- ⏳ Analytics tracking working
+- ✅ Phase 5.8 complete (observability in place)
+- ✅ Analytics tracking working
 - ⏳ E2E tests passing (Phase 5.9)
 
 ---
@@ -189,5 +200,5 @@ For active tasks, see Linear project.
 
 ---
 
-**Last Updated:** 2025-10-28
+**Last Updated:** 2025-11-21 (OLL-70 analytics complete)
 **Next Review:** On phase completion or major milestone

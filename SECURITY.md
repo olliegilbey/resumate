@@ -8,7 +8,7 @@ Multi-layered security protecting contact information while maintaining accessib
 
 Contact information stored in server env vars and only delivered through protected API endpoints after Cloudflare Turnstile CAPTCHA verification - never embedded in static HTML/JavaScript bundles.
 
-### 2. Bot Detection & Rate Limiting (`/middleware.ts`)
+### 2. Bot Detection & Rate Limiting (`/middleware.ts` changed to `/proxy.ts` - NextJS 16 practices)
 
 - Blocks suspicious user agents (curl, wget, generic scrapers)
 - Allows search engines and social media preview bots
