@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { checkRateLimit, getClientIP } from '@/lib/rate-limit'
 import type { ResumeData, Company, Position, Bullet, RoleProfile } from '@/types/resume'
+import { captureEvent } from '@/lib/posthog-server'
 
 /**
  * POST /api/resume/select
@@ -22,7 +23,7 @@ export async function POST(request: NextRequest) {
   try {
     // Parse request body
     const body = await request.json()
-    const { roleProfileId, turnstileToken, config } = body
+    const { roleProfileId, turnstileToken, config, email, linkedin, sessionId } = body
 
     if (!roleProfileId || !turnstileToken) {
       return NextResponse.json(
@@ -129,7 +130,37 @@ export async function POST(request: NextRequest) {
       maxPerPosition: config?.maxPerPosition ?? 4,
     }
 
+    const startTime = Date.now()
     const selected = selectBullets(resumeData, roleProfile, selectionConfig)
+    const selectionDuration = Date.now() - startTime
+
+    // Track resume_prepared event with contact info
+    const clientIP = getClientIP(request)
+    const bulletIds = selected.map(s => s.bullet.id)
+    const bulletsByCompany: Record<string, number> = {}
+    const bulletsByTag: Record<string, number> = {}
+
+    for (const item of selected) {
+      bulletsByCompany[item.companyId] = (bulletsByCompany[item.companyId] || 0) + 1
+      for (const tag of item.bullet.tags || []) {
+        bulletsByTag[tag] = (bulletsByTag[tag] || 0) + 1
+      }
+    }
+
+    await captureEvent(sessionId || clientIP, 'resume_prepared', {
+      sessionId,
+      email,
+      linkedin,
+      roleProfileId: roleProfile.id,
+      roleProfileName: roleProfile.name,
+      bulletIds,
+      bulletCount: selected.length,
+      bulletsByCompany,
+      bulletsByTag,
+      config: selectionConfig,
+      selectionDuration,
+      clientIP,
+    })
 
     // Return results
     return NextResponse.json(

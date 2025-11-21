@@ -7,6 +7,7 @@ import { Download, Loader2, X, AlertCircle } from 'lucide-react'
 import type { ResumeData, RoleProfile } from '@/types/resume'
 import { Turnstile, type TurnstileInstance } from '@marsidev/react-turnstile'
 import { useTheme } from '@/contexts/ThemeContext'
+import { getTotalBullets, getTotalPositions } from '@/lib/resume-metrics'
 
 // Extend Window interface for WASM functions
 declare global {
@@ -25,6 +26,9 @@ type DownloadStatus = 'idle' | 'verifying' | 'loading_wasm' | 'generating' | 'er
 
 export function ResumeDownload({ resumeData }: ResumeDownloadProps) {
   const [selectedRoleId, setSelectedRoleId] = useState<string>('')
+  const [jobDescription, setJobDescription] = useState<string>('')
+  const [email, setEmail] = useState<string>('')
+  const [linkedin, setLinkedin] = useState<string>('')
   const [status, setStatus] = useState<DownloadStatus>('idle')
   const [errorMessage, setErrorMessage] = useState<string | null>(null)
   const [showTurnstile, setShowTurnstile] = useState(false)
@@ -34,17 +38,28 @@ export function ResumeDownload({ resumeData }: ResumeDownloadProps) {
   const { theme } = useTheme()
 
   const roleProfiles = useMemo(() => resumeData.roleProfiles || [], [resumeData.roleProfiles])
+  const totalExperiences = useMemo(() => {
+    return getTotalBullets(resumeData.experience) + getTotalPositions(resumeData.experience)
+  }, [resumeData.experience])
   const siteKey = process.env.NEXT_PUBLIC_TURNSTILE_SITE_KEY
 
+  // Mutual exclusivity: job description disables dropdown and vice versa
+  const isJobDescriptionMode = jobDescription.trim().length > 0
+  const isDropdownMode = selectedRoleId.length > 0
+
   const handleDownloadClick = () => {
-    if (!selectedRoleId) {
-      setErrorMessage('Please select a role profile first')
+    if (!selectedRoleId && !jobDescription.trim()) {
+      setErrorMessage('Please select a role or enter a job description')
       return
     }
 
-    setErrorMessage(null)
-    setShowTurnstile(true)
-    setStatus('idle') // Keep idle so Turnstile widget shows
+    if (selectedRoleId && !isJobDescriptionMode) {
+      setErrorMessage(null)
+      setShowTurnstile(true)
+      setStatus('idle') // Keep idle so Turnstile widget shows
+    } else {
+      setErrorMessage('AI-powered selection coming soon. Please use pre-built roles for now.')
+    }
   }
 
   // When Turnstile succeeds, store token (don't start download yet)
@@ -71,6 +86,8 @@ export function ResumeDownload({ resumeData }: ResumeDownloadProps) {
 
     setShowTurnstile(false)
     setVerifiedToken(null)
+    setEmail('')
+    setLinkedin('')
     setErrorMessage(null)
     setDownloadInitiated(false)
     setStatus('idle')
@@ -85,16 +102,30 @@ export function ResumeDownload({ resumeData }: ResumeDownloadProps) {
       const timer = setTimeout(async () => {
         setDownloadInitiated(true)
 
+        // Track timing for analytics
+        const startTime = Date.now()
+        let wasmLoadStart = 0
+        let wasmLoadEnd = 0
+        let generationStart = 0
+        let generationEnd = 0
+        let errorStage: 'bullet_selection' | 'wasm_load' | 'pdf_generation' = 'bullet_selection'
+
         try {
           setStatus('loading_wasm')
 
           // Step 1: Get curated bullets from server
+          const sessionId = sessionStorage.getItem('resumate_session') || crypto.randomUUID()
+          sessionStorage.setItem('resumate_session', sessionId)
+
           const selectResponse = await fetch('/api/resume/select', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({
               roleProfileId: selectedRoleId,
               turnstileToken: verifiedToken,
+              email: email || undefined,
+              linkedin: linkedin || undefined,
+              sessionId,
             }),
           })
 
@@ -106,6 +137,9 @@ export function ResumeDownload({ resumeData }: ResumeDownloadProps) {
           const selectData = await selectResponse.json()
 
           // Step 2: Load WASM module dynamically from public folder
+          errorStage = 'wasm_load'
+          wasmLoadStart = Date.now()
+          const wasmCached = Boolean(window.__wasmReady)
           setStatus('generating')
 
           // Check if WASM is already loaded
@@ -140,6 +174,10 @@ export function ResumeDownload({ resumeData }: ResumeDownloadProps) {
             }, 100)
           })
 
+          wasmLoadEnd = Date.now()
+          errorStage = 'pdf_generation'
+          generationStart = Date.now()
+
           // Step 3: Prepare generation payload
           const roleProfile = roleProfiles.find((r) => r.id === selectedRoleId)
           if (!roleProfile) {
@@ -169,7 +207,31 @@ export function ResumeDownload({ resumeData }: ResumeDownloadProps) {
           // Type assertion: we checked above that it's defined
           const generatePdfTypst = window.__generatePdfTypst as (payload: string, devMode: boolean) => Uint8Array
           const pdfBytes = generatePdfTypst(JSON.stringify(payload), isDevMode)
+          generationEnd = Date.now()
           console.log('✅ PDF generated successfully with Typst')
+
+          // Calculate durations
+          const wasmLoadDuration = wasmLoadEnd - wasmLoadStart
+          const generationDuration = generationEnd - generationStart
+          const totalDuration = Date.now() - startTime
+
+          // Log generation success event
+          await fetch('/api/resume/log', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              event: 'resume_generated',
+              sessionId,
+              roleProfileId: selectedRoleId,
+              roleProfileName: roleProfile.name,
+              bulletCount: selectData.selected.length,
+              pdfSize: pdfBytes.length,
+              wasmLoadDuration,
+              generationDuration,
+              totalDuration,
+              wasmCached,
+            }),
+          }).catch(err => console.error('Failed to log generation:', err))
 
           // Step 5: Download the PDF
           // Slice creates a copy with proper ArrayBuffer type
@@ -187,6 +249,24 @@ export function ResumeDownload({ resumeData }: ResumeDownloadProps) {
           link.click()
           URL.revokeObjectURL(url)
 
+          // Log download event to server (includes notification trigger)
+          await fetch('/api/resume/log', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              event: 'resume_downloaded',
+              sessionId,
+              roleProfileId: selectedRoleId,
+              roleProfileName: roleProfile.name,
+              email: email || undefined,
+              linkedin: linkedin || undefined,
+              bulletCount: selectData.selected.length,
+              bullets: selectData.selected,
+              pdfSize: pdfBytes.length,
+              filename: link.download,
+            }),
+          }).catch(err => console.error('Failed to log download:', err))
+
           // Wait briefly then close modal
           await new Promise(resolve => setTimeout(resolve, 500))
 
@@ -194,6 +274,8 @@ export function ResumeDownload({ resumeData }: ResumeDownloadProps) {
           setTimeout(() => {
             setShowTurnstile(false)
             setVerifiedToken(null)
+            setEmail('')
+            setLinkedin('')
             setErrorMessage(null)
             setDownloadInitiated(false)
             setStatus('idle')
@@ -201,9 +283,31 @@ export function ResumeDownload({ resumeData }: ResumeDownloadProps) {
           }, 1500)
         } catch (error) {
           console.error('Download error:', error)
-          setErrorMessage(error instanceof Error ? error.message : 'Download failed')
+          const errorMessage = error instanceof Error ? error.message : 'Download failed'
+          setErrorMessage(errorMessage)
           setStatus('error')
           setDownloadInitiated(false)
+
+          // Log failure event
+          const sessionId = sessionStorage.getItem('resumate_session')
+          if (sessionId) {
+            await fetch('/api/resume/log', {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({
+                event: 'resume_failed',
+                sessionId,
+                roleProfileId: selectedRoleId,
+                roleProfileName: roleProfiles.find(r => r.id === selectedRoleId)?.name || 'Unknown',
+                email: email || undefined,
+                linkedin: linkedin || undefined,
+                errorMessage,
+                errorStage,
+                errorStack: process.env.NODE_ENV === 'development' && error instanceof Error ? error.stack : undefined,
+              }),
+            }).catch(err => console.error('Failed to log error:', err))
+          }
+
           // Keep verifiedToken - user can retry without re-verifying Turnstile
         }
       }, 300) // Short delay like vCard
@@ -212,7 +316,7 @@ export function ResumeDownload({ resumeData }: ResumeDownloadProps) {
         clearTimeout(timer)
       }
     }
-  }, [verifiedToken, downloadInitiated, status, selectedRoleId, roleProfiles, resumeData])
+  }, [verifiedToken, downloadInitiated, status, selectedRoleId, roleProfiles, resumeData, email, linkedin])
 
   const getStatusMessage = () => {
     switch (status) {
@@ -232,35 +336,119 @@ export function ResumeDownload({ resumeData }: ResumeDownloadProps) {
   const isLoading = ['verifying', 'loading_wasm', 'generating'].includes(status)
 
   return (
-    <div className="space-y-4">
-      {/* Role Selection Dropdown */}
-      <select
-        id="role-select"
-        value={selectedRoleId}
-        onChange={(e) => {
-          setSelectedRoleId(e.target.value)
-          setErrorMessage(null)
-        }}
-        disabled={isLoading}
-        className="w-full pl-4 pr-12 py-2 bg-white dark:bg-slate-800 border border-slate-300 dark:border-slate-600 rounded-lg text-slate-900 dark:text-slate-100 focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-colors disabled:opacity-50 disabled:cursor-not-allowed appearance-none bg-[length:1.5rem] bg-[position:right_0.75rem_center] bg-no-repeat"
-        style={{
-          backgroundImage: `url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 20 20'%3e%3cpath stroke='%236b7280' stroke-linecap='round' stroke-linejoin='round' stroke-width='1.5' d='M6 8l4 4 4-4'/%3e%3c/svg%3e")`
-        }}
-      >
-        <option value="">Choose a role...</option>
-        {roleProfiles.map((profile: RoleProfile) => (
-          <option key={profile.id} value={profile.id}>
-            {profile.name}
-          </option>
-        ))}
-      </select>
+    <div className="space-y-5">
+      {/* Friendly message */}
+      <p className="text-sm text-slate-600 dark:text-slate-400 text-center">
+        I&apos;d love to know who&apos;s interested — contact info is optional
+      </p>
+
+      {/* Contact Info - Full Width */}
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+        <input
+          type="email"
+          id="email"
+          name="email"
+          autoComplete="email"
+          value={email}
+          onChange={(e) => setEmail(e.target.value)}
+          placeholder="Email (optional)"
+          disabled={isLoading}
+          className="w-full px-3 py-2.5 bg-white dark:bg-slate-700 border border-slate-300 dark:border-slate-600 rounded-lg text-slate-900 dark:text-slate-100 placeholder-slate-400 focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-colors disabled:opacity-50"
+        />
+        <input
+          type="url"
+          id="linkedin"
+          name="linkedin"
+          autoComplete="url"
+          value={linkedin}
+          onChange={(e) => setLinkedin(e.target.value)}
+          placeholder="LinkedIn profile (optional)"
+          disabled={isLoading}
+          className="w-full px-3 py-2.5 bg-white dark:bg-slate-700 border border-slate-300 dark:border-slate-600 rounded-lg text-slate-900 dark:text-slate-100 placeholder-slate-400 focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-colors disabled:opacity-50"
+        />
+      </div>
+
+      {/* Two-Column Selection Layout - Equal Heights */}
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+        {/* Left: Job Description (AI Mode - Disabled) */}
+        <div className="relative min-h-[180px]">
+          <div className="absolute top-3 right-3 z-10">
+            <span className="inline-flex items-center px-2 py-1 rounded text-xs font-medium bg-amber-100 text-amber-800 dark:bg-amber-900/30 dark:text-amber-400">
+              🚧 Coming Soon
+            </span>
+          </div>
+          <div className="h-full flex flex-col bg-slate-50 dark:bg-slate-800/50 border-2 border-dashed border-slate-300 dark:border-slate-600 rounded-lg p-4 opacity-60">
+            <label className="block font-medium text-slate-700 dark:text-slate-300 mb-2">
+              AI-Powered Selection
+            </label>
+            <p className="text-sm text-slate-600 dark:text-slate-400 mb-3 flex-grow">
+              Paste your job description and Resumate intelligently selects the most relevant achievements from {totalExperiences}+ authentic experiences using the Claude API for AI-Curation
+            </p>
+            <textarea
+              value={jobDescription}
+              onChange={(e) => {
+                setJobDescription(e.target.value)
+                if (e.target.value.trim()) setSelectedRoleId('')
+                setErrorMessage(null)
+              }}
+              placeholder="Paste job description here..."
+              disabled={true}
+              rows={4}
+              autoComplete="off"
+              name="job-description"
+              className="w-full px-3 py-2 text-sm bg-white dark:bg-slate-700 border border-slate-300 dark:border-slate-600 rounded text-slate-900 dark:text-slate-100 placeholder-slate-400 resize-none disabled:cursor-not-allowed"
+            />
+          </div>
+        </div>
+
+        {/* Right: Role Profiles (Active) */}
+        <div className="relative min-h-[180px]">
+          <div className="absolute top-3 right-3 z-10">
+            <span className="inline-flex items-center px-2 py-1 rounded text-xs font-medium bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-400">
+              ✓ Available Now
+            </span>
+          </div>
+          <div className="h-full flex flex-col bg-white dark:bg-slate-800 border-2 border-blue-200 dark:border-blue-800 rounded-lg p-4">
+            <label htmlFor="role-select" className="block font-medium text-slate-700 dark:text-slate-300 mb-2">
+              Role Profiles
+            </label>
+            <p className="text-sm text-slate-600 dark:text-slate-400 mb-3 flex-grow">
+              Choose a role and Resumate&apos;s heuristic scoring algorithm instantly curates the most relevant achievements from my {totalExperiences}+ experiences
+            </p>
+            <select
+              id="role-select"
+              name="role-profile"
+              autoComplete="off"
+              value={selectedRoleId}
+              onChange={(e) => {
+                setSelectedRoleId(e.target.value)
+                if (e.target.value) setJobDescription('')
+                setErrorMessage(null)
+              }}
+              disabled={isLoading || isJobDescriptionMode}
+              title={isJobDescriptionMode ? 'Clear job description to use role profiles' : 'Select a role profile'}
+              className="w-full px-3 py-2.5 bg-white dark:bg-slate-700 border border-slate-300 dark:border-slate-600 rounded-lg text-slate-900 dark:text-slate-100 focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-colors disabled:opacity-50 disabled:cursor-not-allowed appearance-none bg-[length:1.5rem] bg-[position:right_0.75rem_center] bg-no-repeat"
+              style={{
+                backgroundImage: `url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 20 20'%3e%3cpath stroke='%236b7280' stroke-linecap='round' stroke-linejoin='round' stroke-width='1.5' d='M6 8l4 4 4-4'/%3e%3c/svg%3e")`
+              }}
+            >
+              <option value="">Choose a role...</option>
+              {roleProfiles.map((profile: RoleProfile) => (
+                <option key={profile.id} value={profile.id}>
+                  {profile.name}
+                </option>
+              ))}
+            </select>
+          </div>
+        </div>
+      </div>
 
       {/* Download Button */}
       <Button
         size="lg"
         className="w-full"
         onClick={handleDownloadClick}
-        disabled={!selectedRoleId || isLoading}
+        disabled={(!selectedRoleId && !jobDescription.trim()) || isLoading}
       >
         {isLoading ? (
           <>
@@ -269,7 +457,7 @@ export function ResumeDownload({ resumeData }: ResumeDownloadProps) {
           </>
         ) : (
           <>
-            {getStatusMessage()}
+            Download PDF
             <Download className="ml-2 h-4 w-4" />
           </>
         )}
@@ -277,9 +465,11 @@ export function ResumeDownload({ resumeData }: ResumeDownloadProps) {
 
       {/* Error Message */}
       {errorMessage && !showTurnstile && (
-        <p className="text-sm text-red-600 dark:text-red-400 text-center">
-          {errorMessage}
-        </p>
+        <div className="p-3 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-lg">
+          <p className="text-sm text-red-600 dark:text-red-400 text-center">
+            {errorMessage}
+          </p>
+        </div>
       )}
 
       {/* Turnstile Modal - Matching vCard pattern */}
@@ -304,14 +494,14 @@ export function ResumeDownload({ resumeData }: ResumeDownloadProps) {
               <X className="h-5 w-5" />
             </button>
 
-            {/* Only show header during Turnstile verification */}
+            {/* Simplified header - just verification */}
             {!verifiedToken && (
               <div className="text-center mb-6">
                 <h3 className="text-2xl font-semibold text-slate-900 dark:text-slate-100 mb-2">
                   Verify You&apos;re Human
                 </h3>
-                <p className="text-slate-600 dark:text-slate-300">
-                  Complete verification to download your tailored resume.
+                <p className="text-sm text-slate-600 dark:text-slate-300">
+                  Complete verification to download your resume
                 </p>
               </div>
             )}
