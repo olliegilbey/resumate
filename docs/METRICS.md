@@ -1,8 +1,8 @@
 ---
-Generated: 2025-11-21T21:57
+Generated: 2025-11-24T16:07
 Generator: scripts/update-metrics-from-logs.sh
 Source: Parsed from test execution logs
-Valid Until: 2025-11-22T21:57 (24h expiry)
+Valid Until: 2025-11-25T16:07 (24h expiry)
 ---
 
 # Project Metrics (Auto-Generated)
@@ -15,9 +15,9 @@ To update: Run `just test` again
 
 ## Test Counts
 
-**Rust:**       140 tests (1 ignored) in 2.17s  ✅ Passing
-**TypeScript:** 205 tests in 1.98s  ✅ Passing
-**TOTAL:**      345 tests  ✅ All Passing
+**Rust:**       140 tests (1 ignored) in 2.32s  ✅ Passing
+**TypeScript:** 211 tests in 2.62s  ✅ Passing
+**TOTAL:**      351 tests  ✅ All Passing
 
 ### Rust Tests (By Crate)
 
@@ -28,9 +28,9 @@ To update: Run `just test` again
 
 ### TypeScript Tests
 
-- Total tests:  205
+- Total tests:  211
 - Test files:   12
-- Execution:    1.98s
+- Execution:    2.62s
 
 **Test files breakdown available in log:** `/Users/olliegilbey/code/resumate/.logs/ts-tests.log`
 
@@ -82,13 +82,13 @@ just coverage-ts-open     # Open in browser
 **Rust Tests:**
 - Command: `cargo test --all`
 - Log: `/Users/olliegilbey/code/resumate/.logs/rust-tests.log`
-- Duration: 2.17s
+- Duration: 2.32s
 - Suites: Multiple (core, typst, wasm, shared-types, integration, doc-tests)
 
 **TypeScript Tests:**
 - Command: `bun run test --run`
 - Log: `/Users/olliegilbey/code/resumate/.logs/ts-tests.log`
-- Duration: 1.98s
+- Duration: 2.62s
 - Files: 12 test files
 
 ---
@@ -119,7 +119,7 @@ cat /Users/olliegilbey/code/resumate/.logs/ts-tests.log       # View TypeScript 
 
 ## Verification
 
-**Last Generated:** 2025-11-21T21:57
+**Last Generated:** 2025-11-24T16:07
 **Next Update:** Automatically on next `just test` run
 **Logs Valid For:** Current session (stored in /tmp)
 

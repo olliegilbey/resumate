@@ -4,12 +4,20 @@
  * These tests validate the bullet selection API endpoint,
  * which is a critical piece of the resume generation system.
  *
+ * Security tests cover:
+ * - Turnstile token verification
+ * - Token replay prevention
+ * - Rate limiting
+ *
  * NOTE: Some tests may fail in CI environments due to dynamic imports
  * and Next.js server component limitations. These serve as
  * integration tests best run locally.
  */
 
-import { describe, it, expect } from 'vitest'
+import { describe, it, expect, beforeEach, afterEach } from 'vitest'
+import { POST } from '../route'
+import { NextRequest } from 'next/server'
+import { mockTurnstileSuccess, mockTurnstileFailure, restoreFetch } from '@/lib/__tests__/helpers/mock-fetch'
 
 // ========== Test Data Fixtures ==========
 
@@ -436,14 +444,136 @@ describe('/api/resume/select - Scoring Behavior', () => {
   })
 })
 
-// ========== NOTE FOR FUTURE INTEGRATION TESTS ==========
-/*
- * Full API integration tests (with NextRequest mocking) are challenging in Vitest
- * due to Next.js's server component architecture. Consider:
- *
- * 1. Manual testing with scripts/test-bullet-selection-api.ts
- * 2. End-to-end tests with Playwright or Cypress
- * 3. Testing deployed preview branches
- *
- * The unit tests above provide good coverage of the core logic.
- */
+// ========== API Security Tests ==========
+
+describe('/api/resume/select - Security (Integration Tests)', () => {
+  let tokenCounter = 0
+
+  beforeEach(() => {
+    // Set required env vars
+    process.env.TURNSTILE_SECRET_KEY = 'test-secret-key'
+    tokenCounter++
+  })
+
+  afterEach(() => {
+    restoreFetch()
+    delete process.env.TURNSTILE_SECRET_KEY
+  })
+
+  function getUniqueToken(): string {
+    return `test-token-${tokenCounter}-${Math.random().toString(36).substring(7)}`
+  }
+
+  function createRequest(body: Record<string, any>): NextRequest {
+    return new NextRequest('http://localhost:3000/api/resume/select', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'x-forwarded-for': '1.2.3.4',
+      },
+      body: JSON.stringify(body),
+    })
+  }
+
+  it('accepts valid Turnstile token', async () => {
+    mockTurnstileSuccess()
+
+    const request = createRequest({
+      roleProfileId: 'developer-relations-lead',
+      turnstileToken: getUniqueToken(),
+    })
+
+    const response = await POST(request)
+    const data = await response.json()
+
+    expect(response.status).toBe(200)
+    expect(data.success).toBe(true)
+  })
+
+  it('rejects invalid Turnstile token', async () => {
+    mockTurnstileFailure()
+
+    const request = createRequest({
+      roleProfileId: 'developer-relations-lead',
+      turnstileToken: getUniqueToken(),
+    })
+
+    const response = await POST(request)
+    const data = await response.json()
+
+    expect(response.status).toBe(403)
+    expect(data.error).toBe('Turnstile verification failed')
+  })
+
+  it('prevents token replay attacks', async () => {
+    mockTurnstileSuccess()
+
+    const token = getUniqueToken()
+
+    // First request should succeed
+    const request1 = createRequest({
+      roleProfileId: 'developer-relations-lead',
+      turnstileToken: token,
+    })
+
+    const response1 = await POST(request1)
+    expect(response1.status).toBe(200)
+
+    // Second request with same token should fail
+    const request2 = createRequest({
+      roleProfileId: 'developer-relations-lead',
+      turnstileToken: token, // Same token!
+    })
+
+    const response2 = await POST(request2)
+    const data2 = await response2.json()
+
+    expect(response2.status).toBe(403)
+    expect(data2.error).toBe('Token already used')
+  })
+
+  it('returns 400 for missing fields', async () => {
+    mockTurnstileSuccess()
+
+    const request = createRequest({
+      roleProfileId: 'developer-relations-lead',
+      // Missing turnstileToken
+    })
+
+    const response = await POST(request)
+    const data = await response.json()
+
+    expect(response.status).toBe(400)
+    expect(data.error).toContain('Missing required fields')
+  })
+
+  it('returns 404 for invalid role profile', async () => {
+    mockTurnstileSuccess()
+
+    const request = createRequest({
+      roleProfileId: 'nonexistent-profile',
+      turnstileToken: getUniqueToken(),
+    })
+
+    const response = await POST(request)
+    const data = await response.json()
+
+    expect(response.status).toBe(404)
+    expect(data.error).toContain('Role profile not found')
+  })
+
+  it('returns 500 if TURNSTILE_SECRET_KEY not configured', async () => {
+    delete process.env.TURNSTILE_SECRET_KEY
+
+    const request = createRequest({
+      roleProfileId: 'developer-relations-lead',
+      turnstileToken: getUniqueToken(),
+    })
+
+    const response = await POST(request)
+    const data = await response.json()
+
+    expect(response.status).toBe(500)
+    expect(data.error).toBe('Server configuration error')
+  })
+})

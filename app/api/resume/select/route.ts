@@ -3,6 +3,11 @@ import { checkRateLimit, getClientIP } from '@/lib/rate-limit'
 import type { ResumeData, Company, Position, Bullet, RoleProfile } from '@/types/resume'
 import { captureEvent } from '@/lib/posthog-server'
 
+// In-memory store for used tokens (prevents replay attacks within function instance lifetime)
+// Note: In serverless, each function instance is stateless and short-lived
+// TODO: For production with multiple instances, use Redis or similar distributed store
+const usedTokens = new Set<string>()
+
 /**
  * POST /api/resume/select
  *
@@ -32,75 +37,75 @@ export async function POST(request: NextRequest) {
       )
     }
 
-    // Check if in development mode (skip rate limit and Turnstile in dev)
-    const isDevelopment = process.env.NODE_ENV === 'development'
-
     // Prepare response headers
     const headers = new Headers()
 
-    // Rate limit check (skip in development)
-    if (!isDevelopment) {
-      const clientIP = getClientIP(request)
-      const rateLimit = checkRateLimit(clientIP, {
-        limit: 10,
-        window: 60 * 60 * 1000, // 1 hour
-      })
+    // Rate limit check
+    const clientIP = getClientIP(request)
+    const rateLimit = checkRateLimit(clientIP, {
+      limit: 10,
+      window: 60 * 60 * 1000, // 1 hour
+    })
 
-      headers.set('X-RateLimit-Limit', rateLimit.limit.toString())
-      headers.set('X-RateLimit-Remaining', rateLimit.remaining.toString())
-      headers.set('X-RateLimit-Reset', new Date(rateLimit.reset).toISOString())
+    headers.set('X-RateLimit-Limit', rateLimit.limit.toString())
+    headers.set('X-RateLimit-Remaining', rateLimit.remaining.toString())
+    headers.set('X-RateLimit-Reset', new Date(rateLimit.reset).toISOString())
 
-      if (!rateLimit.success) {
-        return NextResponse.json(
-          {
-            error: 'Rate limit exceeded',
-            message: 'Maximum 10 requests per hour. Please try again later.',
-            resetAt: rateLimit.reset,
-          },
-          { status: 429, headers }
-        )
-      }
-    }
-
-    // Verify Turnstile token (skip in development mode)
-
-    if (!isDevelopment) {
-      const turnstileSecret = process.env.TURNSTILE_SECRET_KEY
-      if (!turnstileSecret) {
-        console.error('TURNSTILE_SECRET_KEY not configured')
-        return NextResponse.json(
-          { error: 'Server configuration error' },
-          { status: 500 }
-        )
-      }
-
-      const turnstileResponse = await fetch(
-        'https://challenges.cloudflare.com/turnstile/v0/siteverify',
+    if (!rateLimit.success) {
+      return NextResponse.json(
         {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-          },
-          body: JSON.stringify({
-            secret: turnstileSecret,
-            response: turnstileToken,
-          }),
-        }
-      )
-
-      const turnstileData = await turnstileResponse.json()
-
-      if (!turnstileData.success) {
-        return NextResponse.json(
-          { error: 'Turnstile verification failed' },
-          { status: 403 }
-        )
-      }
-    } else {
-      console.log(
-        '⚠️  Development mode: Skipping Turnstile verification'
+          error: 'Rate limit exceeded',
+          message: 'Maximum 10 requests per hour. Please try again later.',
+          resetAt: rateLimit.reset,
+        },
+        { status: 429, headers }
       )
     }
+
+    // Check token replay (one-time use enforcement)
+    if (usedTokens.has(turnstileToken)) {
+      console.warn('Duplicate Turnstile token blocked')
+      return NextResponse.json(
+        { error: 'Token already used' },
+        { status: 403 }
+      )
+    }
+
+    // Verify Turnstile token
+    const turnstileSecret = process.env.TURNSTILE_SECRET_KEY
+    if (!turnstileSecret) {
+      console.error('TURNSTILE_SECRET_KEY not configured')
+      return NextResponse.json(
+        { error: 'Server configuration error' },
+        { status: 500 }
+      )
+    }
+
+    const turnstileResponse = await fetch(
+      'https://challenges.cloudflare.com/turnstile/v0/siteverify',
+      {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          secret: turnstileSecret,
+          response: turnstileToken,
+        }),
+      }
+    )
+
+    const turnstileData = await turnstileResponse.json()
+
+    if (!turnstileData.success) {
+      return NextResponse.json(
+        { error: 'Turnstile verification failed' },
+        { status: 403 }
+      )
+    }
+
+    // Mark token as used (replay prevention)
+    usedTokens.add(turnstileToken)
 
     // Load resume data
     const resumeData = await loadResumeData()
@@ -135,7 +140,6 @@ export async function POST(request: NextRequest) {
     const selectionDuration = Date.now() - startTime
 
     // Track resume_prepared event with contact info
-    const clientIP = getClientIP(request)
     const bulletIds = selected.map(s => s.bullet.id)
     const bulletsByCompany: Record<string, number> = {}
     const bulletsByTag: Record<string, number> = {}
