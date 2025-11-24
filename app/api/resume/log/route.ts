@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { captureEvent } from '@/lib/posthog-server'
-import { getClientIP } from '@/lib/rate-limit'
+import { getClientIP, checkRateLimit } from '@/lib/rate-limit'
 
 /**
  * POST /api/resume/log
@@ -8,7 +8,13 @@ import { getClientIP } from '@/lib/rate-limit'
  * Client-side event logging endpoint for PDF generation events.
  * Captures resume_generated, resume_failed, and resume_downloaded events.
  * Triggers n8n webhook for download notifications.
+ *
+ * Rate limit: 30 requests/hour per IP
  */
+
+const ALLOWED_EVENTS = ['resume_generated', 'resume_failed', 'resume_downloaded']
+const UUID_REGEX = /^[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i
+
 export async function POST(request: NextRequest) {
   try {
     const body = await request.json()
@@ -32,6 +38,7 @@ export async function POST(request: NextRequest) {
       wasmCached,
     } = body
 
+    // Validate required fields
     if (!event || !sessionId) {
       return NextResponse.json(
         { error: 'Missing required fields: event, sessionId' },
@@ -39,7 +46,43 @@ export async function POST(request: NextRequest) {
       )
     }
 
+    // Validate event type
+    if (!ALLOWED_EVENTS.includes(event)) {
+      return NextResponse.json(
+        { error: 'Invalid event type' },
+        { status: 400 }
+      )
+    }
+
+    // Validate sessionId format (UUIDv4)
+    if (!UUID_REGEX.test(sessionId)) {
+      return NextResponse.json(
+        { error: 'Invalid sessionId format' },
+        { status: 400 }
+      )
+    }
+
     const clientIP = getClientIP(request)
+
+    // Rate limiting: 30 requests/hour per IP (allows ~1 PDF every 2 mins)
+    const rateLimit = checkRateLimit(clientIP, {
+      limit: 30,
+      window: 60 * 60 * 1000, // 1 hour
+    })
+
+    if (!rateLimit.success) {
+      return NextResponse.json(
+        { error: 'Rate limit exceeded. Try again later.' },
+        {
+          status: 429,
+          headers: {
+            'X-RateLimit-Limit': rateLimit.limit.toString(),
+            'X-RateLimit-Remaining': rateLimit.remaining.toString(),
+            'X-RateLimit-Reset': new Date(rateLimit.reset).toISOString(),
+          }
+        }
+      )
+    }
 
     // Capture event to PostHog
     const eventProperties: Record<string, any> = {
