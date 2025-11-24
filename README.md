@@ -252,21 +252,32 @@ Claude Code and Warp editors should run this extensively when making changes.
 
 3. **Set Environment Variables**
 
-   Use `printf` to avoid newline issues:
+   Use `printf` to avoid newline issues. Set scopes based on where each var is needed:
 
    ```bash
-   # Contact info
-   printf "%s" "your@email.com" | vercel env add CONTACT_EMAIL_PROFESSIONAL production
-   printf "%s" "personal@email.com" | vercel env add CONTACT_EMAIL_PERSONAL production
-   printf "%s" "+1234567890" | vercel env add CONTACT_PHONE production
+   # Contact info (ALL ENVIRONMENTS - needed for vCard downloads)
+   printf "%s" "your@email.com" | vercel env add CONTACT_EMAIL_PROFESSIONAL production preview development
+   printf "%s" "personal@email.com" | vercel env add CONTACT_EMAIL_PERSONAL production preview development
+   printf "%s" "+1234567890" | vercel env add CONTACT_PHONE production preview development
 
-   # Turnstile keys
+   # Turnstile - TEST KEYS for preview/dev (always pass, work on any domain)
+   printf "%s" "1x00000000000000000000AA" | vercel env add NEXT_PUBLIC_TURNSTILE_SITE_KEY preview development
+   printf "%s" "1x0000000000000000000000000000000AA" | vercel env add TURNSTILE_SECRET_KEY preview development
+
+   # Turnstile - PRODUCTION KEYS (domain-restricted, from Cloudflare dashboard)
    printf "%s" "0x4AAA..." | vercel env add NEXT_PUBLIC_TURNSTILE_SITE_KEY production
    printf "%s" "0x4AAA..." | vercel env add TURNSTILE_SECRET_KEY production
 
-   # Gist URL (for build-time data fetch)
-   printf "%s" "https://gist.githubusercontent.com/..." | vercel env add RESUME_DATA_GIST_URL production
+   # Gist URL (ALL ENVIRONMENTS - for build-time data fetch)
+   printf "%s" "https://gist.githubusercontent.com/..." | vercel env add RESUME_DATA_GIST_URL production preview development
+
+   # Analytics (ALL ENVIRONMENTS - optional)
+   printf "%s" "phc_..." | vercel env add NEXT_PUBLIC_POSTHOG_KEY production preview development
+   printf "%s" "https://eu.i.posthog.com" | vercel env add NEXT_PUBLIC_POSTHOG_HOST production preview development
+   printf "%s" "phc_..." | vercel env add POSTHOG_API_KEY production preview development
    ```
+
+   **Note:** See `.env.example` for complete list with Vercel scope recommendations
 
 4. **Deploy**
    ```bash
