@@ -50,7 +50,7 @@ Next.js bundles any imported JSON into the component that imports it. Server com
 **Discovery Commands:**
 ```bash
 # Build and check bundles
-bun run build
+just build
 rg "[REDACTED_EMAIL]" .next/static/
 rg "[REDACTED_PHONE]" .next/server/
 
@@ -873,7 +873,7 @@ Run these to verify issues before fixing:
 
 ```bash
 # P0-1: PII in bundles
-bun run build
+just build
 rg "[REDACTED_EMAIL]|[REDACTED_PHONE]" .next/static/ .next/server/
 
 # P0-2: In-memory storage

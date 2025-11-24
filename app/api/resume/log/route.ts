@@ -103,7 +103,7 @@ export async function POST(request: NextRequest) {
       }
     }
 
-    await captureEvent(sessionId, event, eventProperties)
+    await captureEvent(sessionId, event, eventProperties, clientIP)
 
     return NextResponse.json({ success: true })
 

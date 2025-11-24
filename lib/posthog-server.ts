@@ -47,11 +47,16 @@ export function getPostHogClient(): PostHog | null {
 
 /**
  * Safely capture event without throwing on failure
+ * @param distinctId - Unique identifier (sessionId or clientIP)
+ * @param event - Event name
+ * @param properties - Event properties
+ * @param ip - Optional client IP for GeoIP lookup (recommended for location tracking)
  */
 export async function captureEvent(
   distinctId: string,
   event: string,
-  properties?: Record<string, any>
+  properties?: Record<string, any>,
+  ip?: string
 ): Promise<void> {
   const client = getPostHogClient();
   if (!client) return;
@@ -64,9 +69,11 @@ export async function captureEvent(
         ...properties,
         environment: process.env.NODE_ENV,
         timestamp: new Date().toISOString(),
+        // Include IP for PostHog GeoIP lookup (if provided)
+        ...(ip && { $ip: ip }),
       },
     });
-    console.log(`[PostHog] Event captured: ${event} for ${distinctId}`);
+    console.log(`[PostHog] Event captured: ${event} for ${distinctId}${ip ? ` from ${ip}` : ''}`);
   } catch (error) {
     console.error("[PostHog] Failed to capture event:", event, error);
   }

@@ -147,20 +147,25 @@ export async function POST(request: NextRequest) {
       }
     }
 
-    await captureEvent(sessionId || clientIP, 'resume_prepared', {
-      sessionId,
-      email,
-      linkedin,
-      roleProfileId: roleProfile.id,
-      roleProfileName: roleProfile.name,
-      bulletIds,
-      bulletCount: selected.length,
-      bulletsByCompany,
-      bulletsByTag,
-      config: selectionConfig,
-      selectionDuration,
-      clientIP,
-    })
+    await captureEvent(
+      sessionId || clientIP,
+      'resume_prepared',
+      {
+        sessionId,
+        email,
+        linkedin,
+        roleProfileId: roleProfile.id,
+        roleProfileName: roleProfile.name,
+        bulletIds,
+        bulletCount: selected.length,
+        bulletsByCompany,
+        bulletsByTag,
+        config: selectionConfig,
+        selectionDuration,
+        clientIP,
+      },
+      clientIP // Pass IP for GeoIP lookup
+    )
 
     // Return results
     return NextResponse.json(

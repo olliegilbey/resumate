@@ -1,6 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { generateVCard } from '@/lib/vcard'
 import type { ResumeData } from '@/types/resume'
+import { captureEvent } from '@/lib/posthog-server'
+import { getClientIP } from '@/lib/rate-limit'
 
 /**
  * Server-side vCard generation with Turnstile protection
@@ -63,7 +65,7 @@ async function loadResumeData(): Promise<ResumeData | null> {
 /**
  * Shared function to generate and return vCard after token verification
  */
-async function generateContactCardResponse(token: string): Promise<NextResponse> {
+async function generateContactCardResponse(token: string, request: NextRequest): Promise<NextResponse> {
   // Check if token was already used (replay attack prevention)
   if (usedTokens.has(token)) {
     console.warn('Duplicate Turnstile token blocked')
@@ -134,11 +136,31 @@ async function generateContactCardResponse(token: string): Promise<NextResponse>
     note: resumeData.summary ?? undefined,
   })
 
+  // Capture vCard download event
+  const clientIP = getClientIP(request)
+  const filename = `${fullName.replace(/\s+/g, '-').toLowerCase()}-contact.vcf`
+
+  await captureEvent(
+    clientIP,
+    'vcard_downloaded',
+    {
+      filename,
+      fullName,
+      hasLinkedin: !!resumeData.personal.linkedin,
+      hasGithub: !!resumeData.personal.github,
+      hasLocation: !!resumeData.personal.location,
+      emailCount: emails.length,
+      clientIP,
+      vcardSize: vcardContent.length,
+    },
+    clientIP // Pass IP for GeoIP lookup
+  )
+
   // Return as downloadable file
   return new NextResponse(vcardContent, {
     headers: {
       'Content-Type': 'text/vcard;charset=utf-8',
-      'Content-Disposition': `attachment; filename="${fullName.replace(/\s+/g, '-').toLowerCase()}-contact.vcf"`,
+      'Content-Disposition': `attachment; filename="${filename}"`,
       'Cache-Control': 'no-store, must-revalidate',
       'X-Robots-Tag': 'noindex, nofollow',
     },
@@ -155,7 +177,7 @@ export async function GET(request: NextRequest) {
       return new NextResponse('Missing verification token', { status: 400 })
     }
 
-    return await generateContactCardResponse(token)
+    return await generateContactCardResponse(token, request)
   } catch (error) {
     console.error('Contact card GET error:', error)
     return new NextResponse('Internal server error', { status: 500 })
@@ -185,7 +207,7 @@ export async function POST(request: NextRequest) {
       return new NextResponse('Missing verification token', { status: 400 })
     }
 
-    return await generateContactCardResponse(token)
+    return await generateContactCardResponse(token, request)
   } catch (error) {
     console.error('Contact card POST error:', error)
     return new NextResponse('Internal server error', { status: 500 })

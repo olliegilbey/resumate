@@ -374,7 +374,7 @@ ORDER BY selections DESC
 
 ### Unit Tests
 ```bash
-bun test app/api/resume/log/__tests__/route.test.ts
+just test-ts  # Run all TypeScript tests
 ```
 
 **Coverage:**

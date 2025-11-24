@@ -59,7 +59,8 @@ describe('/api/resume/log', () => {
         linkedin: 'linkedin.com/in/test',
         bulletCount: 24,
         pdfSize: 100000,
-      })
+      }),
+      'unknown' // clientIP from getClientIP(request)
     )
   })
 
@@ -100,7 +101,8 @@ describe('/api/resume/log', () => {
         generationDuration: 1200,
         totalDuration: 1700,
         wasmCached: true,
-      })
+      }),
+      'unknown'
     )
   })
 
@@ -138,7 +140,8 @@ describe('/api/resume/log', () => {
         linkedin: 'linkedin.com/in/user',
         errorMessage: 'WASM failed to load',
         errorStage: 'wasm_load',
-      })
+      }),
+      'unknown'
     )
   })
 

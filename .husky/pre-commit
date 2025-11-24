@@ -270,6 +270,8 @@ fi
 if [ -n "$TS_STAGED" ] || echo "$RS_STAGED" | grep -q "crates/shared-types/"; then
   printf "${YELLOW}  → Running TypeScript tests${NC}\n"
 
+  # Use package.json script directly (not `just test-ts`) for infrastructure validation
+  # Both call vitest, but pre-commit needs specific flags (--run, --reporter=dot)
   if ! bun run test --run --reporter=dot 2>&1; then
     printf "${RED}❌ TypeScript tests failed${NC}\n"
     exit 1
