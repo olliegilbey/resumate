@@ -5,7 +5,16 @@ import { Moon, Sun } from "lucide-react"
 import { cn } from "@/lib/utils"
 
 export function ThemeToggle() {
-  const { theme, isOverride, toggleTheme } = useTheme()
+  const { theme, isOverride, isMounted, toggleTheme } = useTheme()
+
+  // Render placeholder during SSR to prevent hydration mismatch
+  if (!isMounted) {
+    return (
+      <div className="p-2 h-9 w-9 rounded-lg">
+        <div className="h-5 w-5" />
+      </div>
+    )
+  }
 
   return (
     <button
