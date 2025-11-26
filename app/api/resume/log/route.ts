@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { captureEvent } from '@/lib/posthog-server'
+import { captureEvent, flushEvents } from '@/lib/posthog-server'
 import { getClientIP, checkRateLimit } from '@/lib/rate-limit'
 
 /**
@@ -147,6 +147,9 @@ export async function POST(request: NextRequest) {
     }
 
     await captureEvent(sessionId, event, eventProperties, clientIP)
+
+    // Flush events before serverless function exits
+    await flushEvents()
 
     return NextResponse.json({ success: true })
 

@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { checkRateLimit, getClientIP } from '@/lib/rate-limit'
 import type { ResumeData, Company, Position, Bullet, RoleProfile } from '@/types/resume'
-import { captureEvent } from '@/lib/posthog-server'
+import { captureEvent, flushEvents } from '@/lib/posthog-server'
 
 // In-memory store for used tokens (prevents replay attacks within function instance lifetime)
 // Note: In serverless, each function instance is stateless and short-lived
@@ -170,6 +170,9 @@ export async function POST(request: NextRequest) {
       },
       clientIP // Pass IP for GeoIP lookup
     )
+
+    // Flush events before serverless function exits
+    await flushEvents()
 
     // Return results
     return NextResponse.json(

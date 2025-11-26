@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { generateVCard } from '@/lib/vcard'
 import type { ResumeData } from '@/types/resume'
-import { captureEvent } from '@/lib/posthog-server'
+import { captureEvent, flushEvents } from '@/lib/posthog-server'
 import { getClientIP } from '@/lib/rate-limit'
 
 /**
@@ -155,6 +155,9 @@ async function generateContactCardResponse(token: string, request: NextRequest):
     },
     clientIP // Pass IP for GeoIP lookup
   )
+
+  // Flush events before serverless function exits
+  await flushEvents()
 
   // Return as downloadable file
   return new NextResponse(vcardContent, {

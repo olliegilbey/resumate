@@ -7,6 +7,7 @@ import * as rateLimit from '@/lib/rate-limit'
 // Mock PostHog server
 vi.mock('@/lib/posthog-server', () => ({
   captureEvent: vi.fn(),
+  flushEvents: vi.fn(),
 }))
 
 // Mock rate-limit
