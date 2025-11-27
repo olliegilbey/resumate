@@ -91,7 +91,7 @@ export async function flushEvents(): Promise<void> {
     await client.flush();
     console.log("[PostHog] Events flushed successfully");
   } catch (error) {
+    // Best-effort: log but don't throw - analytics shouldn't break core functionality
     console.error("[PostHog] Failed to flush events:", error);
-    throw error; // Propagate error for debugging
   }
 }
