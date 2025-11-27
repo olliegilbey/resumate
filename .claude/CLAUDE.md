@@ -165,6 +165,8 @@ Single source of truth for each fact, don't duplicate facts. Auto-generated fact
 
 ## Key Commands Reference
 
+ALWAYS prefer `just` over `bun` or `cargo`
+
 ```bash
 just                  # Discover all commands
 just test             # All tests
@@ -216,7 +218,7 @@ just metrics-generate # Update from logs
 
 **Type safety:** Rust → Schema → TS. One-way flow. Never edit generated files.
 
-**Testing:** Write tests first. High coverage.
+**Testing:** Write tests first. High coverage. Always add tests to relevant `just` commands so they run correctly.
 
 **Data privacy:** Resume data gitignored. Gist for remote editing. Server-side contact info. NEVER expose email or phone number to bots.
 

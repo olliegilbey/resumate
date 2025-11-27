@@ -21,7 +21,7 @@ This framework follows [Anthropic's AI guidance principles](https://www.anthropi
 ✅ **All content**: Authentic and real
 ❌ **Never fabricates** career history or achievements
 
-Resumate is **not** an AI resume generator. It's a curation system that helps you present your authentic professional story effectively. You write your bullets once, with all the detail and context. When you need a resume for a specific role, AI helps you select which experiences are most relevant—never generating or fabricating content.
+Resumate is **not** an AI resume generator. It's a curation system that helps you present your authentic professional story effectively. You write your bullets once, with all the detail and context. When you need a resume for a specific role, AI helps you select which experiences are most relevant - never generating or fabricating content.
 
 **Compliant with Anthropic's candidate AI guidance.**
 

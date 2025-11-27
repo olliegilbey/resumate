@@ -136,13 +136,16 @@ async function generateContactCardResponse(token: string, request: NextRequest):
     note: resumeData.summary ?? undefined,
   })
 
-  // Capture vCard download event
+  // Capture contact card served event (authoritative delivery confirmation + geoIP)
+  // Distinct from client-side contact_card_downloaded which tracks timing/funnel
+  // Uses "server:contact_card" as distinctId since we don't have client session
+  // GeoIP still works via $ip property
   const clientIP = getClientIP(request)
   const filename = `${fullName.replace(/\s+/g, '-').toLowerCase()}-contact.vcf`
 
   await captureEvent(
-    clientIP,
-    'vcard_downloaded',
+    'server:contact_card',
+    'contact_card_served',
     {
       filename,
       fullName,

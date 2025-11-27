@@ -1,9 +1,15 @@
-import { describe, it, expect, vi, beforeEach } from 'vitest'
-import { render, screen } from '@testing-library/react'
+import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest'
+import { render, screen, act, within, fireEvent } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { DataExplorer } from '../DataExplorer'
 import { ResumeData } from '@/types/resume'
 import { mockResumeData } from '@/lib/__tests__/fixtures/resume-data.fixture'
+
+// Mock useTrackEvent hook
+const mockTrackEvent = vi.fn()
+vi.mock('@/lib/posthog-client', () => ({
+  useTrackEvent: () => mockTrackEvent,
+}))
 
 // Mock lib/tags module
 vi.mock('@/lib/tags', async (importOriginal) => {
@@ -188,5 +194,143 @@ describe('DataExplorer', () => {
 
     render(<DataExplorer data={emptyData} />)
     expect(screen.getByText('No results found')).toBeInTheDocument()
+  })
+})
+
+describe('DataExplorer Analytics', () => {
+  beforeEach(() => {
+    vi.clearAllMocks()
+  })
+
+  // Helper to get filter section
+  const getFilterSection = () => screen.getByText('Filter by Tags').closest('div')!.parentElement!
+
+  describe('tag filter tracking', () => {
+    beforeEach(() => {
+      vi.useFakeTimers()
+    })
+
+    afterEach(() => {
+      vi.useRealTimers()
+    })
+
+    it('should track tag_filter_changed after debounce when tag selected', () => {
+      render(<DataExplorer data={mockResumeData} />)
+
+      const filterSection = getFilterSection()
+      const checkboxes = within(filterSection).getAllByRole('checkbox')
+
+      // Click first checkbox using fireEvent (synchronous)
+      fireEvent.click(checkboxes[0])
+
+      // Should NOT fire immediately
+      expect(mockTrackEvent).not.toHaveBeenCalled()
+
+      // Advance past debounce
+      act(() => {
+        vi.advanceTimersByTime(1100)
+      })
+
+      // Should fire with correct properties
+      expect(mockTrackEvent).toHaveBeenCalledWith('tag_filter_changed', {
+        tags: expect.any(Array),
+        tag_count: 1,
+        result_count: expect.any(Number),
+      })
+    })
+
+    it('should debounce rapid tag changes', () => {
+      render(<DataExplorer data={mockResumeData} />)
+
+      const filterSection = getFilterSection()
+      const checkboxes = within(filterSection).getAllByRole('checkbox')
+
+      // Click first checkbox
+      fireEvent.click(checkboxes[0])
+
+      // Wait 500ms (not enough)
+      act(() => {
+        vi.advanceTimersByTime(500)
+      })
+
+      // Click second checkbox
+      fireEvent.click(checkboxes[1])
+
+      // Should still not have fired
+      expect(mockTrackEvent).not.toHaveBeenCalled()
+
+      // Advance past debounce from second click
+      act(() => {
+        vi.advanceTimersByTime(1100)
+      })
+
+      // Should fire only once with both tags
+      expect(mockTrackEvent).toHaveBeenCalledTimes(1)
+      expect(mockTrackEvent).toHaveBeenCalledWith('tag_filter_changed', {
+        tags: expect.any(Array),
+        tag_count: 2,
+        result_count: expect.any(Number),
+      })
+    })
+
+    it('should not track tag_filter_changed when tags cleared to empty', () => {
+      render(<DataExplorer data={mockResumeData} />)
+
+      const filterSection = getFilterSection()
+      const checkboxes = within(filterSection).getAllByRole('checkbox')
+
+      // Select first tag
+      fireEvent.click(checkboxes[0])
+
+      // Wait for debounce
+      act(() => {
+        vi.advanceTimersByTime(1100)
+      })
+
+      // Clear the call
+      mockTrackEvent.mockClear()
+
+      // Deselect the tag
+      fireEvent.click(checkboxes[0])
+
+      // Wait for debounce
+      act(() => {
+        vi.advanceTimersByTime(1100)
+      })
+
+      // Should NOT track empty tag selection (user is resetting)
+      expect(mockTrackEvent).not.toHaveBeenCalled()
+    })
+  })
+
+  describe('search tracking', () => {
+    it('should track search_performed on blur with non-empty query', () => {
+      render(<DataExplorer data={mockResumeData} />)
+
+      const searchInput = screen.getByPlaceholderText(/Search experience/i)
+
+      // Type using fireEvent.change (synchronous)
+      fireEvent.change(searchInput, { target: { value: 'deployment' } })
+
+      // Blur the input
+      fireEvent.blur(searchInput)
+
+      expect(mockTrackEvent).toHaveBeenCalledWith('search_performed', {
+        query: 'deployment',
+        result_count: expect.any(Number),
+      })
+    })
+
+    it('should not track search_performed on blur with empty query', () => {
+      render(<DataExplorer data={mockResumeData} />)
+
+      const searchInput = screen.getByPlaceholderText(/Search experience/i)
+
+      // Focus and blur without typing
+      fireEvent.focus(searchInput)
+      fireEvent.blur(searchInput)
+
+      expect(mockTrackEvent).not.toHaveBeenCalledWith('search_performed', expect.anything())
+    })
   })
 })

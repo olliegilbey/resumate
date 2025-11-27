@@ -1,6 +1,6 @@
 "use client"
 
-import { useState, useMemo } from "react"
+import { useState, useMemo, useEffect, useRef, useCallback } from "react"
 import { ResumeData, Tag, BulletPoint } from "@/types/resume"
 import { SearchBar } from "./SearchBar"
 import { TagFilter } from "./TagFilter"
@@ -8,6 +8,7 @@ import { CompanySection } from "./CompanySection"
 import { GlassPanel } from "@/components/ui/GlassPanel"
 import { cn } from "@/lib/utils"
 import { getSortedTags } from "@/lib/tags"
+import { useTrackEvent } from "@/lib/posthog-client"
 
 interface DataExplorerProps {
   data: ResumeData
@@ -17,6 +18,9 @@ interface DataExplorerProps {
 export function DataExplorer({ data, className }: DataExplorerProps) {
   const [searchQuery, setSearchQuery] = useState("")
   const [selectedTags, setSelectedTags] = useState<Tag[]>([])
+  const trackEvent = useTrackEvent()
+  const debounceTimerRef = useRef<NodeJS.Timeout | null>(null)
+  const isInitialMount = useRef(true)
 
   // Extract all tags from resume data, sorted by weight (count × avgPriority)
   const allTags = useMemo(() => getSortedTags(data), [data])
@@ -92,6 +96,51 @@ export function DataExplorer({ data, className }: DataExplorerProps) {
     }
   }, [filteredData])
 
+  // Track tag filter changes with 1s debounce
+  useEffect(() => {
+    // Skip initial mount
+    if (isInitialMount.current) {
+      isInitialMount.current = false
+      return
+    }
+
+    // Clear existing timer
+    if (debounceTimerRef.current) {
+      clearTimeout(debounceTimerRef.current)
+    }
+
+    // Don't track empty tag selections (user is resetting)
+    if (selectedTags.length === 0) {
+      return
+    }
+
+    // Set new debounced timer
+    debounceTimerRef.current = setTimeout(() => {
+      trackEvent('tag_filter_changed', {
+        tags: [...selectedTags],
+        tag_count: selectedTags.length,
+        result_count: stats.totalBullets,
+      })
+    }, 1000)
+
+    // Cleanup on unmount or before next effect
+    return () => {
+      if (debounceTimerRef.current) {
+        clearTimeout(debounceTimerRef.current)
+      }
+    }
+  }, [selectedTags, stats.totalBullets, trackEvent])
+
+  // Handle search blur for tracking
+  const handleSearchBlur = useCallback(() => {
+    if (searchQuery.trim()) {
+      trackEvent('search_performed', {
+        query: searchQuery,
+        result_count: stats.totalBullets,
+      })
+    }
+  }, [searchQuery, stats.totalBullets, trackEvent])
+
   // Get all bullets from original data for TagFilter counts
   const allBulletsForTagFilter = useMemo(() => {
     const bullets: BulletPoint[] = []
@@ -120,6 +169,7 @@ export function DataExplorer({ data, className }: DataExplorerProps) {
         <SearchBar
           value={searchQuery}
           onChange={setSearchQuery}
+          onBlur={handleSearchBlur}
           placeholder="Search experience, companies, roles, or tags..."
         />
       </div>

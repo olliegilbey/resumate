@@ -9,6 +9,7 @@ import { ArrowRight, Briefcase, Download, AlertCircle, X, Calendar } from "lucid
 import resumeData from "@/data/resume-data.json"
 import { Turnstile, type TurnstileInstance } from "@marsidev/react-turnstile"
 import { useTheme } from "@/contexts/ThemeContext"
+import { useTrackEvent } from "@/lib/posthog-client"
 
 export default function HomePage() {
   const { theme } = useTheme()
@@ -20,6 +21,11 @@ export default function HomePage() {
   const turnstileRef = useRef<TurnstileInstance>(null)
   const autoDownloadTimerRef = useRef<NodeJS.Timeout | null>(null)
 
+  // Analytics tracking
+  const trackEvent = useTrackEvent()
+  const flowStartTimeRef = useRef<number | null>(null)
+  const verifiedTimeRef = useRef<number | null>(null)
+
   // Validate Turnstile site key
   const siteKey = process.env.NEXT_PUBLIC_TURNSTILE_SITE_KEY
   if (!siteKey) {
@@ -29,12 +35,28 @@ export default function HomePage() {
   // When Turnstile succeeds, store token
   const handleTurnstileSuccess = (token: string) => {
     console.log('Turnstile verified, token ready')
+    const now = Date.now()
+    verifiedTimeRef.current = now
+
+    // Track verification with turnstile duration
+    if (flowStartTimeRef.current) {
+      trackEvent('contact_card_verified', {
+        turnstile_duration_ms: now - flowStartTimeRef.current,
+      })
+    }
+
     setVerifiedToken(token)
     setIsVerifying(false)
     setErrorMessage(null)
   }
 
   const handleOpenModal = () => {
+    const now = Date.now()
+    flowStartTimeRef.current = now
+    verifiedTimeRef.current = null
+
+    trackEvent('contact_card_initiated', { timestamp: now })
+
     setShowTurnstileModal(true)
     setVerifiedToken(null)
     setErrorMessage(null)
@@ -61,6 +83,14 @@ export default function HomePage() {
 
     // Trigger download immediately
     if (verifiedToken) {
+      // Track download with timing (client-side: funnel completion + duration)
+      // Server separately tracks contact_card_served (delivery confirmation + geoIP)
+      if (flowStartTimeRef.current) {
+        trackEvent('contact_card_downloaded', {
+          total_duration_ms: Date.now() - flowStartTimeRef.current,
+        })
+      }
+
       const link = document.createElement('a')
       link.href = `/api/contact-card?token=${encodeURIComponent(verifiedToken)}`
       link.style.display = 'none'
@@ -71,6 +101,8 @@ export default function HomePage() {
 
     // Close modal after download starts
     setTimeout(() => {
+      flowStartTimeRef.current = null
+      verifiedTimeRef.current = null
       setShowTurnstileModal(false)
       setVerifiedToken(null)
       setErrorMessage(null)
@@ -87,23 +119,45 @@ export default function HomePage() {
       autoDownloadTimerRef.current = null
     }
 
+    // Track cancellation if download wasn't completed
+    if (flowStartTimeRef.current) {
+      trackEvent('contact_card_cancelled', {
+        stage: verifiedTimeRef.current ? 'verified' : 'turnstile',
+        duration_ms: Date.now() - flowStartTimeRef.current,
+      })
+      flowStartTimeRef.current = null
+      verifiedTimeRef.current = null
+    }
+
     setShowTurnstileModal(false)
     setVerifiedToken(null)
     setErrorMessage(null)
     setDownloadInitiated(false)
     turnstileRef.current?.reset()
-  }, [isVerifying])
+  }, [isVerifying, trackEvent])
 
   const handleTurnstileError = useCallback(() => {
+    if (flowStartTimeRef.current) {
+      trackEvent('contact_card_error', {
+        error_type: 'failed',
+        duration_ms: Date.now() - flowStartTimeRef.current,
+      })
+    }
     setErrorMessage('Verification failed. Please try again.')
     setIsVerifying(false)
-  }, [])
+  }, [trackEvent])
 
   const handleTurnstileExpire = useCallback(() => {
+    if (flowStartTimeRef.current) {
+      trackEvent('contact_card_error', {
+        error_type: 'expired',
+        duration_ms: Date.now() - flowStartTimeRef.current,
+      })
+    }
     setErrorMessage('Verification expired. Please refresh and try again.')
     setIsVerifying(false)
     setVerifiedToken(null)
-  }, [])
+  }, [trackEvent])
 
   // Auto-download when token is verified (with slight delay for UX)
   useEffect(() => {
@@ -113,6 +167,14 @@ export default function HomePage() {
       const timer = setTimeout(async () => {
         // Mark as initiated WHEN download actually triggers (not before)
         setDownloadInitiated(true)
+
+        // Track download with timing (client-side: funnel completion + duration)
+        // Server separately tracks contact_card_served (delivery confirmation + geoIP)
+        if (flowStartTimeRef.current) {
+          trackEvent('contact_card_downloaded', {
+            total_duration_ms: Date.now() - flowStartTimeRef.current,
+          })
+        }
 
         // Create a temporary anchor element and trigger download
         const link = document.createElement('a')
@@ -127,6 +189,8 @@ export default function HomePage() {
 
         // Close modal after download starts
         setTimeout(() => {
+          flowStartTimeRef.current = null
+          verifiedTimeRef.current = null
           setShowTurnstileModal(false)
           setVerifiedToken(null)
           setErrorMessage(null)
@@ -140,7 +204,7 @@ export default function HomePage() {
         autoDownloadTimerRef.current = null
       }
     }
-  }, [verifiedToken, downloadInitiated])
+  }, [verifiedToken, downloadInitiated, trackEvent])
 
   // Handle ESC key to close modal
   useEffect(() => {
