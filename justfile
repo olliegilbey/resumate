@@ -427,11 +427,14 @@ install:
     bun install
     @echo "  → Cargo dependencies..."
     cargo fetch
+    @echo "  → WASM tooling..."
+    rustup target add wasm32-unknown-unknown
+    cargo install wasm-pack --locked
     @echo ""
     @echo "✅ Dependencies installed"
     @echo ""
     @echo "Next steps:"
-    @echo "  1. Copy .env.example to .env.local and fill in values"
+    @echo "  1. Run: vercel link (pulls .env.local)"
     @echo "  2. Run: just data-pull"
     @echo "  3. Run: just wasm"
     @echo "  4. Run: just dev"

@@ -1,17 +1,6 @@
 /* tslint:disable */
 /* eslint-disable */
 /**
- * Get build timestamp (when WASM was compiled)
- */
-export function build_info(): string;
-/**
- * Validate JSON payload structure without generating
- *
- * Useful for pre-flight validation before expensive generation
- */
-export function validate_payload_json(payload_json: string): void;
-export function init_panic_hook(): void;
-/**
  * Generate PDF from GenerationPayload JSON using Typst
  *
  * This is the new Typst-based PDF generation, replacing the manual pdf-writer implementation.
@@ -37,9 +26,20 @@ export function init_panic_hook(): void;
  */
 export function generate_pdf_typst(payload_json: string, dev_mode: boolean): Uint8Array;
 /**
+ * Get build timestamp (when WASM was compiled)
+ */
+export function build_info(): string;
+/**
  * Test export to validate WASM build pipeline
  */
 export function version(): string;
+export function init_panic_hook(): void;
+/**
+ * Validate JSON payload structure without generating
+ *
+ * Useful for pre-flight validation before expensive generation
+ */
+export function validate_payload_json(payload_json: string): void;
 /**
  * Get estimated PDF size in bytes (for progress UI)
  */

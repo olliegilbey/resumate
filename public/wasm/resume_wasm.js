@@ -121,52 +121,6 @@ function takeObject(idx) {
     dropObject(idx);
     return ret;
 }
-/**
- * Get build timestamp (when WASM was compiled)
- * @returns {string}
- */
-export function build_info() {
-    let deferred1_0;
-    let deferred1_1;
-    try {
-        const retptr = wasm.__wbindgen_add_to_stack_pointer(-16);
-        wasm.build_info(retptr);
-        var r0 = getDataViewMemory0().getInt32(retptr + 4 * 0, true);
-        var r1 = getDataViewMemory0().getInt32(retptr + 4 * 1, true);
-        deferred1_0 = r0;
-        deferred1_1 = r1;
-        return getStringFromWasm0(r0, r1);
-    } finally {
-        wasm.__wbindgen_add_to_stack_pointer(16);
-        wasm.__wbindgen_export_0(deferred1_0, deferred1_1, 1);
-    }
-}
-
-/**
- * Validate JSON payload structure without generating
- *
- * Useful for pre-flight validation before expensive generation
- * @param {string} payload_json
- */
-export function validate_payload_json(payload_json) {
-    try {
-        const retptr = wasm.__wbindgen_add_to_stack_pointer(-16);
-        const ptr0 = passStringToWasm0(payload_json, wasm.__wbindgen_export_1, wasm.__wbindgen_export_2);
-        const len0 = WASM_VECTOR_LEN;
-        wasm.validate_payload_json(retptr, ptr0, len0);
-        var r0 = getDataViewMemory0().getInt32(retptr + 4 * 0, true);
-        var r1 = getDataViewMemory0().getInt32(retptr + 4 * 1, true);
-        if (r1) {
-            throw takeObject(r0);
-        }
-    } finally {
-        wasm.__wbindgen_add_to_stack_pointer(16);
-    }
-}
-
-export function init_panic_hook() {
-    wasm.init_panic_hook();
-}
 
 function getArrayU8FromWasm0(ptr, len) {
     ptr = ptr >>> 0;
@@ -221,6 +175,27 @@ export function generate_pdf_typst(payload_json, dev_mode) {
 }
 
 /**
+ * Get build timestamp (when WASM was compiled)
+ * @returns {string}
+ */
+export function build_info() {
+    let deferred1_0;
+    let deferred1_1;
+    try {
+        const retptr = wasm.__wbindgen_add_to_stack_pointer(-16);
+        wasm.build_info(retptr);
+        var r0 = getDataViewMemory0().getInt32(retptr + 4 * 0, true);
+        var r1 = getDataViewMemory0().getInt32(retptr + 4 * 1, true);
+        deferred1_0 = r0;
+        deferred1_1 = r1;
+        return getStringFromWasm0(r0, r1);
+    } finally {
+        wasm.__wbindgen_add_to_stack_pointer(16);
+        wasm.__wbindgen_export_0(deferred1_0, deferred1_1, 1);
+    }
+}
+
+/**
  * Test export to validate WASM build pipeline
  * @returns {string}
  */
@@ -238,6 +213,32 @@ export function version() {
     } finally {
         wasm.__wbindgen_add_to_stack_pointer(16);
         wasm.__wbindgen_export_0(deferred1_0, deferred1_1, 1);
+    }
+}
+
+export function init_panic_hook() {
+    wasm.init_panic_hook();
+}
+
+/**
+ * Validate JSON payload structure without generating
+ *
+ * Useful for pre-flight validation before expensive generation
+ * @param {string} payload_json
+ */
+export function validate_payload_json(payload_json) {
+    try {
+        const retptr = wasm.__wbindgen_add_to_stack_pointer(-16);
+        const ptr0 = passStringToWasm0(payload_json, wasm.__wbindgen_export_1, wasm.__wbindgen_export_2);
+        const len0 = WASM_VECTOR_LEN;
+        wasm.validate_payload_json(retptr, ptr0, len0);
+        var r0 = getDataViewMemory0().getInt32(retptr + 4 * 0, true);
+        var r1 = getDataViewMemory0().getInt32(retptr + 4 * 1, true);
+        if (r1) {
+            throw takeObject(r0);
+        }
+    } finally {
+        wasm.__wbindgen_add_to_stack_pointer(16);
     }
 }
 

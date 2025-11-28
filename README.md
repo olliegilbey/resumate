@@ -55,72 +55,68 @@ Resumate is **not** an AI resume generator. It's a curation system that helps yo
 
 ## Quick Start
 
-### 1. Clone & Install
+**Prerequisites**: [just](https://github.com/casey/just) (`brew install just`), [bun](https://bun.sh), [Rust](https://rustup.rs)
+
+### Existing Vercel Project (Recommended)
 
 ```bash
 git clone https://github.com/yourusername/resumate.git
 cd resumate
+just install          # bun, cargo, wasm-pack, wasm32 target
+vercel link           # pulls .env.local from Vercel
+just data-pull        # fetch resume data from gist
+just wasm             # build WASM (first time ~2min)
+just dev              # http://localhost:3000
+```
 
-# Install dependencies (recommended - uses justfile)
+### New Project (Manual Setup)
+
+```bash
+git clone https://github.com/yourusername/resumate.git
+cd resumate
 just install
 
-# OR manually
-bun install
-```
-
-**Build System**: This project uses [justfile](https://github.com/casey/just) for build automation. Install with `brew install just` (macOS) or see [installation instructions](https://github.com/casey/just#installation).
-
-### 2. Configure Your Data
-
-```bash
-# Copy the template to create your personal resume data
+# Create resume data from template
 cp data/resume-data-template.json data/resume-data.json
 
-# Copy environment variables template
-cp .env.example .env.local
-```
-
-### 3. Write Your Experiences
-
-Edit `data/resume-data.json` with YOUR career story:
-- Write bullet points in your own words
-- Add context, metrics, and links
-- Tag each experience with relevant categories
-- Prioritize manually (1-10 scale)
-
-**Remember**: Write everything yourself. This is your authentic career history.
-
-### 4. Add Your Contact Info & Gist URL
-
-Edit `.env.local`:
-
-```env
-CONTACT_EMAIL_PERSONAL=your-email@example.com
-CONTACT_EMAIL_PROFESSIONAL=your-work@example.com
-CONTACT_PHONE=+1234567890
-
-# Get free Turnstile keys from https://dash.cloudflare.com/turnstile
-NEXT_PUBLIC_TURNSTILE_SITE_KEY=your-site-key-here
-TURNSTILE_SECRET_KEY=your-secret-key-here
-
-# Optional: GitHub Gist for remote editing
-RESUME_DATA_GIST_URL=https://gist.githubusercontent.com/[user]/[hash]/raw/resume-data.json
-```
-
-### 5. Run Locally
-
-```bash
+# Configure environment (see "Environment Variables" below)
+# Then:
+just wasm
 just dev
 ```
 
-Visit [http://localhost:3000](http://localhost:3000)
-
-**Available Commands**: Run `just` to see all available commands (40+ automation targets including dev, build, test, wasm, data management, type generation, and more).
+**Available Commands**: Run `just` to see 40+ automation targets.
 
 **Routes**:
 - `/` - Landing page with contact links
 - `/resume` - Resume overview
 - `/resume/view` - Full data explorer (search, filter, explore all experiences)
+
+---
+
+## Environment Variables
+
+Create `.env.local` with:
+
+```env
+# Contact info (server-side only, never exposed to client)
+CONTACT_EMAIL_PERSONAL=your-email@personal.com
+CONTACT_EMAIL_PROFESSIONAL=your-email@work.com
+CONTACT_PHONE=+1234567890
+
+# Cloudflare Turnstile (see setup below)
+NEXT_PUBLIC_TURNSTILE_SITE_KEY=0x4...
+TURNSTILE_SECRET_KEY=0x4...
+
+# Resume data source (GitHub Gist raw URL)
+RESUME_DATA_GIST_URL=https://gist.githubusercontent.com/[user]/[hash]/raw/resume-data.json
+
+# Optional: PostHog analytics
+NEXT_PUBLIC_POSTHOG_KEY=phc_...
+POSTHOG_API_KEY=phc_...
+```
+
+**Tip**: If deploying to Vercel, run `vercel link` to pull all env vars automatically.
 
 ---
 

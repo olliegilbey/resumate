@@ -104,3 +104,4 @@ bun.lock
 
 # Note: Cargo.lock is intentionally tracked for workspace reproducibility
 # Only libraries should ignore Cargo.lock, applications should commit it
+.env*.local
