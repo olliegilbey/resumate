@@ -308,7 +308,9 @@ export function ResumeDownload({ resumeData }: ResumeDownloadProps) {
             }).catch(err => console.error('Failed to log error:', err))
           }
 
-          // Keep verifiedToken - user can retry without re-verifying Turnstile
+          // Reset token on error - server already consumed it, user must re-verify
+          setVerifiedToken(null)
+          turnstileRef.current?.reset()
         }
       }, 300) // Short delay like vCard
 
@@ -516,8 +518,9 @@ export function ResumeDownload({ resumeData }: ResumeDownloadProps) {
                     onClick={() => {
                       setErrorMessage(null)
                       setStatus('idle')
-                      // Don't reset Turnstile - it prevents the loop
-                      // User is still verified and can retry
+                      // Reset for fresh Turnstile verification
+                      setVerifiedToken(null)
+                      turnstileRef.current?.reset()
                     }}
                     className="text-sm text-red-600 hover:text-red-800 font-medium mt-1"
                   >

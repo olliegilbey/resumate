@@ -68,4 +68,27 @@ describe('SearchBar', () => {
     const { container } = render(<SearchBar value="" onChange={vi.fn()} className="custom-class" />)
     expect(container.firstChild).toHaveClass('custom-class')
   })
+
+  it('should call onBlur when input loses focus', async () => {
+    const user = userEvent.setup()
+    const onBlur = vi.fn()
+    render(<SearchBar value="test" onChange={vi.fn()} onBlur={onBlur} />)
+
+    const input = screen.getByPlaceholderText('Search experience...')
+    await user.click(input)
+    await user.tab() // blur
+
+    expect(onBlur).toHaveBeenCalledTimes(1)
+  })
+
+  it('should not fail when onBlur is not provided', async () => {
+    const user = userEvent.setup()
+    render(<SearchBar value="test" onChange={vi.fn()} />)
+
+    const input = screen.getByPlaceholderText('Search experience...')
+    await user.click(input)
+    await user.tab() // blur
+
+    // Should not throw
+  })
 })
