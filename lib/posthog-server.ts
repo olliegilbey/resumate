@@ -69,9 +69,9 @@ export async function captureEvent(
         ...properties,
         environment: process.env.NODE_ENV,
         timestamp: new Date().toISOString(),
-        // Include IP for PostHog GeoIP lookup (if provided)
-        ...(ip && { $ip: ip }),
       },
+      // $ip must be top-level for PostHog GeoIP lookup (not inside properties)
+      ...(ip && { $ip: ip }),
     });
     console.log(`[PostHog] Event captured: ${event} for ${distinctId}${ip ? ` from ${ip}` : ''}`);
   } catch (error) {
