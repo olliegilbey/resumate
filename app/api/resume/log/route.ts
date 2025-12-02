@@ -5,14 +5,17 @@ import { getClientIP, checkRateLimit } from '@/lib/rate-limit'
 /**
  * POST /api/resume/log
  *
- * Client-side event logging endpoint for PDF generation events.
- * Captures resume_generated, resume_failed, and resume_downloaded events.
+ * Server-side event logging endpoint for PDF generation events.
+ * Captures resume_generated, resume_failed, resume_download_notified events.
  * Triggers n8n webhook for download notifications.
+ *
+ * Note: resume_download_notified (server) differs from resume_downloaded (client).
+ * Server events are for n8n/notifications, client events have accurate GeoIP.
  *
  * Rate limit: 30 requests/hour per IP
  */
 
-const ALLOWED_EVENTS = ['resume_generated', 'resume_failed', 'resume_downloaded']
+const ALLOWED_EVENTS = ['resume_generated', 'resume_failed', 'resume_download_notified']
 const UUID_REGEX = /^[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i
 
 export async function POST(request: NextRequest) {
@@ -94,7 +97,7 @@ export async function POST(request: NextRequest) {
       clientIP,
     }
 
-    if (event === 'resume_downloaded') {
+    if (event === 'resume_download_notified') {
       eventProperties.bulletCount = bulletCount
       eventProperties.bullets = bullets // Full bullet content for analysis
       eventProperties.pdfSize = pdfSize
@@ -102,7 +105,7 @@ export async function POST(request: NextRequest) {
 
       // Trigger n8n webhook for download notification
       triggerN8nWebhook({
-        event: 'resume_downloaded',
+        event: 'resume_download_notified',
         sessionId,
         email,
         linkedin,

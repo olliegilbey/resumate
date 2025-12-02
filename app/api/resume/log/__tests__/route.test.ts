@@ -42,14 +42,14 @@ describe('/api/resume/log', () => {
     global.fetch = originalFetch
   })
 
-  it('logs resume_downloaded event with contact info', async () => {
+  it('logs resume_download_notified event with contact info', async () => {
     const mockCaptureEvent = vi.spyOn(posthogServer, 'captureEvent')
     const validSessionId = '550e8400-e29b-41d4-a716-446655440000'
 
     const request = new NextRequest('http://localhost:3000/api/resume/log', {
       method: 'POST',
       body: JSON.stringify({
-        event: 'resume_downloaded',
+        event: 'resume_download_notified',
         sessionId: validSessionId,
         roleProfileId: 'developer-relations-lead',
         roleProfileName: 'Developer Relations Lead',
@@ -72,7 +72,7 @@ describe('/api/resume/log', () => {
     expect(data.success).toBe(true)
     expect(mockCaptureEvent).toHaveBeenCalledWith(
       validSessionId,
-      'resume_downloaded',
+      'resume_download_notified',
       expect.objectContaining({
         sessionId: validSessionId,
         roleProfileId: 'developer-relations-lead',
@@ -173,7 +173,7 @@ describe('/api/resume/log', () => {
     const request = new NextRequest('http://localhost:3000/api/resume/log', {
       method: 'POST',
       body: JSON.stringify({
-        event: 'resume_downloaded',
+        event: 'resume_download_notified',
         // Missing sessionId
       }),
     })
@@ -192,7 +192,7 @@ describe('/api/resume/log', () => {
     const request = new NextRequest('http://localhost:3000/api/resume/log', {
       method: 'POST',
       body: JSON.stringify({
-        event: 'resume_downloaded',
+        event: 'resume_download_notified',
         sessionId: validSessionId,
         roleProfileId: 'test-role',
         bulletCount: 10,
@@ -233,7 +233,7 @@ describe('/api/resume/log', () => {
     const request = new NextRequest('http://localhost:3000/api/resume/log', {
       method: 'POST',
       body: JSON.stringify({
-        event: 'resume_downloaded',
+        event: 'resume_download_notified',
         sessionId: 'not-a-valid-uuid',
       }),
     })
@@ -259,7 +259,7 @@ describe('/api/resume/log', () => {
     const request = new NextRequest('http://localhost:3000/api/resume/log', {
       method: 'POST',
       body: JSON.stringify({
-        event: 'resume_downloaded',
+        event: 'resume_download_notified',
         sessionId: validSessionId,
         bulletCount: 10,
       }),

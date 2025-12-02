@@ -313,12 +313,12 @@ export function ResumeDownload({ resumeData }: ResumeDownloadProps) {
             total_duration_ms: Date.now() - flowStartRef.current,
           })
 
-          // Log download event to server (includes notification trigger)
+          // Log download event to server (triggers n8n notification)
           await fetch('/api/resume/log', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({
-              event: 'resume_downloaded',
+              event: 'resume_download_notified',
               sessionId,
               roleProfileId: selectedRoleId,
               roleProfileName: roleProfile.name,
