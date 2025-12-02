@@ -32,9 +32,10 @@ export function getPostHogClient(): PostHog | null {
   try {
     posthogInstance = new PostHog(apiKey, {
       host: "https://eu.i.posthog.com",
-      // Disable in dev for faster builds
-      flushAt: isDev ? 1 : 20,
-      flushInterval: isDev ? 1000 : 10000,
+      // Serverless requires immediate flush - no batching
+      // https://posthog.com/docs/libraries/node#serverless-environments
+      flushAt: 1,
+      flushInterval: 0,
     });
 
     console.log("[PostHog] Server client initialized");
@@ -68,6 +69,8 @@ export async function captureEvent(
       properties: {
         ...properties,
         environment: process.env.NODE_ENV,
+        // Vercel env: 'production' | 'preview' | 'development', or 'local' for localhost
+        source: process.env.VERCEL_ENV || "local",
         timestamp: new Date().toISOString(),
       },
       // $ip must be top-level for PostHog GeoIP lookup (not inside properties)
@@ -80,18 +83,22 @@ export async function captureEvent(
 }
 
 /**
- * Flush pending events (call before serverless function exits)
+ * Shutdown client and flush pending events (call before serverless function exits)
+ * Uses shutdown() instead of flush() for reliable completion in serverless
+ * https://posthog.com/docs/libraries/node#serverless-environments
  */
 export async function flushEvents(): Promise<void> {
-  const client = getPostHogClient();
-  if (!client) return;
+  if (!posthogInstance) return;
 
   try {
-    console.log("[PostHog] Flushing events...");
-    await client.flush();
-    console.log("[PostHog] Events flushed successfully");
+    console.log("[PostHog] Shutting down...");
+    await posthogInstance.shutdown();
+    console.log("[PostHog] Shutdown complete");
   } catch (error) {
     // Best-effort: log but don't throw - analytics shouldn't break core functionality
-    console.error("[PostHog] Failed to flush events:", error);
+    console.error("[PostHog] Failed to shutdown:", error);
+  } finally {
+    // Reset singleton so next request creates fresh instance
+    posthogInstance = null;
   }
 }

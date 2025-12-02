@@ -2,12 +2,12 @@ import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest'
 
 // Mock posthog-node BEFORE importing the module under test
 const mockCapture = vi.fn()
-const mockFlush = vi.fn().mockResolvedValue(undefined)
+const mockShutdown = vi.fn().mockResolvedValue(undefined)
 
 vi.mock('posthog-node', () => ({
   PostHog: vi.fn().mockImplementation(() => ({
     capture: mockCapture,
-    flush: mockFlush,
+    shutdown: mockShutdown,
   })),
 }))
 
@@ -62,7 +62,7 @@ describe('posthog-server', () => {
       }))
     })
 
-    it('should initialize client in production with API key', async () => {
+    it('should initialize client with serverless config (flushAt: 1, flushInterval: 0)', async () => {
       vi.stubEnv('POSTHOG_API_KEY', 'phc_production_key')
       vi.stubEnv('NODE_ENV', 'production')
 
@@ -72,8 +72,8 @@ describe('posthog-server', () => {
       expect(client).not.toBeNull()
       expect(PostHog).toHaveBeenCalledWith('phc_production_key', expect.objectContaining({
         host: 'https://eu.i.posthog.com',
-        flushAt: 20,
-        flushInterval: 10000,
+        flushAt: 1,
+        flushInterval: 0,
       }))
     })
   })
@@ -98,7 +98,7 @@ describe('posthog-server', () => {
       )
     })
 
-    it('should include properties with environment and timestamp', async () => {
+    it('should include properties with environment, source, and timestamp', async () => {
       const { captureEvent: freshCapture } = await import('../posthog-server')
 
       await freshCapture('user-123', 'test_event', { customProp: 'value' })
@@ -108,7 +108,25 @@ describe('posthog-server', () => {
           properties: expect.objectContaining({
             customProp: 'value',
             environment: 'production',
+            source: 'local', // No VERCEL_ENV set = 'local'
             timestamp: expect.any(String),
+          }),
+        })
+      )
+    })
+
+    it('should use VERCEL_ENV for source when available', async () => {
+      vi.stubEnv('VERCEL_ENV', 'production')
+      vi.resetModules()
+
+      const { captureEvent: freshCapture } = await import('../posthog-server')
+
+      await freshCapture('user-123', 'test_event', {})
+
+      expect(mockCapture).toHaveBeenCalledWith(
+        expect.objectContaining({
+          properties: expect.objectContaining({
+            source: 'production',
           }),
         })
       )
@@ -177,7 +195,7 @@ describe('posthog-server', () => {
       vi.resetModules()
     })
 
-    it('should call flush on the client', async () => {
+    it('should call shutdown on the client (not flush)', async () => {
       const { getPostHogClient: freshGetClient, flushEvents: freshFlush } = await import('../posthog-server')
 
       // Initialize client first
@@ -185,11 +203,11 @@ describe('posthog-server', () => {
 
       await freshFlush()
 
-      expect(mockFlush).toHaveBeenCalled()
+      expect(mockShutdown).toHaveBeenCalled()
     })
 
-    it('should not throw when flush fails', async () => {
-      mockFlush.mockRejectedValueOnce(new Error('Network error'))
+    it('should not throw when shutdown fails', async () => {
+      mockShutdown.mockRejectedValueOnce(new Error('Network error'))
       vi.resetModules()
 
       const { getPostHogClient: freshGetClient, flushEvents: freshFlush } = await import('../posthog-server')
@@ -207,14 +225,30 @@ describe('posthog-server', () => {
       const { flushEvents: freshFlush } = await import('../posthog-server')
 
       await expect(freshFlush()).resolves.toBeUndefined()
-      expect(mockFlush).not.toHaveBeenCalled()
+      expect(mockShutdown).not.toHaveBeenCalled()
+    })
+
+    it('should reset singleton after shutdown', async () => {
+      const { getPostHogClient: freshGetClient, flushEvents: freshFlush } = await import('../posthog-server')
+
+      // Initialize client
+      const client1 = freshGetClient()
+      expect(client1).not.toBeNull()
+
+      // Shutdown resets singleton
+      await freshFlush()
+
+      // Next call should create new instance
+      const client2 = freshGetClient()
+      expect(PostHog).toHaveBeenCalledTimes(2)
     })
   })
 
   describe('integration: captureEvent + flushEvents', () => {
-    it('should capture event and flush in sequence', async () => {
+    it('should capture event and shutdown in sequence', async () => {
       vi.stubEnv('POSTHOG_API_KEY', 'phc_test_key')
       vi.stubEnv('NODE_ENV', 'production')
+      vi.stubEnv('VERCEL_ENV', 'production')
       vi.resetModules()
 
       const { captureEvent: freshCapture, flushEvents: freshFlush } = await import('../posthog-server')
@@ -226,7 +260,7 @@ describe('posthog-server', () => {
 
       await freshFlush()
 
-      // Verify capture was called with full payload
+      // Verify capture was called with full payload including source
       expect(mockCapture).toHaveBeenCalledWith({
         distinctId: 'session-abc',
         event: 'resume_downloaded',
@@ -234,13 +268,14 @@ describe('posthog-server', () => {
           roleProfileId: 'developer-relations',
           bulletCount: 24,
           environment: 'production',
+          source: 'production',
           timestamp: expect.any(String),
         },
         $ip: '198.51.100.1',
       })
 
-      // Verify flush was called
-      expect(mockFlush).toHaveBeenCalled()
+      // Verify shutdown was called (not flush)
+      expect(mockShutdown).toHaveBeenCalled()
     })
   })
 })
