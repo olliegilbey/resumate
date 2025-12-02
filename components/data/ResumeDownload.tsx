@@ -8,6 +8,7 @@ import type { ResumeData, RoleProfile } from '@/types/resume'
 import { Turnstile, type TurnstileInstance } from '@marsidev/react-turnstile'
 import { useTheme } from '@/contexts/ThemeContext'
 import { getTotalBullets, getTotalPositions } from '@/lib/resume-metrics'
+import { usePostHogResume } from '@/lib/posthog-client'
 
 // Extend Window interface for WASM functions
 declare global {
@@ -35,7 +36,9 @@ export function ResumeDownload({ resumeData }: ResumeDownloadProps) {
   const [verifiedToken, setVerifiedToken] = useState<string | null>(null)
   const [downloadInitiated, setDownloadInitiated] = useState(false)
   const turnstileRef = useRef<TurnstileInstance>(null)
+  const flowStartRef = useRef<number>(0) // Track timing from flow initiation
   const { theme } = useTheme()
+  const analytics = usePostHogResume()
 
   const roleProfiles = useMemo(() => resumeData.roleProfiles || [], [resumeData.roleProfiles])
   const totalExperiences = useMemo(() => {
@@ -54,9 +57,17 @@ export function ResumeDownload({ resumeData }: ResumeDownloadProps) {
     }
 
     if (selectedRoleId && !isJobDescriptionMode) {
+      const roleProfile = roleProfiles.find((r) => r.id === selectedRoleId)
       setErrorMessage(null)
       setShowTurnstile(true)
       setStatus('idle') // Keep idle so Turnstile widget shows
+      flowStartRef.current = Date.now()
+
+      // Track: Download button clicked (GeoIP captured here)
+      analytics.initiated({
+        role_profile_id: selectedRoleId,
+        role_profile_name: roleProfile?.name || 'Unknown',
+      })
     } else {
       setErrorMessage('AI-powered selection coming soon. Please use pre-built roles for now.')
     }
@@ -68,21 +79,55 @@ export function ResumeDownload({ resumeData }: ResumeDownloadProps) {
     setVerifiedToken(token)
     setStatus('idle')
     setErrorMessage(null)
-  }, [])
+
+    // Track: Turnstile verification complete
+    analytics.verified({
+      role_profile_id: selectedRoleId,
+      turnstile_duration_ms: Date.now() - flowStartRef.current,
+    })
+  }, [analytics, selectedRoleId])
 
   const handleTurnstileError = useCallback(() => {
     setErrorMessage('Verification failed. Please try again.')
     setStatus('error')
-  }, [])
+
+    // Track: Turnstile verification failed
+    analytics.error({
+      role_profile_id: selectedRoleId,
+      error_stage: 'turnstile',
+      error_message: 'Turnstile verification failed',
+      duration_ms: Date.now() - flowStartRef.current,
+    })
+  }, [analytics, selectedRoleId])
 
   const handleTurnstileExpire = useCallback(() => {
     setErrorMessage('Verification expired. Please refresh and try again.')
     setStatus('error')
     setVerifiedToken(null)
-  }, [])
+
+    // Track: Turnstile expired
+    analytics.error({
+      role_profile_id: selectedRoleId,
+      error_stage: 'turnstile',
+      error_message: 'Turnstile verification expired',
+      duration_ms: Date.now() - flowStartRef.current,
+    })
+  }, [analytics, selectedRoleId])
 
   const handleCloseModal = useCallback(() => {
     if (status === 'verifying') return // Don't close while verifying
+
+    // Track: User cancelled (if flow was in progress)
+    if (flowStartRef.current > 0 && status !== 'error') {
+      const stage = verifiedToken
+        ? (status === 'loading_wasm' || status === 'generating' ? 'compiling' : 'verified')
+        : 'turnstile'
+      analytics.cancelled({
+        role_profile_id: selectedRoleId,
+        stage,
+        duration_ms: Date.now() - flowStartRef.current,
+      })
+    }
 
     setShowTurnstile(false)
     setVerifiedToken(null)
@@ -91,8 +136,9 @@ export function ResumeDownload({ resumeData }: ResumeDownloadProps) {
     setErrorMessage(null)
     setDownloadInitiated(false)
     setStatus('idle')
+    flowStartRef.current = 0
     turnstileRef.current?.reset()
-  }, [status])
+  }, [status, verifiedToken, analytics, selectedRoleId])
 
   // Auto-download when token is verified (like vCard pattern)
   useEffect(() => {
@@ -215,6 +261,16 @@ export function ResumeDownload({ resumeData }: ResumeDownloadProps) {
           const generationDuration = generationEnd - generationStart
           const totalDuration = Date.now() - startTime
 
+          // Track: WASM compilation complete (client-side for accurate timing)
+          analytics.compiled({
+            role_profile_id: selectedRoleId,
+            bullet_count: selectData.selected.length,
+            wasm_load_ms: wasmLoadDuration,
+            wasm_cached: wasmCached,
+            generation_ms: generationDuration,
+            pdf_size_bytes: pdfBytes.length,
+          })
+
           // Log generation success event
           await fetch('/api/resume/log', {
             method: 'POST',
@@ -249,6 +305,14 @@ export function ResumeDownload({ resumeData }: ResumeDownloadProps) {
           link.click()
           URL.revokeObjectURL(url)
 
+          // Track: Download triggered (client-side for accurate GeoIP + funnel)
+          analytics.downloaded({
+            role_profile_id: selectedRoleId,
+            role_profile_name: roleProfile.name,
+            bullet_count: selectData.selected.length,
+            total_duration_ms: Date.now() - flowStartRef.current,
+          })
+
           // Log download event to server (includes notification trigger)
           await fetch('/api/resume/log', {
             method: 'POST',
@@ -279,14 +343,26 @@ export function ResumeDownload({ resumeData }: ResumeDownloadProps) {
             setErrorMessage(null)
             setDownloadInitiated(false)
             setStatus('idle')
+            flowStartRef.current = 0 // Reset timing
             // Do NOT reset Turnstile here - it triggers re-verification loop
           }, 1500)
         } catch (error) {
           console.error('Download error:', error)
-          const errorMessage = error instanceof Error ? error.message : 'Download failed'
-          setErrorMessage(errorMessage)
+          const errorMsg = error instanceof Error ? error.message : 'Download failed'
+          setErrorMessage(errorMsg)
           setStatus('error')
           setDownloadInitiated(false)
+
+          // Track: Error in download flow (client-side for accurate GeoIP + funnel)
+          const analyticsStage = errorStage === 'bullet_selection' ? 'selection'
+            : errorStage === 'wasm_load' ? 'wasm_load'
+            : 'compilation'
+          analytics.error({
+            role_profile_id: selectedRoleId,
+            error_stage: analyticsStage,
+            error_message: errorMsg,
+            duration_ms: Date.now() - flowStartRef.current,
+          })
 
           // Log failure event
           const sessionId = sessionStorage.getItem('resumate_session')
@@ -301,7 +377,7 @@ export function ResumeDownload({ resumeData }: ResumeDownloadProps) {
                 roleProfileName: roleProfiles.find(r => r.id === selectedRoleId)?.name || 'Unknown',
                 email: email || undefined,
                 linkedin: linkedin || undefined,
-                errorMessage,
+                errorMessage: errorMsg,
                 errorStage,
                 errorStack: process.env.NODE_ENV === 'development' && error instanceof Error ? error.stack : undefined,
               }),
@@ -318,7 +394,7 @@ export function ResumeDownload({ resumeData }: ResumeDownloadProps) {
         clearTimeout(timer)
       }
     }
-  }, [verifiedToken, downloadInitiated, status, selectedRoleId, roleProfiles, resumeData, email, linkedin])
+  }, [verifiedToken, downloadInitiated, status, selectedRoleId, roleProfiles, resumeData, email, linkedin, analytics])
 
   const getStatusMessage = () => {
     switch (status) {

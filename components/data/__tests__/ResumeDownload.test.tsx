@@ -4,6 +4,20 @@ import userEvent from '@testing-library/user-event'
 import { ResumeDownload } from '../ResumeDownload'
 import type { ResumeData } from '@/types/resume'
 
+// Mock analytics
+const mockAnalytics = {
+  initiated: vi.fn(),
+  verified: vi.fn(),
+  compiled: vi.fn(),
+  downloaded: vi.fn(),
+  error: vi.fn(),
+  cancelled: vi.fn(),
+}
+
+vi.mock('@/lib/posthog-client', () => ({
+  usePostHogResume: () => mockAnalytics,
+}))
+
 // Mock Turnstile
 const mockTurnstileReset = vi.fn()
 const mockOnSuccess = vi.fn()
@@ -72,6 +86,9 @@ describe('ResumeDownload', () => {
   beforeEach(() => {
     vi.clearAllMocks()
     process.env.NEXT_PUBLIC_TURNSTILE_SITE_KEY = 'test-site-key'
+
+    // Reset analytics mocks
+    Object.values(mockAnalytics).forEach(fn => fn.mockClear())
 
     // Mock fetch
     global.fetch = vi.fn()
@@ -292,5 +309,122 @@ describe('ResumeDownload', () => {
 
     // Now enabled
     expect(downloadBtn).toBeEnabled()
+  })
+
+  /**
+   * Analytics tracking tests
+   * Client-side events for accurate GeoIP and funnel analysis
+   */
+  describe('Analytics tracking', () => {
+    it('should track resume_initiated when download button clicked', async () => {
+      const user = userEvent.setup()
+      render(<ResumeDownload resumeData={mockResumeData} />)
+
+      await user.selectOptions(screen.getByRole('combobox'), 'test-role')
+      await user.click(screen.getByRole('button', { name: /download pdf/i }))
+
+      expect(mockAnalytics.initiated).toHaveBeenCalledWith({
+        role_profile_id: 'test-role',
+        role_profile_name: 'Test Role',
+      })
+    })
+
+    it('should track resume_verified when Turnstile succeeds', async () => {
+      const user = userEvent.setup()
+      render(<ResumeDownload resumeData={mockResumeData} />)
+
+      await user.selectOptions(screen.getByRole('combobox'), 'test-role')
+      await user.click(screen.getByRole('button', { name: /download pdf/i }))
+
+      await waitFor(() => {
+        expect(screen.getByTestId('turnstile-verify')).toBeInTheDocument()
+      })
+
+      await act(async () => {
+        await user.click(screen.getByTestId('turnstile-verify'))
+      })
+
+      expect(mockAnalytics.verified).toHaveBeenCalledWith(
+        expect.objectContaining({
+          role_profile_id: 'test-role',
+          turnstile_duration_ms: expect.any(Number),
+        })
+      )
+    })
+
+    it('should track resume_error when Turnstile fails', async () => {
+      const user = userEvent.setup()
+      render(<ResumeDownload resumeData={mockResumeData} />)
+
+      await user.selectOptions(screen.getByRole('combobox'), 'test-role')
+      await user.click(screen.getByRole('button', { name: /download pdf/i }))
+
+      await waitFor(() => {
+        expect(screen.getByTestId('turnstile-error')).toBeInTheDocument()
+      })
+
+      await user.click(screen.getByTestId('turnstile-error'))
+
+      expect(mockAnalytics.error).toHaveBeenCalledWith(
+        expect.objectContaining({
+          role_profile_id: 'test-role',
+          error_stage: 'turnstile',
+          error_message: 'Turnstile verification failed',
+        })
+      )
+    })
+
+    it('should track resume_error when bullet selection fails', async () => {
+      const user = userEvent.setup()
+
+      vi.mocked(global.fetch).mockResolvedValue({
+        ok: false,
+        json: () => Promise.resolve({ message: 'Rate limit exceeded' }),
+      } as Response)
+
+      render(<ResumeDownload resumeData={mockResumeData} />)
+
+      await user.selectOptions(screen.getByRole('combobox'), 'test-role')
+      await user.click(screen.getByRole('button', { name: /download pdf/i }))
+
+      await waitFor(() => {
+        expect(screen.getByTestId('turnstile-verify')).toBeInTheDocument()
+      })
+
+      await act(async () => {
+        await user.click(screen.getByTestId('turnstile-verify'))
+      })
+
+      await waitFor(() => {
+        expect(mockAnalytics.error).toHaveBeenCalledWith(
+          expect.objectContaining({
+            role_profile_id: 'test-role',
+            error_stage: 'selection',
+            error_message: 'Rate limit exceeded',
+          })
+        )
+      }, { timeout: 3000 })
+    })
+
+    it('should track resume_cancelled when modal closed during Turnstile', async () => {
+      const user = userEvent.setup()
+      render(<ResumeDownload resumeData={mockResumeData} />)
+
+      await user.selectOptions(screen.getByRole('combobox'), 'test-role')
+      await user.click(screen.getByRole('button', { name: /download pdf/i }))
+
+      await waitFor(() => {
+        expect(screen.getByTestId('turnstile-widget')).toBeInTheDocument()
+      })
+
+      await user.click(screen.getByRole('button', { name: /cancel/i }))
+
+      expect(mockAnalytics.cancelled).toHaveBeenCalledWith(
+        expect.objectContaining({
+          role_profile_id: 'test-role',
+          stage: 'turnstile',
+        })
+      )
+    })
   })
 })
