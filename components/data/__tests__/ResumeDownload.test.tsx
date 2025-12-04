@@ -324,6 +324,7 @@ describe('ResumeDownload', () => {
       await user.click(screen.getByRole('button', { name: /download pdf/i }))
 
       expect(mockAnalytics.initiated).toHaveBeenCalledWith({
+        generation_method: 'heuristic',
         role_profile_id: 'test-role',
         role_profile_name: 'Test Role',
       })
@@ -346,6 +347,7 @@ describe('ResumeDownload', () => {
 
       expect(mockAnalytics.verified).toHaveBeenCalledWith(
         expect.objectContaining({
+          generation_method: 'heuristic',
           role_profile_id: 'test-role',
           turnstile_duration_ms: expect.any(Number),
         })
@@ -367,6 +369,7 @@ describe('ResumeDownload', () => {
 
       expect(mockAnalytics.error).toHaveBeenCalledWith(
         expect.objectContaining({
+          generation_method: 'heuristic',
           role_profile_id: 'test-role',
           error_stage: 'turnstile',
           error_message: 'Turnstile verification failed',
@@ -398,6 +401,7 @@ describe('ResumeDownload', () => {
       await waitFor(() => {
         expect(mockAnalytics.error).toHaveBeenCalledWith(
           expect.objectContaining({
+            generation_method: 'heuristic',
             role_profile_id: 'test-role',
             error_stage: 'selection',
             error_message: 'Rate limit exceeded',
@@ -421,6 +425,7 @@ describe('ResumeDownload', () => {
 
       expect(mockAnalytics.cancelled).toHaveBeenCalledWith(
         expect.objectContaining({
+          generation_method: 'heuristic',
           role_profile_id: 'test-role',
           stage: 'turnstile',
         })

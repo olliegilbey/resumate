@@ -3,6 +3,10 @@
 import posthog from 'posthog-js'
 import { PostHogProvider as PHProvider, usePostHog } from 'posthog-js/react'
 import { useEffect, useCallback } from 'react'
+import type { AIProvider } from '@/lib/ai/providers/types'
+
+// Generation method discriminator
+export type GenerationMethod = 'ai' | 'heuristic'
 
 // Client-side event types (direct to PostHog via proxy)
 export type ClientAnalyticsEvent =
@@ -55,42 +59,77 @@ export interface ContactCardCancelledProperties {
 }
 
 // Resume download flow tracking (client-side for accurate GeoIP)
-export interface ResumeInitiatedProperties {
+// Supports both heuristic (role profile) and AI (job description) modes
+
+// Base properties shared across modes
+interface ResumeBaseProperties {
+  generation_method: GenerationMethod
+}
+
+// Heuristic mode properties (role profile selection)
+interface HeuristicModeProperties extends ResumeBaseProperties {
+  generation_method: 'heuristic'
   role_profile_id: string
   role_profile_name: string
 }
 
+// AI mode properties (job description analysis)
+interface AIModeProperties extends ResumeBaseProperties {
+  generation_method: 'ai'
+  ai_provider: AIProvider
+  job_description_length: number
+  job_title?: string | null
+  extracted_salary_min?: number | null
+  extracted_salary_max?: number | null
+  salary_currency?: string | null
+}
+
+export type ResumeInitiatedProperties = HeuristicModeProperties | AIModeProperties
+
 export interface ResumeVerifiedProperties {
-  role_profile_id: string
+  generation_method: GenerationMethod
+  role_profile_id?: string          // heuristic mode
+  ai_provider?: AIProvider          // ai mode
   turnstile_duration_ms: number
 }
 
 export interface ResumeCompiledProperties {
-  role_profile_id: string
+  generation_method: GenerationMethod
+  role_profile_id?: string          // heuristic mode
+  ai_provider?: AIProvider          // ai mode
   bullet_count: number
   wasm_load_ms: number
   wasm_cached: boolean
   generation_ms: number
   pdf_size_bytes: number
+  ai_response_ms?: number           // ai mode only
+  retry_count?: number              // ai mode only
 }
 
 export interface ResumeDownloadedProperties {
-  role_profile_id: string
-  role_profile_name: string
+  generation_method: GenerationMethod
+  role_profile_id?: string
+  role_profile_name?: string
+  ai_provider?: AIProvider
+  job_title?: string | null
   bullet_count: number
   total_duration_ms: number
 }
 
 export interface ResumeErrorProperties {
-  role_profile_id: string
-  error_stage: 'turnstile' | 'selection' | 'wasm_load' | 'compilation'
+  generation_method: GenerationMethod
+  role_profile_id?: string
+  ai_provider?: AIProvider
+  error_stage: 'turnstile' | 'selection' | 'ai_selection' | 'wasm_load' | 'compilation'
   error_message: string
   duration_ms: number
 }
 
 export interface ResumeCancelledProperties {
-  role_profile_id: string
-  stage: 'turnstile' | 'verified' | 'compiling'
+  generation_method: GenerationMethod
+  role_profile_id?: string
+  ai_provider?: AIProvider
+  stage: 'turnstile' | 'verified' | 'compiling' | 'ai_analyzing'
   duration_ms: number
 }
 
@@ -131,6 +170,7 @@ export function useTrackEvent() {
  * Client-side for accurate GeoIP (server-side gives inaccurate location).
  *
  * Funnel: initiated → verified → compiled → downloaded
+ * Supports both heuristic (role profile) and AI (job description) modes.
  * Error/cancelled events for drop-off analysis.
  */
 export function usePostHogResume() {

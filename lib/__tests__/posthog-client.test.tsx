@@ -164,11 +164,13 @@ describe('usePostHogResume', () => {
     const { result } = renderHook(() => usePostHogResume())
 
     result.current.initiated({
+      generation_method: 'heuristic',
       role_profile_id: 'developer-relations',
       role_profile_name: 'Developer Relations Lead',
     })
 
     expect(mockCapture).toHaveBeenCalledWith('resume_initiated', {
+      generation_method: 'heuristic',
       role_profile_id: 'developer-relations',
       role_profile_name: 'Developer Relations Lead',
     })
@@ -178,11 +180,13 @@ describe('usePostHogResume', () => {
     const { result } = renderHook(() => usePostHogResume())
 
     result.current.verified({
+      generation_method: 'heuristic',
       role_profile_id: 'developer-relations',
       turnstile_duration_ms: 2500,
     })
 
     expect(mockCapture).toHaveBeenCalledWith('resume_verified', {
+      generation_method: 'heuristic',
       role_profile_id: 'developer-relations',
       turnstile_duration_ms: 2500,
     })
@@ -192,6 +196,7 @@ describe('usePostHogResume', () => {
     const { result } = renderHook(() => usePostHogResume())
 
     result.current.compiled({
+      generation_method: 'heuristic',
       role_profile_id: 'developer-relations',
       bullet_count: 18,
       wasm_load_ms: 450,
@@ -201,6 +206,7 @@ describe('usePostHogResume', () => {
     })
 
     expect(mockCapture).toHaveBeenCalledWith('resume_compiled', {
+      generation_method: 'heuristic',
       role_profile_id: 'developer-relations',
       bullet_count: 18,
       wasm_load_ms: 450,
@@ -214,6 +220,7 @@ describe('usePostHogResume', () => {
     const { result } = renderHook(() => usePostHogResume())
 
     result.current.compiled({
+      generation_method: 'heuristic',
       role_profile_id: 'developer-relations',
       bullet_count: 18,
       wasm_load_ms: 5, // Much faster when cached
@@ -223,6 +230,7 @@ describe('usePostHogResume', () => {
     })
 
     expect(mockCapture).toHaveBeenCalledWith('resume_compiled', {
+      generation_method: 'heuristic',
       role_profile_id: 'developer-relations',
       bullet_count: 18,
       wasm_load_ms: 5,
@@ -236,6 +244,7 @@ describe('usePostHogResume', () => {
     const { result } = renderHook(() => usePostHogResume())
 
     result.current.downloaded({
+      generation_method: 'heuristic',
       role_profile_id: 'developer-relations',
       role_profile_name: 'Developer Relations Lead',
       bullet_count: 18,
@@ -243,6 +252,7 @@ describe('usePostHogResume', () => {
     })
 
     expect(mockCapture).toHaveBeenCalledWith('resume_downloaded', {
+      generation_method: 'heuristic',
       role_profile_id: 'developer-relations',
       role_profile_name: 'Developer Relations Lead',
       bullet_count: 18,
@@ -254,6 +264,7 @@ describe('usePostHogResume', () => {
     const { result } = renderHook(() => usePostHogResume())
 
     result.current.error({
+      generation_method: 'heuristic',
       role_profile_id: 'developer-relations',
       error_stage: 'selection',
       error_message: 'Rate limit exceeded',
@@ -261,6 +272,7 @@ describe('usePostHogResume', () => {
     })
 
     expect(mockCapture).toHaveBeenCalledWith('resume_error', {
+      generation_method: 'heuristic',
       role_profile_id: 'developer-relations',
       error_stage: 'selection',
       error_message: 'Rate limit exceeded',
@@ -272,6 +284,7 @@ describe('usePostHogResume', () => {
     const { result } = renderHook(() => usePostHogResume())
 
     result.current.error({
+      generation_method: 'heuristic',
       role_profile_id: 'developer-relations',
       error_stage: 'wasm_load',
       error_message: 'Failed to fetch WASM module',
@@ -279,6 +292,7 @@ describe('usePostHogResume', () => {
     })
 
     expect(mockCapture).toHaveBeenCalledWith('resume_error', {
+      generation_method: 'heuristic',
       role_profile_id: 'developer-relations',
       error_stage: 'wasm_load',
       error_message: 'Failed to fetch WASM module',
@@ -290,6 +304,7 @@ describe('usePostHogResume', () => {
     const { result } = renderHook(() => usePostHogResume())
 
     result.current.error({
+      generation_method: 'heuristic',
       role_profile_id: 'developer-relations',
       error_stage: 'compilation',
       error_message: 'Typst compilation failed',
@@ -297,6 +312,7 @@ describe('usePostHogResume', () => {
     })
 
     expect(mockCapture).toHaveBeenCalledWith('resume_error', {
+      generation_method: 'heuristic',
       role_profile_id: 'developer-relations',
       error_stage: 'compilation',
       error_message: 'Typst compilation failed',
@@ -308,12 +324,14 @@ describe('usePostHogResume', () => {
     const { result } = renderHook(() => usePostHogResume())
 
     result.current.cancelled({
+      generation_method: 'heuristic',
       role_profile_id: 'developer-relations',
       stage: 'turnstile',
       duration_ms: 3000,
     })
 
     expect(mockCapture).toHaveBeenCalledWith('resume_cancelled', {
+      generation_method: 'heuristic',
       role_profile_id: 'developer-relations',
       stage: 'turnstile',
       duration_ms: 3000,
@@ -324,12 +342,14 @@ describe('usePostHogResume', () => {
     const { result } = renderHook(() => usePostHogResume())
 
     result.current.cancelled({
+      generation_method: 'heuristic',
       role_profile_id: 'developer-relations',
       stage: 'compiling',
       duration_ms: 1500,
     })
 
     expect(mockCapture).toHaveBeenCalledWith('resume_cancelled', {
+      generation_method: 'heuristic',
       role_profile_id: 'developer-relations',
       stage: 'compiling',
       duration_ms: 1500,
@@ -350,9 +370,10 @@ describe('usePostHogResume', () => {
 
     // None should throw
     expect(() => {
-      result.current.initiated({ role_profile_id: 'test', role_profile_name: 'Test' })
-      result.current.verified({ role_profile_id: 'test', turnstile_duration_ms: 1000 })
+      result.current.initiated({ generation_method: 'heuristic', role_profile_id: 'test', role_profile_name: 'Test' })
+      result.current.verified({ generation_method: 'heuristic', role_profile_id: 'test', turnstile_duration_ms: 1000 })
       result.current.compiled({
+      generation_method: 'heuristic',
         role_profile_id: 'test',
         bullet_count: 10,
         wasm_load_ms: 100,
@@ -361,18 +382,21 @@ describe('usePostHogResume', () => {
         pdf_size_bytes: 10000,
       })
       result.current.downloaded({
+      generation_method: 'heuristic',
         role_profile_id: 'test',
         role_profile_name: 'Test',
         bullet_count: 10,
         total_duration_ms: 1500,
       })
       result.current.error({
+      generation_method: 'heuristic',
         role_profile_id: 'test',
         error_stage: 'selection',
         error_message: 'Test error',
         duration_ms: 500,
       })
       result.current.cancelled({
+      generation_method: 'heuristic',
         role_profile_id: 'test',
         stage: 'turnstile',
         duration_ms: 300,
