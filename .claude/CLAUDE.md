@@ -138,6 +138,7 @@ TDD. High coverage. Property-based tests for core logic (proptest).
 - **Key file:** `crates/resume-core/tests/roundtrip.rs` - Type compatibility validation
 
 Tests are mandatory. Pre-commit enforces.
+EVERY test must be run as pre-commit hook.
 
 ---
 
@@ -227,6 +228,8 @@ just metrics-generate # Update from logs
 Don't write commit messages preemptively, consistently suggest commits at every relevant point after testing and assessing working code. Always implement extensive pre-commit hooks for guardrails.
 
 **Discovery:** Use `just`, `just health`, explore codebase, `rg` ripgrep. Explore systematically before implementing - don't waste tokens, explore deliberately by reading only relevant sections of files, or exploring with tools like ripgrep, find, bash. You also have access to the vercel CLI and gh CLI.
+
+**Read the docs:** Leverage the WebFetch / Fetch agent often to pull most recent best practices and documentation for implementations - fetch 2025 (and sometimes 2024) docs, and include the version numbers.
 
 ---
 
