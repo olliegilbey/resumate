@@ -74,7 +74,7 @@ export class CerebrasProvider implements AIProviderInterface {
         'Cerebras API key not configured',
         [
           {
-            code: 'E010_PROVIDER_DOWN',
+            code: 'E011_PROVIDER_DOWN',
             message: 'CEREBRAS_API_KEY environment variable not set',
             help: 'Set CEREBRAS_API_KEY in .env.local',
           },
@@ -93,6 +93,7 @@ export class CerebrasProvider implements AIProviderInterface {
     })
 
     try {
+      console.log(`[Cerebras] Calling ${this.config.model}...`)
       const response = await fetch(CEREBRAS_API_URL, {
         method: 'POST',
         headers: {
@@ -110,13 +111,15 @@ export class CerebrasProvider implements AIProviderInterface {
         }),
       })
 
+      console.log(`[Cerebras] Response status: ${response.status}`)
+
       if (!response.ok) {
         const errorBody = (await response.json().catch(() => ({}))) as CerebrasErrorResponse
         const errorMessage = errorBody.error?.message ?? `HTTP ${response.status}`
 
         const parseError: ParseError = {
           code: this.isProviderDownStatus(response.status)
-            ? 'E010_PROVIDER_DOWN'
+            ? 'E011_PROVIDER_DOWN'
             : 'E000_PROVIDER_ERROR',
           message: errorMessage,
           help: `Status: ${response.status}, Type: ${errorBody.error?.type ?? 'unknown'}`,
@@ -144,17 +147,23 @@ export class CerebrasProvider implements AIProviderInterface {
 
       const rawText = data.choices[0].message.content
 
+      // Debug: log raw response
+      console.log('[Cerebras] Raw response (first 500 chars):', rawText.slice(0, 500))
+
       // Parse and validate response
       const validIds = extractAllBulletIds(request.compendium.experience)
       const hierarchy = buildBulletHierarchy(request.compendium.experience)
 
       const parseResult = parseAIOutput(rawText, validIds, hierarchy, {
         maxBullets: request.maxBullets,
+        minBullets: request.minBullets,
         maxPerCompany: request.maxPerCompany,
         maxPerPosition: request.maxPerPosition,
       })
 
       if (!parseResult.success) {
+        console.log('[Cerebras] Parse error:', parseResult.error!.code, '-', parseResult.error!.message)
+        console.log('[Cerebras] Help:', parseResult.error!.help?.slice(0, 300))
         throw new AISelectionError(
           parseResult.error!.message,
           [parseResult.error!],
@@ -164,7 +173,7 @@ export class CerebrasProvider implements AIProviderInterface {
       }
 
       return {
-        bulletIds: parseResult.data!.bulletIds,
+        bullets: parseResult.data!.bullets,
         reasoning: parseResult.data!.reasoning,
         jobTitle: parseResult.data!.jobTitle,
         salary: parseResult.data!.salary,
@@ -182,7 +191,7 @@ export class CerebrasProvider implements AIProviderInterface {
         `Cerebras request failed: ${error instanceof Error ? error.message : String(error)}`,
         [
           {
-            code: 'E010_PROVIDER_DOWN',
+            code: 'E011_PROVIDER_DOWN',
             message: String(error),
             help: 'Network error or Cerebras API unavailable',
           },

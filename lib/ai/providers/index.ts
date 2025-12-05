@@ -180,7 +180,7 @@ export async function selectBulletsWithAI(
       ? allErrors
       : [
           {
-            code: 'E010_PROVIDER_DOWN',
+            code: 'E011_PROVIDER_DOWN',
             message: 'All providers unavailable',
             help: 'Check API keys in environment variables',
           },

@@ -16,8 +16,9 @@ export type ParseErrorCode =
   | 'E006_DUPLICATE_BULLET_ID'
   | 'E007_DIVERSITY_VIOLATION'
   | 'E008_MISSING_REASONING'
-  | 'E009_INVALID_SALARY'
-  | 'E010_PROVIDER_DOWN'
+  | 'E009_INVALID_SCORE'
+  | 'E010_INVALID_SALARY'
+  | 'E011_PROVIDER_DOWN'
 
 export interface ParseError {
   code: ParseErrorCode
@@ -91,9 +92,11 @@ export function formatSimplifiedError(error: ParseError): string {
       'The AI selection needs more variety. Retrying with constraints...',
     E008_MISSING_REASONING:
       'The AI did not explain its selection. Retrying...',
-    E009_INVALID_SALARY:
+    E009_INVALID_SCORE:
+      'The AI provided invalid relevance scores. Retrying...',
+    E010_INVALID_SALARY:
       'The AI salary extraction was malformed. Continuing without salary...',
-    E010_PROVIDER_DOWN:
+    E011_PROVIDER_DOWN:
       'The AI service is temporarily unavailable. Trying alternative...',
   }
 
@@ -137,7 +140,7 @@ export class AISelectionError extends Error {
    * Check if this is a provider-down error (should trigger fallback)
    */
   isProviderDown(): boolean {
-    return this.errors.some((e) => e.code === 'E010_PROVIDER_DOWN')
+    return this.errors.some((e) => e.code === 'E011_PROVIDER_DOWN')
   }
 
   /**
@@ -148,10 +151,10 @@ export class AISelectionError extends Error {
       'E001_NO_JSON_FOUND',
       'E002_INVALID_JSON',
       'E003_MISSING_BULLET_IDS',
-      'E004_WRONG_BULLET_COUNT',
+      'E004_WRONG_BULLET_COUNT', // Now: insufficient bullets
       'E005_INVALID_BULLET_ID',
       'E006_DUPLICATE_BULLET_ID',
-      'E007_DIVERSITY_VIOLATION',
+      // E007_DIVERSITY_VIOLATION removed - server handles diversity
       'E008_MISSING_REASONING',
     ]
     return this.errors.some((e) => formatErrors.includes(e.code))

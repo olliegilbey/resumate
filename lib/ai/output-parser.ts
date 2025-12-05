@@ -15,13 +15,19 @@ export interface SalaryInfo {
 }
 
 export interface SelectionConfig {
-  maxBullets: number
-  maxPerCompany?: number
-  maxPerPosition?: number
+  maxBullets: number // Target bullets for final selection (used by route)
+  minBullets?: number // Minimum bullets AI must return (default: 30)
+  maxPerCompany?: number // For server-side diversity (not validated in parser)
+  maxPerPosition?: number // For server-side diversity (not validated in parser)
+}
+
+export interface ScoredBulletId {
+  id: string
+  score: number
 }
 
 export interface ParsedAIResponse {
-  bulletIds: string[]
+  bullets: ScoredBulletId[]
   reasoning: string
   jobTitle: string | null
   salary: SalaryInfo | null
@@ -52,7 +58,13 @@ export function extractJSON(raw: string): string | null {
     return codeBlockMatch[1]
   }
 
-  // Try to find raw JSON object with bullet_ids
+  // Try to find raw JSON object with bullets array (new format)
+  const bulletsMatch = raw.match(/\{[\s\S]*"bullets"[\s\S]*\}/)
+  if (bulletsMatch) {
+    return bulletsMatch[0]
+  }
+
+  // Try to find raw JSON object with bullet_ids (legacy format)
   const jsonMatch = raw.match(/\{[\s\S]*"bullet_ids"[\s\S]*\}/)
   if (jsonMatch) {
     return jsonMatch[0]
@@ -116,75 +128,16 @@ function validateSalary(
   }
 }
 
-/**
- * Validate diversity constraints (max per company, max per position)
- */
-function validateDiversity(
-  bulletIds: string[],
-  hierarchy: BulletHierarchy,
-  config: SelectionConfig
-): ParseError | null {
-  const { maxPerCompany, maxPerPosition } = config
-
-  if (!maxPerCompany && !maxPerPosition) {
-    return null
-  }
-
-  const companyCount: Record<string, number> = {}
-  const positionCount: Record<string, number> = {}
-
-  for (const id of bulletIds) {
-    const info = hierarchy[id]
-    if (!info) continue // Invalid ID handled elsewhere
-
-    companyCount[info.companyId] = (companyCount[info.companyId] || 0) + 1
-    positionCount[info.positionId] = (positionCount[info.positionId] || 0) + 1
-  }
-
-  // Check company limits
-  if (maxPerCompany) {
-    const violations = Object.entries(companyCount).filter(
-      ([, count]) => count > maxPerCompany
-    )
-    if (violations.length > 0) {
-      const details = violations
-        .map(([company, count]) => `${company}: ${count}`)
-        .join(', ')
-      return createParseError(
-        'E007_DIVERSITY_VIOLATION',
-        `Company limit exceeded (max ${maxPerCompany} per company)`,
-        `The following companies have too many bullets selected:\n\n  ${details}\n\nPlease redistribute selections across more companies.`
-      )
-    }
-  }
-
-  // Check position limits
-  if (maxPerPosition) {
-    const violations = Object.entries(positionCount).filter(
-      ([, count]) => count > maxPerPosition
-    )
-    if (violations.length > 0) {
-      const details = violations
-        .map(([position, count]) => `${position}: ${count}`)
-        .join(', ')
-      return createParseError(
-        'E007_DIVERSITY_VIOLATION',
-        `Position limit exceeded (max ${maxPerPosition} per position)`,
-        `The following positions have too many bullets selected:\n\n  ${details}\n\nPlease redistribute selections across more positions.`
-      )
-    }
-  }
-
-  return null
-}
+// Note: Diversity validation removed - now handled server-side in route.ts
+// This allows AI to score freely, with server applying final constraints
 
 /**
  * Parse and validate AI output
  *
  * @param raw - Raw AI response text
  * @param validBulletIds - Set of valid bullet IDs from compendium
- * @param hierarchy - Mapping of bullet IDs to company/position for diversity
- * @param config - Selection configuration (maxBullets, maxPerCompany, etc.)
+ * @param hierarchy - Mapping of bullet IDs to company/position (for route, not used here)
+ * @param config - Selection configuration (minBullets for validation)
  */
 export function parseAIOutput(
   raw: string,
@@ -227,60 +180,69 @@ ${jsonStr.slice(0, 300)}${jsonStr.length > 300 ? '...' : ''}`,
     }
   }
 
-  // Step 3: Validate bullet_ids exists and is array
-  if (!parsed.bullet_ids || !Array.isArray(parsed.bullet_ids)) {
+  // Step 3: Validate bullets array exists (new format with scores)
+  if (!parsed.bullets || !Array.isArray(parsed.bullets)) {
     return {
       success: false,
       error: createParseError(
         'E003_MISSING_BULLET_IDS',
-        'Response missing "bullet_ids" array',
-        `The AI response must contain a "bullet_ids" array.
+        'Response missing "bullets" array',
+        `The AI response must contain a "bullets" array with {id, score} objects.
 
 Got keys: ${Object.keys(parsed).join(', ')}
 
-Expected: bullet_ids, reasoning, job_title, salary`
+Expected: bullets, reasoning, job_title, salary`
       ),
     }
   }
 
-  const bulletIds = parsed.bullet_ids as string[]
+  const rawBullets = parsed.bullets as Array<unknown>
 
-  // Step 4: Validate all IDs are strings
-  const nonStrings = bulletIds.filter((id) => typeof id !== 'string')
-  if (nonStrings.length > 0) {
-    return {
-      success: false,
-      error: createParseError(
-        'E005_INVALID_BULLET_ID',
-        `${nonStrings.length} bullet ID(s) are not strings`,
-        `All bullet_ids must be strings.
-
-Invalid values: ${JSON.stringify(nonStrings.slice(0, 5))}`
-      ),
+  // Step 4: Validate each bullet has id (string) and score (number 0-1)
+  const bullets: ScoredBulletId[] = []
+  for (let i = 0; i < rawBullets.length; i++) {
+    const b = rawBullets[i] as Record<string, unknown>
+    if (typeof b?.id !== 'string') {
+      return {
+        success: false,
+        error: createParseError(
+          'E005_INVALID_BULLET_ID',
+          `Bullet at index ${i} missing valid "id" string`,
+          `Each bullet must have an "id" string. Got: ${JSON.stringify(b)}`
+        ),
+      }
     }
+    if (typeof b?.score !== 'number' || b.score < 0 || b.score > 1) {
+      return {
+        success: false,
+        error: createParseError(
+          'E009_INVALID_SCORE',
+          `Bullet "${b.id}" has invalid score`,
+          `Score must be a number between 0.0 and 1.0. Got: ${b.score}`
+        ),
+      }
+    }
+    bullets.push({ id: b.id, score: b.score })
   }
 
-  // Step 5: Validate count
-  const expected = config.maxBullets
-  const actual = bulletIds.length
-  if (actual !== expected) {
+  // Step 5: Validate minimum count
+  const minRequired = config.minBullets ?? 30
+  const actual = bullets.length
+  if (actual < minRequired) {
     return {
       success: false,
       error: createParseError(
         'E004_WRONG_BULLET_COUNT',
-        `Expected ${expected} bullets, got ${actual}`,
-        `The AI must select exactly ${expected} bullets.
+        `Expected at least ${minRequired} bullets, got ${actual}`,
+        `The AI must score at least ${minRequired} bullets to give the server selection options.
 
-Received ${actual} bullet IDs:
-${bulletIds.slice(0, 10).join(', ')}${actual > 10 ? '...' : ''}
-
-${actual < expected ? `Missing ${expected - actual} bullets.` : `Remove ${actual - expected} bullets.`}`
+Received only ${actual} bullets. Please score more bullets from the compendium.`
       ),
     }
   }
 
   // Step 6: Validate each ID exists in compendium
-  const invalid = bulletIds.filter((id) => !validBulletIds.has(id))
+  const invalid = bullets.filter((b) => !validBulletIds.has(b.id))
   if (invalid.length > 0) {
     const sampleValid = Array.from(validBulletIds).slice(0, 5)
     return {
@@ -290,7 +252,7 @@ ${actual < expected ? `Missing ${expected - actual} bullets.` : `Remove ${actual
         `${invalid.length} invalid bullet ID(s) found`,
         `These IDs do not exist in the compendium:
 
-${invalid.map((id) => `  - "${id}"`).join('\n')}
+${invalid.map((b) => `  - "${b.id}"`).join('\n')}
 
 Valid IDs look like:
 ${sampleValid.map((id) => `  - "${id}"`).join('\n')}...`
@@ -301,9 +263,9 @@ ${sampleValid.map((id) => `  - "${id}"`).join('\n')}...`
   // Step 7: Check for duplicates
   const seen = new Set<string>()
   const dupes: string[] = []
-  for (const id of bulletIds) {
-    if (seen.has(id)) dupes.push(id)
-    seen.add(id)
+  for (const b of bullets) {
+    if (seen.has(b.id)) dupes.push(b.id)
+    seen.add(b.id)
   }
   if (dupes.length > 0) {
     return {
@@ -320,11 +282,7 @@ Remove duplicates and select unique bullets.`
     }
   }
 
-  // Step 8: Validate diversity constraints
-  const diversityError = validateDiversity(bulletIds, hierarchy, config)
-  if (diversityError) {
-    return { success: false, error: diversityError }
-  }
+  // Step 8: Diversity validation removed - server handles constraints
 
   // Step 9: Validate reasoning exists
   if (typeof parsed.reasoning !== 'string' || parsed.reasoning.length === 0) {
@@ -362,7 +320,7 @@ Got: ${typeof parsed.reasoning === 'string' ? '(empty string)' : typeof parsed.r
   return {
     success: true,
     data: {
-      bulletIds,
+      bullets,
       reasoning: parsed.reasoning as string,
       jobTitle,
       salary,

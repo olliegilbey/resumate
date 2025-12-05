@@ -29,31 +29,41 @@ const hierarchy: BulletHierarchy = {
 }
 
 const defaultConfig: SelectionConfig = {
-  maxBullets: 3,
-  maxPerCompany: 2,
-  maxPerPosition: 2,
+  maxBullets: 24, // Target for server-side selection
+  minBullets: 3, // Minimum AI must return for tests
+  maxPerCompany: 6, // For server-side diversity (not validated in parser)
+  maxPerPosition: 4, // For server-side diversity (not validated in parser)
 }
+
+// Helper to create bullets with scores
+const b = (id: string, score = 0.9) => ({ id, score })
 
 describe('extractJSON', () => {
   it('extracts JSON from markdown code block', () => {
     const raw = `Here's the selection:
 \`\`\`json
-{"bullet_ids": ["a", "b"], "reasoning": "test"}
+{"bullets": [{"id": "a", "score": 0.9}], "reasoning": "test"}
 \`\`\`
 `
     const result = extractJSON(raw)
-    expect(result).toBe('{"bullet_ids": ["a", "b"], "reasoning": "test"}')
+    expect(result).toBe('{"bullets": [{"id": "a", "score": 0.9}], "reasoning": "test"}')
   })
 
   it('extracts JSON from code block without language tag', () => {
     const raw = `\`\`\`
-{"bullet_ids": ["a"]}
+{"bullets": [{"id": "a", "score": 0.9}]}
 \`\`\``
     const result = extractJSON(raw)
-    expect(result).toBe('{"bullet_ids": ["a"]}')
+    expect(result).toBe('{"bullets": [{"id": "a", "score": 0.9}]}')
   })
 
-  it('extracts raw JSON with bullet_ids', () => {
+  it('extracts raw JSON with bullets array (new format)', () => {
+    const raw = 'Some text {"bullets": [{"id": "a", "score": 0.9}]} more text'
+    const result = extractJSON(raw)
+    expect(result).toBe('{"bullets": [{"id": "a", "score": 0.9}]}')
+  })
+
+  it('extracts raw JSON with bullet_ids (legacy format)', () => {
     const raw = 'Some text {"bullet_ids": ["a", "b"]} more text'
     const result = extractJSON(raw)
     expect(result).toBe('{"bullet_ids": ["a", "b"]}')
@@ -75,10 +85,10 @@ describe('extractJSON', () => {
 describe('parseAIOutput', () => {
   it('parses valid JSON with all fields', () => {
     const raw = JSON.stringify({
-      bullet_ids: [
-        'company-a-pos-1-bullet-1',
-        'company-b-pos-1-bullet-1',
-        'company-a-pos-2-bullet-1',
+      bullets: [
+        b('company-a-pos-1-bullet-1', 0.95),
+        b('company-b-pos-1-bullet-1', 0.88),
+        b('company-a-pos-2-bullet-1', 0.82),
       ],
       reasoning: 'Selected based on relevance to job requirements',
       job_title: 'Senior Software Engineer',
@@ -93,7 +103,8 @@ describe('parseAIOutput', () => {
     const result = parseAIOutput(raw, validBulletIds, hierarchy, defaultConfig)
 
     expect(result.success).toBe(true)
-    expect(result.data?.bulletIds).toHaveLength(3)
+    expect(result.data?.bullets).toHaveLength(3)
+    expect(result.data?.bullets[0]).toEqual({ id: 'company-a-pos-1-bullet-1', score: 0.95 })
     expect(result.data?.reasoning).toBe(
       'Selected based on relevance to job requirements'
     )
@@ -108,10 +119,10 @@ describe('parseAIOutput', () => {
 
   it('handles null job_title gracefully', () => {
     const raw = JSON.stringify({
-      bullet_ids: [
-        'company-a-pos-1-bullet-1',
-        'company-b-pos-1-bullet-1',
-        'company-a-pos-2-bullet-1',
+      bullets: [
+        b('company-a-pos-1-bullet-1'),
+        b('company-b-pos-1-bullet-1'),
+        b('company-a-pos-2-bullet-1'),
       ],
       reasoning: 'Test reasoning',
       job_title: null,
@@ -126,10 +137,10 @@ describe('parseAIOutput', () => {
 
   it('handles null salary gracefully', () => {
     const raw = JSON.stringify({
-      bullet_ids: [
-        'company-a-pos-1-bullet-1',
-        'company-b-pos-1-bullet-1',
-        'company-a-pos-2-bullet-1',
+      bullets: [
+        b('company-a-pos-1-bullet-1'),
+        b('company-b-pos-1-bullet-1'),
+        b('company-a-pos-2-bullet-1'),
       ],
       reasoning: 'Test reasoning',
       job_title: 'Engineer',
@@ -144,10 +155,10 @@ describe('parseAIOutput', () => {
 
   it('handles missing salary field gracefully', () => {
     const raw = JSON.stringify({
-      bullet_ids: [
-        'company-a-pos-1-bullet-1',
-        'company-b-pos-1-bullet-1',
-        'company-a-pos-2-bullet-1',
+      bullets: [
+        b('company-a-pos-1-bullet-1'),
+        b('company-b-pos-1-bullet-1'),
+        b('company-a-pos-2-bullet-1'),
       ],
       reasoning: 'Test reasoning',
     })
@@ -161,10 +172,10 @@ describe('parseAIOutput', () => {
 
   it('validates salary structure - invalid currency', () => {
     const raw = JSON.stringify({
-      bullet_ids: [
-        'company-a-pos-1-bullet-1',
-        'company-b-pos-1-bullet-1',
-        'company-a-pos-2-bullet-1',
+      bullets: [
+        b('company-a-pos-1-bullet-1'),
+        b('company-b-pos-1-bullet-1'),
+        b('company-a-pos-2-bullet-1'),
       ],
       reasoning: 'Test reasoning',
       salary: { min: 100000, period: 'annual' }, // Missing currency
@@ -179,10 +190,10 @@ describe('parseAIOutput', () => {
 
   it('validates salary structure - invalid period', () => {
     const raw = JSON.stringify({
-      bullet_ids: [
-        'company-a-pos-1-bullet-1',
-        'company-b-pos-1-bullet-1',
-        'company-a-pos-2-bullet-1',
+      bullets: [
+        b('company-a-pos-1-bullet-1'),
+        b('company-b-pos-1-bullet-1'),
+        b('company-a-pos-2-bullet-1'),
       ],
       reasoning: 'Test reasoning',
       salary: { min: 100000, currency: 'USD', period: 'biweekly' }, // Invalid period
@@ -205,7 +216,7 @@ describe('parseAIOutput', () => {
 
   it('returns E002 for malformed JSON', () => {
     // Valid-looking JSON structure that fails parse (invalid escape sequence)
-    const raw = '{"bullet_ids": ["test\\x"], "reasoning": "test"}'
+    const raw = '{"bullets": [{"id": "test\\x"}], "reasoning": "test"}'
 
     const result = parseAIOutput(raw, validBulletIds, hierarchy, defaultConfig)
 
@@ -213,7 +224,7 @@ describe('parseAIOutput', () => {
     expect(result.error?.code).toBe('E002_INVALID_JSON')
   })
 
-  it('returns E003 when bullet_ids missing', () => {
+  it('returns E003 when bullets array missing', () => {
     const raw = JSON.stringify({
       reasoning: 'Test',
       selections: ['a', 'b'], // Wrong key
@@ -225,9 +236,9 @@ describe('parseAIOutput', () => {
     expect(result.error?.code).toBe('E003_MISSING_BULLET_IDS')
   })
 
-  it('returns E004 for wrong bullet count', () => {
+  it('returns E004 for insufficient bullet count', () => {
     const raw = JSON.stringify({
-      bullet_ids: ['company-a-pos-1-bullet-1', 'company-b-pos-1-bullet-1'], // Only 2
+      bullets: [b('company-a-pos-1-bullet-1'), b('company-b-pos-1-bullet-1')], // Only 2, min is 3
       reasoning: 'Test',
     })
 
@@ -235,15 +246,15 @@ describe('parseAIOutput', () => {
 
     expect(result.success).toBe(false)
     expect(result.error?.code).toBe('E004_WRONG_BULLET_COUNT')
-    expect(result.error?.message).toContain('Expected 3 bullets, got 2')
+    expect(result.error?.message).toContain('Expected at least 3 bullets, got 2')
   })
 
   it('returns E005 for invalid bullet IDs', () => {
     const raw = JSON.stringify({
-      bullet_ids: [
-        'company-a-pos-1-bullet-1',
-        'nonexistent-bullet',
-        'also-fake',
+      bullets: [
+        b('company-a-pos-1-bullet-1'),
+        b('nonexistent-bullet'),
+        b('also-fake'),
       ],
       reasoning: 'Test',
     })
@@ -257,10 +268,10 @@ describe('parseAIOutput', () => {
 
   it('returns E006 for duplicate bullet IDs', () => {
     const raw = JSON.stringify({
-      bullet_ids: [
-        'company-a-pos-1-bullet-1',
-        'company-a-pos-1-bullet-1', // Duplicate
-        'company-b-pos-1-bullet-1',
+      bullets: [
+        b('company-a-pos-1-bullet-1'),
+        b('company-a-pos-1-bullet-1'), // Duplicate
+        b('company-b-pos-1-bullet-1'),
       ],
       reasoning: 'Test',
     })
@@ -271,58 +282,15 @@ describe('parseAIOutput', () => {
     expect(result.error?.code).toBe('E006_DUPLICATE_BULLET_ID')
   })
 
-  it('returns E007 for company diversity violation', () => {
-    const raw = JSON.stringify({
-      bullet_ids: [
-        'company-a-pos-1-bullet-1',
-        'company-a-pos-1-bullet-2',
-        'company-a-pos-2-bullet-1', // 3 from company-a, max is 2
-      ],
-      reasoning: 'Test',
-    })
-
-    const result = parseAIOutput(raw, validBulletIds, hierarchy, defaultConfig)
-
-    expect(result.success).toBe(false)
-    expect(result.error?.code).toBe('E007_DIVERSITY_VIOLATION')
-    expect(result.error?.message).toContain('Company limit exceeded')
-  })
-
-  it('returns E007 for position diversity violation', () => {
-    const raw = JSON.stringify({
-      bullet_ids: [
-        'company-b-pos-1-bullet-1',
-        'company-b-pos-1-bullet-2',
-        'company-b-pos-1-bullet-3', // 3 from same position, max is 2
-      ],
-      reasoning: 'Test',
-    })
-
-    // Use config with higher company limit to trigger position violation first
-    const configHighCompanyLimit: SelectionConfig = {
-      maxBullets: 3,
-      maxPerCompany: 10, // High enough to not trigger
-      maxPerPosition: 2, // This should trigger
-    }
-
-    const result = parseAIOutput(
-      raw,
-      validBulletIds,
-      hierarchy,
-      configHighCompanyLimit
-    )
-
-    expect(result.success).toBe(false)
-    expect(result.error?.code).toBe('E007_DIVERSITY_VIOLATION')
-    expect(result.error?.message).toContain('Position limit exceeded')
-  })
+  // E007 diversity validation removed - server handles constraints
+  // AI just scores bullets, server applies maxPerCompany/maxPerPosition
 
   it('returns E008 when reasoning is missing', () => {
     const raw = JSON.stringify({
-      bullet_ids: [
-        'company-a-pos-1-bullet-1',
-        'company-b-pos-1-bullet-1',
-        'company-a-pos-2-bullet-1',
+      bullets: [
+        b('company-a-pos-1-bullet-1'),
+        b('company-b-pos-1-bullet-1'),
+        b('company-a-pos-2-bullet-1'),
       ],
       // No reasoning field
     })
@@ -335,10 +303,10 @@ describe('parseAIOutput', () => {
 
   it('returns E008 when reasoning is empty string', () => {
     const raw = JSON.stringify({
-      bullet_ids: [
-        'company-a-pos-1-bullet-1',
-        'company-b-pos-1-bullet-1',
-        'company-a-pos-2-bullet-1',
+      bullets: [
+        b('company-a-pos-1-bullet-1'),
+        b('company-b-pos-1-bullet-1'),
+        b('company-a-pos-2-bullet-1'),
       ],
       reasoning: '',
     })
@@ -349,15 +317,47 @@ describe('parseAIOutput', () => {
     expect(result.error?.code).toBe('E008_MISSING_REASONING')
   })
 
+  it('returns E009 for invalid score (out of range)', () => {
+    const raw = JSON.stringify({
+      bullets: [
+        b('company-a-pos-1-bullet-1', 1.5), // Score > 1.0
+        b('company-b-pos-1-bullet-1'),
+        b('company-a-pos-2-bullet-1'),
+      ],
+      reasoning: 'Test',
+    })
+
+    const result = parseAIOutput(raw, validBulletIds, hierarchy, defaultConfig)
+
+    expect(result.success).toBe(false)
+    expect(result.error?.code).toBe('E009_INVALID_SCORE')
+  })
+
+  it('returns E009 for invalid score (negative)', () => {
+    const raw = JSON.stringify({
+      bullets: [
+        b('company-a-pos-1-bullet-1', -0.5), // Negative score
+        b('company-b-pos-1-bullet-1'),
+        b('company-a-pos-2-bullet-1'),
+      ],
+      reasoning: 'Test',
+    })
+
+    const result = parseAIOutput(raw, validBulletIds, hierarchy, defaultConfig)
+
+    expect(result.success).toBe(false)
+    expect(result.error?.code).toBe('E009_INVALID_SCORE')
+  })
+
   it('extracts JSON from markdown code blocks in full response', () => {
     const raw = `Based on the job description, I've selected the following bullets:
 
 \`\`\`json
 {
-  "bullet_ids": [
-    "company-a-pos-1-bullet-1",
-    "company-b-pos-1-bullet-1",
-    "company-a-pos-2-bullet-1"
+  "bullets": [
+    {"id": "company-a-pos-1-bullet-1", "score": 0.95},
+    {"id": "company-b-pos-1-bullet-1", "score": 0.88},
+    {"id": "company-a-pos-2-bullet-1", "score": 0.82}
   ],
   "reasoning": "Selected technical leadership experience",
   "job_title": "Tech Lead",
@@ -370,7 +370,7 @@ These bullets best match the requirements.`
     const result = parseAIOutput(raw, validBulletIds, hierarchy, defaultConfig)
 
     expect(result.success).toBe(true)
-    expect(result.data?.bulletIds).toHaveLength(3)
+    expect(result.data?.bullets).toHaveLength(3)
     expect(result.data?.jobTitle).toBe('Tech Lead')
   })
 })
@@ -418,8 +418,9 @@ describe('formatSimplifiedError', () => {
       'E006_DUPLICATE_BULLET_ID',
       'E007_DIVERSITY_VIOLATION',
       'E008_MISSING_REASONING',
-      'E009_INVALID_SALARY',
-      'E010_PROVIDER_DOWN',
+      'E009_INVALID_SCORE',
+      'E010_INVALID_SALARY',
+      'E011_PROVIDER_DOWN',
     ] as const
 
     for (const code of codes) {

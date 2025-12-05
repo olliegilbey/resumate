@@ -110,7 +110,7 @@ describe('getFirstAvailableProvider', () => {
 
 describe('selectBulletsWithAI', () => {
   const validResult: SelectionResult = {
-    bulletIds: ['bullet-1', 'bullet-2'],
+    bullets: [{ id: 'bullet-1', score: 0.95 }, { id: 'bullet-2', score: 0.88 }],
     reasoning: 'Test',
     jobTitle: null,
     salary: null,
@@ -207,7 +207,7 @@ describe('selectBulletsWithAI', () => {
     it('falls back on provider DOWN', async () => {
       const downError = new AISelectionError(
         'Rate limited',
-        [{ code: 'E010_PROVIDER_DOWN', message: 'Down', help: 'Wait' }],
+        [{ code: 'E011_PROVIDER_DOWN', message: 'Down', help: 'Wait' }],
         'cerebras-gpt'
       )
 
@@ -269,7 +269,7 @@ describe('selectBulletsWithAI', () => {
     it('skips unavailable providers in fallback chain', async () => {
       const downError = new AISelectionError(
         'Down',
-        [{ code: 'E010_PROVIDER_DOWN', message: 'Down', help: '' }],
+        [{ code: 'E011_PROVIDER_DOWN', message: 'Down', help: '' }],
         'cerebras-gpt'
       )
 
@@ -314,7 +314,7 @@ describe('selectBulletsWithAI', () => {
     it('respects enableFallback=false', async () => {
       const downError = new AISelectionError(
         'Down',
-        [{ code: 'E010_PROVIDER_DOWN', message: 'Down', help: '' }],
+        [{ code: 'E011_PROVIDER_DOWN', message: 'Down', help: '' }],
         'cerebras-gpt'
       )
 

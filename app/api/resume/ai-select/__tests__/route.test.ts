@@ -206,7 +206,7 @@ describe('/api/resume/ai-select', () => {
     it('accepts valid provider options', async () => {
       mockTurnstileSuccess()
       mockSelectBulletsWithAI.mockResolvedValue({
-        bulletIds: ['bullet-1', 'bullet-2', 'bullet-3'],
+        bullets: [{id: 'bullet-1', score: 0.95}, {id: 'bullet-2', score: 0.88}, {id: 'bullet-3', score: 0.82}],
         reasoning: 'Test reasoning',
         jobTitle: 'Senior Engineer',
         salary: null,
@@ -252,7 +252,7 @@ describe('/api/resume/ai-select', () => {
     it('prevents token replay attacks', async () => {
       mockTurnstileSuccess()
       mockSelectBulletsWithAI.mockResolvedValue({
-        bulletIds: ['bullet-1'],
+        bullets: [{id: 'bullet-1', score: 0.95}],
         reasoning: 'Test',
         jobTitle: null,
         salary: null,
@@ -303,7 +303,7 @@ describe('/api/resume/ai-select', () => {
     it('enforces 5 requests per hour limit', async () => {
       mockTurnstileSuccess()
       mockSelectBulletsWithAI.mockResolvedValue({
-        bulletIds: ['bullet-1'],
+        bullets: [{id: 'bullet-1', score: 0.95}],
         reasoning: 'Test',
         jobTitle: null,
         salary: null,
@@ -344,7 +344,7 @@ describe('/api/resume/ai-select', () => {
     it('includes rate limit headers in response', async () => {
       mockTurnstileSuccess()
       mockSelectBulletsWithAI.mockResolvedValue({
-        bulletIds: ['bullet-1'],
+        bullets: [{id: 'bullet-1', score: 0.95}],
         reasoning: 'Test',
         jobTitle: null,
         salary: null,
@@ -370,7 +370,7 @@ describe('/api/resume/ai-select', () => {
     it('returns successful selection with full bullet data', async () => {
       mockTurnstileSuccess()
       mockSelectBulletsWithAI.mockResolvedValue({
-        bulletIds: ['bullet-1', 'bullet-2'],
+        bullets: [{id: 'bullet-1', score: 0.95}, {id: 'bullet-2', score: 0.88}],
         reasoning: 'Selected backend and leadership bullets',
         jobTitle: 'Senior Software Engineer',
         salary: { min: 150000, max: 200000, currency: 'USD', period: 'annual' },
@@ -415,7 +415,7 @@ describe('/api/resume/ai-select', () => {
     it('uses default provider when not specified', async () => {
       mockTurnstileSuccess()
       mockSelectBulletsWithAI.mockResolvedValue({
-        bulletIds: ['bullet-1'],
+        bullets: [{id: 'bullet-1', score: 0.95}],
         reasoning: 'Test',
         jobTitle: null,
         salary: null,
@@ -440,7 +440,7 @@ describe('/api/resume/ai-select', () => {
     it('passes custom config to AI selection', async () => {
       mockTurnstileSuccess()
       mockSelectBulletsWithAI.mockResolvedValue({
-        bulletIds: ['bullet-1'],
+        bullets: [{id: 'bullet-1', score: 0.95}],
         reasoning: 'Test',
         jobTitle: null,
         salary: null,
@@ -460,11 +460,10 @@ describe('/api/resume/ai-select', () => {
       const response = await POST(request)
       const data = await response.json()
 
+      // Only maxBullets passed to AI; diversity constraints applied server-side
       expect(mockSelectBulletsWithAI).toHaveBeenCalledWith(
         expect.objectContaining({
           maxBullets: 10,
-          maxPerCompany: 3,
-          maxPerPosition: 2,
         }),
         expect.any(String)
       )
@@ -472,6 +471,7 @@ describe('/api/resume/ai-select', () => {
       expect(data.config).toEqual({
         maxBullets: 10,
         maxPerCompany: 3,
+        minPerCompany: 2, // Uses default
         maxPerPosition: 2,
       })
     })
@@ -479,7 +479,7 @@ describe('/api/resume/ai-select', () => {
     it('uses default config when not specified', async () => {
       mockTurnstileSuccess()
       mockSelectBulletsWithAI.mockResolvedValue({
-        bulletIds: ['bullet-1'],
+        bullets: [{id: 'bullet-1', score: 0.95}],
         reasoning: 'Test',
         jobTitle: null,
         salary: null,
@@ -495,8 +495,9 @@ describe('/api/resume/ai-select', () => {
       const data = await response.json()
 
       expect(data.config).toEqual({
-        maxBullets: 28,
+        maxBullets: 24,
         maxPerCompany: 6,
+        minPerCompany: 2,
         maxPerPosition: 4,
       })
     })
@@ -511,7 +512,7 @@ describe('/api/resume/ai-select', () => {
       const aiError = new AISelectionError(
         'All providers failed',
         [
-          { code: 'E010_PROVIDER_DOWN', message: 'Rate limited', help: 'Try later' },
+          { code: 'E011_PROVIDER_DOWN', message: 'Rate limited', help: 'Try later' },
         ],
         'cerebras-gpt',
         3
@@ -556,7 +557,7 @@ describe('/api/resume/ai-select', () => {
     it('includes all expected fields in success response', async () => {
       mockTurnstileSuccess()
       mockSelectBulletsWithAI.mockResolvedValue({
-        bulletIds: ['bullet-1'],
+        bullets: [{id: 'bullet-1', score: 0.95}],
         reasoning: 'Test reasoning',
         jobTitle: 'Test Title',
         salary: { min: 100000, currency: 'USD', period: 'annual' },
@@ -587,10 +588,16 @@ describe('/api/resume/ai-select', () => {
       expect(data.metadata).toHaveProperty('duration')
     })
 
-    it('preserves bullet order from AI (relevance order)', async () => {
+    it('sorts bullets by score within each company', async () => {
       mockTurnstileSuccess()
       mockSelectBulletsWithAI.mockResolvedValue({
-        bulletIds: ['bullet-3', 'bullet-1', 'bullet-2'], // Non-sequential order
+        // bullet-2 has highest score but should come after bullet-1 if same company
+        // because they're sorted by score descending within company
+        bullets: [
+          { id: 'bullet-1', score: 0.7 },
+          { id: 'bullet-2', score: 0.95 },
+          { id: 'bullet-3', score: 0.5 },
+        ],
         reasoning: 'Ordered by relevance',
         jobTitle: null,
         salary: null,
@@ -600,20 +607,27 @@ describe('/api/resume/ai-select', () => {
       const request = createRequest({
         jobDescription: validJobDescription,
         turnstileToken: getUniqueToken(),
+        // Allow single-bullet companies (company2 has only bullet-3)
+        config: { minPerCompany: 1 },
       })
 
       const response = await POST(request)
       const data = await response.json()
 
-      expect(data.selected[0].bullet.id).toBe('bullet-3')
-      expect(data.selected[1].bullet.id).toBe('bullet-1')
-      expect(data.selected[2].bullet.id).toBe('bullet-2')
+      // All bullets are in company-a, so they should be sorted by score (highest first)
+      expect(data.selected[0].bullet.id).toBe('bullet-2') // score 0.95
+      expect(data.selected[1].bullet.id).toBe('bullet-1') // score 0.7
+      expect(data.selected[2].bullet.id).toBe('bullet-3') // score 0.5
     })
 
     it('filters out non-existent bullet IDs gracefully', async () => {
       mockTurnstileSuccess()
       mockSelectBulletsWithAI.mockResolvedValue({
-        bulletIds: ['bullet-1', 'non-existent', 'bullet-2'],
+        bullets: [
+          { id: 'bullet-1', score: 0.95 },
+          { id: 'non-existent', score: 0.8 },
+          { id: 'bullet-2', score: 0.75 },
+        ],
         reasoning: 'Test',
         jobTitle: null,
         salary: null,
@@ -628,10 +642,10 @@ describe('/api/resume/ai-select', () => {
       const response = await POST(request)
       const data = await response.json()
 
-      // Should only include existing bullets
+      // Should only include existing bullets, sorted by score
       expect(data.selected).toHaveLength(2)
-      expect(data.selected[0].bullet.id).toBe('bullet-1')
-      expect(data.selected[1].bullet.id).toBe('bullet-2')
+      expect(data.selected[0].bullet.id).toBe('bullet-1') // score 0.95
+      expect(data.selected[1].bullet.id).toBe('bullet-2') // score 0.75
     })
   })
 })

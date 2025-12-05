@@ -127,16 +127,16 @@ describe('buildUserPrompt', () => {
     expect(prompt).toContain('### Big Tech Inc')
   })
 
-  it('includes selection constraints', () => {
+  it('includes minimum bullet requirement', () => {
     const prompt = buildUserPrompt(sampleJobDescription, mockCompendium, {
-      maxBullets: 3,
-      maxPerCompany: 2,
-      maxPerPosition: 1,
+      maxBullets: 24, // Target for server selection
     })
 
-    expect(prompt).toContain('Select exactly **3** bullets')
-    expect(prompt).toContain('Maximum **2** bullets per company')
-    expect(prompt).toContain('Maximum **1** bullets per position')
+    // Should ask for minimum bullets (30 or maxBullets+10)
+    expect(prompt).toContain('Score AT LEAST')
+    expect(prompt).toContain('bullets')
+    // Should mention server handles constraints
+    expect(prompt).toContain('server will apply diversity constraints')
   })
 
   it('formats compendium compactly but completely', () => {
@@ -189,9 +189,9 @@ describe('buildUserPrompt', () => {
         'error[E004_WRONG_BULLET_COUNT]: Expected 3 bullets, got 2',
     })
 
-    expect(prompt).toContain('Previous Attempt Failed')
+    expect(prompt).toContain('PREVIOUS RESPONSE HAD ERRORS')
     expect(prompt).toContain('E004_WRONG_BULLET_COUNT')
-    expect(prompt).toContain('Please correct the issues')
+    expect(prompt).toContain('fix the issues')
   })
 
   it('does not include retry section when no context', () => {
@@ -199,7 +199,7 @@ describe('buildUserPrompt', () => {
       maxBullets: 3,
     })
 
-    expect(prompt).not.toContain('Previous Attempt Failed')
+    expect(prompt).not.toContain('PREVIOUS RESPONSE HAD ERRORS')
   })
 
   it('includes response format instructions', () => {
@@ -207,11 +207,11 @@ describe('buildUserPrompt', () => {
       maxBullets: 3,
     })
 
-    expect(prompt).toContain('"bullet_ids"')
+    expect(prompt).toContain('"bullets"')
     expect(prompt).toContain('"reasoning"')
     expect(prompt).toContain('"job_title"')
     expect(prompt).toContain('"salary"')
-    expect(prompt).toContain('ONLY the JSON object')
+    expect(prompt).toContain('ONLY a JSON object')
   })
 })
 

@@ -35,7 +35,7 @@ export interface ModelConfig {
 export const AI_MODELS: Record<AIProvider, ModelConfig> = {
   'cerebras-gpt': {
     provider: 'cerebras',
-    model: 'gpt-oss-120b',
+    model: 'gpt-oss-120b', // Cerebras reasoning model
     label: 'GPT OSS 120B (Fast)',
     cost: 'free',
     contextWindow: 128000,
@@ -104,14 +104,21 @@ export interface SelectionRequest {
   jobDescription: string
   compendium: ResumeData
   maxBullets: number
+  minBullets?: number // Minimum AI must return (default: 30, for tests can be lower)
   maxPerCompany?: number
   maxPerPosition?: number
   retryContext?: string // Error feedback from previous attempt
 }
 
+// Bullet with AI-assigned score
+export interface ScoredBulletSelection {
+  id: string
+  score: number // 0.0-1.0, higher = more relevant
+}
+
 // Selection result from AI provider
 export interface SelectionResult {
-  bulletIds: string[]
+  bullets: ScoredBulletSelection[]
   reasoning: string
   jobTitle: string | null
   salary: SalaryInfo | null

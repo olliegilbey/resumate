@@ -2,7 +2,7 @@
  * POST /api/resume/ai-select
  *
  * AI-powered bullet selection from job description.
- * Uses LLM to analyze job description and select relevant bullets.
+ * Uses LLM to score bullets, then applies diversity constraints server-side.
  *
  * Rate limit: 5 requests per hour per IP (stricter due to AI costs)
  */
@@ -13,7 +13,13 @@ import { selectBulletsWithAI, FALLBACK_ORDER } from '@/lib/ai/providers'
 import type { AIProvider } from '@/lib/ai/providers/types'
 import { AISelectionError } from '@/lib/ai/errors'
 import { captureEvent, flushEvents } from '@/lib/posthog-server'
-import type { ResumeData, Company, Position, Bullet } from '@/types/resume'
+import type { ResumeData } from '@/types/resume'
+import {
+  selectBulletsWithConstraints,
+  reorderByCompanyChronology,
+  DEFAULT_SELECTION_CONFIG,
+  type SelectedBullet,
+} from '@/lib/ai/selection'
 
 // In-memory token replay prevention (per function instance)
 const usedTokens = new Set<string>()
@@ -24,31 +30,8 @@ const AI_RATE_LIMIT = {
   window: 60 * 60 * 1000, // 1 hour
 }
 
-// Selection config defaults
-const DEFAULT_CONFIG = {
-  maxBullets: 28,
-  maxPerCompany: 6,
-  maxPerPosition: 4,
-}
-
 // Minimum job description length
 const MIN_JOB_DESCRIPTION_LENGTH = 50
-
-/**
- * Selected bullet with full context
- */
-interface SelectedBullet {
-  bullet: Bullet
-  companyId: string
-  companyName: string | null | undefined
-  companyDateStart: string
-  companyDateEnd: string | null | undefined
-  companyLocation: string | null | undefined
-  positionId: string
-  positionName: string
-  positionDateStart: string
-  positionDateEnd: string | null | undefined
-}
 
 export async function POST(request: NextRequest) {
   const headers = new Headers()
@@ -157,33 +140,46 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'Resume data not available' }, { status: 500 })
     }
 
-    // Selection config with defaults
+    // Selection config with defaults (matches Rust SelectionConfig)
     const selectionConfig = {
-      maxBullets: config?.maxBullets ?? DEFAULT_CONFIG.maxBullets,
-      maxPerCompany: config?.maxPerCompany ?? DEFAULT_CONFIG.maxPerCompany,
-      maxPerPosition: config?.maxPerPosition ?? DEFAULT_CONFIG.maxPerPosition,
+      maxBullets: config?.maxBullets ?? DEFAULT_SELECTION_CONFIG.maxBullets,
+      maxPerCompany: config?.maxPerCompany ?? DEFAULT_SELECTION_CONFIG.maxPerCompany,
+      maxPerPosition: config?.maxPerPosition ?? DEFAULT_SELECTION_CONFIG.maxPerPosition,
+      minPerCompany: config?.minPerCompany ?? DEFAULT_SELECTION_CONFIG.minPerCompany,
     }
 
     // Call AI provider with retry + fallback
+    // AI scores many bullets, server applies diversity constraints
     const startTime = Date.now()
     const result = await selectBulletsWithAI(
       {
         jobDescription,
         compendium: resumeData,
-        ...selectionConfig,
+        maxBullets: selectionConfig.maxBullets, // Passed to AI for context
       },
       provider as AIProvider
     )
     const aiDuration = Date.now() - startTime
 
-    // Look up full bullet data from IDs
-    const selected = lookupBullets(resumeData, result.bulletIds)
+    // Build score map from AI response
+    const scoreMap = new Map<string, number>()
+    for (const b of result.bullets) {
+      scoreMap.set(b.id, b.score)
+    }
+
+    // Apply diversity constraints server-side (ported from Rust)
+    const selectedRaw = selectBulletsWithConstraints(resumeData, scoreMap, selectionConfig)
+
+    // Reorder to maintain company chronology (companies in resume order, bullets by score)
+    const selected = reorderByCompanyChronology(selectedRaw, resumeData)
 
     // Build analytics data
     const bulletsByCompany: Record<string, number> = {}
     const bulletsByTag: Record<string, number> = {}
+    const bulletIds: string[] = []
 
     for (const item of selected) {
+      bulletIds.push(item.bullet.id)
       bulletsByCompany[item.companyId] = (bulletsByCompany[item.companyId] || 0) + 1
       for (const tag of item.bullet.tags || []) {
         bulletsByTag[tag] = (bulletsByTag[tag] || 0) + 1
@@ -207,7 +203,7 @@ export async function POST(request: NextRequest) {
         extracted_salary_max: result.salary?.max,
         salary_currency: result.salary?.currency,
         salary_period: result.salary?.period,
-        bulletIds: result.bulletIds,
+        bulletIds,
         bulletCount: selected.length,
         bulletsByCompany,
         bulletsByTag,
@@ -273,35 +269,5 @@ async function loadResumeData(): Promise<ResumeData | null> {
   }
 }
 
-/**
- * Look up full bullet data from IDs
- * Returns bullets with company/position context
- */
-function lookupBullets(resumeData: ResumeData, bulletIds: string[]): SelectedBullet[] {
-  const bulletMap = new Map<string, SelectedBullet>()
-
-  // Build map of all bullets with context
-  for (const company of resumeData.experience) {
-    for (const position of company.children) {
-      for (const bullet of position.children) {
-        bulletMap.set(bullet.id, {
-          bullet,
-          companyId: company.id,
-          companyName: company.name,
-          companyDateStart: company.dateStart,
-          companyDateEnd: company.dateEnd,
-          companyLocation: company.location,
-          positionId: position.id,
-          positionName: position.name,
-          positionDateStart: position.dateStart,
-          positionDateEnd: position.dateEnd,
-        })
-      }
-    }
-  }
-
-  // Return bullets in the order specified by AI (relevance order)
-  return bulletIds
-    .map((id) => bulletMap.get(id))
-    .filter((b): b is SelectedBullet => b !== undefined)
-}
+// Selection logic moved to lib/ai/selection.ts
+// Uses selectBulletsWithConstraints + reorderByCompanyChronology

@@ -20,12 +20,29 @@ export function buildUserPrompt(
   config: PromptConfig
 ): string {
   const bulletList = formatBulletsForPrompt(compendium)
-  const constraints = formatConstraints(config)
+
+  // Put retry context FIRST if present (most important)
   const retrySection = config.retryContext
     ? formatRetryContext(config.retryContext)
     : ''
 
-  return `## Job Description
+  // Minimum bullets to score - give buffer for server-side filtering
+  const minBullets = getMinBullets(config.maxBullets || 24)
+
+  return `${retrySection}## YOUR TASK
+
+Score the most relevant bullets from the candidate's experience for this job.
+
+**Requirements:**
+- Score AT LEAST ${minBullets} bullets (more is better)
+- Use scores 0.0-1.0 (1.0 = perfect match, 0.0 = irrelevant)
+- Only use IDs exactly as shown in brackets [like-this]
+
+The server will apply diversity constraints and select the final set. Your job is to score relevance accurately.
+
+---
+
+## Job Description
 
 ${jobDescription}
 
@@ -33,30 +50,27 @@ ${jobDescription}
 
 ## Available Bullets
 
-Select from the following bullets. Each bullet shows:
-- [ID] The unique identifier you must use in your response
-- Description text
-- Tags and priority for reference
+Each bullet shows: [ID] Description (tags | priority)
 
 ${bulletList}
 
 ---
 
-## Selection Requirements
+## Response Format
 
-${constraints}
+Return ONLY a JSON object:
+{
+  "bullets": [
+    {"id": "bullet-id", "score": 0.95},
+    {"id": "another-id", "score": 0.82},
+    ... at least ${minBullets} scored bullets
+  ],
+  "reasoning": "Brief explanation of scoring criteria",
+  "job_title": "Title from JD" or null,
+  "salary": {"min": N, "max": N, "currency": "USD", "period": "annual"} or null
+}
 
----
-${retrySection}
-## Your Response
-
-Return a JSON object with:
-- "bullet_ids": Array of exactly ${config.maxBullets} bullet IDs
-- "reasoning": Brief explanation of selection strategy
-- "job_title": Extracted job title or null
-- "salary": Extracted salary info or null
-
-Remember: Return ONLY the JSON object, no other text.`
+NO markdown, NO code blocks, NO extra text.`
 }
 
 /**
@@ -116,37 +130,24 @@ function formatDateRange(start: string, end?: string | null): string {
 }
 
 /**
- * Format selection constraints
+ * Calculate minimum bullets to request from AI
  */
-function formatConstraints(config: PromptConfig): string {
-  const lines = [`- Select exactly **${config.maxBullets}** bullets`]
-
-  if (config.maxPerCompany) {
-    lines.push(`- Maximum **${config.maxPerCompany}** bullets per company`)
-  }
-  if (config.maxPerPosition) {
-    lines.push(`- Maximum **${config.maxPerPosition}** bullets per position`)
-  }
-
-  lines.push('- Order bullets by relevance (most relevant first)')
-  lines.push('- Only use IDs from the compendium above')
-
-  return lines.join('\n')
+export function getMinBullets(targetBullets: number): number {
+  return Math.max(30, targetBullets + 10)
 }
 
 /**
  * Format retry context from previous failed attempt
- * Uses Rust-style error formatting to help AI correct mistakes
  */
 function formatRetryContext(context: string): string {
-  return `
-## Previous Attempt Failed
+  return `## 🛑 PREVIOUS RESPONSE HAD ERRORS
 
 ${context}
 
-Please correct the issues above and try again.
+Please fix the issues above. Score more bullets if needed, and ensure all IDs exist.
 
 ---
+
 `
 }
 
@@ -171,32 +172,42 @@ export async function loadSystemPrompt(): Promise<string> {
  * Embedded system prompt for edge runtime where file access isn't available
  */
 function getEmbeddedSystemPrompt(): string {
-  return `# Resume Bullet Selection Expert
+  return `# Resume Bullet Scoring Expert
 
-You are an expert resume curator. Your task is to select the most relevant bullet points from a candidate's experience compendium to match a specific job description.
+You are an expert resume curator. Your task is to SCORE bullet points from a candidate's experience based on relevance to a job description.
 
 ## Your Goal
 
-Analyze the job description and select bullets that will make the strongest resume for this specific role.
+Analyze the job description and score bullets based on how well they demonstrate relevant experience. The server will handle final selection and diversity constraints.
 
 ## Output Format
 
 You MUST respond with a single JSON object:
 
 {
-  "bullet_ids": ["id-1", "id-2", ...],
-  "reasoning": "Brief explanation of selection strategy",
+  "bullets": [
+    {"id": "bullet-id", "score": 0.95},
+    {"id": "another-id", "score": 0.82},
+    ...
+  ],
+  "reasoning": "Brief explanation of scoring criteria",
   "job_title": "Extracted Job Title" or null,
   "salary": { "min": number, "max": number, "currency": "USD", "period": "annual" } or null
 }
 
+## Scoring Guidelines
+
+- 0.9-1.0: Direct skill match + quantifiable impact
+- 0.7-0.9: Strong relevance to job requirements
+- 0.5-0.7: Moderate relevance, transferable skills
+- 0.3-0.5: Weak relevance but shows breadth
+- 0.0-0.3: Minimal relevance
+
 ## Critical Rules
 
 1. Only use bullet IDs from the provided compendium
-2. Select exactly the required number of bullets
-3. Respect diversity constraints (max per company/position)
-4. Return valid JSON only - no markdown, no extra text
-5. Include all required fields`
+2. Score at least 30 bullets (more is better)
+3. Return valid JSON only - no markdown, no extra text`
 }
 
 /**

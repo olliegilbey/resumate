@@ -40,7 +40,7 @@ export class AnthropicProvider implements AIProviderInterface {
           'Anthropic API key not configured',
           [
             {
-              code: 'E010_PROVIDER_DOWN',
+              code: 'E011_PROVIDER_DOWN',
               message: 'ANTHROPIC_API_KEY environment variable not set',
               help: 'Set ANTHROPIC_API_KEY in .env.local',
             },
@@ -108,6 +108,7 @@ export class AnthropicProvider implements AIProviderInterface {
 
       const parseResult = parseAIOutput(rawText, validIds, hierarchy, {
         maxBullets: request.maxBullets,
+        minBullets: request.minBullets,
         maxPerCompany: request.maxPerCompany,
         maxPerPosition: request.maxPerPosition,
       })
@@ -125,7 +126,7 @@ export class AnthropicProvider implements AIProviderInterface {
         (response.usage?.input_tokens ?? 0) + (response.usage?.output_tokens ?? 0)
 
       return {
-        bulletIds: parseResult.data!.bulletIds,
+        bullets: parseResult.data!.bullets,
         reasoning: parseResult.data!.reasoning,
         jobTitle: parseResult.data!.jobTitle,
         salary: parseResult.data!.salary,
@@ -141,7 +142,7 @@ export class AnthropicProvider implements AIProviderInterface {
       // Handle Anthropic API errors (duck-type check for testability)
       if (this.isAnthropicAPIError(error)) {
         const parseError: ParseError = {
-          code: this.isProviderDownError(error) ? 'E010_PROVIDER_DOWN' : 'E000_PROVIDER_ERROR',
+          code: this.isProviderDownError(error) ? 'E011_PROVIDER_DOWN' : 'E000_PROVIDER_ERROR',
           message: error.message,
           help: `Status: ${error.status}, Type: ${error.name}`,
         }

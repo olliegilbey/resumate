@@ -109,13 +109,13 @@ describe('CerebrasProvider', () => {
         await provider.select({
           jobDescription: 'Test job',
           compendium: mockCompendium,
-          maxBullets: 2,
+          maxBullets: 2, minBullets: 2,
         })
         expect.fail('Should have thrown')
       } catch (e) {
         expect(e).toBeInstanceOf(AISelectionError)
         const err = e as AISelectionError
-        expect(err.errors[0].code).toBe('E010_PROVIDER_DOWN')
+        expect(err.errors[0].code).toBe('E011_PROVIDER_DOWN')
       }
     })
 
@@ -127,7 +127,7 @@ describe('CerebrasProvider', () => {
             {
               message: {
                 content: JSON.stringify({
-                  bullet_ids: ['bullet-1', 'bullet-2'],
+                  bullets: [{id: 'bullet-1', score: 0.95}, {id: 'bullet-2', score: 0.88}],
                   reasoning: 'Selected relevant bullets',
                   job_title: 'Software Engineer',
                   salary: null,
@@ -143,7 +143,7 @@ describe('CerebrasProvider', () => {
       await provider.select({
         jobDescription: 'We need an engineer',
         compendium: mockCompendium,
-        maxBullets: 2,
+        maxBullets: 2, minBullets: 2,
       })
 
       expect(mockFetch).toHaveBeenCalledWith(
@@ -175,7 +175,7 @@ describe('CerebrasProvider', () => {
             {
               message: {
                 content: JSON.stringify({
-                  bullet_ids: ['bullet-1', 'bullet-2'],
+                  bullets: [{id: 'bullet-1', score: 0.95}, {id: 'bullet-2', score: 0.88}],
                   reasoning: 'API + leadership match job',
                   job_title: 'Backend Developer',
                   salary: { min: 100000, max: 150000, currency: 'USD', period: 'annual' },
@@ -191,10 +191,10 @@ describe('CerebrasProvider', () => {
       const result = await provider.select({
         jobDescription: 'Backend developer needed',
         compendium: mockCompendium,
-        maxBullets: 2,
+        maxBullets: 2, minBullets: 2,
       })
 
-      expect(result.bulletIds).toEqual(['bullet-1', 'bullet-2'])
+      expect(result.bullets).toEqual([{id: 'bullet-1', score: 0.95}, {id: 'bullet-2', score: 0.88}])
       expect(result.reasoning).toBe('API + leadership match job')
       expect(result.jobTitle).toBe('Backend Developer')
       expect(result.salary).toEqual({
@@ -215,7 +215,7 @@ describe('CerebrasProvider', () => {
             {
               message: {
                 content: JSON.stringify({
-                  bullet_ids: ['bullet-1', 'nonexistent-bullet'],
+                  bullets: [{id: 'bullet-1', score: 0.95}, {id: 'nonexistent-bullet', score: 0.85}],
                   reasoning: 'Test',
                   job_title: null,
                   salary: null,
@@ -232,7 +232,7 @@ describe('CerebrasProvider', () => {
         await provider.select({
           jobDescription: 'Test',
           compendium: mockCompendium,
-          maxBullets: 2,
+          maxBullets: 2, minBullets: 2,
         })
         expect.fail('Should have thrown')
       } catch (e) {
@@ -249,7 +249,7 @@ describe('CerebrasProvider', () => {
             {
               message: {
                 content: JSON.stringify({
-                  bullet_ids: ['bullet-1'],
+                  bullets: [{id: 'bullet-1', score: 0.95}],
                   reasoning: 'Test',
                   job_title: null,
                   salary: null,
@@ -266,7 +266,7 @@ describe('CerebrasProvider', () => {
         await provider.select({
           jobDescription: 'Test',
           compendium: mockCompendium,
-          maxBullets: 2,
+          maxBullets: 2, minBullets: 2,
         })
         expect.fail('Should have thrown')
       } catch (e) {
@@ -290,12 +290,12 @@ describe('CerebrasProvider', () => {
         await provider.select({
           jobDescription: 'Test',
           compendium: mockCompendium,
-          maxBullets: 2,
+          maxBullets: 2, minBullets: 2,
         })
         expect.fail('Should have thrown')
       } catch (e) {
         const err = e as AISelectionError
-        expect(err.errors[0].code).toBe('E010_PROVIDER_DOWN')
+        expect(err.errors[0].code).toBe('E011_PROVIDER_DOWN')
       }
     })
 
@@ -314,12 +314,12 @@ describe('CerebrasProvider', () => {
         await provider.select({
           jobDescription: 'Test',
           compendium: mockCompendium,
-          maxBullets: 2,
+          maxBullets: 2, minBullets: 2,
         })
         expect.fail('Should have thrown')
       } catch (e) {
         const err = e as AISelectionError
-        expect(err.errors[0].code).toBe('E010_PROVIDER_DOWN')
+        expect(err.errors[0].code).toBe('E011_PROVIDER_DOWN')
       }
     })
 
@@ -332,12 +332,12 @@ describe('CerebrasProvider', () => {
         await provider.select({
           jobDescription: 'Test',
           compendium: mockCompendium,
-          maxBullets: 2,
+          maxBullets: 2, minBullets: 2,
         })
         expect.fail('Should have thrown')
       } catch (e) {
         const err = e as AISelectionError
-        expect(err.errors[0].code).toBe('E010_PROVIDER_DOWN')
+        expect(err.errors[0].code).toBe('E011_PROVIDER_DOWN')
         expect(err.message).toContain('fetch failed')
       }
     })
@@ -356,7 +356,7 @@ describe('CerebrasProvider', () => {
         await provider.select({
           jobDescription: 'Test',
           compendium: mockCompendium,
-          maxBullets: 2,
+          maxBullets: 2, minBullets: 2,
         })
         expect.fail('Should have thrown')
       } catch (e) {
@@ -373,7 +373,7 @@ describe('CerebrasProvider', () => {
             {
               message: {
                 content: JSON.stringify({
-                  bullet_ids: ['bullet-1', 'bullet-2'],
+                  bullets: [{id: 'bullet-1', score: 0.95}, {id: 'bullet-2', score: 0.88}],
                   reasoning: 'Fixed the issue',
                   job_title: null,
                   salary: null,
@@ -388,12 +388,12 @@ describe('CerebrasProvider', () => {
       await provider.select({
         jobDescription: 'Test job',
         compendium: mockCompendium,
-        maxBullets: 2,
+        maxBullets: 2, minBullets: 2,
         retryContext: 'error[E004_WRONG_BULLET_COUNT]: Expected 2, got 1',
       })
 
       const body = JSON.parse(mockFetch.mock.calls[0][1].body)
-      expect(body.messages[1].content).toContain('Previous Attempt Failed')
+      expect(body.messages[1].content).toContain('PREVIOUS RESPONSE HAD ERRORS')
       expect(body.messages[1].content).toContain('E004_WRONG_BULLET_COUNT')
     })
 
@@ -405,7 +405,7 @@ describe('CerebrasProvider', () => {
             {
               message: {
                 content: JSON.stringify({
-                  bullet_ids: ['bullet-1', 'bullet-2'],
+                  bullets: [{id: 'bullet-1', score: 0.95}, {id: 'bullet-2', score: 0.88}],
                   reasoning: 'Test',
                   job_title: null,
                   salary: null,
@@ -420,7 +420,7 @@ describe('CerebrasProvider', () => {
       await provider.select({
         jobDescription: 'Test',
         compendium: mockCompendium,
-        maxBullets: 2,
+        maxBullets: 2, minBullets: 2,
       })
 
       const body = JSON.parse(mockFetch.mock.calls[0][1].body)
