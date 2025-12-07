@@ -66,7 +66,7 @@ export class AnthropicProvider implements AIProviderInterface {
    */
   async select(request: SelectionRequest): Promise<SelectionResult> {
     const client = this.getClient()
-    const systemPrompt = await loadSystemPrompt()
+    const systemPrompt = loadSystemPrompt()
 
     const userPrompt = buildUserPrompt(request.jobDescription, request.compendium, {
       maxBullets: request.maxBullets,

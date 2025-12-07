@@ -6,6 +6,7 @@
 
 import type { ResumeData } from '@/lib/types/generated-resume'
 import type { SelectionConfig } from '../output-parser'
+import { SYSTEM_PROMPT } from './system-prompt'
 
 export interface PromptConfig extends SelectionConfig {
   retryContext?: string // Error context from previous failed attempt
@@ -152,62 +153,13 @@ Please fix the issues above. Score more bullets if needed, and ensure all IDs ex
 }
 
 /**
- * Load system prompt from markdown file
+ * Load system prompt - now returns TypeScript constant (no file I/O)
+ *
+ * Previously read from system.md but Vercel serverless couldn't bundle it.
+ * Converted to system-prompt.ts for reliable bundling.
  */
-export async function loadSystemPrompt(): Promise<string> {
-  // In Node.js environment, read from file
-  // In edge/browser, use embedded string
-  if (typeof window === 'undefined') {
-    const fs = await import('fs/promises')
-    const path = await import('path')
-    const promptPath = path.join(process.cwd(), 'lib/ai/prompts/system.md')
-    return fs.readFile(promptPath, 'utf-8')
-  }
-
-  // Fallback: return embedded version for edge runtime
-  return getEmbeddedSystemPrompt()
-}
-
-/**
- * Embedded system prompt for edge runtime where file access isn't available
- */
-function getEmbeddedSystemPrompt(): string {
-  return `# Resume Bullet Scoring Expert
-
-You are an expert resume curator. Your task is to SCORE bullet points from a candidate's experience based on relevance to a job description.
-
-## Your Goal
-
-Analyze the job description and score bullets based on how well they demonstrate relevant experience. The server will handle final selection and diversity constraints.
-
-## Output Format
-
-You MUST respond with a single JSON object:
-
-{
-  "bullets": [
-    {"id": "bullet-id", "score": 0.95},
-    {"id": "another-id", "score": 0.82},
-    ...
-  ],
-  "reasoning": "Brief explanation of scoring criteria",
-  "job_title": "Extracted Job Title" or null,
-  "salary": { "min": number, "max": number, "currency": "USD", "period": "annual" } or null
-}
-
-## Scoring Guidelines
-
-- 0.9-1.0: Direct skill match + quantifiable impact
-- 0.7-0.9: Strong relevance to job requirements
-- 0.5-0.7: Moderate relevance, transferable skills
-- 0.3-0.5: Weak relevance but shows breadth
-- 0.0-0.3: Minimal relevance
-
-## Critical Rules
-
-1. Only use bullet IDs from the provided compendium
-2. Score at least 30 bullets (more is better)
-3. Return valid JSON only - no markdown, no extra text`
+export function loadSystemPrompt(): string {
+  return SYSTEM_PROMPT
 }
 
 /**

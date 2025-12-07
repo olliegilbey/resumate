@@ -84,7 +84,7 @@ export class CerebrasProvider implements AIProviderInterface {
       )
     }
 
-    const systemPrompt = await loadSystemPrompt()
+    const systemPrompt = loadSystemPrompt()
     const userPrompt = buildUserPrompt(request.jobDescription, request.compendium, {
       maxBullets: request.maxBullets,
       maxPerCompany: request.maxPerCompany,

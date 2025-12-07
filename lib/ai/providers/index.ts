@@ -107,7 +107,7 @@ export async function selectBulletsWithAI(
         return result
       } catch (error) {
         if (!(error instanceof AISelectionError)) {
-          // Unknown error - wrap and continue
+          // Unknown error - wrap and track
           const parseError: ParseError = {
             code: 'E000_PROVIDER_ERROR',
             message: error instanceof Error ? error.message : String(error),
@@ -115,7 +115,27 @@ export async function selectBulletsWithAI(
           }
           allErrors.push(parseError)
           console.error(`[AI] Unexpected error:`, error)
-          continue
+
+          // Check if this is the last retry - if so, try fallback or throw
+          if (attempt === maxRetries) {
+            console.error(`[AI] All ${maxRetries} retries exhausted for ${currentProvider}`)
+            if (enableFallback) {
+              const nextProvider = getNextFallback(currentProvider)
+              if (nextProvider) {
+                console.log(`[AI] Trying fallback provider: ${nextProvider}`)
+                currentProvider = nextProvider
+                break // Break inner loop to try next provider
+              }
+            }
+            // No more fallbacks - throw aggregated error
+            throw new AISelectionError(
+              `Failed after ${maxRetries} attempts with ${currentProvider}`,
+              allErrors,
+              currentProvider,
+              totalRetries
+            )
+          }
+          continue // Try again with same provider
         }
 
         allErrors.push(...error.errors)
