@@ -104,11 +104,12 @@ export async function POST(request: NextRequest) {
       )
     }
 
-    // Token replay check
+    // Token replay check (mark used immediately to prevent TOCTOU race)
     if (usedTokens.has(turnstileToken)) {
       console.warn('[AI Select] Duplicate Turnstile token blocked')
       return NextResponse.json({ error: 'Token already used' }, { status: 403 })
     }
+    usedTokens.add(turnstileToken)
 
     // Turnstile verification
     const turnstileSecret = process.env.TURNSTILE_SECRET_KEY
@@ -134,9 +135,6 @@ export async function POST(request: NextRequest) {
     if (!turnstileData.success) {
       return NextResponse.json({ error: 'Turnstile verification failed' }, { status: 403 })
     }
-
-    // Mark token as used
-    usedTokens.add(turnstileToken)
 
     // Load resume data
     const resumeData = await loadResumeData()
