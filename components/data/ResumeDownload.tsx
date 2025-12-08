@@ -156,9 +156,26 @@ export function ResumeDownload({ resumeData }: ResumeDownloadProps) {
 
     // Track: User cancelled (if flow was in progress)
     if (flowStartRef.current > 0 && status !== 'error') {
-      const stage = verifiedToken
-        ? (status === 'loading_wasm' || status === 'generating' ? 'compiling' : 'verified')
-        : 'turnstile'
+      // Derive stage from aiStage when in AI mode, otherwise from status
+      let stage: 'turnstile' | 'verified' | 'compiling' | 'ai_analyzing'
+      if (isJobDescriptionMode && aiStage !== 'idle') {
+        // AI mode: map aiStage to analytics stage
+        if (['analyzing', 'selecting', 'validating', 'retrying'].includes(aiStage)) {
+          stage = 'ai_analyzing'
+        } else if (aiStage === 'compiling') {
+          stage = 'compiling'
+        } else if (aiStage === 'verifying') {
+          stage = 'turnstile'
+        } else {
+          // complete, error, or other - use verified as fallback
+          stage = 'verified'
+        }
+      } else {
+        // Heuristic mode: derive from status
+        stage = verifiedToken
+          ? (status === 'loading_wasm' || status === 'generating' ? 'compiling' : 'verified')
+          : 'turnstile'
+      }
       analytics.cancelled({
         generation_method: isJobDescriptionMode ? 'ai' : 'heuristic',
         role_profile_id: isJobDescriptionMode ? undefined : selectedRoleId,
@@ -179,7 +196,7 @@ export function ResumeDownload({ resumeData }: ResumeDownloadProps) {
     setAiRetryCount(0)
     flowStartRef.current = 0
     turnstileRef.current?.reset()
-  }, [status, verifiedToken, analytics, selectedRoleId, isJobDescriptionMode, aiProvider])
+  }, [status, verifiedToken, analytics, selectedRoleId, isJobDescriptionMode, aiProvider, aiStage])
 
   // Auto-download when token is verified (like vCard pattern)
   useEffect(() => {
