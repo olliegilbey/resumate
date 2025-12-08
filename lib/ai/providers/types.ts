@@ -51,16 +51,16 @@ export const AI_MODELS: Record<AIProvider, ModelConfig> = {
   },
   'claude-sonnet': {
     provider: 'anthropic',
-    model: 'claude-sonnet-4-5-20250514',
-    label: 'Claude Sonnet 4.5',
+    model: 'claude-sonnet-4-20250514', // Claude Sonnet 4
+    label: 'Claude Sonnet 4',
     cost: 'paid',
     contextWindow: 200000,
     maxOutputTokens: 8192,
   },
   'claude-haiku': {
     provider: 'anthropic',
-    model: 'claude-haiku-4-5-20250514',
-    label: 'Claude Haiku 4.5',
+    model: 'claude-3-5-haiku-20241022', // Claude Haiku 3.5
+    label: 'Claude Haiku 3.5',
     cost: 'paid',
     contextWindow: 200000,
     maxOutputTokens: 8192,
@@ -149,12 +149,8 @@ export interface SelectionOptions {
   enableFallback?: boolean
 }
 
-// Default selection configuration
-export const DEFAULT_SELECTION_CONFIG = {
-  maxBullets: 28,
-  maxPerCompany: 6,
-  maxPerPosition: 4,
-} as const
+// Note: DEFAULT_SELECTION_CONFIG is in lib/ai/selection.ts (source of truth)
+// Do not add a duplicate here - it was removed to prevent divergence
 
 // Default selection options
 export const DEFAULT_SELECTION_OPTIONS: Required<SelectionOptions> = {

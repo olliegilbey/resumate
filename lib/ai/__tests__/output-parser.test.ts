@@ -7,7 +7,7 @@ import {
   type BulletHierarchy,
   type SelectionConfig,
 } from '../output-parser'
-import { formatRustStyleError, formatSimplifiedError } from '../errors'
+import { formatRustStyleError, formatSimplifiedError, AISelectionError } from '../errors'
 
 // Test fixtures
 const validBulletIds = new Set([
@@ -491,5 +491,45 @@ describe('extractAllBulletIds', () => {
     expect(result.has('b')).toBe(true)
     expect(result.has('c')).toBe(true)
     expect(result.has('d')).toBe(true)
+  })
+})
+
+describe('AISelectionError.isOutputFormatError', () => {
+  it('returns true for E009_INVALID_SCORE (regression test)', () => {
+    // E009 should trigger retry - invalid scores are fixable by the AI
+    const error = new AISelectionError(
+      'Invalid score',
+      [{ code: 'E009_INVALID_SCORE', message: 'test', help: 'test' }],
+      'cerebras-gpt',
+      1
+    )
+    expect(error.isOutputFormatError()).toBe(true)
+  })
+
+  it('returns true for all retryable format errors', () => {
+    const formatErrors = [
+      'E001_NO_JSON_FOUND',
+      'E002_INVALID_JSON',
+      'E003_MISSING_BULLET_IDS',
+      'E004_WRONG_BULLET_COUNT',
+      'E005_INVALID_BULLET_ID',
+      'E006_DUPLICATE_BULLET_ID',
+      'E008_MISSING_REASONING',
+      'E009_INVALID_SCORE',
+    ] as const
+
+    for (const code of formatErrors) {
+      const error = new AISelectionError('test', [{ code, message: 'test', help: 'test' }], 'test', 1)
+      expect(error.isOutputFormatError()).toBe(true)
+    }
+  })
+
+  it('returns false for non-format errors', () => {
+    const nonFormatErrors = ['E000_PROVIDER_ERROR', 'E011_PROVIDER_DOWN'] as const
+
+    for (const code of nonFormatErrors) {
+      const error = new AISelectionError('test', [{ code, message: 'test', help: 'test' }], 'test', 1)
+      expect(error.isOutputFormatError()).toBe(false)
+    }
   })
 })

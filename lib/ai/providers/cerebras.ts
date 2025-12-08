@@ -109,6 +109,7 @@ export class CerebrasProvider implements AIProviderInterface {
           max_tokens: this.config.maxOutputTokens,
           temperature: 0.3,
         }),
+        signal: AbortSignal.timeout(30000), // 30s timeout for AI inference
       })
 
       console.log(`[Cerebras] Response status: ${response.status}`)

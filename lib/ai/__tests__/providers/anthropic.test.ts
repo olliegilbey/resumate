@@ -80,7 +80,7 @@ describe('AnthropicProvider', () => {
       const provider = new AnthropicProvider('claude-sonnet')
 
       expect(provider.name).toBe('claude-sonnet')
-      expect(provider.config.model).toBe('claude-sonnet-4-5-20250514')
+      expect(provider.config.model).toBe('claude-sonnet-4-20250514')
       expect(provider.config.provider).toBe('anthropic')
     })
 
@@ -88,7 +88,7 @@ describe('AnthropicProvider', () => {
       const provider = new AnthropicProvider('claude-haiku')
 
       expect(provider.name).toBe('claude-haiku')
-      expect(provider.config.model).toBe('claude-haiku-4-5-20250514')
+      expect(provider.config.model).toBe('claude-3-5-haiku-20241022')
     })
   })
 
@@ -164,7 +164,7 @@ describe('AnthropicProvider', () => {
 
       expect(mockCreate).toHaveBeenCalledWith(
         expect.objectContaining({
-          model: 'claude-sonnet-4-5-20250514',
+          model: 'claude-sonnet-4-20250514',
           max_tokens: 8192,
           system: expect.any(String),
           messages: [{ role: 'user', content: expect.any(String) }],

@@ -156,6 +156,7 @@ export class AISelectionError extends Error {
       'E006_DUPLICATE_BULLET_ID',
       // E007_DIVERSITY_VIOLATION removed - server handles diversity
       'E008_MISSING_REASONING',
+      'E009_INVALID_SCORE', // AI returned score outside 0-1 range
     ]
     return this.errors.some((e) => formatErrors.includes(e.code))
   }

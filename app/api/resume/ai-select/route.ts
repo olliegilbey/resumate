@@ -21,7 +21,10 @@ import {
   type SelectedBullet,
 } from '@/lib/ai/selection'
 
-// In-memory token replay prevention (per function instance)
+// WARNING: In-memory token replay prevention is lost on serverless cold starts.
+// For production at scale, consider storing used tokens in Redis/KV with TTL
+// matching Turnstile token validity (~5 min). Current implementation provides
+// protection within a single function instance only.
 const usedTokens = new Set<string>()
 
 // Rate limit config: 5 requests per hour (stricter for AI)
@@ -188,6 +191,9 @@ export async function POST(request: NextRequest) {
     }
 
     // Track resume_ai_prepared event
+    // NOTE: PII (email, linkedin, clientIP, job_description) is intentionally captured.
+    // This powers n8n automation to notify the resume owner when recruiters show interest.
+    // Privacy policy covers this data collection. Do not remove without owner approval.
     await captureEvent(
       sessionId || clientIP,
       'resume_ai_prepared',
@@ -197,7 +203,7 @@ export async function POST(request: NextRequest) {
         linkedin,
         generation_method: 'ai',
         ai_provider: result.provider,
-        job_description: jobDescription, // Full JD for n8n
+        job_description: jobDescription, // Full JD for n8n automation
         job_description_length: jobDescription.length,
         job_title: result.jobTitle,
         extracted_salary_min: result.salary?.min,

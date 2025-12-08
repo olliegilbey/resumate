@@ -102,7 +102,8 @@ Note: job_title and salary can be \`null\` if not found in the job description.
     {"id": "startup-cto-scaling", "score": 0.87},
     {"id": "bigco-senior-api-design", "score": 0.82},
     {"id": "startup-backend-optimization", "score": 0.75},
-    ...more scored bullets
+    {"id": "bigco-senior-performance", "score": 0.68},
+    {"id": "startup-devops-ci-cd", "score": 0.62}
   ],
   "reasoning": "Prioritized infrastructure and scaling experience. Weighted leadership bullets highly for senior-level role.",
   "job_title": "Senior Site Reliability Engineer",
@@ -113,4 +114,6 @@ Note: job_title and salary can be \`null\` if not found in the job description.
     "period": "annual"
   }
 }
-\`\`\``
+\`\`\`
+
+Note: Continue this pattern for all scored bullets. Include more bullets to give the server selection options.`

@@ -7,13 +7,10 @@
 
 import { createParseError, type ParseError } from './errors'
 import { AI_BULLET_BUFFER } from './prompts/user-template'
+import type { SalaryInfo } from './providers/types'
 
-export interface SalaryInfo {
-  min?: number
-  max?: number
-  currency: string
-  period: 'annual' | 'monthly' | 'hourly' | 'daily' | 'weekly'
-}
+// Re-export SalaryInfo for backward compatibility
+export type { SalaryInfo } from './providers/types'
 
 export interface SelectionConfig {
   maxBullets: number // Target bullets for final selection (used by route)

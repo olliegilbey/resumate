@@ -280,7 +280,6 @@ describe('selectBulletsWithAI', () => {
       })
 
       // cerebras-gpt available but DOWN, claude-haiku available
-      let callCount = 0
       ;(CerebrasProvider as unknown as ReturnType<typeof vi.fn>).mockImplementation(
         (model: string) => {
           if (model === 'cerebras-gpt') {

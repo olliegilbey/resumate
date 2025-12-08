@@ -127,6 +127,10 @@ function formatBullet(bullet: {
 
 /**
  * Format date range for display
+ *
+ * @param start - Date string in "YYYY" or "YYYY-MM" format
+ * @param end - Optional end date in same format, or null/undefined for current
+ * @returns Formatted range like "2020–2023" or "2022–Present"
  */
 function formatDateRange(start: string, end?: string | null): string {
   const startYear = start.split('-')[0]
