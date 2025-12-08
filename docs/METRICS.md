@@ -1,8 +1,8 @@
 ---
-Generated: 2025-11-27T16:42
+Generated: 2025-12-08T01:08
 Generator: scripts/update-metrics-from-logs.sh
 Source: Parsed from test execution logs
-Valid Until: 2025-11-28T16:42 (24h expiry)
+Valid Until: 2025-12-09T01:08 (24h expiry)
 ---
 
 # Project Metrics (Auto-Generated)
@@ -15,9 +15,9 @@ To update: Run `just test` again
 
 ## Test Counts
 
-**Rust:**       140 tests (1 ignored) in 2.09s  ✅ Passing
-**TypeScript:** 233 tests in 1.81s  ✅ Passing
-**TOTAL:**      373 tests  ✅ All Passing
+**Rust:**       140 tests (1 ignored) in 2.10s  ✅ Passing
+**TypeScript:** 387 tests in 4.11s  ✅ Passing
+**TOTAL:**      527 tests  ✅ All Passing
 
 ### Rust Tests (By Crate)
 
@@ -28,11 +28,11 @@ To update: Run `just test` again
 
 ### TypeScript Tests
 
-- Total tests:  233
-- Test files:   13
-- Execution:    1.81s
+- Total tests:  387
+- Test files:   21
+- Execution:    4.11s
 
-**Test files breakdown available in log:** `/Users/olliegilbey/code/resumate/.logs/ts-tests.log`
+**Test files breakdown available in log:** `.logs/ts-tests.log`
 
 ---
 
@@ -81,15 +81,15 @@ just coverage-ts-open     # Open in browser
 
 **Rust Tests:**
 - Command: `cargo test --all`
-- Log: `/Users/olliegilbey/code/resumate/.logs/rust-tests.log`
-- Duration: 2.09s
+- Log: `.logs/rust-tests.log`
+- Duration: 2.10s
 - Suites: Multiple (core, typst, wasm, shared-types, integration, doc-tests)
 
 **TypeScript Tests:**
 - Command: `bun run test --run`
-- Log: `/Users/olliegilbey/code/resumate/.logs/ts-tests.log`
-- Duration: 1.81s
-- Files: 13 test files
+- Log: `.logs/ts-tests.log`
+- Duration: 4.11s
+- Files: 21 test files
 
 ---
 
@@ -111,25 +111,25 @@ just coverage-ts       # TypeScript coverage report
 
 **View logs:**
 ```bash
-cat /Users/olliegilbey/code/resumate/.logs/rust-tests.log     # View Rust test output
-cat /Users/olliegilbey/code/resumate/.logs/ts-tests.log       # View TypeScript test output
+cat .logs/rust-tests.log     # View Rust test output
+cat .logs/ts-tests.log       # View TypeScript test output
 ```
 
 ---
 
 ## Verification
 
-**Last Generated:** 2025-11-27T16:42
+**Last Generated:** 2025-12-08T01:08
 **Next Update:** Automatically on next `just test` run
 **Logs Valid For:** Current session (stored in /tmp)
 
 **To verify counts:**
 ```bash
 # Check Rust
-grep "test result: ok" /Users/olliegilbey/code/resumate/.logs/rust-tests.log | grep -oE "[0-9]+ passed"
+grep "test result: ok" .logs/rust-tests.log | grep -oE "[0-9]+ passed"
 
 # Check TypeScript
-grep "Tests.*passed" /Users/olliegilbey/code/resumate/.logs/ts-tests.log
+grep "Tests.*passed" .logs/ts-tests.log
 ```
 
 ---

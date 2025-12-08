@@ -324,6 +324,7 @@ describe('ResumeDownload', () => {
       await user.click(screen.getByRole('button', { name: /download pdf/i }))
 
       expect(mockAnalytics.initiated).toHaveBeenCalledWith({
+        generation_method: 'heuristic',
         role_profile_id: 'test-role',
         role_profile_name: 'Test Role',
       })
@@ -346,6 +347,7 @@ describe('ResumeDownload', () => {
 
       expect(mockAnalytics.verified).toHaveBeenCalledWith(
         expect.objectContaining({
+          generation_method: 'heuristic',
           role_profile_id: 'test-role',
           turnstile_duration_ms: expect.any(Number),
         })
@@ -367,6 +369,7 @@ describe('ResumeDownload', () => {
 
       expect(mockAnalytics.error).toHaveBeenCalledWith(
         expect.objectContaining({
+          generation_method: 'heuristic',
           role_profile_id: 'test-role',
           error_stage: 'turnstile',
           error_message: 'Turnstile verification failed',
@@ -398,6 +401,7 @@ describe('ResumeDownload', () => {
       await waitFor(() => {
         expect(mockAnalytics.error).toHaveBeenCalledWith(
           expect.objectContaining({
+            generation_method: 'heuristic',
             role_profile_id: 'test-role',
             error_stage: 'selection',
             error_message: 'Rate limit exceeded',
@@ -421,8 +425,56 @@ describe('ResumeDownload', () => {
 
       expect(mockAnalytics.cancelled).toHaveBeenCalledWith(
         expect.objectContaining({
+          generation_method: 'heuristic',
           role_profile_id: 'test-role',
           stage: 'turnstile',
+        })
+      )
+    })
+
+    it('should track resume_cancelled with ai_analyzing stage when cancelled during AI selection', async () => {
+      const user = userEvent.setup()
+
+      // Mock AI selection API to delay long enough for cancellation
+      // Set up before render so the mock is ready when fetch is called
+      ;(global.fetch as ReturnType<typeof vi.fn>).mockImplementation(() =>
+        new Promise((resolve) => {
+          setTimeout(() => resolve({
+            ok: true,
+            json: () => Promise.resolve({ bullets: [], reasoning: 'test' })
+          }), 10000) // Long delay to allow cancellation
+        })
+      )
+
+      render(<ResumeDownload resumeData={mockResumeData} />)
+
+      // Enter job description (min 50 chars for AI mode)
+      const jobDescInput = screen.getByPlaceholderText(/paste job description/i)
+      await user.type(jobDescInput, 'This is a test job description that is long enough to trigger AI mode.')
+
+      // Click download
+      await user.click(screen.getByRole('button', { name: /download pdf/i }))
+
+      // Turnstile should appear
+      await waitFor(() => {
+        expect(screen.getByTestId('turnstile-widget')).toBeInTheDocument()
+      })
+
+      // Verify Turnstile - this will trigger the AI flow
+      await user.click(screen.getByTestId('turnstile-verify'))
+
+      // Wait for AI progress indicator to appear (shows selecting state - analyzing transitions immediately)
+      await waitFor(() => {
+        expect(screen.getByText(/Selecting relevant experience/i)).toBeInTheDocument()
+      }, { timeout: 2000 })
+
+      // Cancel while AI is selecting (maps to ai_analyzing in analytics)
+      await user.click(screen.getByRole('button', { name: /cancel/i }))
+
+      expect(mockAnalytics.cancelled).toHaveBeenCalledWith(
+        expect.objectContaining({
+          generation_method: 'ai',
+          stage: 'ai_analyzing',
         })
       )
     })

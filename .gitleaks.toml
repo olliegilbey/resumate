@@ -43,6 +43,7 @@ paths = [
   '''^node_modules/''',             # Node dependencies
   '''^\.next/''',                   # Next.js build output (build cache)
   '''^\.git/logs/''',               # Git reflog (historical commits)
+  '''^\.git/worktrees/''',          # Git worktree metadata (contains author emails)
 ]
 
 # Regex patterns to ignore (common false positives)

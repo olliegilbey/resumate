@@ -15,6 +15,9 @@ fi
 PROJECT_ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 RUST_LOG="$PROJECT_ROOT/.logs/rust-tests.log"
 TS_LOG="$PROJECT_ROOT/.logs/ts-tests.log"
+# Relative paths for output (don't expose machine-specific paths in docs)
+RUST_LOG_REL=".logs/rust-tests.log"
+TS_LOG_REL=".logs/ts-tests.log"
 
 # Verify logs exist
 if [[ ! -f "$RUST_LOG" ]]; then
@@ -155,7 +158,7 @@ To update: Run \`just test\` again
 - Test files:   $TS_FILE_COUNT
 - Execution:    $TS_TIME
 
-**Test files breakdown available in log:** \`$TS_LOG\`
+**Test files breakdown available in log:** \`$TS_LOG_REL\`
 
 ---
 
@@ -204,13 +207,13 @@ just coverage-ts-open     # Open in browser
 
 **Rust Tests:**
 - Command: \`cargo test --all\`
-- Log: \`$RUST_LOG\`
+- Log: \`$RUST_LOG_REL\`
 - Duration: $RUST_TIME
 - Suites: Multiple (core, typst, wasm, shared-types, integration, doc-tests)
 
 **TypeScript Tests:**
 - Command: \`bun run test --run\`
-- Log: \`$TS_LOG\`
+- Log: \`$TS_LOG_REL\`
 - Duration: $TS_TIME
 - Files: $TS_FILE_COUNT test files
 
@@ -234,8 +237,8 @@ just coverage-ts       # TypeScript coverage report
 
 **View logs:**
 \`\`\`bash
-cat $RUST_LOG     # View Rust test output
-cat $TS_LOG       # View TypeScript test output
+cat $RUST_LOG_REL     # View Rust test output
+cat $TS_LOG_REL       # View TypeScript test output
 \`\`\`
 
 ---
@@ -249,10 +252,10 @@ cat $TS_LOG       # View TypeScript test output
 **To verify counts:**
 \`\`\`bash
 # Check Rust
-grep "test result: ok" $RUST_LOG | grep -oE "[0-9]+ passed"
+grep "test result: ok" $RUST_LOG_REL | grep -oE "[0-9]+ passed"
 
 # Check TypeScript
-grep "Tests.*passed" $TS_LOG
+grep "Tests.*passed" $TS_LOG_REL
 \`\`\`
 
 ---

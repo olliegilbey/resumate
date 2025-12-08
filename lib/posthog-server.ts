@@ -1,9 +1,63 @@
 import { PostHog } from "posthog-node";
+import type { AIProvider } from "@/lib/ai/providers/types";
 
 /**
  * Server-side PostHog client for analytics and event tracking
  * Singleton pattern ensures single instance across API routes
  */
+
+// Generation method discriminator
+export type GenerationMethod = "ai" | "heuristic";
+
+// Server-side AI event types (sent to n8n webhook via PostHog)
+export interface ResumeAIPreparedProperties {
+  sessionId?: string;
+  email?: string;
+  linkedin?: string;
+  generation_method: "ai";
+  ai_provider: AIProvider;
+  job_description: string; // Full JD for n8n analysis
+  job_description_length: number;
+  job_title?: string | null;
+  extracted_salary_min?: number | null;
+  extracted_salary_max?: number | null;
+  salary_currency?: string | null;
+  salary_period?: string | null;
+  bulletIds: string[];
+  bulletCount: number;
+  bulletsByCompany: Record<string, number>;
+  bulletsByTag: Record<string, number>;
+  config: {
+    maxBullets: number;
+    maxPerCompany: number;
+    maxPerPosition: number;
+  };
+  ai_response_ms: number;
+  tokens_used?: number;
+  reasoning?: string;
+  clientIP?: string;
+}
+
+export interface ResumeHeuristicPreparedProperties {
+  sessionId?: string;
+  email?: string;
+  linkedin?: string;
+  generation_method: "heuristic";
+  role_profile_id: string;
+  role_profile_name: string;
+  bulletCount: number;
+  config: {
+    maxBullets: number;
+    maxPerCompany: number;
+    maxPerPosition: number;
+  };
+  clientIP?: string;
+}
+
+export type ResumePreparedProperties =
+  | ResumeAIPreparedProperties
+  | ResumeHeuristicPreparedProperties;
+
 let posthogInstance: PostHog | null = null;
 
 export function getPostHogClient(): PostHog | null {
