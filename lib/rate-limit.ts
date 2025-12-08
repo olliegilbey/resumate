@@ -8,6 +8,10 @@ interface RateLimitRecord {
   resetAt: number
 }
 
+// WARNING: In-memory rate limiter is lost on serverless cold starts.
+// For production at scale, consider using Redis/Vercel KV for persistent rate limiting
+// across function instances. Current implementation provides protection within a
+// single warm function instance only.
 const rateLimitStore = new Map<string, RateLimitRecord>()
 
 // Cleanup old entries every 10 minutes
