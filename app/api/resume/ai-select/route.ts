@@ -123,6 +123,7 @@ export async function POST(request: NextRequest) {
           secret: turnstileSecret,
           response: turnstileToken,
         }),
+        signal: AbortSignal.timeout(5000), // 5s timeout
       }
     )
 

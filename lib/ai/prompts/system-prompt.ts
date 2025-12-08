@@ -48,26 +48,27 @@ You MUST respond with a single JSON object. No markdown, no explanation outside 
   "bullets": [
     {"id": "bullet-id-1", "score": 0.95},
     {"id": "bullet-id-2", "score": 0.88},
-    {"id": "bullet-id-3", "score": 0.72},
-    ...at least 30 scored bullets
+    {"id": "bullet-id-3", "score": 0.72}
   ],
   "reasoning": "Brief explanation of your scoring strategy",
-  "job_title": "Extracted Job Title" or null,
+  "job_title": "Extracted Job Title",
   "salary": {
     "min": 120000,
     "max": 150000,
     "currency": "USD",
     "period": "annual"
-  } or null
+  }
 }
 \`\`\`
+
+Note: job_title and salary can be \`null\` if not found in the job description.
 
 ### Field Requirements
 
 - **bullets**: Array of objects with id and score
   - **id**: Bullet ID from the compendium (must match exactly)
   - **score**: Relevance score from 0.0 to 1.0
-  - Score AT LEAST 30 bullets (more is better - give the server options)
+  - Score the minimum bullets specified in the task (more is better - gives server selection options)
 
 - **reasoning**: 1-3 sentences explaining your scoring criteria
   - What skills/experiences you weighted highly
@@ -86,7 +87,7 @@ You MUST respond with a single JSON object. No markdown, no explanation outside 
 
 ## Critical Rules
 
-1. **MINIMUM COUNT** - Score at least 30 bullets to give server selection options
+1. **MINIMUM COUNT** - Score at least the minimum bullets specified in the task
 2. **VALID IDs ONLY** - Only use bullet IDs from the provided compendium
 3. **VALID SCORES** - All scores must be between 0.0 and 1.0
 4. **VALID JSON** - Return JSON only, no markdown, no extra text

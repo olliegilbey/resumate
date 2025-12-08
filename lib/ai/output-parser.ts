@@ -6,6 +6,7 @@
  */
 
 import { createParseError, type ParseError } from './errors'
+import { AI_BULLET_BUFFER } from './prompts/user-template'
 
 export interface SalaryInfo {
   min?: number
@@ -16,7 +17,7 @@ export interface SalaryInfo {
 
 export interface SelectionConfig {
   maxBullets: number // Target bullets for final selection (used by route)
-  minBullets?: number // Minimum bullets AI must return (default: 30)
+  minBullets?: number // Minimum bullets AI must return (default: maxBullets + AI_BULLET_BUFFER)
   maxPerCompany?: number // For server-side diversity (not validated in parser)
   maxPerPosition?: number // For server-side diversity (not validated in parser)
 }
@@ -225,8 +226,8 @@ Expected: bullets, reasoning, job_title, salary`
     bullets.push({ id: b.id, score: b.score })
   }
 
-  // Step 5: Validate minimum count
-  const minRequired = config.minBullets ?? 30
+  // Step 5: Validate minimum count (derive from maxBullets if not provided)
+  const minRequired = config.minBullets ?? config.maxBullets + AI_BULLET_BUFFER
   const actual = bullets.length
   if (actual < minRequired) {
     return {
@@ -234,7 +235,7 @@ Expected: bullets, reasoning, job_title, salary`
       error: createParseError(
         'E004_WRONG_BULLET_COUNT',
         `Expected at least ${minRequired} bullets, got ${actual}`,
-        `The AI must score at least ${minRequired} bullets to give the server selection options.
+        `The AI must score at least ${minRequired} bullets (maxBullets=${config.maxBullets} + buffer=${AI_BULLET_BUFFER}) to give the server selection options.
 
 Received only ${actual} bullets. Please score more bullets from the compendium.`
       ),

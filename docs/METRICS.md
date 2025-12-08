@@ -1,8 +1,8 @@
 ---
-Generated: 2025-12-04T13:38
+Generated: 2025-12-08T00:33
 Generator: scripts/update-metrics-from-logs.sh
 Source: Parsed from test execution logs
-Valid Until: 2025-12-05T13:38 (24h expiry)
+Valid Until: 2025-12-09T00:33 (24h expiry)
 ---
 
 # Project Metrics (Auto-Generated)
@@ -32,7 +32,7 @@ To update: Run `just test` again
 - Test files:   17
 - Execution:    3.80s
 
-**Test files breakdown available in log:** `/Users/olliegilbey/code/resumate/.logs/ts-tests.log`
+**Test files breakdown available in log:** `.logs/ts-tests.log`
 
 ---
 
@@ -81,13 +81,13 @@ just coverage-ts-open     # Open in browser
 
 **Rust Tests:**
 - Command: `cargo test --all`
-- Log: `/Users/olliegilbey/code/resumate/.logs/rust-tests.log`
+- Log: `.logs/rust-tests.log`
 - Duration: 2.14s
 - Suites: Multiple (core, typst, wasm, shared-types, integration, doc-tests)
 
 **TypeScript Tests:**
 - Command: `bun run test --run`
-- Log: `/Users/olliegilbey/code/resumate/.logs/ts-tests.log`
+- Log: `.logs/ts-tests.log`
 - Duration: 3.80s
 - Files: 17 test files
 
@@ -111,25 +111,25 @@ just coverage-ts       # TypeScript coverage report
 
 **View logs:**
 ```bash
-cat /Users/olliegilbey/code/resumate/.logs/rust-tests.log     # View Rust test output
-cat /Users/olliegilbey/code/resumate/.logs/ts-tests.log       # View TypeScript test output
+cat .logs/rust-tests.log     # View Rust test output
+cat .logs/ts-tests.log       # View TypeScript test output
 ```
 
 ---
 
 ## Verification
 
-**Last Generated:** 2025-12-04T13:38
+**Last Generated:** 2025-12-08T00:33
 **Next Update:** Automatically on next `just test` run
 **Logs Valid For:** Current session (stored in /tmp)
 
 **To verify counts:**
 ```bash
 # Check Rust
-grep "test result: ok" /Users/olliegilbey/code/resumate/.logs/rust-tests.log | grep -oE "[0-9]+ passed"
+grep "test result: ok" .logs/rust-tests.log | grep -oE "[0-9]+ passed"
 
 # Check TypeScript
-grep "Tests.*passed" /Users/olliegilbey/code/resumate/.logs/ts-tests.log
+grep "Tests.*passed" .logs/ts-tests.log
 ```
 
 ---

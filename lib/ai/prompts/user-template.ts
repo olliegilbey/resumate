@@ -63,13 +63,17 @@ Return ONLY a JSON object:
 {
   "bullets": [
     {"id": "bullet-id", "score": 0.95},
-    {"id": "another-id", "score": 0.82},
-    ... at least ${minBullets} scored bullets
+    {"id": "another-id", "score": 0.82}
   ],
   "reasoning": "Brief explanation of scoring criteria",
-  "job_title": "Title from JD" or null,
-  "salary": {"min": N, "max": N, "currency": "USD", "period": "annual"} or null
+  "job_title": "Senior Software Engineer",
+  "salary": {"min": 120000, "max": 150000, "currency": "USD", "period": "annual"}
 }
+
+Notes:
+- Include at least ${minBullets} scored bullets
+- job_title: extract from JD, or null if not found
+- salary: extract from JD, or null if not mentioned
 
 NO markdown, NO code blocks, NO extra text.`
 }
@@ -131,10 +135,16 @@ function formatDateRange(start: string, end?: string | null): string {
 }
 
 /**
- * Calculate minimum bullets to request from AI
+ * Buffer for AI to score extra bullets (server picks top N with diversity)
  */
-export function getMinBullets(targetBullets: number): number {
-  return Math.max(30, targetBullets + 10)
+export const AI_BULLET_BUFFER = 10
+
+/**
+ * Calculate minimum bullets to request from AI
+ * Returns maxBullets + buffer to give server diversity options
+ */
+export function getMinBullets(maxBullets: number): number {
+  return maxBullets + AI_BULLET_BUFFER
 }
 
 /**

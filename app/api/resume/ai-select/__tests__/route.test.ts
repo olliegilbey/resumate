@@ -614,10 +614,12 @@ describe('/api/resume/ai-select', () => {
       const response = await POST(request)
       const data = await response.json()
 
-      // All bullets are in company-a, so they should be sorted by score (highest first)
-      expect(data.selected[0].bullet.id).toBe('bullet-2') // score 0.95
-      expect(data.selected[1].bullet.id).toBe('bullet-1') // score 0.7
-      expect(data.selected[2].bullet.id).toBe('bullet-3') // score 0.5
+      // Bullets sorted by score within company chronological order
+      // company1 (newer) bullets first: bullet-2 (0.95), bullet-1 (0.7)
+      // company2 (older) bullets: bullet-3 (0.5)
+      expect(data.selected[0].bullet.id).toBe('bullet-2') // score 0.95 (company1)
+      expect(data.selected[1].bullet.id).toBe('bullet-1') // score 0.7 (company1)
+      expect(data.selected[2].bullet.id).toBe('bullet-3') // score 0.5 (company2)
     })
 
     it('filters out non-existent bullet IDs gracefully', async () => {

@@ -127,14 +127,15 @@ describe('buildUserPrompt', () => {
     expect(prompt).toContain('### Big Tech Inc')
   })
 
-  it('includes minimum bullet requirement', () => {
+  it('includes minimum bullet requirement derived from maxBullets', () => {
     const prompt = buildUserPrompt(sampleJobDescription, mockCompendium, {
       maxBullets: 24, // Target for server selection
     })
 
-    // Should ask for minimum bullets (30 or maxBullets+10)
+    // Should ask for minimum bullets (maxBullets + AI_BULLET_BUFFER = 24 + 10 = 34)
     expect(prompt).toContain('Score AT LEAST')
-    expect(prompt).toContain('bullets')
+    expect(prompt).toMatch(/Score AT LEAST \d+ bullets/)
+    expect(prompt).toContain('34 bullets') // 24 + 10 buffer
     // Should mention server handles constraints
     expect(prompt).toContain('server will apply diversity constraints')
   })
