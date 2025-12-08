@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import { generateVCard } from '@/lib/vcard'
 import type { ResumeData } from '@/types/resume'
 import { captureEvent, flushEvents } from '@/lib/posthog-server'
+import { ANALYTICS_EVENTS } from '@/lib/analytics/events'
 import { getClientIP } from '@/lib/rate-limit'
 
 /**
@@ -145,16 +146,17 @@ async function generateContactCardResponse(token: string, request: NextRequest):
 
   await captureEvent(
     'server:contact_card',
-    'contact_card_served',
+    ANALYTICS_EVENTS.CONTACT_CARD_SERVED,
     {
+      download_type: 'vcard',
       filename,
-      fullName,
-      hasLinkedin: !!resumeData.personal.linkedin,
-      hasGithub: !!resumeData.personal.github,
-      hasLocation: !!resumeData.personal.location,
-      emailCount: emails.length,
-      clientIP,
-      vcardSize: vcardContent.length,
+      full_name: fullName,
+      has_linkedin: !!resumeData.personal.linkedin,
+      has_github: !!resumeData.personal.github,
+      has_location: !!resumeData.personal.location,
+      email_count: emails.length,
+      client_ip: clientIP,
+      vcard_size: vcardContent.length,
     },
     clientIP // Pass IP for GeoIP lookup
   )

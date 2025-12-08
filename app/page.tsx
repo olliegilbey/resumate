@@ -41,6 +41,7 @@ export default function HomePage() {
     // Track verification with turnstile duration
     if (flowStartTimeRef.current) {
       trackEvent('contact_card_verified', {
+        download_type: 'vcard',
         turnstile_duration_ms: now - flowStartTimeRef.current,
       })
     }
@@ -55,7 +56,10 @@ export default function HomePage() {
     flowStartTimeRef.current = now
     verifiedTimeRef.current = null
 
-    trackEvent('contact_card_initiated', { timestamp: now })
+    trackEvent('contact_card_initiated', {
+      download_type: 'vcard',
+      timestamp: now,
+    })
 
     setShowTurnstileModal(true)
     setVerifiedToken(null)
@@ -87,6 +91,7 @@ export default function HomePage() {
       // Server separately tracks contact_card_served (delivery confirmation + geoIP)
       if (flowStartTimeRef.current) {
         trackEvent('contact_card_downloaded', {
+          download_type: 'vcard',
           total_duration_ms: Date.now() - flowStartTimeRef.current,
         })
       }
@@ -122,6 +127,7 @@ export default function HomePage() {
     // Track cancellation if download wasn't completed
     if (flowStartTimeRef.current) {
       trackEvent('contact_card_cancelled', {
+        download_type: 'vcard',
         stage: verifiedTimeRef.current ? 'verified' : 'turnstile',
         duration_ms: Date.now() - flowStartTimeRef.current,
       })
@@ -139,7 +145,12 @@ export default function HomePage() {
   const handleTurnstileError = useCallback(() => {
     if (flowStartTimeRef.current) {
       trackEvent('contact_card_error', {
-        error_type: 'failed',
+        download_type: 'vcard',
+        error_code: 'TN_001',
+        error_category: 'turnstile',
+        error_stage: 'turnstile',
+        error_message: 'Turnstile verification failed',
+        is_retryable: true,
         duration_ms: Date.now() - flowStartTimeRef.current,
       })
     }
@@ -150,7 +161,12 @@ export default function HomePage() {
   const handleTurnstileExpire = useCallback(() => {
     if (flowStartTimeRef.current) {
       trackEvent('contact_card_error', {
-        error_type: 'expired',
+        download_type: 'vcard',
+        error_code: 'TN_002',
+        error_category: 'turnstile',
+        error_stage: 'turnstile',
+        error_message: 'Turnstile verification expired',
+        is_retryable: true,
         duration_ms: Date.now() - flowStartTimeRef.current,
       })
     }
@@ -172,6 +188,7 @@ export default function HomePage() {
         // Server separately tracks contact_card_served (delivery confirmation + geoIP)
         if (flowStartTimeRef.current) {
           trackEvent('contact_card_downloaded', {
+            download_type: 'vcard',
             total_duration_ms: Date.now() - flowStartTimeRef.current,
           })
         }

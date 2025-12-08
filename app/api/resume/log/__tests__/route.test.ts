@@ -42,7 +42,7 @@ describe('/api/resume/log', () => {
     global.fetch = originalFetch
   })
 
-  it('logs resume_download_notified event with contact info', async () => {
+  it('logs resume_download_notified event with contact info (snake_case)', async () => {
     const mockCaptureEvent = vi.spyOn(posthogServer, 'captureEvent')
     const validSessionId = '550e8400-e29b-41d4-a716-446655440000'
 
@@ -50,14 +50,14 @@ describe('/api/resume/log', () => {
       method: 'POST',
       body: JSON.stringify({
         event: 'resume_download_notified',
-        sessionId: validSessionId,
-        roleProfileId: 'developer-relations-lead',
-        roleProfileName: 'Developer Relations Lead',
+        session_id: validSessionId,
+        role_profile_id: 'developer-relations-lead',
+        role_profile_name: 'Developer Relations Lead',
         email: 'test@example.com',
         linkedin: 'linkedin.com/in/test',
-        bulletCount: 24,
+        bullet_count: 24,
         bullets: [{ bullet: { id: 'test-bullet', description: 'Test', tags: [], priority: 5 }, score: 0.9 }],
-        pdfSize: 100000,
+        pdf_size: 100000,
         filename: 'resume.pdf',
       }),
       headers: {
@@ -74,19 +74,100 @@ describe('/api/resume/log', () => {
       validSessionId,
       'resume_download_notified',
       expect.objectContaining({
-        sessionId: validSessionId,
-        roleProfileId: 'developer-relations-lead',
-        roleProfileName: 'Developer Relations Lead',
+        session_id: validSessionId,
+        role_profile_id: 'developer-relations-lead',
+        role_profile_name: 'Developer Relations Lead',
         email: 'test@example.com',
         linkedin: 'linkedin.com/in/test',
-        bulletCount: 24,
-        pdfSize: 100000,
+        bullet_count: 24,
+        pdf_size: 100000,
       }),
       'unknown' // clientIP from getClientIP(request)
     )
   })
 
-  it('logs resume_generated event with performance metrics', async () => {
+  it('logs resume_download_notified with legacy camelCase (backward compatibility)', async () => {
+    const mockCaptureEvent = vi.spyOn(posthogServer, 'captureEvent')
+    const validSessionId = '550e8400-e29b-41d4-a716-446655440000'
+
+    const request = new NextRequest('http://localhost:3000/api/resume/log', {
+      method: 'POST',
+      body: JSON.stringify({
+        event: 'resume_download_notified',
+        sessionId: validSessionId, // Legacy camelCase
+        roleProfileId: 'developer-relations-lead',
+        roleProfileName: 'Developer Relations Lead',
+        email: 'test@example.com',
+        linkedin: 'linkedin.com/in/test',
+        bulletCount: 24,
+        bullets: [{ bullet: { id: 'test-bullet', description: 'Test', tags: [], priority: 5 }, score: 0.9 }],
+        pdfSize: 100000,
+        filename: 'resume.pdf',
+      }),
+    })
+
+    const response = await POST(request)
+    const data = await response.json()
+
+    expect(response.status).toBe(200)
+    expect(data.success).toBe(true)
+    // Should convert to snake_case internally
+    expect(mockCaptureEvent).toHaveBeenCalledWith(
+      validSessionId,
+      'resume_download_notified',
+      expect.objectContaining({
+        session_id: validSessionId,
+        bullet_count: 24,
+        pdf_size: 100000,
+      }),
+      'unknown'
+    )
+  })
+
+  it('logs resume_generated event with performance metrics (snake_case)', async () => {
+    const mockCaptureEvent = vi.spyOn(posthogServer, 'captureEvent')
+    const validSessionId = '660e8400-e29b-41d4-a716-446655440001'
+
+    const request = new NextRequest('http://localhost:3000/api/resume/log', {
+      method: 'POST',
+      body: JSON.stringify({
+        event: 'resume_generated',
+        session_id: validSessionId,
+        role_profile_id: 'backend-engineer',
+        role_profile_name: 'Backend Engineer',
+        bullet_count: 20,
+        pdf_size: 95000,
+        wasm_load_ms: 500,
+        generation_ms: 1200,
+        total_duration_ms: 1700,
+        wasm_cached: true,
+      }),
+    })
+
+    const response = await POST(request)
+    const data = await response.json()
+
+    expect(response.status).toBe(200)
+    expect(data.success).toBe(true)
+    expect(mockCaptureEvent).toHaveBeenCalledWith(
+      validSessionId,
+      'resume_generated',
+      expect.objectContaining({
+        session_id: validSessionId,
+        role_profile_id: 'backend-engineer',
+        role_profile_name: 'Backend Engineer',
+        bullet_count: 20,
+        pdf_size: 95000,
+        wasm_load_ms: 500,
+        generation_ms: 1200,
+        total_duration_ms: 1700,
+        wasm_cached: true,
+      }),
+      'unknown'
+    )
+  })
+
+  it('logs resume_generated with legacy camelCase (backward compatibility)', async () => {
     const mockCaptureEvent = vi.spyOn(posthogServer, 'captureEvent')
     const validSessionId = '660e8400-e29b-41d4-a716-446655440001'
 
@@ -111,25 +192,65 @@ describe('/api/resume/log', () => {
 
     expect(response.status).toBe(200)
     expect(data.success).toBe(true)
+    // Should convert to snake_case internally
     expect(mockCaptureEvent).toHaveBeenCalledWith(
       validSessionId,
       'resume_generated',
       expect.objectContaining({
-        sessionId: validSessionId,
-        roleProfileId: 'backend-engineer',
-        roleProfileName: 'Backend Engineer',
-        bulletCount: 20,
-        pdfSize: 95000,
-        wasmLoadDuration: 500,
-        generationDuration: 1200,
-        totalDuration: 1700,
-        wasmCached: true,
+        session_id: validSessionId,
+        bullet_count: 20,
+        pdf_size: 95000,
+        wasm_load_ms: 500,
+        generation_ms: 1200,
+        total_duration_ms: 1700,
+        wasm_cached: true,
       }),
       'unknown'
     )
   })
 
-  it('logs resume_failed event with contact info', async () => {
+  it('logs resume_failed event with unified error format', async () => {
+    const mockCaptureEvent = vi.spyOn(posthogServer, 'captureEvent')
+    const validSessionId = '770e8400-e29b-41d4-a716-446655440002'
+
+    const request = new NextRequest('http://localhost:3000/api/resume/log', {
+      method: 'POST',
+      body: JSON.stringify({
+        event: 'resume_failed',
+        session_id: validSessionId,
+        role_profile_id: 'frontend-engineer',
+        role_profile_name: 'Frontend Engineer',
+        email: 'user@example.com',
+        linkedin: 'linkedin.com/in/user',
+        error_code: 'WM_001',
+        error_category: 'wasm',
+        error_stage: 'wasm_load',
+        error_message: 'WASM failed to load',
+        is_retryable: true,
+      }),
+    })
+
+    const response = await POST(request)
+    const data = await response.json()
+
+    expect(response.status).toBe(200)
+    expect(data.success).toBe(true)
+    expect(mockCaptureEvent).toHaveBeenCalledWith(
+      validSessionId,
+      'resume_failed',
+      expect.objectContaining({
+        session_id: validSessionId,
+        error_code: 'WM_001',
+        error_category: 'wasm',
+        error_stage: 'wasm_load',
+        error_message: 'WASM failed to load',
+        is_retryable: true,
+      }),
+      'unknown'
+    )
+  })
+
+  it('logs resume_failed with legacy camelCase (backward compatibility)', async () => {
     const mockCaptureEvent = vi.spyOn(posthogServer, 'captureEvent')
     const validSessionId = '770e8400-e29b-41d4-a716-446655440002'
 
@@ -153,17 +274,14 @@ describe('/api/resume/log', () => {
 
     expect(response.status).toBe(200)
     expect(data.success).toBe(true)
+    // Should convert to snake_case internally
     expect(mockCaptureEvent).toHaveBeenCalledWith(
       validSessionId,
       'resume_failed',
       expect.objectContaining({
-        sessionId: validSessionId,
-        roleProfileId: 'frontend-engineer',
-        roleProfileName: 'Frontend Engineer',
-        email: 'user@example.com',
-        linkedin: 'linkedin.com/in/user',
-        errorMessage: 'WASM failed to load',
-        errorStage: 'wasm_load',
+        session_id: validSessionId,
+        error_message: 'WASM failed to load',
+        error_stage: 'wasm_load',
       }),
       'unknown'
     )
@@ -174,7 +292,7 @@ describe('/api/resume/log', () => {
       method: 'POST',
       body: JSON.stringify({
         event: 'resume_download_notified',
-        // Missing sessionId
+        // Missing session_id
       }),
     })
 
@@ -193,11 +311,11 @@ describe('/api/resume/log', () => {
       method: 'POST',
       body: JSON.stringify({
         event: 'resume_download_notified',
-        sessionId: validSessionId,
-        roleProfileId: 'test-role',
-        bulletCount: 10,
+        session_id: validSessionId,
+        role_profile_id: 'test-role',
+        bullet_count: 10,
         bullets: [],
-        pdfSize: 50000,
+        pdf_size: 50000,
         filename: 'test.pdf',
       }),
     })
@@ -218,7 +336,7 @@ describe('/api/resume/log', () => {
       method: 'POST',
       body: JSON.stringify({
         event: 'invalid_event_type',
-        sessionId: validSessionId,
+        session_id: validSessionId,
       }),
     })
 
@@ -229,12 +347,12 @@ describe('/api/resume/log', () => {
     expect(data.error).toContain('Invalid event type')
   })
 
-  it('returns 400 for invalid sessionId format', async () => {
+  it('returns 400 for invalid session_id format', async () => {
     const request = new NextRequest('http://localhost:3000/api/resume/log', {
       method: 'POST',
       body: JSON.stringify({
         event: 'resume_download_notified',
-        sessionId: 'not-a-valid-uuid',
+        session_id: 'not-a-valid-uuid',
       }),
     })
 
@@ -242,7 +360,7 @@ describe('/api/resume/log', () => {
     const data = await response.json()
 
     expect(response.status).toBe(400)
-    expect(data.error).toContain('Invalid sessionId format')
+    expect(data.error).toContain('Invalid session_id format')
   })
 
   it('returns 429 when rate limit exceeded', async () => {
@@ -260,8 +378,8 @@ describe('/api/resume/log', () => {
       method: 'POST',
       body: JSON.stringify({
         event: 'resume_download_notified',
-        sessionId: validSessionId,
-        bulletCount: 10,
+        session_id: validSessionId,
+        bullet_count: 10,
       }),
     })
 

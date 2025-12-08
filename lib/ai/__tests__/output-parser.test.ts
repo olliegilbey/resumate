@@ -205,6 +205,41 @@ describe('parseAIOutput', () => {
     expect(result.data?.salary).toBeNull()
   })
 
+  it('validates salary structure - non-ISO 4217 currency', () => {
+    const raw = JSON.stringify({
+      bullets: [
+        b('company-a-pos-1-bullet-1'),
+        b('company-b-pos-1-bullet-1'),
+        b('company-a-pos-2-bullet-1'),
+      ],
+      reasoning: 'Test reasoning',
+      salary: { min: 100000, currency: 'dollars', period: 'annual' }, // Not ISO 4217
+    })
+
+    const result = parseAIOutput(raw, validBulletIds, hierarchy, defaultConfig)
+
+    // Should succeed but with null salary (non-ISO currencies ignored)
+    expect(result.success).toBe(true)
+    expect(result.data?.salary).toBeNull()
+  })
+
+  it('normalizes lowercase currency to uppercase ISO 4217', () => {
+    const raw = JSON.stringify({
+      bullets: [
+        b('company-a-pos-1-bullet-1'),
+        b('company-b-pos-1-bullet-1'),
+        b('company-a-pos-2-bullet-1'),
+      ],
+      reasoning: 'Test reasoning',
+      salary: { min: 100000, max: 150000, currency: 'usd', period: 'annual' }, // lowercase
+    })
+
+    const result = parseAIOutput(raw, validBulletIds, hierarchy, defaultConfig)
+
+    expect(result.success).toBe(true)
+    expect(result.data?.salary?.currency).toBe('USD') // Normalized to uppercase
+  })
+
   it('returns E001 when no JSON found', () => {
     const raw = 'Just some text without any JSON'
 
