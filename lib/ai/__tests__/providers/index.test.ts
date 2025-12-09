@@ -115,6 +115,8 @@ describe('selectBulletsWithAI', () => {
     jobTitle: null,
     salary: null,
     provider: 'cerebras-gpt',
+    promptUsed: 'test prompt',
+    attemptCount: 1,
   }
 
   beforeEach(() => {
@@ -164,7 +166,8 @@ describe('selectBulletsWithAI', () => {
         'cerebras-gpt'
       )
 
-      expect(result).toEqual(validResult)
+      // Orchestrator overrides attemptCount with totalRetries (2 in this case)
+      expect(result).toEqual({ ...validResult, attemptCount: 2 })
       expect(mockSelect).toHaveBeenCalledTimes(2)
 
       // Second call should include retry context
@@ -212,10 +215,13 @@ describe('selectBulletsWithAI', () => {
       )
 
       const mockCerebrasSelect = vi.fn().mockRejectedValue(downError)
-      const mockAnthropicSelect = vi.fn().mockResolvedValue({
+      const fallbackResult: SelectionResult = {
         ...validResult,
         provider: 'claude-haiku',
-      })
+        promptUsed: 'test prompt',
+        attemptCount: 1,
+      }
+      const mockAnthropicSelect = vi.fn().mockResolvedValue(fallbackResult)
 
       ;(CerebrasProvider as unknown as ReturnType<typeof vi.fn>).mockImplementation(() => ({
         isAvailable: () => true,
@@ -274,10 +280,13 @@ describe('selectBulletsWithAI', () => {
       )
 
       const mockCerebrasGptSelect = vi.fn().mockRejectedValue(downError)
-      const mockAnthropicSelect = vi.fn().mockResolvedValue({
+      const fallbackResult: SelectionResult = {
         ...validResult,
         provider: 'claude-haiku',
-      })
+        promptUsed: 'test prompt',
+        attemptCount: 1,
+      }
+      const mockAnthropicSelect = vi.fn().mockResolvedValue(fallbackResult)
 
       // cerebras-gpt available but DOWN, claude-haiku available
       ;(CerebrasProvider as unknown as ReturnType<typeof vi.fn>).mockImplementation(

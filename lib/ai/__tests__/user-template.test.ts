@@ -3,7 +3,7 @@ import {
   buildUserPrompt,
   estimateTokenCount,
   checkCompendiumSize,
-} from '../prompts/user-template'
+} from '../prompts/prompt'
 import type { ResumeData } from '@/lib/types/generated-resume'
 
 // Minimal valid compendium for testing

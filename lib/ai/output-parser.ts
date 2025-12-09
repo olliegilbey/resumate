@@ -6,7 +6,7 @@
  */
 
 import { createParseError, type ParseError } from './errors'
-import { AI_BULLET_BUFFER } from './prompts/user-template'
+import { AI_BULLET_BUFFER } from './prompts/prompt'
 import type { SalaryInfo } from './providers/types'
 
 // Re-export SalaryInfo for backward compatibility

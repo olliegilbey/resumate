@@ -10,6 +10,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { checkRateLimit, getClientIP } from '@/lib/rate-limit'
 import { selectBulletsWithAI, FALLBACK_ORDER } from '@/lib/ai/providers'
+import { formatPromptForAnalytics } from '@/lib/ai/prompts/prompt'
 import type { AIProvider } from '@/lib/ai/providers/types'
 import { AISelectionError } from '@/lib/ai/errors'
 import { captureEvent, flushEvents } from '@/lib/posthog-server'
@@ -189,6 +190,9 @@ export async function POST(request: NextRequest) {
       }
     }
 
+    // Format prompt for analytics (replaces system prompt with hash placeholder)
+    const aiPromptForAnalytics = await formatPromptForAnalytics(result.promptUsed)
+
     // Track resume_prepared event (unified for AI and heuristic)
     // NOTE: PII (email, linkedin, client_ip, job_description) is intentionally captured.
     // This powers n8n automation to notify the resume owner when recruiters show interest.
@@ -222,6 +226,8 @@ export async function POST(request: NextRequest) {
         ai_response_ms: aiDuration,
         tokens_used: result.tokensUsed,
         reasoning: result.reasoning,
+        ai_prompt: aiPromptForAnalytics, // Full prompt with system hash placeholder
+        ai_attempt_count: result.attemptCount, // 1 = success first try, >1 = retries
         client_ip: clientIP,
       },
       clientIP

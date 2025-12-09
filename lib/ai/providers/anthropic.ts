@@ -13,7 +13,7 @@ import type {
   SelectionResult,
 } from './types'
 import { AI_MODELS } from './types'
-import { buildUserPrompt, loadSystemPrompt } from '../prompts/user-template'
+import { buildUserPrompt, loadSystemPrompt } from '../prompts/prompt'
 import { parseAIOutput, buildBulletHierarchy, extractAllBulletIds } from '../output-parser'
 import { AISelectionError, type ParseError } from '../errors'
 
@@ -132,6 +132,8 @@ export class AnthropicProvider implements AIProviderInterface {
         salary: parseResult.data!.salary,
         tokensUsed,
         provider: this.name,
+        promptUsed: userPrompt,
+        attemptCount: 1, // Single provider call, orchestrator tracks total attempts
       }
     } catch (error) {
       // Re-throw AISelectionError as-is

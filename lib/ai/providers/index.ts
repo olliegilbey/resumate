@@ -104,7 +104,11 @@ export async function selectBulletsWithAI(
       try {
         const result = await provider.select(retryRequest)
         console.log(`[AI] Success with ${currentProvider} after ${attempt} attempt(s)`)
-        return result
+        // Override attemptCount with orchestrator's total count
+        return {
+          ...result,
+          attemptCount: totalRetries,
+        }
       } catch (error) {
         if (!(error instanceof AISelectionError)) {
           // Unknown error - wrap and track

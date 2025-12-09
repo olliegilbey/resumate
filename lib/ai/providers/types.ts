@@ -124,6 +124,8 @@ export interface SelectionResult {
   salary: SalaryInfo | null
   tokensUsed?: number
   provider: AIProvider
+  promptUsed: string // User prompt sent to AI (for analytics)
+  attemptCount: number // 1 = success first try, >1 = needed retries
 }
 
 // AI Provider interface
