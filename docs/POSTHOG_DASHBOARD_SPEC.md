@@ -33,7 +33,7 @@
 | Download pipeline | **Unified stages** | Common flow for resume (AI/heuristic) and vCard |
 | Error format | **Rust-style** | Clear, debuggable, unified across all download types |
 | Currency format | **ISO 4217** | Consistent salary data (GBP, USD, EUR, not £/$) |
-| AI prompt tracking | **Hash + user prompt** | Full user prompt with `[SYSTEM_PROMPT:hash]` placeholder. Enables prompt improvement analysis without storing static system prompt repeatedly. |
+| AI prompt tracking | **Placeholders** | User prompt with `[SYSTEM_PROMPT:hash]` and `[JOB_DESCRIPTION]` placeholders. Full JD in separate field. Enables prompt analysis without duplication. |
 
 ---
 
@@ -761,7 +761,7 @@ export type CancelStage = 'turnstile' | 'verified' | 'compiling' | 'ai_analyzing
   ai_response_ms: number
   tokens_used?: number
   reasoning?: string
-  ai_prompt: string                    // Full prompt with [SYSTEM_PROMPT:hash] placeholder
+  ai_prompt: string                    // Prompt structure with [SYSTEM_PROMPT:hash] and [JOB_DESCRIPTION] placeholders
   ai_attempt_count: number             // 1 = success first try, >1 = retries needed
 }
 ```

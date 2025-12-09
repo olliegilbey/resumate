@@ -245,7 +245,8 @@ export async function getSystemPromptHash(): Promise<string> {
 
 /**
  * Format a prompt for analytics storage.
- * Replaces full system prompt with placeholder to save storage.
+ * Replaces system prompt and job description with placeholders to save storage.
+ * Both are available in separate event fields.
  *
  * Output format:
  *   [SYSTEM_PROMPT:abc12345]
@@ -254,10 +255,20 @@ export async function getSystemPromptHash(): Promise<string> {
  *
  *   ## YOUR TASK
  *   ...
+ *   ## Job Description
+ *
+ *   [JOB_DESCRIPTION]
+ *   ...
  */
-export async function formatPromptForAnalytics(userPrompt: string): Promise<string> {
+export async function formatPromptForAnalytics(
+  userPrompt: string,
+  jobDescription: string
+): Promise<string> {
   const hash = await getSystemPromptHash()
-  return `[SYSTEM_PROMPT:${hash}]\n\n---\n\n${userPrompt}`
+  const withSystemPlaceholder = `[SYSTEM_PROMPT:${hash}]\n\n---\n\n${userPrompt}`
+
+  // Replace JD with placeholder (full text in separate job_description field)
+  return withSystemPlaceholder.replace(jobDescription, '[JOB_DESCRIPTION]')
 }
 
 // ============================================================================

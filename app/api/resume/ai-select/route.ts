@@ -190,8 +190,8 @@ export async function POST(request: NextRequest) {
       }
     }
 
-    // Format prompt for analytics (replaces system prompt with hash placeholder)
-    const aiPromptForAnalytics = await formatPromptForAnalytics(result.promptUsed)
+    // Format prompt for analytics (replaces system prompt + JD with placeholders)
+    const aiPromptForAnalytics = await formatPromptForAnalytics(result.promptUsed, jobDescription)
 
     // Track resume_prepared event (unified for AI and heuristic)
     // NOTE: PII (email, linkedin, client_ip, job_description) is intentionally captured.
