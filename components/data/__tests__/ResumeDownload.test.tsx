@@ -374,7 +374,7 @@ describe('ResumeDownload', () => {
           generation_method: 'heuristic',
           download_type: 'resume_heuristic',
           role_profile_id: 'test-role',
-          error_code: 'TN_001',
+          error_code: 'TN_002',
           error_category: 'turnstile',
           error_stage: 'turnstile',
           error_message: 'Turnstile verification failed',
