@@ -98,7 +98,7 @@ describe('posthog-server', () => {
       )
     })
 
-    it('should include properties with environment, source, and timestamp', async () => {
+    it('should include properties with env, is_server, source, and timestamp', async () => {
       const { captureEvent: freshCapture } = await import('../posthog-server')
 
       await freshCapture('user-123', 'test_event', { customProp: 'value' })
@@ -107,7 +107,8 @@ describe('posthog-server', () => {
         expect.objectContaining({
           properties: expect.objectContaining({
             customProp: 'value',
-            environment: 'production',
+            env: 'production',
+            is_server: true,
             source: 'local', // No VERCEL_ENV set = 'local'
             timestamp: expect.any(String),
           }),
@@ -267,7 +268,8 @@ describe('posthog-server', () => {
         properties: {
           roleProfileId: 'developer-relations',
           bulletCount: 24,
-          environment: 'production',
+          env: 'production',
+          is_server: true,
           source: 'production',
           timestamp: expect.any(String),
         },

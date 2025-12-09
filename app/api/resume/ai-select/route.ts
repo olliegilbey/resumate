@@ -13,6 +13,7 @@ import { selectBulletsWithAI, FALLBACK_ORDER } from '@/lib/ai/providers'
 import type { AIProvider } from '@/lib/ai/providers/types'
 import { AISelectionError } from '@/lib/ai/errors'
 import { captureEvent, flushEvents } from '@/lib/posthog-server'
+import { ANALYTICS_EVENTS } from '@/lib/analytics/events'
 import type { ResumeData } from '@/types/resume'
 import {
   selectBulletsWithConstraints,
@@ -175,31 +176,32 @@ export async function POST(request: NextRequest) {
     // Reorder to maintain company chronology (companies in resume order, bullets by score)
     const selected = reorderByCompanyChronology(selectedRaw, resumeData)
 
-    // Build analytics data
-    const bulletsByCompany: Record<string, number> = {}
-    const bulletsByTag: Record<string, number> = {}
-    const bulletIds: string[] = []
+    // Build analytics data (snake_case per spec)
+    const bullets_by_company: Record<string, number> = {}
+    const bullets_by_tag: Record<string, number> = {}
+    const bullet_ids: string[] = []
 
     for (const item of selected) {
-      bulletIds.push(item.bullet.id)
-      bulletsByCompany[item.companyId] = (bulletsByCompany[item.companyId] || 0) + 1
+      bullet_ids.push(item.bullet.id)
+      bullets_by_company[item.companyId] = (bullets_by_company[item.companyId] || 0) + 1
       for (const tag of item.bullet.tags || []) {
-        bulletsByTag[tag] = (bulletsByTag[tag] || 0) + 1
+        bullets_by_tag[tag] = (bullets_by_tag[tag] || 0) + 1
       }
     }
 
-    // Track resume_ai_prepared event
-    // NOTE: PII (email, linkedin, clientIP, job_description) is intentionally captured.
+    // Track resume_prepared event (unified for AI and heuristic)
+    // NOTE: PII (email, linkedin, client_ip, job_description) is intentionally captured.
     // This powers n8n automation to notify the resume owner when recruiters show interest.
     // Privacy policy covers this data collection. Do not remove without owner approval.
     await captureEvent(
       sessionId || clientIP,
-      'resume_ai_prepared',
+      ANALYTICS_EVENTS.RESUME_PREPARED,
       {
-        sessionId,
+        session_id: sessionId,
         email,
         linkedin,
         generation_method: 'ai',
+        download_type: 'resume_ai',
         ai_provider: result.provider,
         job_description: jobDescription, // Full JD for n8n automation
         job_description_length: jobDescription.length,
@@ -208,15 +210,19 @@ export async function POST(request: NextRequest) {
         extracted_salary_max: result.salary?.max,
         salary_currency: result.salary?.currency,
         salary_period: result.salary?.period,
-        bulletIds,
-        bulletCount: selected.length,
-        bulletsByCompany,
-        bulletsByTag,
-        config: selectionConfig,
+        bullet_ids,
+        bullet_count: selected.length,
+        bullets_by_company,
+        bullets_by_tag,
+        config: {
+          max_bullets: selectionConfig.maxBullets,
+          max_per_company: selectionConfig.maxPerCompany,
+          max_per_position: selectionConfig.maxPerPosition,
+        },
         ai_response_ms: aiDuration,
         tokens_used: result.tokensUsed,
         reasoning: result.reasoning,
-        clientIP,
+        client_ip: clientIP,
       },
       clientIP
     )

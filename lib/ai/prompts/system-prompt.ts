@@ -81,7 +81,11 @@ Note: job_title and salary can be \`null\` if not found in the job description.
 - **salary**: Extract salary information if mentioned anywhere in the description
   - Parse ranges like "$120k - $150k" into min/max numbers
   - Convert "k" notation to full numbers (120k → 120000)
-  - Identify currency from symbols or text (USD, GBP, EUR, etc.)
+  - **CRITICAL: Use ISO 4217 currency codes only:**
+    - USD (not $, dollars)
+    - GBP (not £, pounds, sterling)
+    - EUR (not €, euros)
+    - JPY, CAD, AUD, CHF, etc.
   - Determine period from context (annual, monthly, hourly, daily, weekly)
   - Return \`null\` if no salary information is found
 

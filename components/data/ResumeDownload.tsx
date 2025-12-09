@@ -83,6 +83,7 @@ export function ResumeDownload({ resumeData }: ResumeDownloadProps) {
       // Track: AI download initiated
       analytics.initiated({
         generation_method: 'ai',
+        download_type: 'resume_ai',
         ai_provider: aiProvider,
         job_description_length: jobDescription.trim().length,
       })
@@ -93,6 +94,7 @@ export function ResumeDownload({ resumeData }: ResumeDownloadProps) {
       // Track: Download button clicked (GeoIP captured here)
       analytics.initiated({
         generation_method: 'heuristic',
+        download_type: 'resume_heuristic',
         role_profile_id: selectedRoleId,
         role_profile_name: roleProfile?.name || 'Unknown',
       })
@@ -114,6 +116,7 @@ export function ResumeDownload({ resumeData }: ResumeDownloadProps) {
     // Track: Turnstile verification complete
     analytics.verified({
       generation_method: isJobDescriptionMode ? 'ai' : 'heuristic',
+      download_type: isJobDescriptionMode ? 'resume_ai' : 'resume_heuristic',
       role_profile_id: isJobDescriptionMode ? undefined : selectedRoleId,
       ai_provider: isJobDescriptionMode ? aiProvider : undefined,
       turnstile_duration_ms: Date.now() - flowStartRef.current,
@@ -127,10 +130,14 @@ export function ResumeDownload({ resumeData }: ResumeDownloadProps) {
     // Track: Turnstile verification failed
     analytics.error({
       generation_method: isJobDescriptionMode ? 'ai' : 'heuristic',
+      download_type: isJobDescriptionMode ? 'resume_ai' : 'resume_heuristic',
       role_profile_id: isJobDescriptionMode ? undefined : selectedRoleId,
       ai_provider: isJobDescriptionMode ? aiProvider : undefined,
+      error_code: 'TN_001',
+      error_category: 'turnstile',
       error_stage: 'turnstile',
       error_message: 'Turnstile verification failed',
+      is_retryable: true,
       duration_ms: Date.now() - flowStartRef.current,
     })
   }, [analytics, selectedRoleId, isJobDescriptionMode, aiProvider])
@@ -143,10 +150,14 @@ export function ResumeDownload({ resumeData }: ResumeDownloadProps) {
     // Track: Turnstile expired
     analytics.error({
       generation_method: isJobDescriptionMode ? 'ai' : 'heuristic',
+      download_type: isJobDescriptionMode ? 'resume_ai' : 'resume_heuristic',
       role_profile_id: isJobDescriptionMode ? undefined : selectedRoleId,
       ai_provider: isJobDescriptionMode ? aiProvider : undefined,
+      error_code: 'TN_002',
+      error_category: 'turnstile',
       error_stage: 'turnstile',
       error_message: 'Turnstile verification expired',
+      is_retryable: true,
       duration_ms: Date.now() - flowStartRef.current,
     })
   }, [analytics, selectedRoleId, isJobDescriptionMode, aiProvider])
@@ -178,6 +189,7 @@ export function ResumeDownload({ resumeData }: ResumeDownloadProps) {
       }
       analytics.cancelled({
         generation_method: isJobDescriptionMode ? 'ai' : 'heuristic',
+        download_type: isJobDescriptionMode ? 'resume_ai' : 'resume_heuristic',
         role_profile_id: isJobDescriptionMode ? undefined : selectedRoleId,
         ai_provider: isJobDescriptionMode ? aiProvider : undefined,
         stage,
@@ -384,6 +396,7 @@ export function ResumeDownload({ resumeData }: ResumeDownloadProps) {
           // Track: WASM compilation complete (client-side for accurate timing)
           analytics.compiled({
             generation_method: isAIMode ? 'ai' : 'heuristic',
+            download_type: isAIMode ? 'resume_ai' : 'resume_heuristic',
             role_profile_id: isAIMode ? undefined : selectedRoleId,
             ai_provider: isAIMode ? currentProvider : undefined,
             bullet_count: selectData.selected.length,
@@ -436,6 +449,7 @@ export function ResumeDownload({ resumeData }: ResumeDownloadProps) {
           // Track: Download triggered
           analytics.downloaded({
             generation_method: isAIMode ? 'ai' : 'heuristic',
+            download_type: isAIMode ? 'resume_ai' : 'resume_heuristic',
             role_profile_id: isAIMode ? undefined : selectedRoleId,
             role_profile_name: isAIMode ? undefined : roleProfile.name,
             ai_provider: isAIMode ? currentProvider : undefined,
@@ -495,15 +509,26 @@ export function ResumeDownload({ resumeData }: ResumeDownloadProps) {
           setDownloadInitiated(false)
 
           // Track: Error in download flow
-          const analyticsStage = errorStage === 'bullet_selection' ? 'selection'
-            : errorStage === 'pdf_generation' ? 'compilation'
-            : errorStage
+          // Map error stage to error code and category
+          const errorCode = errorStage === 'ai_selection' ? 'AI_001'
+            : errorStage === 'bullet_selection' ? 'AI_001'
+            : errorStage === 'wasm_load' ? 'WM_001'
+            : errorStage === 'pdf_generation' ? 'PDF_001'
+            : 'PDF_001'
+          const errorCategory = errorStage === 'ai_selection' || errorStage === 'bullet_selection' ? 'ai'
+            : errorStage === 'wasm_load' ? 'wasm'
+            : 'pdf'
+          const isRetryable = errorStage !== 'pdf_generation'
           analytics.error({
             generation_method: isAIMode ? 'ai' : 'heuristic',
+            download_type: isAIMode ? 'resume_ai' : 'resume_heuristic',
             role_profile_id: isAIMode ? undefined : selectedRoleId,
             ai_provider: isAIMode ? currentProvider : undefined,
-            error_stage: analyticsStage,
+            error_code: errorCode,
+            error_category: errorCategory,
+            error_stage: errorStage,
             error_message: errorMsg,
+            is_retryable: isRetryable,
             duration_ms: Date.now() - flowStartRef.current,
           })
 

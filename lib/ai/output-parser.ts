@@ -78,7 +78,16 @@ export function extractJSON(raw: string): string | null {
 }
 
 /**
- * Validate salary structure
+ * ISO 4217 currency codes (common subset)
+ */
+const ISO_4217_CURRENCIES = new Set([
+  'USD', 'EUR', 'GBP', 'JPY', 'CNY', 'CAD', 'AUD', 'CHF', 'HKD', 'SGD',
+  'SEK', 'NOK', 'DKK', 'NZD', 'MXN', 'BRL', 'INR', 'KRW', 'PLN', 'CZK',
+  'ILS', 'THB', 'PHP', 'MYR', 'IDR', 'ZAR', 'AED', 'SAR', 'TRY', 'RUB',
+])
+
+/**
+ * Validate salary structure with ISO 4217 currency validation
  */
 function validateSalary(
   salary: unknown
@@ -93,9 +102,18 @@ function validateSalary(
 
   const s = salary as Record<string, unknown>
 
-  // Validate currency
+  // Validate currency is non-empty string
   if (typeof s.currency !== 'string' || s.currency.length === 0) {
     return { valid: false, error: 'salary.currency must be a non-empty string' }
+  }
+
+  // Normalize and validate ISO 4217 currency code
+  const currencyUpper = s.currency.toUpperCase()
+  if (!ISO_4217_CURRENCIES.has(currencyUpper)) {
+    return {
+      valid: false,
+      error: `salary.currency must be ISO 4217 (USD, GBP, EUR, etc.). Got: ${s.currency}`,
+    }
   }
 
   // Validate period
@@ -120,7 +138,7 @@ function validateSalary(
     data: {
       min: s.min as number | undefined,
       max: s.max as number | undefined,
-      currency: s.currency as string,
+      currency: currencyUpper, // Normalized to uppercase
       period: s.period as SalaryInfo['period'],
     },
   }

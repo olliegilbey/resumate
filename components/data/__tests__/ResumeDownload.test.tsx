@@ -325,6 +325,7 @@ describe('ResumeDownload', () => {
 
       expect(mockAnalytics.initiated).toHaveBeenCalledWith({
         generation_method: 'heuristic',
+        download_type: 'resume_heuristic',
         role_profile_id: 'test-role',
         role_profile_name: 'Test Role',
       })
@@ -348,6 +349,7 @@ describe('ResumeDownload', () => {
       expect(mockAnalytics.verified).toHaveBeenCalledWith(
         expect.objectContaining({
           generation_method: 'heuristic',
+          download_type: 'resume_heuristic',
           role_profile_id: 'test-role',
           turnstile_duration_ms: expect.any(Number),
         })
@@ -370,9 +372,13 @@ describe('ResumeDownload', () => {
       expect(mockAnalytics.error).toHaveBeenCalledWith(
         expect.objectContaining({
           generation_method: 'heuristic',
+          download_type: 'resume_heuristic',
           role_profile_id: 'test-role',
+          error_code: 'TN_001',
+          error_category: 'turnstile',
           error_stage: 'turnstile',
           error_message: 'Turnstile verification failed',
+          is_retryable: true,
         })
       )
     })
@@ -402,9 +408,13 @@ describe('ResumeDownload', () => {
         expect(mockAnalytics.error).toHaveBeenCalledWith(
           expect.objectContaining({
             generation_method: 'heuristic',
+            download_type: 'resume_heuristic',
             role_profile_id: 'test-role',
-            error_stage: 'selection',
+            error_code: expect.any(String),
+            error_category: expect.any(String),
+            error_stage: 'bullet_selection',
             error_message: 'Rate limit exceeded',
+            is_retryable: expect.any(Boolean),
           })
         )
       }, { timeout: 3000 })
@@ -426,6 +436,7 @@ describe('ResumeDownload', () => {
       expect(mockAnalytics.cancelled).toHaveBeenCalledWith(
         expect.objectContaining({
           generation_method: 'heuristic',
+          download_type: 'resume_heuristic',
           role_profile_id: 'test-role',
           stage: 'turnstile',
         })
@@ -474,6 +485,7 @@ describe('ResumeDownload', () => {
       expect(mockAnalytics.cancelled).toHaveBeenCalledWith(
         expect.objectContaining({
           generation_method: 'ai',
+          download_type: 'resume_ai',
           stage: 'ai_analyzing',
         })
       )

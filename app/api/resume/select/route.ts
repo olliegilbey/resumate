@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import { checkRateLimit, getClientIP } from '@/lib/rate-limit'
 import type { ResumeData, Company, Position, Bullet, RoleProfile } from '@/types/resume'
 import { captureEvent, flushEvents } from '@/lib/posthog-server'
+import { ANALYTICS_EVENTS } from '@/lib/analytics/events'
 
 // In-memory store for used tokens (prevents replay attacks within function instance lifetime)
 // Note: In serverless, each function instance is stateless and short-lived
@@ -139,34 +140,40 @@ export async function POST(request: NextRequest) {
     const selected = selectBullets(resumeData, roleProfile, selectionConfig)
     const selectionDuration = Date.now() - startTime
 
-    // Track resume_prepared event with contact info
-    const bulletIds = selected.map(s => s.bullet.id)
-    const bulletsByCompany: Record<string, number> = {}
-    const bulletsByTag: Record<string, number> = {}
+    // Track resume_prepared event (snake_case per spec)
+    const bullet_ids = selected.map(s => s.bullet.id)
+    const bullets_by_company: Record<string, number> = {}
+    const bullets_by_tag: Record<string, number> = {}
 
     for (const item of selected) {
-      bulletsByCompany[item.companyId] = (bulletsByCompany[item.companyId] || 0) + 1
+      bullets_by_company[item.companyId] = (bullets_by_company[item.companyId] || 0) + 1
       for (const tag of item.bullet.tags || []) {
-        bulletsByTag[tag] = (bulletsByTag[tag] || 0) + 1
+        bullets_by_tag[tag] = (bullets_by_tag[tag] || 0) + 1
       }
     }
 
     await captureEvent(
       sessionId || clientIP,
-      'resume_prepared',
+      ANALYTICS_EVENTS.RESUME_PREPARED,
       {
-        sessionId,
+        session_id: sessionId,
         email,
         linkedin,
-        roleProfileId: roleProfile.id,
-        roleProfileName: roleProfile.name,
-        bulletIds,
-        bulletCount: selected.length,
-        bulletsByCompany,
-        bulletsByTag,
-        config: selectionConfig,
-        selectionDuration,
-        clientIP,
+        generation_method: 'heuristic',
+        download_type: 'resume_heuristic',
+        role_profile_id: roleProfile.id,
+        role_profile_name: roleProfile.name,
+        bullet_ids,
+        bullet_count: selected.length,
+        bullets_by_company,
+        bullets_by_tag,
+        config: {
+          max_bullets: selectionConfig.maxBullets,
+          max_per_company: selectionConfig.maxPerCompany,
+          max_per_position: selectionConfig.maxPerPosition,
+        },
+        selection_duration_ms: selectionDuration,
+        client_ip: clientIP,
       },
       clientIP // Pass IP for GeoIP lookup
     )
