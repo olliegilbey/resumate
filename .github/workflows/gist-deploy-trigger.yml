@@ -29,15 +29,26 @@ jobs:
           GIST_ID="${{ secrets.RESUME_DATA_GIST_ID }}"
 
           # Fetch gist metadata from GitHub API
-          UPDATED_AT=$(curl -s -H "Accept: application/vnd.github.v3+json" \
-            "https://api.github.com/gists/${GIST_ID}" | \
-            jq -r '.updated_at')
+          RESPONSE=$(curl -s -H "Accept: application/vnd.github.v3+json" \
+            "https://api.github.com/gists/${GIST_ID}")
+
+          UPDATED_AT=$(echo "$RESPONSE" | jq -r '.updated_at // empty')
+
+          # Guard against null/empty (API error, rate limit, etc)
+          if [ -z "$UPDATED_AT" ] || [ "$UPDATED_AT" = "null" ]; then
+            echo "⚠️ Could not fetch gist timestamp - skipping deploy check"
+            echo "API response: $(echo "$RESPONSE" | jq -r '.message // "no error message"')"
+            echo "valid_timestamp=false" >> $GITHUB_OUTPUT
+            exit 0
+          fi
 
           echo "Gist last updated: $UPDATED_AT"
           echo "updated_at=$UPDATED_AT" >> $GITHUB_OUTPUT
+          echo "valid_timestamp=true" >> $GITHUB_OUTPUT
 
       - name: Validate gist with schema
         id: validate
+        if: steps.gist.outputs.valid_timestamp == 'true'
         run: |
           # Fetch the gist content using secret
           GIST_ID="${{ secrets.RESUME_DATA_GIST_ID }}"
