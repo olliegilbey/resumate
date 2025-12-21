@@ -46,22 +46,33 @@
 - name: Fetch gist metadata
   run: |
     GIST_ID="${{ secrets.RESUME_DATA_GIST_ID }}"
-    # Use grep instead of jq to handle control characters in gist content
-    UPDATED_AT=$(curl -s -H "Accept: application/vnd.github.v3+json" \
-      "https://api.github.com/gists/${GIST_ID}" | \
-      grep -o '"updated_at":"[^"]*"' | \
-      cut -d'"' -f4)
+    RESPONSE=$(curl -s -H "Accept: application/vnd.github.v3+json" \
+      "https://api.github.com/gists/${GIST_ID}")
+    UPDATED_AT=$(echo "$RESPONSE" | jq -r '.updated_at // empty')
+
+    # Guard against null/empty (API error, rate limit, etc)
+    if [ -z "$UPDATED_AT" ] || [ "$UPDATED_AT" = "null" ]; then
+      echo "⚠️ Could not fetch gist timestamp - skipping deploy check"
+      echo "valid_timestamp=false" >> $GITHUB_OUTPUT
+      exit 0
+    fi
+
     echo "updated_at=$UPDATED_AT" >> $GITHUB_OUTPUT
+    echo "valid_timestamp=true" >> $GITHUB_OUTPUT
 ```
 
 **What it does:**
 - Fetches gist metadata from GitHub API
 - Extracts `updated_at` timestamp (ISO 8601 format)
+- **Guards against null/empty responses** (API errors, rate limits)
+- Sets `valid_timestamp` flag to gate downstream steps
 - Passes to next steps via `GITHUB_OUTPUT`
 
 **API Endpoint:** `https://api.github.com/gists/{gist_id}`
 
 **No authentication needed:** Public gist, read-only access
+
+**Null Guard:** Intermittent GitHub API issues can return null timestamps. Without the guard, string comparison `"null" > "2025-..."` evaluates true (ASCII), causing spurious deploys. The guard skips the deploy check entirely when timestamp is invalid.
 
 ---
 
@@ -69,6 +80,7 @@
 
 ```yaml
 - name: Validate gist with schema
+  if: steps.gist.outputs.valid_timestamp == 'true'
   run: |
     GIST_ID="${{ secrets.RESUME_DATA_GIST_ID }}"
     USERNAME="${{ github.repository_owner }}"
@@ -291,7 +303,9 @@ Hourly Cron (GitHub Actions)
   ↓
 Fetch gist metadata (GitHub API)
   ↓
-Validate JSON format (jq)
+Valid timestamp? ─No→ Skip (prevents spurious deploys)
+  ↓ Yes
+Validate JSON + schema
   ↓
 Get last Vercel deployment (Vercel API)
   ↓
@@ -396,6 +410,10 @@ just build
 - **Cause**: Prebuild didn't fetch latest gist
 - **Solution**: Check Vercel build logs, verify `RESUME_DATA_GIST_URL` env var
 
+**Issue: Workflow skips with "Could not fetch gist timestamp"**
+- **Cause**: GitHub API returned null (rate limit, transient error)
+- **Solution**: Expected behavior - workflow will retry next hour. No action needed.
+
 ---
 
 ## Performance & Cost
@@ -412,6 +430,7 @@ just build
 - ~720-1440 minutes/month (well within free tier)
 
 **Optimization:**
+- Early exit if gist timestamp null (prevents spurious deploys from API errors)
 - Early exit if JSON invalid (saves Vercel build minutes)
 - Only triggers deploy if gist changed (prevents unnecessary builds)
 
