@@ -48,11 +48,13 @@
     GIST_ID="${{ secrets.RESUME_DATA_GIST_ID }}"
     RESPONSE=$(curl -s -H "Accept: application/vnd.github.v3+json" \
       "https://api.github.com/gists/${GIST_ID}")
-    UPDATED_AT=$(echo "$RESPONSE" | jq -r '.updated_at // empty')
+    # Safely extract timestamp - handle malformed JSON (rate limit, HTML error pages)
+    UPDATED_AT=$(echo "$RESPONSE" | jq -r '.updated_at // empty' 2>/dev/null || echo "")
 
     # Guard against null/empty (API error, rate limit, etc)
     if [ -z "$UPDATED_AT" ] || [ "$UPDATED_AT" = "null" ]; then
       echo "⚠️ Could not fetch gist timestamp - skipping deploy check"
+      echo "API response: $(echo "$RESPONSE" | jq -r '.message // "no error message"' 2>/dev/null || echo "non-JSON response (rate limit?)")"
       echo "valid_timestamp=false" >> $GITHUB_OUTPUT
       exit 0
     fi
@@ -64,7 +66,8 @@
 **What it does:**
 - Fetches gist metadata from GitHub API
 - Extracts `updated_at` timestamp (ISO 8601 format)
-- **Guards against null/empty responses** (API errors, rate limits)
+- **Handles malformed JSON** (rate limit HTML pages, API errors) via `2>/dev/null || echo ""`
+- **Guards against null/empty responses** - skips deploy check gracefully
 - Sets `valid_timestamp` flag to gate downstream steps
 - Passes to next steps via `GITHUB_OUTPUT`
 
@@ -72,7 +75,7 @@
 
 **No authentication needed:** Public gist, read-only access
 
-**Null Guard:** Intermittent GitHub API issues can return null timestamps. Without the guard, string comparison `"null" > "2025-..."` evaluates true (ASCII), causing spurious deploys. The guard skips the deploy check entirely when timestamp is invalid.
+**Malformed JSON & Null Guard:** GitHub API can return malformed responses (HTML rate limit pages) or null timestamps. The `2>/dev/null || echo ""` pattern suppresses jq parse errors. Without these guards, string comparison `"null" > "2025-..."` evaluates true (ASCII), causing spurious deploys. The guard skips deploy check when timestamp unavailable.
 
 ---
 
@@ -411,8 +414,9 @@ just build
 - **Solution**: Check Vercel build logs, verify `RESUME_DATA_GIST_URL` env var
 
 **Issue: Workflow skips with "Could not fetch gist timestamp"**
-- **Cause**: GitHub API returned null (rate limit, transient error)
+- **Cause**: GitHub API returned null or malformed response (rate limit, HTML error page, transient error)
 - **Solution**: Expected behavior - workflow will retry next hour. No action needed.
+- **Note**: `jq` parse errors from malformed JSON are suppressed to prevent workflow failure
 
 ---
 
