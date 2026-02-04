@@ -37,7 +37,7 @@ retention_policy: All versions preserved in git
 | `NEXT_PUBLIC_POSTHOG_KEY` | PostHog project API key | ✅ Yes |
 | `NEXT_PUBLIC_POSTHOG_HOST` | PostHog host URL | ✅ Yes |
 
-**Security Note:** Phone and email are NEVER exposed to the client. They're only used server-side in the vCard generation API route.
+**Security Note:** Phone and email should not be exposed to the client (see P0-1 in `docs/CODEBASE_REVIEW.md` for remediation status). They're only intended for server-side use in the vCard generation API route.
 
 ---
 
