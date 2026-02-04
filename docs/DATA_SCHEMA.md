@@ -49,11 +49,11 @@ types/resume.ts ← ALWAYS IMPORT FROM HERE
 
 **TypeScript & JSON:**
 - Style: `camelCase`
-- Examples: `companyTags`, `companyPriority`, `scoringWeights`, `tagRelevance`
+- Examples: `tags`, `priority`, `scoringWeights`, `tagRelevance`
 
 **Rust:**
 - Style: `snake_case`
-- Examples: `company_tags`, `company_priority`, `scoring_weights`, `tag_relevance`
+- Examples: `tags`, `priority`, `scoring_weights`, `tag_relevance`
 
 ### Automatic Conversion
 
@@ -63,15 +63,15 @@ Rust types use `#[serde(rename_all = "camelCase")]` to automatically serialize t
 #[derive(Serialize, Deserialize, JsonSchema)]
 #[serde(rename_all = "camelCase")]
 pub struct Company {
-    pub company_tags: Option<Vec<Tag>>,  // Rust: snake_case
-    pub company_priority: Option<u8>,    // → JSON: camelCase
+    pub tags: Vec<Tag>,      // Rust: snake_case
+    pub priority: u8,        // → JSON: camelCase
 }
 ```
 
 ```json
 {
-    "companyTags": ["blockchain"],
-    "companyPriority": 8
+    "tags": ["blockchain"],
+    "priority": 8
 }
 ```
 
@@ -332,15 +332,26 @@ Pre-commit hooks automatically:
 
 ## Optional vs Required Fields
 
+### Required Hierarchy Fields
+
+`tags` and `priority` are **required** at all hierarchy levels (Company, Position, Bullet):
+
+```rust
+pub struct Company {
+    pub tags: Vec<Tag>,    // Required
+    pub priority: u8,      // Required (1-10)
+}
+```
+
 ### Optional Fields (Rust `Option<T>`)
 
 ```rust
 #[serde(skip_serializing_if = "Option::is_none")]
-pub company_tags: Option<Vec<Tag>>
+pub gpa: Option<String>
 ```
 
 - Omitted from JSON when `null`
-- Used for new hierarchy fields to maintain backward compatibility
+- Used for fields that may not apply to all entries (e.g., `gpa`, `honors`)
 
 ### Required Fields
 
@@ -348,7 +359,7 @@ pub company_tags: Option<Vec<Tag>>
 pub scoring_weights: ScoringWeights
 ```
 
-- Must be present in all new `roleProfiles`
+- Must be present in all `roleProfiles`
 
 ---
 

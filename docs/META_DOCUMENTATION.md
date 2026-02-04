@@ -69,7 +69,8 @@ When information conflicts:
 ### Changed Rust types?
 ```bash
 just types-sync
-# No doc updates needed
+# Schema + TS types auto-generated
+# Manual update needed: docs/DATA_SCHEMA.md if field semantics changed
 ```
 
 ### Completed a phase?
