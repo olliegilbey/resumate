@@ -82,10 +82,10 @@ strip = true           # Remove debug symbols
 ```
 
 **Output:** `public/wasm/`
-- `resume_wasm_bg.wasm` (16MB raw, 6.28MB gzipped)
-- `resume_wasm.js` (16KB - JS bindings)
-- `resume_wasm.d.ts` (6KB - TypeScript types)
-- `package.json` (446B - module metadata)
+- `resume_wasm_bg.wasm` - See [METRICS.md](./METRICS.md) for current sizes
+- `resume_wasm.js` - JS bindings
+- `resume_wasm.d.ts` - TypeScript types
+- `package.json` - module metadata
 
 ### 4. WASM Optimization (Automatic)
 
@@ -97,9 +97,8 @@ wasm-opt = ["-Oz", "--enable-bulk-memory", "--enable-nontrapping-float-to-int"]
 ```
 
 **Effect:**
-- Pre-optimization: ~18-20MB (estimated)
-- Post-optimization: 16MB (~11% reduction)
-- Gzipped transfer: 6.28MB (what browser downloads)
+- Significant size reduction via wasm-opt
+- See [METRICS.md](./METRICS.md) for current raw and gzipped sizes
 
 ---
 
@@ -158,7 +157,7 @@ document.head.appendChild(script)
 ```
 
 **Why Dynamic:**
-- Non-blocking (user sees UI before 6.28MB download)
+- Non-blocking (user sees UI before WASM download - see [METRICS.md](./METRICS.md) for current gzipped size)
 - Browser caching (instant subsequent loads)
 - Progress indicator during first load
 
@@ -294,7 +293,7 @@ just dev
 ```bash
 just wasm
 # Expected output: "[INFO]: Optimizing wasm binaries with `wasm-opt`..."
-# Expected size: ~16MB raw, ~6.28MB gzipped
+# See METRICS.md for current expected sizes
 ```
 
 ---

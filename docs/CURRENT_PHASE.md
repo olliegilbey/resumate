@@ -133,7 +133,7 @@ updated_by: Claude (Documentation remediation)
 ## Metrics
 
 For current test counts, coverage, and performance metrics:
-- **[METRICS.md](./METRICS.md)** - Auto-generated test and coverage data (532 total tests: 140 Rust, 392 TypeScript)
+- **[METRICS.md](./METRICS.md)** - Auto-generated test and coverage data
 
 For testing philosophy and strategy:
 - **[TESTING_STRATEGY.md](./TESTING_STRATEGY.md)** - TDD principles and patterns

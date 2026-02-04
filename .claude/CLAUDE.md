@@ -70,8 +70,7 @@ Don't bypass for final commits.
 
 TDD. High coverage. Property-based tests for core logic (proptest).
 
-- **Rust:** 140+ tests in `crates/*/tests/`
-- **TypeScript:** 390+ tests (Vitest + jsdom)
+- **Current counts:** See [docs/METRICS.md](docs/METRICS.md) (auto-generated)
 - **Key file:** `crates/resume-core/tests/roundtrip.rs` - Type compatibility
 
 ---
