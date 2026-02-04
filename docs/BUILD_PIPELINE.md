@@ -121,9 +121,10 @@ scripts/check-wasm.sh --exists
 
 6. **Tests** (~10-30s conditional)
    - Rust tests: If ANY .rs changed
-   - TypeScript tests: ALWAYS run
+   - TypeScript tests: If ANY TS/TSX files changed OR shared-types changed
    - WASM tests: If WASM rebuilt
    - Blocks: ANY test failure
+   - **Hook location:** `.husky/pre-commit`
 
 7. **Timing enforcement** (<1s)
    - Measures total pre-commit duration
