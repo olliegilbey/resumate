@@ -70,6 +70,11 @@ CONTACT_PHONE=+1234567890
 NEXT_PUBLIC_TURNSTILE_SITE_KEY=0x4AAA...
 TURNSTILE_SECRET_KEY=0x4BBB...
 RESUME_DATA_GIST_URL=https://gist.githubusercontent.com/...
+POSTHOG_API_KEY=phc_...
+N8N_WEBHOOK_URL=https://your-n8n.com/webhook/...
+N8N_WEBHOOK_SECRET=your-secret-here
+NEXT_PUBLIC_POSTHOG_KEY=phc_...
+NEXT_PUBLIC_POSTHOG_HOST=https://us.i.posthog.com
 ```
 
 ---
@@ -88,6 +93,11 @@ printf "%s" "+1234567890" | vercel env add CONTACT_PHONE production
 printf "%s" "0x4AAA..." | vercel env add NEXT_PUBLIC_TURNSTILE_SITE_KEY production
 printf "%s" "0x4BBB..." | vercel env add TURNSTILE_SECRET_KEY production
 printf "%s" "https://gist.githubusercontent.com/..." | vercel env add RESUME_DATA_GIST_URL production
+printf "%s" "phc_..." | vercel env add POSTHOG_API_KEY production
+printf "%s" "https://your-n8n.com/webhook/..." | vercel env add N8N_WEBHOOK_URL production
+printf "%s" "your-secret-here" | vercel env add N8N_WEBHOOK_SECRET production
+printf "%s" "phc_..." | vercel env add NEXT_PUBLIC_POSTHOG_KEY production
+printf "%s" "https://us.i.posthog.com" | vercel env add NEXT_PUBLIC_POSTHOG_HOST production
 
 # Verify no newlines were added
 vercel env ls production

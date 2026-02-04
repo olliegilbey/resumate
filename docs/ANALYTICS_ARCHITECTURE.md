@@ -10,7 +10,7 @@ Full-stack analytics system tracking resume and contact card download funnels wi
 **Implemented:**
 - ✅ Client-side events: `resume_initiated`, `resume_verified`, `resume_compiled`, `resume_downloaded`, `resume_error`, `resume_cancelled`
 - ✅ Server-side events: `resume_prepared`, `resume_generated`, `resume_download_notified`, `resume_failed`
-- ✅ Contact card funnel: `contact_card_initiated` → `contact_card_downloaded`
+- ✅ Contact card funnel: `contact_card_initiated` → `contact_card_verified` → `contact_card_downloaded` → `contact_card_served`
 - ✅ Contact info collection (email, LinkedIn - optional)
 - ✅ Session tracking via sessionStorage UUID
 - ✅ Performance metrics (WASM load, generation, total duration)
