@@ -48,9 +48,9 @@ All limits defined in `justfile`. Scripts source limits via `just --evaluate var
 
 **Solution:** Pre-compile locally, commit binaries
 - Pre-commit validates freshness (hash-based)
-- Vercel build: ~45s (was 12min) - 95% reduction
+- Vercel build: See [METRICS.md](./METRICS.md) for current times (was 12min pre-optimization)
 - GitHub Actions: Skip Rust entirely
-- **Savings:** $3.60/deploy, 700min/month
+- **Savings:** See [METRICS.md](./METRICS.md) for current cost/time metrics
 
 **Tradeoff:** See [METRICS.md](./METRICS.md) for current WASM sizes (raw + gzipped)
 

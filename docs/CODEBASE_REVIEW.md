@@ -580,20 +580,20 @@ Original plan was to use Rust for selection, but:
 3. Server-side Rust would require napi-rs or Node WASM loader (added complexity)
 4. TS version works, was meant as temporary, never replaced
 
-**Future Consideration:**
+**Phase 6 Status:** ✅ **PARTIALLY IMPLEMENTED** (2025-12-08, commit d0b9d1d)
 
-Planned Phase 6 adds Claude API selection:
+AI selection is now live with Cerebras provider:
 ```typescript
 if (jobDescription) {
-  // Claude API selects bullets based on job description
-  selectedBullets = await selectWithClaude(jobDescription, resumeData)
+  // AI selects bullets based on job description (Cerebras live, Claude pending)
+  selectedBullets = await selectWithAI(jobDescription, resumeData)
 } else {
   // Heuristic selection (current TS algorithm)
   selectedBullets = selectBullets(resumeData, roleProfile, config)
 }
 ```
 
-Both flows are naturally TypeScript (API calls, async). Rust selection doesn't fit either path.
+Both flows are TypeScript (API calls, async). Rust selection code remains dead and should be deleted. Claude API integration is planned but not yet functional.
 
 **Solution Approaches:**
 
@@ -761,15 +761,15 @@ MAX_GZIP_MB="${2:-$(just --evaluate wasm_max_gzip_mb)}"
 
 1. **P1-1: Schema Drift** - Add missing fields, enable strict validation
 2. **P1-2: Dead /prepare** - Remove or wire up (check roadmap first)
-3. **P1-3: Template Bypass** - Rename function or implement template loading
-4. **P1-4: API Tests** - Add handler-level integration tests
+3. ~~**P1-3: Template Bypass**~~ - ✅ RESOLVED (template loaded via `include_str!`)
+4. ~~**P1-4: API Tests**~~ - ✅ RESOLVED (tests do import POST handler)
 
-**Estimated Effort:** 6-10 hours
+**Estimated Effort:** 4-6 hours (reduced - P1-3, P1-4 resolved)
 **Risk if unfixed:** Type safety violations, confusing codebase
 
 ### Medium Priority (P2) - Code Quality
 
-1. **P2-1: TS Duplication** - Port min_per_company to TS
+1. **P2-1: Dead Rust Code** - Delete unused selector.rs/scoring.rs (~1300 LOC)
 2. **P2-2: Dead Tests** - Delete 20 LOC
 3. **P2-3: Config Drift** - Single source for limits
 
@@ -848,13 +848,14 @@ const TEMPLATE: &str = include_str!("../../typst/templates/resume.typ");
 rg "import.*POST|import.*route" app/api/resume/select/__tests__/route.test.ts
 ```
 
-### ✅ Phase 6 AI Implementation - COMPLETE
+### ✅ Phase 6 AI Implementation - PARTIALLY COMPLETE
 
-**Note:** Phase 6 (AI resume generation) was completed 2025-12-08, commit d0b9d1d. The P2-1 section about "Future Consideration" for Claude API is now implemented:
-- Multi-provider support (Anthropic + Cerebras)
-- AI-curated bullet selection from job descriptions
-- Salary extraction
-- Full analytics integration
+**Note:** Phase 6 (AI resume generation) was partially completed 2025-12-08, commit d0b9d1d:
+- ✅ Multi-provider architecture (Anthropic + Cerebras)
+- ✅ AI-curated bullet selection from job descriptions (Cerebras live)
+- ✅ Salary extraction
+- ✅ Full analytics integration
+- ⏳ Claude/Anthropic API integration pending (Cerebras is current provider)
 
 ---
 

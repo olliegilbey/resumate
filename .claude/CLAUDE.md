@@ -14,7 +14,7 @@ Dynamic resume website: experience explorer + intelligent PDF download via WASM 
 
 ### Type System Flow (One-Way, Never Edit Generated)
 
-```
+```text
 Rust types (crates/shared-types/src/lib.rs)
   ↓ just types-sync
 JSON Schema (schemas/resume.schema.json)
@@ -26,7 +26,7 @@ Pre-commit enforces consistency. Type drift fails build.
 
 ### WASM Pipeline
 
-```
+```text
 TypeScript payload
   ↓ WASM boundary
 Rust Typst compiler (fonts embedded at compile-time)
@@ -66,7 +66,7 @@ WASM binaries committed to git. Pre-commit validates freshness via hash. Vercel 
 
 ## Rust Workspace (crates/)
 
-```
+```text
 shared-types/   # Source of truth - changes trigger regeneration
 resume-core/    # Bullet scoring, selection logic
 resume-typst/   # PDF generation with Typst
@@ -97,8 +97,8 @@ TDD. High coverage. Property-based tests for core logic (proptest).
 
 ## Security Model
 
-- Client never receives full plaintext resume data in production
-- PDF generation client-side - email/phone hashed to prevent bot scraping
+- Client receives only selected bullets, not full resume data (see P0-1 in `docs/CODEBASE_REVIEW.md` for remaining work)
+- PDF generation client-side - email/phone should be hashed/omitted to prevent bot scraping
 - Turnstile CAPTCHA protects downloads (vCard, PDF)
 
 ---

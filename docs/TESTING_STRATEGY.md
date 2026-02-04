@@ -31,9 +31,9 @@ retention_policy: Keep all historical versions in git
 3. REFACTOR: Improve while keeping tests green
 ```
 
-**Rule:** Tests run fast enough (~7s test execution time) to enable continuous TDD feedback loop.
+**Rule:** Tests run fast enough to enable continuous TDD feedback loop (see [METRICS.md](./METRICS.md) for current timings).
 
-**Note:** Pre-commit adds overhead (10-60s including linting, WASM checks, type sync). The ~7s refers to test execution only.
+**Note:** Pre-commit adds overhead (10-60s including linting, WASM checks, type sync). See METRICS.md for test execution time.
 
 ---
 

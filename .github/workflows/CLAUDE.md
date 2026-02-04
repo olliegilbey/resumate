@@ -6,7 +6,7 @@
 - CI/CD automation
 - Deployment triggers
 
-**Shared project context already loaded via root CLAUDE.md:**
+**Shared project context already loaded via `.claude/CLAUDE.md`:**
 - Architecture, workflows, status, Linear, deployment
 
 **This file contains CI/CD-specific patterns and conventions.**

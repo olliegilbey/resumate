@@ -270,7 +270,7 @@ Six error stages for precise failure tracking:
 
 Separate funnel for vCard downloads:
 
-```
+```text
 contact_card_initiated
     ↓
 contact_card_verified (Turnstile)

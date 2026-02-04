@@ -27,6 +27,7 @@ retention_policy: All versions preserved in git
 | `POSTHOG_API_KEY` | PostHog server API key | ✅ Yes |
 | `N8N_WEBHOOK_URL` | N8N webhook for notifications | ✅ Yes |
 | `N8N_WEBHOOK_SECRET` | N8N webhook authentication secret | ✅ Yes |
+| `POSTHOG_ENABLE_DEV` | Enable PostHog in dev mode | ❌ Optional |
 
 ### Client-Side (Public)
 
@@ -35,7 +36,6 @@ retention_policy: All versions preserved in git
 | `NEXT_PUBLIC_TURNSTILE_SITE_KEY` | Cloudflare Turnstile site key | ✅ Yes |
 | `NEXT_PUBLIC_POSTHOG_KEY` | PostHog project API key | ✅ Yes |
 | `NEXT_PUBLIC_POSTHOG_HOST` | PostHog host URL | ✅ Yes |
-| `POSTHOG_ENABLE_DEV` | Enable PostHog in dev mode | ❌ Optional |
 
 **Security Note:** Phone and email are NEVER exposed to the client. They're only used server-side in the vCard generation API route.
 

@@ -44,7 +44,7 @@ updated_by: Claude (Documentation remediation)
 
 **Accomplishments (commit d0b9d1d):**
 - AI-curated bullet selection via job description analysis
-- Multi-provider support: Anthropic (Claude) + Cerebras (fast inference)
+- Multi-provider architecture: Cerebras (live) + Anthropic (pending)
 - Prompt engineering for context-aware bullet selection
 - Salary extraction from job descriptions
 - AI selection analytics events
@@ -153,7 +153,7 @@ For active tasks, see Linear project.
 - ✅ Heuristic PDF generation (role profile selection)
 - ✅ AI-curated PDF generation (job description analysis)
 - ✅ vCard download with Turnstile protection
-- ✅ Rate limiting active
+- ✅ Rate-limiting active
 - ✅ Gist auto-deploy functional (hourly checks)
 - ✅ WASM builds deploying automatically
 - ✅ PostHog analytics + N8N notifications
