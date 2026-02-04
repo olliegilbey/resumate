@@ -78,9 +78,11 @@ pub struct Company {
 ### Field Naming Patterns
 
 **Hierarchy Fields:**
-- **Company-level**: `companyTags: string[]`, `companyPriority: number (1-10)`
-- **Position-level**: `descriptionTags`, `descriptionPriority`
-- **Bullet-level**: `tags`, `priority`
+- **Company-level**: `tags: string[]`, `priority: number (1-10)`
+- **Position-level**: `tags: string[]`, `priority: number (1-10)`
+- **Bullet-level**: `tags: string[]`, `priority: number (1-10)`
+
+All three levels use the same `tags` and `priority` field names for consistency.
 
 **Scoring Weights:**
 ```typescript
@@ -257,10 +259,15 @@ Each level uses the generic `children` field to contain the next level, creating
 - **institution** (required): University/school name
 - **dateStart** (required): Start date (YYYY format)
 - **dateEnd** (optional): End date or null for in-progress
+- **degreeType** (required): Type of degree (e.g., "Bachelor of Science")
+- **location** (required): Institution location
 - **field** (optional): Field of study
-- **degree** (optional): Degree name
+- **degree** (optional): Full degree name
 - **gpa** (optional): GPA if relevant
 - **honors** (optional): Array of honors and awards
+
+### MetaFooter (Optional)
+- **metaFooter** (optional): Footer text for PDF output (e.g., timestamp, version info)
 
 ---
 
@@ -450,8 +457,8 @@ If migrating from the old schema format:
 - `text` → `description` (at bullet level)
 - `dateRange` → `dateStart`/`dateEnd` (structured dates)
 - `context` → `description` or `summary`
-- `descriptionTags` → `tags` (at position level)
-- `descriptionPriority` → `priority` (at position level)
+- `descriptionTags` → `tags` (at position level) - **Note:** Use `tags` now
+- `descriptionPriority` → `priority` (at position level) - **Note:** Use `priority` now
 
 **Removed Fields:**
 - `metrics` - No longer supported (include in description text instead)
@@ -484,5 +491,5 @@ If migrating from the old schema format:
 
 ---
 
-**Last Updated:** 2025-10-22
+**Last Updated:** 2026-02-04
 **Schema Version:** 1.0.0 (resume.schema.json)
