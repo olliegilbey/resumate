@@ -1,5 +1,5 @@
 ---
-last_updated: 2025-10-22
+last_updated: 2026-02-04
 category: Data Schema & Type System
 update_frequency: Never (only when schema architecture changes)
 retention_policy: All versions preserved in git
@@ -171,6 +171,8 @@ Each level uses the generic `children` field to contain the next level, creating
     {
       "id": "edu-id",
       "institution": "University Name",
+      "degreeType": "Bachelor of Science",
+      "location": "London, UK",
       "field": "Computer Science",
       "degree": "Bachelor of Science",
       "dateStart": "2016",

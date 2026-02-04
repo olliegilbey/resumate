@@ -138,7 +138,7 @@ For [information], see [canonical-file.md]
 ✅ **Generate dynamic data from commands**
 ```bash
 # Parse actual output
-RUST_COUNT=$(grep "passed" /tmp/test.log | awk '{sum+=$1} END {print sum}')
+RUST_COUNT=$(grep "passed" .logs/rust-tests.log | awk '{sum+=$1} END {print sum}')
 ```
 
 ✅ **Add timestamps to manual updates**
