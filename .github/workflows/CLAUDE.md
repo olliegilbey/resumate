@@ -7,7 +7,7 @@
 - Deployment triggers
 
 **Shared project context already loaded via root CLAUDE.md:**
-- Architecture, workflows, status, todos, deployment
+- Architecture, workflows, status, Linear, deployment
 
 **This file contains CI/CD-specific patterns and conventions.**
 

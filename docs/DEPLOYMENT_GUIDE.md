@@ -24,13 +24,18 @@ retention_policy: All versions preserved in git
 | `CONTACT_PHONE` | Phone number (international format) | ✅ Yes |
 | `TURNSTILE_SECRET_KEY` | Cloudflare Turnstile secret key | ✅ Yes |
 | `RESUME_DATA_GIST_URL` | GitHub Gist raw URL for resume data | ✅ Yes |
-| `N8N_WEBHOOK_URL` | N8N webhook for notifications | ⏳ Phase 8 |
+| `POSTHOG_API_KEY` | PostHog server API key | ✅ Yes |
+| `N8N_WEBHOOK_URL` | N8N webhook for notifications | ✅ Yes |
+| `N8N_WEBHOOK_SECRET` | N8N webhook authentication secret | ✅ Yes |
 
 ### Client-Side (Public)
 
 | Variable | Purpose | Required |
 |----------|---------|----------|
 | `NEXT_PUBLIC_TURNSTILE_SITE_KEY` | Cloudflare Turnstile site key | ✅ Yes |
+| `NEXT_PUBLIC_POSTHOG_KEY` | PostHog project API key | ✅ Yes |
+| `NEXT_PUBLIC_POSTHOG_HOST` | PostHog host URL | ✅ Yes |
+| `POSTHOG_ENABLE_DEV` | Enable PostHog in dev mode | ❌ Optional |
 
 **Security Note:** Phone and email are NEVER exposed to the client. They're only used server-side in the vCard generation API route.
 
@@ -247,5 +252,5 @@ After deployment, verify:
 
 ---
 
-**Last Updated:** 2025-11-13
+**Last Updated:** 2026-02-04
 **Next Review:** When deployment process changes
