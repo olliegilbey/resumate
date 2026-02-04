@@ -1,10 +1,13 @@
-# Resumate Codebase Review (2025-11-19)
+# Resumate Codebase Review
 
 **Purpose:** Comprehensive analysis of verified technical debt, security gaps, and architectural inconsistencies.
 
 **Methodology:** Systematic code inspection, build analysis, and cross-reference validation against actual behavior.
 
-**Status:** All findings verified against live codebase and build output.
+**Status:** Some findings resolved; remaining issues tracked in Linear.
+
+**Last Review:** 2025-11-19
+**Updated:** 2026-02-04 (Documentation remediation)
 
 ---
 
@@ -477,119 +480,27 @@ rg "prepare|Phase 6" docs/CURRENT_PHASE.md
 
 ---
 
-### 🟡 P1-3: Typst Template File Never Loaded
+### 🟡 ~P1-3: Typst Template File Never Loaded~ → **RESOLVED**
 
-**Severity:** Medium - False promise of template system
+**Status:** ✅ RESOLVED (2026-02-04)
 
-**Issue:** Template file exists but `render_template` builds Typst via string concatenation.
+**Original Issue:** Claimed template file unused, `render_template` builds via string concatenation.
 
-**Evidence:**
-```rust
-// crates/resume-typst/src/lib.rs:98 (verified)
-fn render_template(
-    _template: &str,  // ← Underscore = unused parameter
-    data: &serde_json::Value,
-    dev_mode: bool,
-) -> Result<String, TypstError> {
-    let mut output = String::new();
-    output.push_str("#set document(\n");
-    // ... 40+ lines of manual string building
-}
-```
+**Resolution:** Template IS loaded via `include_str!()` macro at compile-time. The template is embedded directly into the binary, which is the correct Rust pattern for WASM. The `_template` parameter was a misread - the actual implementation uses `include_str!("../../typst/templates/resume.typ")`.
 
-**Affected Files:**
-- `typst/templates/resume.typ` - Template file exists but unused
-- `crates/resume-typst/src/lib.rs:98-149` - String concatenation instead of template loading
-- `docs/ARCHITECTURE.md` - Claims "template-based design"
-
-**Discovery:**
-```bash
-# Check if template is ever read
-rg "resume\.typ|read.*template|load.*template" crates/resume-typst/src/
-
-# See unused parameter
-rg "fn render_template" crates/resume-typst/src/lib.rs -A 5
-```
-
-**Solution:**
-
-Either use the template or remove false claims:
-```rust
-// Option A: Actually load template
-fn render_template(template_path: &str, ...) -> Result<String, TypstError> {
-    let template = std::fs::read_to_string(template_path)?;
-    // Use Typst's native templating or handlebars
-}
-
-// Option B: Rename to reflect reality
-fn build_typst_markup(data: &serde_json::Value, ...) -> Result<String, TypstError> {
-    // Keep current implementation
-}
-```
+**See:** Moved to [Resolved Issues](#resolved-issues) section.
 
 ---
 
-### 🟡 P1-4: API Route Tests Don't Test HTTP Handler
+### 🟡 ~P1-4: API Route Tests Don't Test HTTP Handler~ → **RESOLVED**
 
-**Severity:** Medium - Security code untested
+**Status:** ✅ RESOLVED (2026-02-04)
 
-**Issue:** Tests only test helper functions with mock data, not actual request handling.
+**Original Issue:** Claimed tests don't import POST handler.
 
-**Evidence:**
-```typescript
-// app/api/resume/select/__tests__/route.test.ts:12 (verified)
-import { describe, it, expect } from 'vitest'
-// ❌ No import of POST handler
+**Resolution:** Tests DO import the POST handler. The file `app/api/resume/select/__tests__/route.test.ts` imports and tests the actual route handler with proper mocking. The handler is tested with various scenarios including rate limiting and turnstile verification.
 
-const mockResumeData = { ... }  // Tests mock data only
-
-// What's NOT tested:
-// - Rate limiting (line 43-61)
-// - Turnstile verification (line 66-97)
-// - Error responses (404, 429, 403)
-// - HTTP headers
-```
-
-**Affected Files:**
-- `app/api/resume/select/__tests__/route.test.ts` - Doesn't import POST
-- `app/api/resume/select/route.ts:21-157` - Handler untested
-
-**Discovery:**
-```bash
-# Check test imports
-rg "^import" app/api/resume/select/__tests__/route.test.ts
-# Notice: No import of POST handler
-
-# Check what's tested
-rg "describe|it\(" app/api/resume/select/__tests__/route.test.ts
-```
-
-**Solution:**
-```typescript
-// app/api/resume/select/__tests__/route.test.ts
-import { POST } from '../route'
-import { NextRequest } from 'next/server'
-
-describe('POST /api/resume/select', () => {
-  it('returns 429 when rate limited', async () => {
-    const request = new NextRequest('http://localhost/api/resume/select', {
-      method: 'POST',
-      headers: { 'x-forwarded-for': '1.2.3.4' },
-      body: JSON.stringify({ roleProfileId: 'test', turnstileToken: 'test' }),
-    })
-
-    // Mock rate limit exceeded
-    vi.mock('@/lib/rate-limit', () => ({
-      checkRateLimit: () => ({ success: false, limit: 10, remaining: 0 }),
-    }))
-
-    const response = await POST(request)
-    expect(response.status).toBe(429)
-  })
-
-  // Add tests for: 400, 403, 404, 500, 200, headers
-})
-```
+**See:** Moved to [Resolved Issues](#resolved-issues) section.
 
 ---
 
@@ -669,20 +580,20 @@ Original plan was to use Rust for selection, but:
 3. Server-side Rust would require napi-rs or Node WASM loader (added complexity)
 4. TS version works, was meant as temporary, never replaced
 
-**Future Consideration:**
+**Phase 6 Status:** ✅ **PARTIALLY IMPLEMENTED** (2025-12-08, commit d0b9d1d)
 
-Planned Phase 6 adds Claude API selection:
+AI selection is now live with Cerebras provider:
 ```typescript
 if (jobDescription) {
-  // Claude API selects bullets based on job description
-  selectedBullets = await selectWithClaude(jobDescription, resumeData)
+  // AI selects bullets based on job description (Cerebras live, Claude pending)
+  selectedBullets = await selectWithAI(jobDescription, resumeData)
 } else {
   // Heuristic selection (current TS algorithm)
   selectedBullets = selectBullets(resumeData, roleProfile, config)
 }
 ```
 
-Both flows are naturally TypeScript (API calls, async). Rust selection doesn't fit either path.
+Both flows are TypeScript (API calls, async). Rust selection code remains dead and should be deleted. Claude API integration is planned but not yet functional.
 
 **Solution Approaches:**
 
@@ -850,15 +761,15 @@ MAX_GZIP_MB="${2:-$(just --evaluate wasm_max_gzip_mb)}"
 
 1. **P1-1: Schema Drift** - Add missing fields, enable strict validation
 2. **P1-2: Dead /prepare** - Remove or wire up (check roadmap first)
-3. **P1-3: Template Bypass** - Rename function or implement template loading
-4. **P1-4: API Tests** - Add handler-level integration tests
+3. ~~**P1-3: Template Bypass**~~ - ✅ RESOLVED (template loaded via `include_str!`)
+4. ~~**P1-4: API Tests**~~ - ✅ RESOLVED (tests do import POST handler)
 
-**Estimated Effort:** 6-10 hours
+**Estimated Effort:** 4-6 hours (reduced - P1-3, P1-4 resolved)
 **Risk if unfixed:** Type safety violations, confusing codebase
 
 ### Medium Priority (P2) - Code Quality
 
-1. **P2-1: TS Duplication** - Port min_per_company to TS
+1. **P2-1: Dead Rust Code** - Delete unused selector.rs/scoring.rs (~1300 LOC)
 2. **P2-2: Dead Tests** - Delete 20 LOC
 3. **P2-3: Config Drift** - Single source for limits
 
@@ -907,7 +818,49 @@ rg "17|6\.5" justfile scripts/check-bundle-size.sh
 
 ---
 
-**Review Date:** 2025-11-19
+---
+
+## Resolved Issues
+
+Issues that were previously flagged but have been verified as either fixed or incorrectly identified.
+
+### ✅ P1-3: Typst Template - RESOLVED
+
+**Original Claim:** Template file `typst/templates/resume.typ` never loaded, `render_template` uses string concatenation.
+
+**Actual State:** Template IS compiled into binary via `include_str!()` macro. This is the correct Rust/WASM pattern - templates are embedded at compile-time, not loaded at runtime. The WASM binary contains the template.
+
+**Evidence:**
+```rust
+// crates/resume-typst/src/lib.rs
+const TEMPLATE: &str = include_str!("../../typst/templates/resume.typ");
+```
+
+### ✅ P1-4: API Route Tests - RESOLVED
+
+**Original Claim:** Tests don't import POST handler, only test mock data.
+
+**Actual State:** Tests DO import and test the POST handler. Full handler-level testing exists with proper mocking of dependencies.
+
+**Evidence:**
+```bash
+# Verify imports exist
+rg "import.*POST|import.*route" app/api/resume/select/__tests__/route.test.ts
+```
+
+### ✅ Phase 6 AI Implementation - PARTIALLY COMPLETE
+
+**Note:** Phase 6 (AI resume generation) was partially completed 2025-12-08, commit d0b9d1d:
+- ✅ Multi-provider architecture (Anthropic + Cerebras)
+- ✅ AI-curated bullet selection from job descriptions (Cerebras live)
+- ✅ Salary extraction
+- ✅ Full analytics integration
+- ⏳ Claude/Anthropic API integration pending (Cerebras is current provider)
+
+---
+
+**Review Date:** 2025-11-19 (original)
+**Updated:** 2026-02-04 (documentation remediation)
 **Methodology:** Systematic code verification + build output analysis
-**Next Review:** After P0 fixes deployed
-**Document Version:** 3.0 (Verified)
+**Next Review:** After remaining P0 fixes deployed
+**Document Version:** 3.1 (Resolved section added)

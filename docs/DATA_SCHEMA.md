@@ -1,5 +1,5 @@
 ---
-last_updated: 2025-10-22
+last_updated: 2026-02-04
 category: Data Schema & Type System
 update_frequency: Never (only when schema architecture changes)
 retention_policy: All versions preserved in git
@@ -49,11 +49,11 @@ types/resume.ts ← ALWAYS IMPORT FROM HERE
 
 **TypeScript & JSON:**
 - Style: `camelCase`
-- Examples: `companyTags`, `companyPriority`, `scoringWeights`, `tagRelevance`
+- Examples: `tags`, `priority`, `scoringWeights`, `tagRelevance`
 
 **Rust:**
 - Style: `snake_case`
-- Examples: `company_tags`, `company_priority`, `scoring_weights`, `tag_relevance`
+- Examples: `tags`, `priority`, `scoring_weights`, `tag_relevance`
 
 ### Automatic Conversion
 
@@ -63,24 +63,26 @@ Rust types use `#[serde(rename_all = "camelCase")]` to automatically serialize t
 #[derive(Serialize, Deserialize, JsonSchema)]
 #[serde(rename_all = "camelCase")]
 pub struct Company {
-    pub company_tags: Option<Vec<Tag>>,  // Rust: snake_case
-    pub company_priority: Option<u8>,    // → JSON: camelCase
+    pub tags: Vec<Tag>,      // Rust: snake_case
+    pub priority: u8,        // → JSON: camelCase
 }
 ```
 
 ```json
 {
-    "companyTags": ["blockchain"],
-    "companyPriority": 8
+    "tags": ["blockchain"],
+    "priority": 8
 }
 ```
 
 ### Field Naming Patterns
 
 **Hierarchy Fields:**
-- **Company-level**: `companyTags: string[]`, `companyPriority: number (1-10)`
-- **Position-level**: `descriptionTags`, `descriptionPriority`
-- **Bullet-level**: `tags`, `priority`
+- **Company-level**: `tags: string[]`, `priority: number (1-10)`
+- **Position-level**: `tags: string[]`, `priority: number (1-10)`
+- **Bullet-level**: `tags: string[]`, `priority: number (1-10)`
+
+All three levels use the same `tags` and `priority` field names for consistency.
 
 **Scoring Weights:**
 ```typescript
@@ -169,6 +171,8 @@ Each level uses the generic `children` field to contain the next level, creating
     {
       "id": "edu-id",
       "institution": "University Name",
+      "degreeType": "Bachelor of Science",
+      "location": "London, UK",
       "field": "Computer Science",
       "degree": "Bachelor of Science",
       "dateStart": "2016",
@@ -257,10 +261,15 @@ Each level uses the generic `children` field to contain the next level, creating
 - **institution** (required): University/school name
 - **dateStart** (required): Start date (YYYY format)
 - **dateEnd** (optional): End date or null for in-progress
+- **degreeType** (required): Type of degree (e.g., "Bachelor of Science")
+- **location** (required): Institution location
 - **field** (optional): Field of study
-- **degree** (optional): Degree name
+- **degree** (optional): Full degree name
 - **gpa** (optional): GPA if relevant
 - **honors** (optional): Array of honors and awards
+
+### MetaFooter (Optional)
+- **metaFooter** (optional): Footer text for PDF output (e.g., timestamp, version info)
 
 ---
 
@@ -323,15 +332,26 @@ Pre-commit hooks automatically:
 
 ## Optional vs Required Fields
 
+### Required Hierarchy Fields
+
+`tags` and `priority` are **required** at all hierarchy levels (Company, Position, Bullet):
+
+```rust
+pub struct Company {
+    pub tags: Vec<Tag>,    // Required
+    pub priority: u8,      // Required (1-10)
+}
+```
+
 ### Optional Fields (Rust `Option<T>`)
 
 ```rust
 #[serde(skip_serializing_if = "Option::is_none")]
-pub company_tags: Option<Vec<Tag>>
+pub gpa: Option<String>
 ```
 
 - Omitted from JSON when `null`
-- Used for new hierarchy fields to maintain backward compatibility
+- Used for fields that may not apply to all entries (e.g., `gpa`, `honors`)
 
 ### Required Fields
 
@@ -339,7 +359,7 @@ pub company_tags: Option<Vec<Tag>>
 pub scoring_weights: ScoringWeights
 ```
 
-- Must be present in all new `roleProfiles`
+- Must be present in all `roleProfiles`
 
 ---
 
@@ -450,8 +470,8 @@ If migrating from the old schema format:
 - `text` → `description` (at bullet level)
 - `dateRange` → `dateStart`/`dateEnd` (structured dates)
 - `context` → `description` or `summary`
-- `descriptionTags` → `tags` (at position level)
-- `descriptionPriority` → `priority` (at position level)
+- `descriptionTags` → `tags` (at position level) - **Note:** Use `tags` now
+- `descriptionPriority` → `priority` (at position level) - **Note:** Use `priority` now
 
 **Removed Fields:**
 - `metrics` - No longer supported (include in description text instead)
@@ -484,5 +504,5 @@ If migrating from the old schema format:
 
 ---
 
-**Last Updated:** 2025-10-22
+**Last Updated:** 2026-02-04
 **Schema Version:** 1.0.0 (resume.schema.json)

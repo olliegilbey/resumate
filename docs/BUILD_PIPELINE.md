@@ -1,5 +1,5 @@
 ---
-last_updated: 2025-11-13
+last_updated: 2026-02-04
 category: Build & Deployment
 update_frequency: When build process changes
 retention_policy: All versions preserved in git
@@ -25,25 +25,21 @@ retention_policy: All versions preserved in git
 
 ## Build Limits (Single Source of Truth)
 
-All limits defined in `justfile` (lines 11-34).
+All limits defined in `justfile`. Scripts source limits via `just --evaluate variable_name`.
 
-**Current values:**
-- WASM raw: ≤17MB
-- WASM gzipped: ≤6.5MB
-- Pre-commit duration: ≤70s (fast: 15s, rebuild: 60s)
-- Rust test minimum: ≥140 tests
-- TypeScript test minimum: ≥200 tests
-- Coverage minimum: ≥85% (both Rust + TS)
+**Limit types:**
+- WASM size limits (raw + gzipped)
+- Pre-commit duration targets
+- Test count minimums
+- Coverage minimums
 
-**Current metrics:** See `docs/METRICS.md` (auto-generated)
-
-Scripts source limits via `just --evaluate variable_name`
+**Current values and metrics:** See [METRICS.md](./METRICS.md) (auto-generated)
 
 ---
 
 ## WASM Build Strategy
 
-### Why Binaries Are Committed (16MB)
+### Why Binaries Are Committed
 
 **Problem:** Rust compilation slow + storage heavy
 - Local: 9GB target/ directory (24,631 files)
@@ -52,11 +48,11 @@ Scripts source limits via `just --evaluate variable_name`
 
 **Solution:** Pre-compile locally, commit binaries
 - Pre-commit validates freshness (hash-based)
-- Vercel build: 45-47s (was 12min) - 95% reduction
+- Vercel build: See [METRICS.md](./METRICS.md) for current times (was 12min pre-optimization)
 - GitHub Actions: Skip Rust entirely
-- **Savings:** $3.60/deploy, 700min/month
+- **Savings:** See [METRICS.md](./METRICS.md) for current cost/time metrics
 
-**Tradeoff:** 16MB in git (6.28MB gzipped over wire)
+**Tradeoff:** See [METRICS.md](./METRICS.md) for current WASM sizes (raw + gzipped)
 
 ### WASM Build Process
 
@@ -121,9 +117,10 @@ scripts/check-wasm.sh --exists
 
 6. **Tests** (~10-30s conditional)
    - Rust tests: If ANY .rs changed
-   - TypeScript tests: ALWAYS run
+   - TypeScript tests: If ANY TS/TSX files changed OR shared-types changed
    - WASM tests: If WASM rebuilt
    - Blocks: ANY test failure
+   - **Hook location:** `.husky/pre-commit`
 
 7. **Timing enforcement** (<1s)
    - Measures total pre-commit duration
@@ -176,7 +173,7 @@ bash scripts/check-wasm.sh --exists && bun scripts/fetch-gist-data.js --force
 2. Fetch gist data (fail-fast if invalid)
 3. Build Next.js + Turbopack
 
-**Duration:** 45-47s (current, see METRICS.md)
+**Duration:** See [METRICS.md](./METRICS.md) for current build times
 
 **Triggers:**
 - Git push to main
@@ -258,20 +255,19 @@ TypeScript types (generated)
 
 ## Performance Comparison
 
-**Before optimization:**
+**Before optimization (2025-11):**
 - Local: 30-90s
 - GitHub Actions: ~11min
 - Vercel: ~12min
 
 **After optimization:**
-- Local: 4-60s (conditional, see justfile limits)
-- GitHub Actions: ~30s (gist watcher only)
-- Vercel: ~47s (current, see METRICS.md)
+- Local: Conditional based on changes (see justfile limits)
+- GitHub Actions: ~30s (gist watcher only, no builds)
+- Vercel: See [METRICS.md](./METRICS.md) for current build times
 
 **Savings:**
-- Vercel: 11min/deploy = $3.60/deploy
-- GitHub Actions: 700min/month (deleted PR workflow)
-- Total: Significant cost + time savings
+- Vercel build time reduced ~95%
+- GitHub Actions: 700min/month saved (deleted redundant PR workflow)
 
 ---
 
@@ -349,23 +345,19 @@ bun scripts/fetch-gist-data.js --force
 
 ---
 
-## Target Directory (9GB) - NORMAL
+## Target Directory - NORMAL
 
-**Breakdown:**
-- 4.2GB debug/deps - Debug builds
-- 3.4GB llvm-cov-target - Coverage instrumentation
-- 797MB release/deps - Release builds
-- 658MB wasm32-unknown-unknown - WASM target
+The `target/` directory grows large (several GB) due to multiple compilation targets.
 
 **Why large:**
 - 4 compilation targets (debug, release, wasm32, coverage)
-- Typst embeds fonts (~50MB per target)
+- Typst embeds fonts per target
 - Incremental compilation caches
 - Normal Rust behavior
 
 **Optimization:**
-- Clean `llvm-cov-target` after coverage (-3.4GB)
-- Keep others for incremental speed
+- Clean `llvm-cov-target` after coverage runs
+- Keep others for incremental build speed
 - Never pushed to git (gitignored)
 
 ---

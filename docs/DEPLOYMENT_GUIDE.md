@@ -24,15 +24,20 @@ retention_policy: All versions preserved in git
 | `CONTACT_PHONE` | Phone number (international format) | ✅ Yes |
 | `TURNSTILE_SECRET_KEY` | Cloudflare Turnstile secret key | ✅ Yes |
 | `RESUME_DATA_GIST_URL` | GitHub Gist raw URL for resume data | ✅ Yes |
-| `N8N_WEBHOOK_URL` | N8N webhook for notifications | ⏳ Phase 8 |
+| `POSTHOG_API_KEY` | PostHog server API key | ✅ Yes |
+| `N8N_WEBHOOK_URL` | N8N webhook for notifications | ✅ Yes |
+| `N8N_WEBHOOK_SECRET` | N8N webhook authentication secret | ✅ Yes |
+| `POSTHOG_ENABLE_DEV` | Enable PostHog in dev mode | ❌ Optional |
 
 ### Client-Side (Public)
 
 | Variable | Purpose | Required |
 |----------|---------|----------|
 | `NEXT_PUBLIC_TURNSTILE_SITE_KEY` | Cloudflare Turnstile site key | ✅ Yes |
+| `NEXT_PUBLIC_POSTHOG_KEY` | PostHog project API key | ✅ Yes |
+| `NEXT_PUBLIC_POSTHOG_HOST` | PostHog host URL | ✅ Yes |
 
-**Security Note:** Phone and email are NEVER exposed to the client. They're only used server-side in the vCard generation API route.
+**Security Note:** Phone and email should not be exposed to the client (see P0-1 in `docs/CODEBASE_REVIEW.md` for remediation status). They're only intended for server-side use in the vCard generation API route.
 
 ---
 
@@ -65,6 +70,11 @@ CONTACT_PHONE=+1234567890
 NEXT_PUBLIC_TURNSTILE_SITE_KEY=0x4AAA...
 TURNSTILE_SECRET_KEY=0x4BBB...
 RESUME_DATA_GIST_URL=https://gist.githubusercontent.com/...
+POSTHOG_API_KEY=phc_...
+N8N_WEBHOOK_URL=https://your-n8n.com/webhook/...
+N8N_WEBHOOK_SECRET=your-secret-here
+NEXT_PUBLIC_POSTHOG_KEY=phc_...
+NEXT_PUBLIC_POSTHOG_HOST=https://us.i.posthog.com
 ```
 
 ---
@@ -83,6 +93,11 @@ printf "%s" "+1234567890" | vercel env add CONTACT_PHONE production
 printf "%s" "0x4AAA..." | vercel env add NEXT_PUBLIC_TURNSTILE_SITE_KEY production
 printf "%s" "0x4BBB..." | vercel env add TURNSTILE_SECRET_KEY production
 printf "%s" "https://gist.githubusercontent.com/..." | vercel env add RESUME_DATA_GIST_URL production
+printf "%s" "phc_..." | vercel env add POSTHOG_API_KEY production
+printf "%s" "https://your-n8n.com/webhook/..." | vercel env add N8N_WEBHOOK_URL production
+printf "%s" "your-secret-here" | vercel env add N8N_WEBHOOK_SECRET production
+printf "%s" "phc_..." | vercel env add NEXT_PUBLIC_POSTHOG_KEY production
+printf "%s" "https://us.i.posthog.com" | vercel env add NEXT_PUBLIC_POSTHOG_HOST production
 
 # Verify no newlines were added
 vercel env ls production
@@ -247,5 +262,5 @@ After deployment, verify:
 
 ---
 
-**Last Updated:** 2025-11-13
+**Last Updated:** 2026-02-04
 **Next Review:** When deployment process changes

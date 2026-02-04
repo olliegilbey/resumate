@@ -247,7 +247,7 @@ cat $TS_LOG_REL       # View TypeScript test output
 
 **Last Generated:** $TIMESTAMP
 **Next Update:** Automatically on next \`just test\` run
-**Logs Valid For:** Current session (stored in /tmp)
+**Logs Valid For:** Current session (stored in .logs/)
 
 **To verify counts:**
 \`\`\`bash

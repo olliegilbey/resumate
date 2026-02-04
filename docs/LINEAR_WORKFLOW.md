@@ -1,5 +1,5 @@
 ---
-last_updated: 2025-11-03
+last_updated: 2026-02-04
 category: Workflow Guide
 update_frequency: When workflow changes
 ---
@@ -276,8 +276,8 @@ mcp__linear__create_comment with
 - Task tracking moved from `docs/TODOS.md` to Linear
 - `scripts/archive-todos.sh` no longer needed
 - All historical tasks preserved in git history
-- 9 initial issues created (OLL-26 through OLL-35)
-- 7 child issues created for complex work (OLL-69 through OLL-75)
+- 10 initial issues created (OLL-26 through OLL-35)
+- Child issues created for complex work (OLL-69+)
 
 ### What Stayed Same
 - TodoWrite tool still used (but ephemeral)
@@ -307,5 +307,5 @@ mcp__linear__create_comment with
 
 ---
 
-**Last Updated:** 2025-11-03
+**Last Updated:** 2026-02-04
 **Next Review:** When workflow or tooling changes

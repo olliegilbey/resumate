@@ -44,9 +44,11 @@ mv LiberationSerif-Bold.ttf fonts/
 **Output:** `typst/fonts/`
 - `LiberationSerif-Regular.ttf` (394KB)
 - `LiberationSerif-Bold.ttf` (370KB)
-- **Total:** ~764KB
+- **Total:** ~764KB (Regular + Bold only)
 
 **Why Liberation Serif:** SIL Open Font License (embeddable), professional serif font, smaller than full Typst assets (~764KB vs ~8MB).
+
+**Note:** Italic font is not included - only Regular and Bold variants are embedded.
 
 ### 2. Font Embedding (Compile-Time)
 
@@ -80,10 +82,10 @@ strip = true           # Remove debug symbols
 ```
 
 **Output:** `public/wasm/`
-- `resume_wasm_bg.wasm` (16MB raw, 6.28MB gzipped)
-- `resume_wasm.js` (16KB - JS bindings)
-- `resume_wasm.d.ts` (6KB - TypeScript types)
-- `package.json` (446B - module metadata)
+- `resume_wasm_bg.wasm` - See [METRICS.md](./METRICS.md) for current sizes
+- `resume_wasm.js` - JS bindings
+- `resume_wasm.d.ts` - TypeScript types
+- `package.json` - module metadata
 
 ### 4. WASM Optimization (Automatic)
 
@@ -95,9 +97,8 @@ wasm-opt = ["-Oz", "--enable-bulk-memory", "--enable-nontrapping-float-to-int"]
 ```
 
 **Effect:**
-- Pre-optimization: ~18-20MB (estimated)
-- Post-optimization: 16MB (~11% reduction)
-- Gzipped transfer: 6.28MB (what browser downloads)
+- Significant size reduction via wasm-opt
+- See [METRICS.md](./METRICS.md) for current raw and gzipped sizes
 
 ---
 
@@ -137,7 +138,7 @@ pub fn generate_pdf_typst(payload_json: &str, dev_mode: bool) -> Result<Vec<u8>,
 
 ## TypeScript Integration
 
-**File:** `components/data/ResumeDownload.tsx:116-174`
+**File:** `components/data/ResumeDownload.tsx:305-330`
 
 ### WASM Loading (Dynamic)
 
@@ -156,7 +157,7 @@ document.head.appendChild(script)
 ```
 
 **Why Dynamic:**
-- Non-blocking (user sees UI before 6.28MB download)
+- Non-blocking (user sees UI before WASM download - see [METRICS.md](./METRICS.md) for current gzipped size)
 - Browser caching (instant subsequent loads)
 - Progress indicator during first load
 
@@ -275,9 +276,8 @@ just dev     # Dev server (uses cached WASM if exists)
 
 ## Testing
 
-**WASM Tests:** `crates/resume-wasm/tests/`
+**WASM Tests:** `crates/resume-wasm/src/lib.rs` (inline tests)
 
-- 32 tests (validation, JSON parsing, PDF generation, edge cases)
 - Tests run with `#[cfg(target_arch = "wasm32")]` (only on WASM target)
 - Validates: Payload structure, scoring weights (sum ≈ 1.0), bullet count (≤50), empty fields
 
@@ -293,7 +293,7 @@ just dev
 ```bash
 just wasm
 # Expected output: "[INFO]: Optimizing wasm binaries with `wasm-opt`..."
-# Expected size: ~16MB raw, ~6.28MB gzipped
+# See METRICS.md for current expected sizes
 ```
 
 ---
@@ -317,7 +317,7 @@ just wasm
 - Optimization: `crates/resume-wasm/Cargo.toml`
 
 **TypeScript Integration:**
-- Component: `components/data/ResumeDownload.tsx:116-174`
+- Component: `components/data/ResumeDownload.tsx:305-330`
 - Dynamic loading: ES module script injection
 - Type safety: wasm-bindgen generates `.d.ts` files
 

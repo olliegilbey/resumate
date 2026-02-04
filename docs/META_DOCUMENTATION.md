@@ -1,5 +1,5 @@
 ---
-last_updated: 2025-10-28
+last_updated: 2026-02-04
 category: Meta (Documentation System)
 update_frequency: When documentation structure changes
 retention_policy: All versions preserved in git
@@ -55,6 +55,11 @@ When information conflicts:
 | **`docs/ARCHITECTURE.md`** | Design | Per major version | System design | Temporary status |
 | **`docs/DATA_SCHEMA.md`** | Types | When schema changes | Type system | Current data |
 | **`docs/DEPLOYMENT_GUIDE.md`** | How-to | When process changes | Steps to deploy | Current status |
+| **`docs/ANALYTICS_ARCHITECTURE.md`** | Events | When analytics changes | Event schemas, flows | Current data |
+| **`docs/BUILD_PIPELINE.md`** | Build | When build changes | Pre-commit, CI | Current status |
+| **`docs/CODEBASE_REVIEW.md`** | Review | Per audit | Tech debt, issues | Stale findings |
+| **`docs/LINEAR_WORKFLOW.md`** | Tasks | When workflow changes | Linear integration | Task details |
+| **`docs/POSTHOG_DASHBOARD_SPEC.md`** | Dashboards | When dashboards change | Dashboard specs | Live data |
 | **`docs/META_DOCUMENTATION.md`** | Meta | When docs change | This guide | Project specifics |
 
 ---
@@ -64,7 +69,8 @@ When information conflicts:
 ### Changed Rust types?
 ```bash
 just types-sync
-# No doc updates needed
+# Schema + TS types auto-generated
+# Manual update needed: docs/DATA_SCHEMA.md if field semantics changed
 ```
 
 ### Completed a phase?
@@ -133,7 +139,7 @@ For [information], see [canonical-file.md]
 ✅ **Generate dynamic data from commands**
 ```bash
 # Parse actual output
-RUST_COUNT=$(grep "passed" /tmp/test.log | awk '{sum+=$1} END {print sum}')
+RUST_COUNT=$(grep "passed" .logs/rust-tests.log | awk '{sum+=$1} END {print sum}')
 ```
 
 ✅ **Add timestamps to manual updates**
@@ -154,7 +160,7 @@ last_updated: 2025-10-28
 ### `scripts/update-metrics-from-logs.sh`
 **Trigger:** Every commit (pre-commit hook)
 **Generates:** `docs/METRICS.md`
-**Input:** Test logs from `/tmp/resumate-*-tests.log`
+**Input:** Test logs from `.logs/rust-tests.log` and `.logs/ts-tests.log`
 
 ### `scripts/verify-docs.sh`
 **Trigger:** Every commit (pre-commit hook)
@@ -208,6 +214,11 @@ docs/
   ├── TESTING_STRATEGY.md      # Philosophy
   ├── METRICS.md               # Generated metrics
   ├── LINEAR_WORKFLOW.md       # Linear task tracking guide
+  ├── ANALYTICS_ARCHITECTURE.md # Event tracking
+  ├── BUILD_PIPELINE.md        # Build system
+  ├── CODEBASE_REVIEW.md       # Tech debt audit
+  ├── DEPLOYMENT_GUIDE.md      # Deployment how-to
+  ├── POSTHOG_DASHBOARD_SPEC.md # Dashboard specs
   └── META_DOCUMENTATION.md    # This guide
 scripts/
   ├── update-metrics-from-logs.sh
@@ -233,5 +244,5 @@ scripts/
 
 ---
 
-**Last Updated:** 2025-10-28
+**Last Updated:** 2026-02-04
 **Next Review:** When documentation structure changes
