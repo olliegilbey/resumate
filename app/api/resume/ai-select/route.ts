@@ -21,7 +21,7 @@ import {
   reorderByCompanyChronology,
   DEFAULT_SELECTION_CONFIG,
   type SelectedBullet,
-} from '@/lib/ai/selection'
+} from '@/lib/selection'
 
 // WARNING: In-memory token replay prevention is lost on serverless cold starts.
 // For production at scale, consider storing used tokens in Redis/KV with TTL
@@ -286,5 +286,5 @@ async function loadResumeData(): Promise<ResumeData | null> {
   }
 }
 
-// Selection logic moved to lib/ai/selection.ts
+// Selection logic in lib/selection.ts
 // Uses selectBulletsWithConstraints + reorderByCompanyChronology

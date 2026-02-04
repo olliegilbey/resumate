@@ -8,7 +8,17 @@ license.workspace = true
 repository.workspace = true
 
 [package.metadata.wasm-pack.profile.release]
-wasm-opt = ["-Oz", "--enable-bulk-memory", "--enable-nontrapping-float-to-int"]  # Aggressive size optimization
+# Maximum size optimization
+wasm-opt = [
+    "-Oz",                              # Optimize for size
+    "--enable-bulk-memory",             # Enable bulk memory operations
+    "--enable-nontrapping-float-to-int", # Non-trapping float-to-int
+    "--converge",                       # Run until no more optimizations
+    "--vacuum",                         # Remove unused modules
+    "--strip-debug",                    # Strip debug info
+    "--strip-dwarf",                    # Strip DWARF sections
+    "--strip-producers",                # Strip producer info
+]
 
 [lib]
 crate-type = ["cdylib", "rlib"]
@@ -18,7 +28,7 @@ default = ["console_error_panic_hook"]
 
 [dependencies]
 console_error_panic_hook = { version = "0.1.7", optional = true }
-resume-core = { workspace = true }
+shared-types = { workspace = true }
 resume-typst = { workspace = true }
 serde = { workspace = true }
 serde_json = { workspace = true }

@@ -1,16 +1,14 @@
 /**
  * Bullet Selection Algorithm
  *
- * TypeScript port of Rust selector logic from crates/resume-core/src/selector.rs
- * Applies diversity constraints to AI-scored bullets.
+ * Applies diversity constraints to scored bullets.
+ * Used by both heuristic and AI scoring paths.
  */
 
-import type { Bullet, Company, Position, ResumeData } from '@/lib/types/generated-resume'
-import type { ScoredBulletId } from './output-parser'
+import type { Bullet, ResumeData } from '@/lib/types/generated-resume'
 
 /**
  * Configuration for bullet selection
- * Matches Rust SelectionConfig
  */
 export interface SelectionConfig {
   /** Maximum total bullets (ceiling - may select fewer) */
@@ -24,8 +22,7 @@ export interface SelectionConfig {
 }
 
 /**
- * Selected bullet with full context
- * Must match ScoredBullet in Rust for WASM compatibility
+ * Selected bullet with full context for WASM payload
  */
 export interface SelectedBullet {
   bullet: Bullet
@@ -55,21 +52,21 @@ export const DEFAULT_SELECTION_CONFIG: SelectionConfig = {
 }
 
 /**
- * Select top bullets from AI scores applying diversity constraints
+ * Select top bullets applying diversity constraints
  *
- * Algorithm (matches Rust apply_diversity_constraints):
- * 1. Build full bullet objects from resume data + AI scores
+ * Algorithm:
+ * 1. Build full bullet objects from resume data + scores
  * 2. Sort by score descending
  * 3. Select bullets while respecting per-company and per-position limits
  * 4. Remove companies with fewer than minPerCompany bullets
  *
  * @param resumeData - Full resume data
- * @param aiScores - Bullet ID to score map from AI
+ * @param scores - Bullet ID to score map
  * @param config - Selection configuration
  */
 export function selectBulletsWithConstraints(
   resumeData: ResumeData,
-  aiScores: Map<string, number>,
+  scores: Map<string, number>,
   config: SelectionConfig = DEFAULT_SELECTION_CONFIG
 ): SelectedBullet[] {
   // Step 1: Build all bullet candidates with scores
@@ -78,8 +75,8 @@ export function selectBulletsWithConstraints(
   for (const company of resumeData.experience) {
     for (const position of company.children) {
       for (const bullet of position.children) {
-        const score = aiScores.get(bullet.id)
-        if (score === undefined) continue // AI didn't score this bullet
+        const score = scores.get(bullet.id)
+        if (score === undefined) continue // Bullet wasn't scored
 
         allBullets.push({
           bullet,
@@ -104,7 +101,7 @@ export function selectBulletsWithConstraints(
   // Step 2: Sort by score descending
   allBullets.sort((a, b) => b.score - a.score)
 
-  // Step 3: Apply diversity constraints (matches Rust apply_diversity_constraints)
+  // Step 3: Apply diversity constraints
   const selected = applyDiversityConstraints(allBullets, config)
 
   return selected
@@ -112,8 +109,6 @@ export function selectBulletsWithConstraints(
 
 /**
  * Apply diversity constraints to sorted bullet list
- *
- * Port of Rust function from crates/resume-core/src/selector.rs:142-202
  */
 function applyDiversityConstraints(
   sortedBullets: SelectedBullet[],

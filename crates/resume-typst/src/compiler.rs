@@ -63,7 +63,7 @@ impl ResumeWorld {
     /// Compile the template to a Typst document
     ///
     /// # Returns
-    /// * `Ok(typst::Document)` - Compiled document ready for PDF export
+    /// * `Ok(typst::model::Document)` - Compiled document ready for PDF export
     /// * `Err(TypstError)` - Compilation failed
     ///
     pub fn compile(&self) -> Result<typst::model::Document, TypstError> {
@@ -115,8 +115,8 @@ impl World for ResumeWorld {
     }
 
     fn today(&self, _offset: Option<i64>) -> Option<Datetime> {
-        // Use current date for PDF metadata
-        let now = chrono::Local::now();
+        // Use UTC date for PDF metadata (Local::now() unavailable in WASM)
+        let now = chrono::Utc::now();
         Datetime::from_ymd(now.year(), now.month() as u8, now.day() as u8)
     }
 }

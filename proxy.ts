@@ -105,10 +105,12 @@ export function proxy(request: NextRequest) {
   }
 
   // 2. Rate limiting - apply to all requests from same IP
-  const maxRequests = /googlebot/i.test(userAgent) ? 100 : 30 // Be generous with Google (case-insensitive)
+  // In dev mode, be very permissive to avoid rate limiting during debugging
+  const isDevEnv = process.env.NODE_ENV === 'development'
+  const maxRequests = isDevEnv ? 1000 : /googlebot/i.test(userAgent) ? 100 : 30
   if (!checkRateLimit(ipAddress, maxRequests, 60000)) {
     console.log(`Rate limit exceeded for ${ipAddress}`)
-    return new NextResponse('Too Many Requests', { 
+    return new NextResponse('Too Many Requests', {
       status: 429,
       headers: {
         'Retry-After': '60',

@@ -151,7 +151,7 @@ export interface SelectionOptions {
   enableFallback?: boolean
 }
 
-// Note: DEFAULT_SELECTION_CONFIG is in lib/ai/selection.ts (source of truth)
+// Note: DEFAULT_SELECTION_CONFIG is in lib/selection.ts (source of truth)
 // Do not add a duplicate here - it was removed to prevent divergence
 
 // Default selection options

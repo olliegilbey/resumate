@@ -7,7 +7,11 @@
 //! summary, description, tags, priority, link) with varying optionality.
 //!
 //! Types are generated into JSON Schema and TypeScript for cross-language compatibility.
+//!
+//! # Features
+//! - `schema`: Enable JSON Schema generation via schemars (not needed for runtime/WASM)
 
+#[cfg(feature = "schema")]
 use schemars::JsonSchema;
 use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
@@ -23,80 +27,90 @@ pub type Tag = String;
 ///
 /// Represents a company/organization where you worked.
 /// Contains positions (roles) held at this company.
-#[derive(Debug, Clone, Serialize, Deserialize, PartialEq, JsonSchema)]
+#[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
+#[cfg_attr(feature = "schema", derive(JsonSchema))]
 #[serde(rename_all = "camelCase")]
 pub struct Company {
-    #[schemars(
+    #[cfg_attr(feature = "schema", schemars(
         description = "Unique identifier (required)",
-        example = "company_id_example"
-    )]
+        example = company_id_example()
+    ))]
     pub id: String,
 
     #[serde(skip_serializing_if = "Option::is_none")]
-    #[schemars(
+    #[cfg_attr(feature = "schema", schemars(
         description = "Company name (optional)",
-        example = "company_name_example"
-    )]
+        example = company_name_example()
+    ))]
     pub name: Option<String>,
 
     #[serde(skip_serializing_if = "Option::is_none")]
-    #[schemars(
+    #[cfg_attr(feature = "schema", schemars(
         description = "Physical location (optional)",
-        example = "location_example"
-    )]
+        example = location_example()
+    ))]
     pub location: Option<String>,
 
-    #[schemars(description = "Start date (required)", example = "date_start_example")]
+    #[cfg_attr(feature = "schema", schemars(description = "Start date (required)", example = date_start_example()))]
     pub date_start: String,
 
     #[serde(skip_serializing_if = "Option::is_none")]
-    #[schemars(
+    #[cfg_attr(feature = "schema", schemars(
         description = "End date or null for Present (optional)",
-        example = "date_end_example"
-    )]
+        example = date_end_example()
+    ))]
     pub date_end: Option<String>,
 
     #[serde(skip_serializing_if = "Option::is_none")]
-    #[schemars(
+    #[cfg_attr(feature = "schema", schemars(
         description = "Brief company context (optional)",
-        example = "company_summary_example"
-    )]
+        example = company_summary_example()
+    ))]
     pub summary: Option<String>,
 
     #[serde(skip_serializing_if = "Option::is_none")]
-    #[schemars(description = "Detailed description, rarely used at company level (optional)")]
+    #[cfg_attr(
+        feature = "schema",
+        schemars(description = "Detailed description, rarely used at company level (optional)")
+    )]
     pub description: Option<String>,
 
-    #[schemars(
+    #[cfg_attr(feature = "schema", schemars(
         description = "Category tags for filtering and scoring (required)",
-        example = "tags_example"
-    )]
+        example = tags_example()
+    ))]
     pub tags: Vec<Tag>,
 
-    #[schemars(
+    #[cfg_attr(feature = "schema", schemars(
         description = "Company importance ranking 1-10, higher = more prestigious (required)",
         range(min = 1, max = 10),
-        example = "priority_example"
-    )]
+        example = priority_example()
+    ))]
     pub priority: u8,
 
     #[serde(skip_serializing_if = "Option::is_none")]
-    #[schemars(
+    #[cfg_attr(feature = "schema", schemars(
         description = "Link to company website (optional)",
-        example = "url_example"
-    )]
+        example = url_example()
+    ))]
     pub link: Option<String>,
 
-    #[schemars(description = "List of Position objects - roles held at this company (required)")]
+    #[cfg_attr(
+        feature = "schema",
+        schemars(description = "List of Position objects - roles held at this company (required)")
+    )]
     pub children: Vec<Position>,
 }
 
+#[cfg(feature = "schema")]
 fn company_id_example() -> &'static str {
     "anthropic"
 }
+#[cfg(feature = "schema")]
 fn company_name_example() -> &'static str {
     "Anthropic"
 }
+#[cfg(feature = "schema")]
 fn company_summary_example() -> &'static str {
     "AI safety research company"
 }
@@ -105,81 +119,91 @@ fn company_summary_example() -> &'static str {
 ///
 /// Represents a specific role/title at a company.
 /// Contains bullets (achievements/responsibilities) for this role.
-#[derive(Debug, Clone, Serialize, Deserialize, PartialEq, JsonSchema)]
+#[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
+#[cfg_attr(feature = "schema", derive(JsonSchema))]
 #[serde(rename_all = "camelCase")]
 pub struct Position {
-    #[schemars(
+    #[cfg_attr(feature = "schema", schemars(
         description = "Unique identifier (required)",
-        example = "position_id_example"
-    )]
+        example = position_id_example()
+    ))]
     pub id: String,
 
-    #[schemars(
+    #[cfg_attr(feature = "schema", schemars(
         description = "Job title or role name (required)",
-        example = "position_name_example"
-    )]
+        example = position_name_example()
+    ))]
     pub name: String,
 
     #[serde(skip_serializing_if = "Option::is_none")]
-    #[schemars(
+    #[cfg_attr(feature = "schema", schemars(
         description = "Physical location if different from company (optional)",
-        example = "location_example"
-    )]
+        example = location_example()
+    ))]
     pub location: Option<String>,
 
-    #[schemars(description = "Start date (required)", example = "date_start_example")]
+    #[cfg_attr(feature = "schema", schemars(description = "Start date (required)", example = date_start_example()))]
     pub date_start: String,
 
     #[serde(skip_serializing_if = "Option::is_none")]
-    #[schemars(
+    #[cfg_attr(feature = "schema", schemars(
         description = "End date or null for Present (optional)",
-        example = "date_end_example"
-    )]
+        example = date_end_example()
+    ))]
     pub date_end: Option<String>,
 
     #[serde(skip_serializing_if = "Option::is_none")]
-    #[schemars(
+    #[cfg_attr(feature = "schema", schemars(
         description = "Brief role summary (optional)",
-        example = "position_summary_example"
-    )]
+        example = position_summary_example()
+    ))]
     pub summary: Option<String>,
 
     #[serde(skip_serializing_if = "Option::is_none")]
-    #[schemars(description = "Detailed role description shown in resume (optional)")]
+    #[cfg_attr(
+        feature = "schema",
+        schemars(description = "Detailed role description shown in resume (optional)")
+    )]
     pub description: Option<String>,
 
-    #[schemars(
+    #[cfg_attr(feature = "schema", schemars(
         description = "Category tags for filtering and scoring (required)",
-        example = "tags_example"
-    )]
+        example = tags_example()
+    ))]
     pub tags: Vec<Tag>,
 
-    #[schemars(
+    #[cfg_attr(feature = "schema", schemars(
         description = "Position importance ranking 1-10, higher = more senior/relevant (required)",
         range(min = 1, max = 10),
-        example = "priority_example"
-    )]
+        example = priority_example()
+    ))]
     pub priority: u8,
 
     #[serde(skip_serializing_if = "Option::is_none")]
-    #[schemars(
+    #[cfg_attr(feature = "schema", schemars(
         description = "Link to position-specific work or context (optional)",
-        example = "url_example"
-    )]
+        example = url_example()
+    ))]
     pub link: Option<String>,
 
-    #[schemars(
-        description = "List of Bullet objects - achievements/responsibilities for this role (required)"
+    #[cfg_attr(
+        feature = "schema",
+        schemars(
+            description = "List of Bullet objects - achievements/responsibilities for this role (required)"
+        )
     )]
     pub children: Vec<Bullet>,
 }
 
+#[cfg(feature = "schema")]
 fn position_id_example() -> &'static str {
     "anthropic-swe"
 }
+#[cfg(feature = "schema")]
 fn position_name_example() -> &'static str {
     "Software Engineer"
 }
+#[cfg(feature = "schema")]
 fn position_summary_example() -> &'static str {
     "Led team of 5 engineers building developer tools"
 }
@@ -188,91 +212,109 @@ fn position_summary_example() -> &'static str {
 ///
 /// Represents a single resume bullet point.
 /// This is the atomic unit of experience that gets selected for targeted resumes.
-#[derive(Debug, Clone, Serialize, Deserialize, PartialEq, JsonSchema)]
+#[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
+#[cfg_attr(feature = "schema", derive(JsonSchema))]
 #[serde(rename_all = "camelCase")]
 pub struct Bullet {
-    #[schemars(
+    #[cfg_attr(feature = "schema", schemars(
         description = "Unique identifier (required)",
-        example = "bullet_id_example"
-    )]
+        example = bullet_id_example()
+    ))]
     pub id: String,
 
     #[serde(skip_serializing_if = "Option::is_none")]
-    #[schemars(description = "Optional heading or label, rarely used (optional)")]
+    #[cfg_attr(
+        feature = "schema",
+        schemars(description = "Optional heading or label, rarely used (optional)")
+    )]
     pub name: Option<String>,
 
     #[serde(skip_serializing_if = "Option::is_none")]
-    #[schemars(description = "Physical location, rarely used at bullet level (optional)")]
+    #[cfg_attr(
+        feature = "schema",
+        schemars(description = "Physical location, rarely used at bullet level (optional)")
+    )]
     pub location: Option<String>,
 
     #[serde(skip_serializing_if = "Option::is_none")]
-    #[schemars(
+    #[cfg_attr(feature = "schema", schemars(
         description = "Start date for time-bound achievements (optional)",
-        example = "date_start_example"
-    )]
+        example = date_start_example()
+    ))]
     pub date_start: Option<String>,
 
     #[serde(skip_serializing_if = "Option::is_none")]
-    #[schemars(
+    #[cfg_attr(feature = "schema", schemars(
         description = "End date for time-bound achievements (optional)",
-        example = "date_end_example"
-    )]
+        example = date_end_example()
+    ))]
     pub date_end: Option<String>,
 
     #[serde(skip_serializing_if = "Option::is_none")]
-    #[schemars(description = "Brief context for this achievement (optional)")]
+    #[cfg_attr(
+        feature = "schema",
+        schemars(description = "Brief context for this achievement (optional)")
+    )]
     pub summary: Option<String>,
 
-    #[schemars(
+    #[cfg_attr(feature = "schema", schemars(
         description = "The actual bullet text that appears on resume (required)",
-        example = "bullet_description_example"
-    )]
+        example = bullet_description_example()
+    ))]
     pub description: String,
 
-    #[schemars(
+    #[cfg_attr(feature = "schema", schemars(
         description = "Category tags for filtering and scoring (required)",
-        example = "tags_example"
-    )]
+        example = tags_example()
+    ))]
     pub tags: Vec<Tag>,
 
-    #[schemars(
+    #[cfg_attr(feature = "schema", schemars(
         description = "Bullet importance ranking 1-10, higher = more impressive/relevant (required)",
         range(min = 1, max = 10),
-        example = "priority_example"
-    )]
+        example = priority_example()
+    ))]
     pub priority: u8,
 
     #[serde(skip_serializing_if = "Option::is_none")]
-    #[schemars(
+    #[cfg_attr(feature = "schema", schemars(
         description = "Link to work, recording, demo, or additional context (optional)",
-        example = "url_example"
-    )]
+        example = url_example()
+    ))]
     pub link: Option<String>,
 }
 
+#[cfg(feature = "schema")]
 fn bullet_id_example() -> &'static str {
     "anthropic-launched-claude"
 }
+#[cfg(feature = "schema")]
 fn bullet_description_example() -> &'static str {
     "Built distributed system handling 10M requests/day with 99.9% uptime"
 }
 
 // Shared example functions
+#[cfg(feature = "schema")]
 fn location_example() -> &'static str {
     "San Francisco, CA"
 }
+#[cfg(feature = "schema")]
 fn date_start_example() -> &'static str {
     "January 2020"
 }
+#[cfg(feature = "schema")]
 fn date_end_example() -> &'static str {
     "December 2023"
 }
+#[cfg(feature = "schema")]
 fn tags_example() -> Vec<String> {
     vec!["engineering".to_string(), "leadership".to_string()]
 }
+#[cfg(feature = "schema")]
 fn priority_example() -> &'static str {
     "9"
 }
+#[cfg(feature = "schema")]
 fn url_example() -> &'static str {
     "https://example.com"
 }
@@ -365,37 +407,49 @@ impl Bullet {
 ///
 /// Defines which tags/skills are most relevant for a specific role type,
 /// and how to weight different scoring components when selecting bullets.
-#[derive(Debug, Clone, Serialize, Deserialize, PartialEq, JsonSchema)]
+#[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
+#[cfg_attr(feature = "schema", derive(JsonSchema))]
 #[serde(rename_all = "camelCase")]
 pub struct RoleProfile {
-    #[schemars(
+    #[cfg_attr(feature = "schema", schemars(
         description = "Unique identifier (required)",
-        example = "role_profile_id_example"
-    )]
+        example = role_profile_id_example()
+    ))]
     pub id: String,
 
-    #[schemars(
+    #[cfg_attr(feature = "schema", schemars(
         description = "Display name for this role type (required)",
-        example = "role_profile_name_example"
-    )]
+        example = role_profile_name_example()
+    ))]
     pub name: String,
 
     #[serde(skip_serializing_if = "Option::is_none")]
-    #[schemars(description = "Optional description of this role type (optional)")]
+    #[cfg_attr(
+        feature = "schema",
+        schemars(description = "Optional description of this role type (optional)")
+    )]
     pub description: Option<String>,
 
-    #[schemars(
-        description = "Map of tag names to relevance weights 0.0-1.0, higher = more relevant (required)"
+    #[cfg_attr(
+        feature = "schema",
+        schemars(
+            description = "Map of tag names to relevance weights 0.0-1.0, higher = more relevant (required)"
+        )
     )]
     pub tag_weights: HashMap<Tag, f32>,
 
-    #[schemars(description = "Weights for scoring algorithm components (required)")]
+    #[cfg_attr(
+        feature = "schema",
+        schemars(description = "Weights for scoring algorithm components (required)")
+    )]
     pub scoring_weights: ScoringWeights,
 }
 
+#[cfg(feature = "schema")]
 fn role_profile_id_example() -> &'static str {
     "software-engineer"
 }
+#[cfg(feature = "schema")]
 fn role_profile_name_example() -> &'static str {
     "Software Engineer"
 }
@@ -404,27 +458,30 @@ fn role_profile_name_example() -> &'static str {
 ///
 /// Defines how to weight different factors when scoring bullets.
 /// All weights should sum to approximately 1.0.
-#[derive(Debug, Clone, Serialize, Deserialize, PartialEq, JsonSchema)]
+#[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
+#[cfg_attr(feature = "schema", derive(JsonSchema))]
 #[serde(rename_all = "camelCase")]
 pub struct ScoringWeights {
-    #[schemars(
+    #[cfg_attr(feature = "schema", schemars(
         description = "Weight for tag relevance 0.0-1.0 (required)",
         range(min = 0.0, max = 1.0),
-        example = "scoring_tag_relevance_example"
-    )]
+        example = scoring_tag_relevance_example()
+    ))]
     pub tag_relevance: f32,
 
-    #[schemars(
+    #[cfg_attr(feature = "schema", schemars(
         description = "Weight for manual priority 0.0-1.0 (required)",
         range(min = 0.0, max = 1.0),
-        example = "scoring_priority_example"
-    )]
+        example = scoring_priority_example()
+    ))]
     pub priority: f32,
 }
 
+#[cfg(feature = "schema")]
 fn scoring_tag_relevance_example() -> &'static str {
     "0.6"
 }
+#[cfg(feature = "schema")]
 fn scoring_priority_example() -> &'static str {
     "0.4"
 }
@@ -481,36 +538,58 @@ impl ScoringWeights {
 ///
 /// Top-level container for all resume information.
 /// This is the root object stored in resume-data.json.
-#[derive(Debug, Clone, Serialize, Deserialize, PartialEq, JsonSchema)]
+#[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
+#[cfg_attr(feature = "schema", derive(JsonSchema))]
 #[serde(rename_all = "camelCase")]
 pub struct ResumeData {
-    #[schemars(description = "Personal information (required)")]
+    #[cfg_attr(
+        feature = "schema",
+        schemars(description = "Personal information (required)")
+    )]
     pub personal: PersonalInfo,
 
     #[serde(skip_serializing_if = "Option::is_none")]
-    #[schemars(description = "Professional summary 2-3 sentences (optional)")]
+    #[cfg_attr(
+        feature = "schema",
+        schemars(description = "Professional summary 2-3 sentences (optional)")
+    )]
     pub summary: Option<String>,
 
-    #[schemars(description = "List of Company objects - work experience (required)")]
+    #[cfg_attr(
+        feature = "schema",
+        schemars(description = "List of Company objects - work experience (required)")
+    )]
     pub experience: Vec<Company>,
 
     #[serde(skip_serializing_if = "Option::is_none")]
-    #[schemars(description = "List of Education objects - degrees earned (optional)")]
+    #[cfg_attr(
+        feature = "schema",
+        schemars(description = "List of Education objects - degrees earned (optional)")
+    )]
     pub education: Option<Vec<Education>>,
 
     #[serde(skip_serializing_if = "Option::is_none")]
-    #[schemars(description = "Skills grouped by category (optional)")]
+    #[cfg_attr(
+        feature = "schema",
+        schemars(description = "Skills grouped by category (optional)")
+    )]
     pub skills: Option<HashMap<String, Vec<String>>>,
 
     #[serde(skip_serializing_if = "Option::is_none")]
-    #[schemars(
-        description = "List of RoleProfile objects for targeted resume generation (optional)"
+    #[cfg_attr(
+        feature = "schema",
+        schemars(
+            description = "List of RoleProfile objects for targeted resume generation (optional)"
+        )
     )]
     pub role_profiles: Option<Vec<RoleProfile>>,
 
     #[serde(skip_serializing_if = "Option::is_none")]
-    #[schemars(
-        description = "Meta footer text for PDF (supports {bullet_count} and {company_count} template variables)"
+    #[cfg_attr(
+        feature = "schema",
+        schemars(
+            description = "Meta footer text for PDF (supports {bullet_count} and {company_count} template variables)"
+        )
     )]
     pub meta_footer: Option<String>,
 }
@@ -552,104 +631,337 @@ impl ResumeData {
 }
 
 /// Personal information
-#[derive(Debug, Clone, Serialize, Deserialize, PartialEq, JsonSchema)]
+#[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
+#[cfg_attr(feature = "schema", derive(JsonSchema))]
 #[serde(rename_all = "camelCase")]
 pub struct PersonalInfo {
-    #[schemars(
+    #[cfg_attr(feature = "schema", schemars(
         description = "Full name (required)",
-        example = "personal_name_example"
-    )]
+        example = personal_name_example()
+    ))]
     pub name: String,
 
     #[serde(skip_serializing_if = "Option::is_none")]
-    #[schemars(description = "Nickname or preferred name (optional)")]
+    #[cfg_attr(
+        feature = "schema",
+        schemars(description = "Nickname or preferred name (optional)")
+    )]
     pub nickname: Option<String>,
 
     #[serde(skip_serializing_if = "Option::is_none")]
-    #[schemars(
+    #[cfg_attr(feature = "schema", schemars(
         description = "Professional tagline or motto (optional)",
-        example = "personal_tagline_example"
-    )]
+        example = personal_tagline_example()
+    ))]
     pub tagline: Option<String>,
 
     #[serde(skip_serializing_if = "Option::is_none")]
-    #[schemars(
+    #[cfg_attr(feature = "schema", schemars(
         description = "Email address (optional)",
-        example = "personal_email_example"
-    )]
+        example = personal_email_example()
+    ))]
     pub email: Option<String>,
 
     #[serde(skip_serializing_if = "Option::is_none")]
-    #[schemars(description = "Phone number (optional)")]
+    #[cfg_attr(feature = "schema", schemars(description = "Phone number (optional)"))]
     pub phone: Option<String>,
 
     #[serde(skip_serializing_if = "Option::is_none")]
-    #[schemars(
+    #[cfg_attr(feature = "schema", schemars(
         description = "Current location (optional)",
-        example = "location_example"
-    )]
+        example = location_example()
+    ))]
     pub location: Option<String>,
 
     #[serde(skip_serializing_if = "Option::is_none")]
-    #[schemars(
+    #[cfg_attr(feature = "schema", schemars(
         description = "LinkedIn profile URL (optional)",
-        example = "url_example"
-    )]
+        example = url_example()
+    ))]
     pub linkedin: Option<String>,
 
     #[serde(skip_serializing_if = "Option::is_none")]
-    #[schemars(description = "GitHub profile URL (optional)", example = "url_example")]
+    #[cfg_attr(feature = "schema", schemars(description = "GitHub profile URL (optional)", example = url_example()))]
     pub github: Option<String>,
 
     #[serde(skip_serializing_if = "Option::is_none")]
-    #[schemars(
+    #[cfg_attr(feature = "schema", schemars(
         description = "Personal website URL (optional)",
-        example = "url_example"
-    )]
+        example = url_example()
+    ))]
     pub website: Option<String>,
 
     #[serde(skip_serializing_if = "Option::is_none")]
-    #[schemars(
+    #[cfg_attr(feature = "schema", schemars(
         description = "Twitter/X profile URL (optional)",
-        example = "url_example"
-    )]
+        example = url_example()
+    ))]
     pub twitter: Option<String>,
 }
 
+#[cfg(feature = "schema")]
 fn personal_name_example() -> &'static str {
     "Jane Doe"
 }
+#[cfg(feature = "schema")]
 fn personal_tagline_example() -> &'static str {
     "Building the future of AI"
 }
+#[cfg(feature = "schema")]
 fn personal_email_example() -> &'static str {
     "jane@example.com"
 }
 
 /// Education entry
-#[derive(Debug, Clone, Serialize, Deserialize, PartialEq, JsonSchema)]
+#[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
+#[cfg_attr(feature = "schema", derive(JsonSchema))]
 #[serde(rename_all = "camelCase")]
 pub struct Education {
-    #[schemars(description = "Full degree name (required)")]
+    #[cfg_attr(
+        feature = "schema",
+        schemars(description = "Full degree name (required)")
+    )]
     pub degree: String,
 
-    #[schemars(description = "Degree type (required)")]
+    #[cfg_attr(feature = "schema", schemars(description = "Degree type (required)"))]
     pub degree_type: String,
 
-    #[schemars(description = "Institution name (required)")]
+    #[cfg_attr(
+        feature = "schema",
+        schemars(description = "Institution name (required)")
+    )]
     pub institution: String,
 
-    #[schemars(description = "Institution location (required)")]
+    #[cfg_attr(
+        feature = "schema",
+        schemars(description = "Institution location (required)")
+    )]
     pub location: String,
 
-    #[schemars(description = "Year graduated (required)")]
+    #[cfg_attr(
+        feature = "schema",
+        schemars(description = "Year graduated (required)")
+    )]
     pub year: String,
 
     #[serde(skip_serializing_if = "Option::is_none")]
-    #[schemars(description = "Relevant coursework (optional)")]
+    #[cfg_attr(
+        feature = "schema",
+        schemars(description = "Relevant coursework (optional)")
+    )]
     pub coursework: Option<Vec<String>>,
 
     #[serde(skip_serializing_if = "Option::is_none")]
-    #[schemars(description = "Clubs, societies, and activities (optional)")]
+    #[cfg_attr(
+        feature = "schema",
+        schemars(description = "Clubs, societies, and activities (optional)")
+    )]
     pub societies: Option<Vec<String>>,
+}
+
+// =============================================================================
+// SCORED BULLET (for PDF generation)
+// =============================================================================
+
+/// Selected bullet with context for PDF generation
+///
+/// Contains the bullet plus company/position context needed
+/// to render the resume PDF properly.
+#[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
+#[cfg_attr(feature = "schema", derive(JsonSchema))]
+#[serde(rename_all = "camelCase")]
+pub struct ScoredBullet {
+    #[cfg_attr(
+        feature = "schema",
+        schemars(description = "The bullet point (required)")
+    )]
+    pub bullet: Bullet,
+
+    #[cfg_attr(
+        feature = "schema",
+        schemars(description = "Selection score (required)")
+    )]
+    pub score: f32,
+
+    #[cfg_attr(feature = "schema", schemars(description = "Company ID (required)"))]
+    pub company_id: String,
+
+    #[serde(skip_serializing_if = "Option::is_none")]
+    #[cfg_attr(feature = "schema", schemars(description = "Company name (optional)"))]
+    pub company_name: Option<String>,
+
+    #[serde(skip_serializing_if = "Option::is_none")]
+    #[cfg_attr(
+        feature = "schema",
+        schemars(description = "Company context/industry (optional)")
+    )]
+    pub company_description: Option<String>,
+
+    #[serde(skip_serializing_if = "Option::is_none")]
+    #[cfg_attr(
+        feature = "schema",
+        schemars(description = "Company website (optional)")
+    )]
+    pub company_link: Option<String>,
+
+    #[cfg_attr(
+        feature = "schema",
+        schemars(description = "Company start date (required)")
+    )]
+    pub company_date_start: String,
+
+    #[serde(skip_serializing_if = "Option::is_none")]
+    #[cfg_attr(
+        feature = "schema",
+        schemars(description = "Company end date (optional)")
+    )]
+    pub company_date_end: Option<String>,
+
+    #[serde(skip_serializing_if = "Option::is_none")]
+    #[cfg_attr(
+        feature = "schema",
+        schemars(description = "Company location (optional)")
+    )]
+    pub company_location: Option<String>,
+
+    #[cfg_attr(feature = "schema", schemars(description = "Position ID (required)"))]
+    pub position_id: String,
+
+    #[cfg_attr(
+        feature = "schema",
+        schemars(description = "Position/role name (required)")
+    )]
+    pub position_name: String,
+
+    #[serde(skip_serializing_if = "Option::is_none")]
+    #[cfg_attr(
+        feature = "schema",
+        schemars(description = "Position description (optional)")
+    )]
+    pub position_description: Option<String>,
+
+    #[cfg_attr(
+        feature = "schema",
+        schemars(description = "Position start date (required)")
+    )]
+    pub position_date_start: String,
+
+    #[serde(skip_serializing_if = "Option::is_none")]
+    #[cfg_attr(
+        feature = "schema",
+        schemars(description = "Position end date (optional)")
+    )]
+    pub position_date_end: Option<String>,
+}
+
+// =============================================================================
+// GENERATION PAYLOAD (for WASM PDF generation)
+// =============================================================================
+
+/// Payload for document generation (PDF)
+///
+/// Contains all data needed to generate a targeted resume document.
+/// This is the data structure that the WASM PDF generator receives.
+#[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
+#[cfg_attr(feature = "schema", derive(JsonSchema))]
+#[serde(rename_all = "camelCase")]
+pub struct GenerationPayload {
+    #[cfg_attr(
+        feature = "schema",
+        schemars(description = "Personal contact information (required)")
+    )]
+    pub personal: PersonalInfo,
+
+    #[cfg_attr(
+        feature = "schema",
+        schemars(description = "Selected bullets with context (required)")
+    )]
+    pub selected_bullets: Vec<ScoredBullet>,
+
+    #[cfg_attr(
+        feature = "schema",
+        schemars(description = "Role profile used for selection (required)")
+    )]
+    pub role_profile: RoleProfile,
+
+    #[serde(skip_serializing_if = "Option::is_none")]
+    #[cfg_attr(
+        feature = "schema",
+        schemars(description = "Education history (optional)")
+    )]
+    pub education: Option<Vec<Education>>,
+
+    #[serde(skip_serializing_if = "Option::is_none")]
+    #[cfg_attr(
+        feature = "schema",
+        schemars(description = "Skills by category (optional)")
+    )]
+    pub skills: Option<HashMap<String, Vec<String>>>,
+
+    #[serde(skip_serializing_if = "Option::is_none")]
+    #[cfg_attr(
+        feature = "schema",
+        schemars(description = "Professional summary (optional)")
+    )]
+    pub summary: Option<String>,
+
+    #[serde(skip_serializing_if = "Option::is_none")]
+    #[cfg_attr(
+        feature = "schema",
+        schemars(description = "Meta footer text for PDF (optional)")
+    )]
+    pub meta_footer: Option<String>,
+
+    #[serde(skip_serializing_if = "Option::is_none")]
+    #[cfg_attr(
+        feature = "schema",
+        schemars(description = "Total bullets available in database (optional)")
+    )]
+    pub total_bullets_available: Option<usize>,
+
+    #[serde(skip_serializing_if = "Option::is_none")]
+    #[cfg_attr(
+        feature = "schema",
+        schemars(description = "Total companies in database (optional)")
+    )]
+    pub total_companies_available: Option<usize>,
+
+    #[serde(skip_serializing_if = "Option::is_none")]
+    #[cfg_attr(
+        feature = "schema",
+        schemars(description = "Generation metadata for tracking (optional)")
+    )]
+    pub metadata: Option<GenerationMetadata>,
+}
+
+/// Metadata for tracking and reconstruction
+///
+/// Allows recreating exact PDFs from stored generation IDs
+#[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
+#[cfg_attr(feature = "schema", derive(JsonSchema))]
+#[serde(rename_all = "camelCase")]
+pub struct GenerationMetadata {
+    #[cfg_attr(
+        feature = "schema",
+        schemars(description = "Unique generation ID (required)")
+    )]
+    pub generation_id: String,
+
+    #[cfg_attr(
+        feature = "schema",
+        schemars(description = "Unix epoch timestamp (required)")
+    )]
+    pub timestamp: u64,
+
+    #[cfg_attr(
+        feature = "schema",
+        schemars(description = "IDs of selected bullets (required)")
+    )]
+    pub selected_bullet_ids: Vec<String>,
+
+    #[cfg_attr(
+        feature = "schema",
+        schemars(description = "Role profile ID used (required)")
+    )]
+    pub role_profile_id: String,
 }
