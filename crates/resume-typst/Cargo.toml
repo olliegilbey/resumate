@@ -29,5 +29,3 @@ shared-types = { workspace = true }
 # Time handling (wasmbind uses JS Date API in WASM, no system clock needed)
 chrono = { workspace = true }
 
-[dev-dependencies]
-proptest = { workspace = true }

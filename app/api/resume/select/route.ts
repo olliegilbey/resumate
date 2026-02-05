@@ -3,6 +3,7 @@ import { checkRateLimit, getClientIP } from '@/lib/rate-limit'
 import type { ResumeData, Company, Position, Bullet, RoleProfile } from '@/types/resume'
 import { captureEvent, flushEvents } from '@/lib/posthog-server'
 import { ANALYTICS_EVENTS } from '@/lib/analytics/events'
+import { applyDiversityConstraints, type ScoredBullet, type SelectionConfig } from '@/lib/selection'
 
 // In-memory store for used tokens (prevents replay attacks within function instance lifetime)
 // Note: In serverless, each function instance is stateless and short-lived
@@ -219,28 +220,6 @@ async function loadResumeData(): Promise<ResumeData | null> {
   }
 }
 
-interface SelectionConfig {
-  maxBullets: number
-  maxPerCompany?: number
-  maxPerPosition?: number
-}
-
-interface ScoredBullet {
-  bullet: Bullet | { id: string; description: string; tags: string[]; priority: number }
-  score: number
-  companyId: string
-  companyName: string | null | undefined
-  companyDescription: string | null | undefined
-  companyLink: string | null | undefined
-  companyDateStart: string
-  companyDateEnd: string | null | undefined
-  companyLocation: string | null | undefined
-  positionId: string
-  positionName: string
-  positionDescription: string | null | undefined
-  positionDateStart: string
-  positionDateEnd: string | null | undefined
-}
 
 /**
  * TypeScript implementation of bullet selection algorithm
@@ -408,43 +387,3 @@ function calculatePositionMultiplier(
   return priorityMultiplier * tagMultiplier
 }
 
-/**
- * Apply diversity constraints
- */
-function applyDiversityConstraints(sortedBullets: ScoredBullet[], config: SelectionConfig): ScoredBullet[] {
-  const selected = []
-  const companyCounts: Record<string, number> = {}
-  const positionCounts: Record<string, number> = {}
-
-  for (const bullet of sortedBullets) {
-    // Check total limit
-    if (selected.length >= config.maxBullets) {
-      break
-    }
-
-    // Check per-company limit
-    if (config.maxPerCompany) {
-      const companyCount = companyCounts[bullet.companyId] || 0
-      if (companyCount >= config.maxPerCompany) {
-        continue
-      }
-    }
-
-    // Check per-position limit
-    if (config.maxPerPosition) {
-      const positionCount = positionCounts[bullet.positionId] || 0
-      if (positionCount >= config.maxPerPosition) {
-        continue
-      }
-    }
-
-    // Add bullet and increment counters
-    companyCounts[bullet.companyId] =
-      (companyCounts[bullet.companyId] || 0) + 1
-    positionCounts[bullet.positionId] =
-      (positionCounts[bullet.positionId] || 0) + 1
-    selected.push(bullet)
-  }
-
-  return selected
-}

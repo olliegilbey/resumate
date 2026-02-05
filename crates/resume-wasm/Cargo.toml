@@ -38,5 +38,3 @@ thiserror = { workspace = true }
 [build-dependencies]
 chrono = "0.4"
 
-[dev-dependencies]
-proptest = { workspace = true }
