@@ -8,6 +8,8 @@ Dynamic resume website: experience explorer + intelligent PDF download via WASM 
 
 **Public repo** - keep PII private, operate as if everyone is watching.
 
+**Document public APIs** using TSDoc (TypeScript) and Rustdoc (Rust). Use pre-function doc comments for exported functions/types, inline comments for non-obvious logic.
+
 ---
 
 ## Mental Models
