@@ -199,13 +199,14 @@ fn test_education_schema() {
 fn test_schema_has_descriptions() {
     let schema_json = schema_to_json::<ResumeData>();
 
-    // Root schema should have description
-    if let Some(description) = schema_json.get("description") {
-        assert!(
-            !description.as_str().unwrap().is_empty(),
-            "Schema should have description"
-        );
-    }
+    // Root schema must have description
+    let description = schema_json
+        .get("description")
+        .expect("Root schema must include a 'description' field");
+    assert!(
+        !description.as_str().unwrap().is_empty(),
+        "Schema description must not be empty"
+    );
 }
 
 #[test]

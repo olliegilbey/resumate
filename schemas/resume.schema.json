@@ -1,5 +1,5 @@
 {
-  "$comment": "AUTO-GENERATED from crates/shared-types/src/lib.rs at timestamp 1770247551",
+  "$comment": "AUTO-GENERATED from crates/shared-types/src/lib.rs at timestamp 1770374803",
   "$defs": {
     "Bullet": {
       "description": "Bullet - leaf level of hierarchy (individual achievement/responsibility)\n\nRepresents a single resume bullet point.\nThis is the atomic unit of experience that gets selected for targeted resumes.",
