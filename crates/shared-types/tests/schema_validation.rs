@@ -42,21 +42,23 @@ fn test_personal_info_schema() {
     let schema_json = schema_to_json::<PersonalInfo>();
 
     // Check required fields
-    if let Some(required) = schema_json.get("required") {
-        let required_arr = required.as_array().expect("Required should be an array");
-        assert!(
-            required_arr.contains(&Value::String("name".to_string())),
-            "PersonalInfo should require 'name'"
-        );
-    }
+    let required = schema_json
+        .get("required")
+        .expect("PersonalInfo schema must have 'required' field");
+    let required_arr = required.as_array().expect("Required should be an array");
+    assert!(
+        required_arr.contains(&Value::String("name".to_string())),
+        "PersonalInfo should require 'name'"
+    );
 
     // Check properties exist
-    if let Some(props) = schema_json.get("properties") {
-        assert!(props.get("name").is_some());
-        assert!(props.get("email").is_some());
-        assert!(props.get("phone").is_some());
-        assert!(props.get("location").is_some());
-    }
+    let props = schema_json
+        .get("properties")
+        .expect("PersonalInfo schema must have 'properties' field");
+    assert!(props.get("name").is_some());
+    assert!(props.get("email").is_some());
+    assert!(props.get("phone").is_some());
+    assert!(props.get("location").is_some());
 }
 
 #[test]
@@ -64,24 +66,20 @@ fn test_bullet_schema() {
     let schema_json = schema_to_json::<Bullet>();
 
     // Check required fields
-    if let Some(required) = schema_json.get("required") {
-        let required_arr = required.as_array().expect("Required should be an array");
+    let required = schema_json
+        .get("required")
+        .expect("Bullet schema must have 'required' field");
+    let required_arr = required.as_array().expect("Required should be an array");
 
-        // These fields should be required
-        assert!(required_arr.contains(&Value::String("id".to_string())));
-        assert!(required_arr.contains(&Value::String("description".to_string())));
-        assert!(required_arr.contains(&Value::String("tags".to_string())));
-        assert!(required_arr.contains(&Value::String("priority".to_string())));
-    } else {
-        panic!("Bullet schema missing 'required' field");
-    }
+    // These fields should be required
+    assert!(required_arr.contains(&Value::String("id".to_string())));
+    assert!(required_arr.contains(&Value::String("description".to_string())));
+    assert!(required_arr.contains(&Value::String("tags".to_string())));
+    assert!(required_arr.contains(&Value::String("priority".to_string())));
 
     // Check that optional fields are NOT in required
-    if let Some(required) = schema_json.get("required") {
-        let required_arr = required.as_array().expect("Required should be an array");
-        assert!(!required_arr.contains(&Value::String("summary".to_string())));
-        assert!(!required_arr.contains(&Value::String("link".to_string())));
-    }
+    assert!(!required_arr.contains(&Value::String("summary".to_string())));
+    assert!(!required_arr.contains(&Value::String("link".to_string())));
 }
 
 #[test]
@@ -89,19 +87,20 @@ fn test_position_schema() {
     let schema_json = schema_to_json::<Position>();
 
     // Check required fields
-    if let Some(required) = schema_json.get("required") {
-        let required_arr = required.as_array().expect("Required should be an array");
+    let required = schema_json
+        .get("required")
+        .expect("Position schema must have 'required' field");
+    let required_arr = required.as_array().expect("Required should be an array");
 
-        assert!(required_arr.contains(&Value::String("id".to_string())));
-        assert!(
-            required_arr.contains(&Value::String("name".to_string())),
-            "Position should require 'name'"
-        );
-        assert!(required_arr.contains(&Value::String("dateStart".to_string())));
-        assert!(required_arr.contains(&Value::String("children".to_string())));
-        assert!(required_arr.contains(&Value::String("priority".to_string())));
-        assert!(required_arr.contains(&Value::String("tags".to_string())));
-    }
+    assert!(required_arr.contains(&Value::String("id".to_string())));
+    assert!(
+        required_arr.contains(&Value::String("name".to_string())),
+        "Position should require 'name'"
+    );
+    assert!(required_arr.contains(&Value::String("dateStart".to_string())));
+    assert!(required_arr.contains(&Value::String("children".to_string())));
+    assert!(required_arr.contains(&Value::String("priority".to_string())));
+    assert!(required_arr.contains(&Value::String("tags".to_string())));
 }
 
 #[test]
@@ -109,24 +108,22 @@ fn test_company_schema() {
     let schema_json = schema_to_json::<Company>();
 
     // Check required fields
-    if let Some(required) = schema_json.get("required") {
-        let required_arr = required.as_array().expect("Required should be an array");
+    let required = schema_json
+        .get("required")
+        .expect("Company schema must have 'required' field");
+    let required_arr = required.as_array().expect("Required should be an array");
 
-        assert!(required_arr.contains(&Value::String("id".to_string())));
-        assert!(required_arr.contains(&Value::String("dateStart".to_string())));
-        assert!(required_arr.contains(&Value::String("children".to_string())));
-        assert!(required_arr.contains(&Value::String("priority".to_string())));
-        assert!(required_arr.contains(&Value::String("tags".to_string())));
-    }
+    assert!(required_arr.contains(&Value::String("id".to_string())));
+    assert!(required_arr.contains(&Value::String("dateStart".to_string())));
+    assert!(required_arr.contains(&Value::String("children".to_string())));
+    assert!(required_arr.contains(&Value::String("priority".to_string())));
+    assert!(required_arr.contains(&Value::String("tags".to_string())));
 
     // Company name should be optional
-    if let Some(required) = schema_json.get("required") {
-        let required_arr = required.as_array().expect("Required should be an array");
-        assert!(
-            !required_arr.contains(&Value::String("name".to_string())),
-            "Company name should be optional"
-        );
-    }
+    assert!(
+        !required_arr.contains(&Value::String("name".to_string())),
+        "Company name should be optional"
+    );
 }
 
 #[test]
@@ -134,14 +131,15 @@ fn test_role_profile_schema() {
     let schema_json = schema_to_json::<RoleProfile>();
 
     // Check required fields
-    if let Some(required) = schema_json.get("required") {
-        let required_arr = required.as_array().expect("Required should be an array");
+    let required = schema_json
+        .get("required")
+        .expect("RoleProfile schema must have 'required' field");
+    let required_arr = required.as_array().expect("Required should be an array");
 
-        assert!(required_arr.contains(&Value::String("id".to_string())));
-        assert!(required_arr.contains(&Value::String("name".to_string())));
-        assert!(required_arr.contains(&Value::String("tagWeights".to_string())));
-        assert!(required_arr.contains(&Value::String("scoringWeights".to_string())));
-    }
+    assert!(required_arr.contains(&Value::String("id".to_string())));
+    assert!(required_arr.contains(&Value::String("name".to_string())));
+    assert!(required_arr.contains(&Value::String("tagWeights".to_string())));
+    assert!(required_arr.contains(&Value::String("scoringWeights".to_string())));
 }
 
 #[test]
@@ -149,22 +147,26 @@ fn test_scoring_weights_schema() {
     let schema_json = schema_to_json::<ScoringWeights>();
 
     // Both fields should be required
-    if let Some(required) = schema_json.get("required") {
-        let required_arr = required.as_array().expect("Required should be an array");
+    let required = schema_json
+        .get("required")
+        .expect("ScoringWeights schema must have 'required' field");
+    let required_arr = required.as_array().expect("Required should be an array");
 
-        assert!(required_arr.contains(&Value::String("tagRelevance".to_string())));
-        assert!(required_arr.contains(&Value::String("priority".to_string())));
-    }
+    assert!(required_arr.contains(&Value::String("tagRelevance".to_string())));
+    assert!(required_arr.contains(&Value::String("priority".to_string())));
 
     // Check properties are numbers
-    if let Some(props) = schema_json.get("properties") {
-        if let Some(tag_rel) = props.get("tagRelevance") {
-            assert!(tag_rel.get("type").is_some());
-        }
-        if let Some(priority) = props.get("priority") {
-            assert!(priority.get("type").is_some());
-        }
-    }
+    let props = schema_json
+        .get("properties")
+        .expect("ScoringWeights schema must have 'properties' field");
+    assert!(
+        props.get("tagRelevance").is_some(),
+        "tagRelevance property must exist"
+    );
+    assert!(
+        props.get("priority").is_some(),
+        "priority property must exist"
+    );
 }
 
 #[test]
@@ -172,27 +174,25 @@ fn test_education_schema() {
     let schema_json = schema_to_json::<Education>();
 
     // Check required fields
-    if let Some(required) = schema_json.get("required") {
-        let required_arr = required.as_array().expect("Required should be an array");
+    let required = schema_json
+        .get("required")
+        .expect("Education schema must have 'required' field");
+    let required_arr = required.as_array().expect("Required should be an array");
 
-        assert!(required_arr.contains(&Value::String("institution".to_string())));
-        assert!(required_arr.contains(&Value::String("degreeType".to_string())));
-        assert!(required_arr.contains(&Value::String("year".to_string())));
-        assert!(required_arr.contains(&Value::String("location".to_string())));
-    }
+    assert!(required_arr.contains(&Value::String("institution".to_string())));
+    assert!(required_arr.contains(&Value::String("degreeType".to_string())));
+    assert!(required_arr.contains(&Value::String("year".to_string())));
+    assert!(required_arr.contains(&Value::String("location".to_string())));
 
-    // Check optional fields (coursework and societies are optional)
-    if let Some(required) = schema_json.get("required") {
-        let required_arr = required.as_array().expect("Required should be an array");
-        // degree is required (full degree name)
-        assert!(
-            required_arr.contains(&Value::String("degree".to_string())),
-            "degree should be required"
-        );
-        // coursework and societies are optional
-        assert!(!required_arr.contains(&Value::String("coursework".to_string())));
-        assert!(!required_arr.contains(&Value::String("societies".to_string())));
-    }
+    // degree is required (full degree name)
+    assert!(
+        required_arr.contains(&Value::String("degree".to_string())),
+        "degree should be required"
+    );
+
+    // coursework and societies are optional
+    assert!(!required_arr.contains(&Value::String("coursework".to_string())));
+    assert!(!required_arr.contains(&Value::String("societies".to_string())));
 }
 
 #[test]
