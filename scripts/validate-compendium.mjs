@@ -5,7 +5,7 @@
  * Run with: just data-validate <path-to-json>
  */
 
-import Ajv from 'ajv'
+import Ajv2020 from 'ajv/dist/2020.js'
 import addFormats from 'ajv-formats'
 import * as fs from 'fs'
 import * as path from 'path'
@@ -25,8 +25,8 @@ const schemaPath = path.join(__dirname, '..', 'schemas', 'resume.schema.json')
 const schema = JSON.parse(fs.readFileSync(schemaPath, 'utf8'))
 const data = JSON.parse(fs.readFileSync(jsonPath, 'utf8'))
 
-// Configure ajv
-const ajv = new Ajv({
+// Configure ajv (2020-12 draft support)
+const ajv = new Ajv2020({
   allErrors: true,
   verbose: true,
   strict: false, // Allows schemars-specific keywords

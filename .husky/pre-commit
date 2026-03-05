@@ -199,8 +199,8 @@ printf "${BLUE}→ Phase 5/7: WASM-dependent tests${NC}\n"
 if [ "$WASM_REBUILT" = true ]; then
   printf "${YELLOW}  → Running WASM-dependent Rust tests${NC}\n"
 
-  # Tests that depend on WASM: pdf_validation, pdf_permutation
-  if ! cargo test --test pdf_validation --test pdf_permutation --quiet 2>&1; then
+  # Tests that depend on WASM: typst_generation_test
+  if ! cargo test --test typst_generation_test --quiet 2>&1; then
     printf "${RED}❌ WASM tests failed${NC}\n"
     exit 1
   fi
@@ -225,8 +225,8 @@ printf "${BLUE}→ Phase 6/7: Type synchronization${NC}\n"
 if echo "$RS_STAGED" | grep -q "crates/shared-types/"; then
   printf "${YELLOW}  → shared-types changed - regenerating schema + TS types${NC}\n"
 
-  # Generate JSON Schema from Rust
-  if ! cargo run --bin generate_schema -p shared-types --quiet 2>&1; then
+  # Generate JSON Schema from Rust (requires schema feature for schemars)
+  if ! cargo run --bin generate_schema -p shared-types --features schema --quiet 2>&1; then
     printf "${RED}❌ Schema generation failed${NC}\n"
     exit 1
   fi

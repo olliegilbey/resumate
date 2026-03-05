@@ -5,20 +5,25 @@
 //! 2. Schema has correct structure and metadata
 //! 3. Required/optional fields are correctly marked
 //! 4. Descriptions and constraints are present
+//!
+//! Note: These tests only run when the `schema` feature is enabled.
+//! Run with: cargo test -p shared-types --features schema
+
+#![cfg(feature = "schema")]
 
 use schemars::schema_for;
 use serde_json::Value;
 use shared_types::*;
 
+/// Helper to convert schema to JSON Value for inspection
+fn schema_to_json<T: schemars::JsonSchema>() -> Value {
+    let schema = schema_for!(T);
+    serde_json::to_value(&schema).expect("Failed to serialize schema")
+}
+
 #[test]
 fn test_resume_data_schema_generation() {
-    let schema = schema_for!(ResumeData);
-
-    // Should generate valid schema
-    assert!(schema.schema.metadata.is_some());
-
-    // Convert to JSON to inspect structure
-    let schema_json = serde_json::to_value(&schema).expect("Failed to serialize schema");
+    let schema_json = schema_to_json::<ResumeData>();
 
     // Check that required fields are marked
     if let Some(obj) = schema_json.get("properties") {
@@ -34,8 +39,7 @@ fn test_resume_data_schema_generation() {
 
 #[test]
 fn test_personal_info_schema() {
-    let schema = schema_for!(PersonalInfo);
-    let schema_json = serde_json::to_value(&schema).expect("Failed to serialize schema");
+    let schema_json = schema_to_json::<PersonalInfo>();
 
     // Check required fields
     if let Some(required) = schema_json.get("required") {
@@ -57,8 +61,7 @@ fn test_personal_info_schema() {
 
 #[test]
 fn test_bullet_schema() {
-    let schema = schema_for!(Bullet);
-    let schema_json = serde_json::to_value(&schema).expect("Failed to serialize schema");
+    let schema_json = schema_to_json::<Bullet>();
 
     // Check required fields
     if let Some(required) = schema_json.get("required") {
@@ -83,8 +86,7 @@ fn test_bullet_schema() {
 
 #[test]
 fn test_position_schema() {
-    let schema = schema_for!(Position);
-    let schema_json = serde_json::to_value(&schema).expect("Failed to serialize schema");
+    let schema_json = schema_to_json::<Position>();
 
     // Check required fields
     if let Some(required) = schema_json.get("required") {
@@ -104,8 +106,7 @@ fn test_position_schema() {
 
 #[test]
 fn test_company_schema() {
-    let schema = schema_for!(Company);
-    let schema_json = serde_json::to_value(&schema).expect("Failed to serialize schema");
+    let schema_json = schema_to_json::<Company>();
 
     // Check required fields
     if let Some(required) = schema_json.get("required") {
@@ -130,8 +131,7 @@ fn test_company_schema() {
 
 #[test]
 fn test_role_profile_schema() {
-    let schema = schema_for!(RoleProfile);
-    let schema_json = serde_json::to_value(&schema).expect("Failed to serialize schema");
+    let schema_json = schema_to_json::<RoleProfile>();
 
     // Check required fields
     if let Some(required) = schema_json.get("required") {
@@ -146,8 +146,7 @@ fn test_role_profile_schema() {
 
 #[test]
 fn test_scoring_weights_schema() {
-    let schema = schema_for!(ScoringWeights);
-    let schema_json = serde_json::to_value(&schema).expect("Failed to serialize schema");
+    let schema_json = schema_to_json::<ScoringWeights>();
 
     // Both fields should be required
     if let Some(required) = schema_json.get("required") {
@@ -170,8 +169,7 @@ fn test_scoring_weights_schema() {
 
 #[test]
 fn test_education_schema() {
-    let schema = schema_for!(Education);
-    let schema_json = serde_json::to_value(&schema).expect("Failed to serialize schema");
+    let schema_json = schema_to_json::<Education>();
 
     // Check required fields
     if let Some(required) = schema_json.get("required") {
@@ -199,16 +197,16 @@ fn test_education_schema() {
 
 #[test]
 fn test_schema_has_descriptions() {
-    let schema = schema_for!(ResumeData);
-    let schema_json = serde_json::to_value(&schema).expect("Failed to serialize schema");
+    let schema_json = schema_to_json::<ResumeData>();
 
-    // Root schema should have description
-    if let Some(metadata) = schema_json.get("description") {
-        assert!(
-            !metadata.as_str().unwrap().is_empty(),
-            "Schema should have description"
-        );
-    }
+    // Root schema must have description
+    let description = schema_json
+        .get("description")
+        .expect("Root schema must include a 'description' field");
+    assert!(
+        !description.as_str().unwrap().is_empty(),
+        "Schema description must not be empty"
+    );
 }
 
 #[test]
@@ -223,7 +221,7 @@ fn test_schema_output_format() {
 
     // Should contain expected top-level keys
     assert!(pretty_json.contains("\"$schema\""));
-    assert!(pretty_json.contains("\"definitions\"") || pretty_json.contains("\"$defs\""));
+    assert!(pretty_json.contains("\"$defs\"") || pretty_json.contains("\"definitions\""));
 }
 
 #[test]

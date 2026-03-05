@@ -7,7 +7,8 @@
 /**
  * Complete resume data structure
  *
- * Top-level container for all resume information. This is the root object stored in resume-data.json.
+ * Top-level container for all resume information.
+ * This is the root object stored in resume-data.json.
  */
 export interface ResumeData {
   /**
@@ -22,9 +23,6 @@ export interface ResumeData {
    * Meta footer text for PDF (supports {bullet_count} and {company_count} template variables)
    */
   metaFooter?: string | null
-  /**
-   * Personal information (required)
-   */
   personal: PersonalInfo
   /**
    * List of RoleProfile objects for targeted resume generation (optional)
@@ -79,7 +77,8 @@ export interface Education {
 /**
  * Company - top level of experience hierarchy
  *
- * Represents a company/organization where you worked. Contains positions (roles) held at this company.
+ * Represents a company/organization where you worked.
+ * Contains positions (roles) held at this company.
  */
 export interface Company {
   /**
@@ -131,7 +130,8 @@ export interface Company {
 /**
  * Position - middle level of hierarchy (role within a company)
  *
- * Represents a specific role/title at a company. Contains bullets (achievements/responsibilities) for this role.
+ * Represents a specific role/title at a company.
+ * Contains bullets (achievements/responsibilities) for this role.
  */
 export interface Position {
   /**
@@ -183,7 +183,8 @@ export interface Position {
 /**
  * Bullet - leaf level of hierarchy (individual achievement/responsibility)
  *
- * Represents a single resume bullet point. This is the atomic unit of experience that gets selected for targeted resumes.
+ * Represents a single resume bullet point.
+ * This is the atomic unit of experience that gets selected for targeted resumes.
  */
 export interface Bullet {
   /**
@@ -229,7 +230,7 @@ export interface Bullet {
   [k: string]: unknown
 }
 /**
- * Personal information
+ * Personal information (required)
  */
 export interface PersonalInfo {
   /**
@@ -277,7 +278,8 @@ export interface PersonalInfo {
 /**
  * Role profile for targeted resume generation
  *
- * Defines which tags/skills are most relevant for a specific role type, and how to weight different scoring components when selecting bullets.
+ * Defines which tags/skills are most relevant for a specific role type,
+ * and how to weight different scoring components when selecting bullets.
  */
 export interface RoleProfile {
   /**
@@ -292,9 +294,6 @@ export interface RoleProfile {
    * Display name for this role type (required)
    */
   name: string
-  /**
-   * Weights for scoring algorithm components (required)
-   */
   scoringWeights: ScoringWeights
   /**
    * Map of tag names to relevance weights 0.0-1.0, higher = more relevant (required)
@@ -305,9 +304,7 @@ export interface RoleProfile {
   [k: string]: unknown
 }
 /**
- * Scoring weights for bullet selection algorithm
- *
- * Defines how to weight different factors when scoring bullets. All weights should sum to approximately 1.0.
+ * Weights for scoring algorithm components (required)
  */
 export interface ScoringWeights {
   /**

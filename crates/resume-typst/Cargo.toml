@@ -24,10 +24,8 @@ comemo = { workspace = true }
 ecow = { workspace = true }
 
 # Local dependencies
-resume-core = { workspace = true }
+shared-types = { workspace = true }
 
-# Additional utilities
-chrono = "0.4"
+# Time handling (wasmbind uses JS Date API in WASM, no system clock needed)
+chrono = { workspace = true }
 
-[dev-dependencies]
-proptest = { workspace = true }

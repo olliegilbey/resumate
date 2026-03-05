@@ -1,8 +1,8 @@
 ---
-Generated: 2026-02-04T13:11
+Generated: 2026-02-04T18:21
 Generator: scripts/update-metrics-from-logs.sh
 Source: Parsed from test execution logs
-Valid Until: 2026-02-05T13:11 (24h expiry)
+Valid Until: 2026-02-05T18:21 (24h expiry)
 ---
 
 # Project Metrics (Auto-Generated)
@@ -15,9 +15,9 @@ To update: Run `just test` again
 
 ## Test Counts
 
-**Rust:**       140 tests (1 ignored) in 1.88s  ✅ Passing
-**TypeScript:** 392 tests in 4.45s  ✅ Passing
-**TOTAL:**      532 tests  ✅ All Passing
+**Rust:**       80 tests (0 ignored) in 0.43s  ✅ Passing
+**TypeScript:** 392 tests in 4.68s  ✅ Passing
+**TOTAL:**      472 tests  ✅ All Passing
 
 ### Rust Tests (By Crate)
 
@@ -30,7 +30,7 @@ To update: Run `just test` again
 
 - Total tests:  392
 - Test files:   21
-- Execution:    4.45s
+- Execution:    4.68s
 
 **Test files breakdown available in log:** `.logs/ts-tests.log`
 
@@ -39,8 +39,8 @@ To update: Run `just test` again
 ## Build Artifacts
 
 **WASM Binary:**
-- Raw size:     15.08MB  (limit: ≤17MB)   ✅ Pass
-- Gzipped size: 6.29MB  (limit: ≤6.5MB)  ✅ Pass
+- Raw size:     15.18MB  (limit: ≤17MB)   ✅ Pass
+- Gzipped size: 6.33MB  (limit: ≤6.5MB)  ✅ Pass
 
 **Limits configured in:** justfile (wasm_max_raw_mb, wasm_max_gzip_mb)
 **Enforcement:** Pre-commit hook blocks commits if limits exceeded
@@ -51,7 +51,7 @@ To update: Run `just test` again
 
 ### Rust Coverage
 
-**Line Coverage:** 87.54%
+**Line Coverage:** 83.10%
 
 **Command to generate detailed report:**
 ```bash
@@ -82,13 +82,13 @@ just coverage-ts-open     # Open in browser
 **Rust Tests:**
 - Command: `cargo test --all`
 - Log: `.logs/rust-tests.log`
-- Duration: 1.88s
+- Duration: 0.43s
 - Suites: Multiple (core, typst, wasm, shared-types, integration, doc-tests)
 
 **TypeScript Tests:**
 - Command: `bun run test --run`
 - Log: `.logs/ts-tests.log`
-- Duration: 4.45s
+- Duration: 4.68s
 - Files: 21 test files
 
 ---
@@ -119,9 +119,9 @@ cat .logs/ts-tests.log       # View TypeScript test output
 
 ## Verification
 
-**Last Generated:** 2026-02-04T13:11
+**Last Generated:** 2026-02-04T18:21
 **Next Update:** Automatically on next `just test` run
-**Logs Valid For:** Current session (stored in `.logs/`)
+**Logs Valid For:** Current session (stored in .logs/)
 
 **To verify counts:**
 ```bash

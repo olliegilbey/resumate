@@ -101,7 +101,7 @@ wasm-fonts:
 # Generate JSON Schema from Rust types
 types-schema:
     @echo "🔧 Generating JSON Schema from Rust..."
-    cargo run --bin generate_schema -p shared-types
+    cargo run --bin generate_schema -p shared-types --features schema
     @echo "  → schemas/resume.schema.json"
 
 # Generate TypeScript types from JSON Schema

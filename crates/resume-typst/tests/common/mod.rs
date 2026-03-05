@@ -1,8 +1,7 @@
 //! Common test utilities and helpers for Typst PDF generation testing
 
-use resume_core::scoring::ScoredBullet;
-use resume_core::{
-    Bullet, Education, GenerationPayload, PersonalInfo, RoleProfile, ScoringWeights,
+use shared_types::{
+    Bullet, Education, GenerationPayload, PersonalInfo, RoleProfile, ScoredBullet, ScoringWeights,
 };
 use std::collections::HashMap;
 

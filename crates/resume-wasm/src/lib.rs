@@ -54,7 +54,7 @@ pub fn build_info() -> String {
 #[wasm_bindgen]
 pub fn generate_pdf_typst(payload_json: &str, dev_mode: bool) -> Result<Vec<u8>, JsValue> {
     // Parse JSON payload
-    let payload: resume_core::GenerationPayload = serde_json::from_str(payload_json)
+    let payload: shared_types::GenerationPayload = serde_json::from_str(payload_json)
         .map_err(|e| JsValue::from_str(&format!("Invalid JSON payload: {}", e)))?;
 
     // Validate payload
@@ -70,7 +70,7 @@ pub fn generate_pdf_typst(payload_json: &str, dev_mode: bool) -> Result<Vec<u8>,
 /// Internal validation logic (WASM-agnostic)
 ///
 /// Returns String error messages instead of JsValue for testability
-fn validate_payload_internal(payload: &resume_core::GenerationPayload) -> Result<(), String> {
+fn validate_payload_internal(payload: &shared_types::GenerationPayload) -> Result<(), String> {
     // Check personal info
     if payload.personal.name.trim().is_empty() {
         return Err("Personal name is required".to_string());
@@ -113,7 +113,7 @@ fn validate_payload_internal(payload: &resume_core::GenerationPayload) -> Result
 /// - Personal info has required fields
 /// - Role profile is valid
 /// - Selected bullets array is reasonable size
-fn validate_payload(payload: &resume_core::GenerationPayload) -> Result<(), JsValue> {
+fn validate_payload(payload: &shared_types::GenerationPayload) -> Result<(), JsValue> {
     validate_payload_internal(payload).map_err(|e| JsValue::from_str(&e))
 }
 
@@ -122,7 +122,7 @@ fn validate_payload(payload: &resume_core::GenerationPayload) -> Result<(), JsVa
 /// Useful for pre-flight validation before expensive generation
 #[wasm_bindgen]
 pub fn validate_payload_json(payload_json: &str) -> Result<(), JsValue> {
-    let payload: resume_core::GenerationPayload = serde_json::from_str(payload_json)
+    let payload: shared_types::GenerationPayload = serde_json::from_str(payload_json)
         .map_err(|e| JsValue::from_str(&format!("Invalid JSON: {}", e)))?;
 
     validate_payload(&payload)?;
@@ -142,8 +142,8 @@ pub fn estimate_pdf_size(bullet_count: usize) -> usize {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use resume_core::GenerationPayload;
-    use resume_core::{scoring::ScoredBullet, Bullet, PersonalInfo, RoleProfile, ScoringWeights};
+    use shared_types::GenerationPayload;
+    use shared_types::{Bullet, PersonalInfo, RoleProfile, ScoredBullet, ScoringWeights};
     use std::collections::HashMap;
 
     fn create_test_payload() -> GenerationPayload {
@@ -467,7 +467,7 @@ mod tests {
                     priority: 0.35,
                 },
             },
-            education: Some(vec![resume_core::Education {
+            education: Some(vec![shared_types::Education {
                 degree: "BSc Computer Science".to_string(),
                 degree_type: "BSc".to_string(),
                 institution: "University of Madrid".to_string(),
@@ -761,7 +761,7 @@ mod tests {
                     priority: 0.35,
                 },
             },
-            education: Some(vec![resume_core::Education {
+            education: Some(vec![shared_types::Education {
                 degree: "BSc Computer Science".to_string(),
                 degree_type: "BSc".to_string(),
                 institution: "University of Madrid".to_string(),

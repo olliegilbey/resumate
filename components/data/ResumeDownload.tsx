@@ -18,6 +18,7 @@ declare global {
     __wasmReady?: boolean
     __generatePdf?: (payload: string, devMode: boolean) => Uint8Array
     __generatePdfTypst?: (payload: string, devMode: boolean) => Uint8Array
+    __validatePayloadJson?: (json: string) => void
   }
 }
 
@@ -318,13 +319,17 @@ export function ResumeDownload({ resumeData }: ResumeDownloadProps) {
             script.type = 'module'
             script.setAttribute('data-wasm-loader', 'true')
             script.textContent = `
-              import init, { generate_pdf_typst } from '/wasm/resume_wasm.js';
+              import init, { generate_pdf_typst, init_panic_hook, validate_payload_json } from '/wasm/resume_wasm.js';
               await init('/wasm/resume_wasm_bg.wasm');
+
+              // Enable better panic messages in WASM
+              init_panic_hook();
 
               console.log('✅ WASM loaded and cached');
 
               window.__wasmReady = true;
               window.__generatePdfTypst = generate_pdf_typst;
+              window.__validatePayloadJson = validate_payload_json;
             `
             document.head.appendChild(script)
           } else {
@@ -379,9 +384,24 @@ export function ResumeDownload({ resumeData }: ResumeDownloadProps) {
           // Dev mode based on build environment, not hostname
           const isDevMode = process.env.NODE_ENV === 'development'
 
+          // Pre-validate payload for better error messages
+          const payloadJson = JSON.stringify(payload)
+          console.log('🔍 Validating payload...', { bulletCount: payload.selectedBullets?.length })
+
+          if (window.__validatePayloadJson) {
+            try {
+              const validatePayloadJson = window.__validatePayloadJson as (json: string) => void
+              validatePayloadJson(payloadJson)
+              console.log('✅ Payload validation passed')
+            } catch (validationError) {
+              console.error('❌ Payload validation failed:', validationError)
+              throw new Error(`Invalid payload: ${validationError}`)
+            }
+          }
+
           console.log('🎨 Generating PDF with Typst...')
           const generatePdfTypst = window.__generatePdfTypst as (payload: string, devMode: boolean) => Uint8Array
-          const pdfBytes = generatePdfTypst(JSON.stringify(payload), isDevMode)
+          const pdfBytes = generatePdfTypst(payloadJson, isDevMode)
           generationEnd = Date.now()
           console.log('✅ PDF generated successfully with Typst')
 

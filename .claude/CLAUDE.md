@@ -8,6 +8,8 @@ Dynamic resume website: experience explorer + intelligent PDF download via WASM 
 
 **Public repo** - keep PII private, operate as if everyone is watching.
 
+**Document public APIs** using TSDoc (TypeScript) and Rustdoc (Rust). Use pre-function doc comments for exported functions/types, inline comments for non-obvious logic.
+
 ---
 
 ## Mental Models
@@ -67,10 +69,9 @@ WASM binaries committed to git. Pre-commit validates freshness via hash. Vercel 
 ## Rust Workspace (crates/)
 
 ```text
-shared-types/   # Source of truth - changes trigger regeneration
-resume-core/    # Bullet scoring, selection logic
+shared-types/   # Types + GenerationPayload + schema generation
 resume-typst/   # PDF generation with Typst
-resume-wasm/    # Browser WASM bindings
+resume-wasm/    # Browser WASM bindings (compilation only)
 ```
 
 ---
@@ -88,10 +89,10 @@ Don't bypass for final commits.
 
 ## Testing
 
-TDD. High coverage. Property-based tests for core logic (proptest).
+TDD. High coverage.
 
 - **Current counts:** See [docs/METRICS.md](docs/METRICS.md) (auto-generated)
-- **Key file:** `crates/resume-core/tests/roundtrip.rs` - Type compatibility
+- **Key file:** `crates/shared-types/tests/roundtrip.rs` - Type compatibility
 
 ---
 

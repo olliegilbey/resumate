@@ -9,7 +9,7 @@
 //!
 //! ```no_run
 //! use resume_typst::render_resume;
-//! use resume_core::GenerationPayload;
+//! use shared_types::GenerationPayload;
 //!
 //! # fn main() -> Result<(), Box<dyn std::error::Error>> {
 //! let payload: GenerationPayload = serde_json::from_str("{...}")?;
@@ -26,7 +26,7 @@ pub mod compiler;
 pub mod fonts;
 pub mod template;
 
-use resume_core::GenerationPayload;
+use shared_types::GenerationPayload;
 use thiserror::Error;
 
 /// Errors that can occur during Typst PDF generation
@@ -58,7 +58,7 @@ pub enum TypstError {
 /// # Example
 /// ```no_run
 /// use resume_typst::render_resume;
-/// use resume_core::GenerationPayload;
+/// use shared_types::GenerationPayload;
 ///
 /// # fn main() -> Result<(), Box<dyn std::error::Error>> {
 /// let payload: GenerationPayload = serde_json::from_str("{...}")?;
@@ -466,7 +466,7 @@ fn render_template(
         output.push_str("= BUILD METADATA (DEV MODE)\n\n");
         output.push_str(&format!(
             "*Build Time:* {}\n\n",
-            chrono::Local::now().format("%Y-%m-%d %H:%M:%S")
+            chrono::Utc::now().format("%Y-%m-%d %H:%M:%S UTC")
         ));
         output.push_str(&format!(
             "*Typst Version:* {}\n\n",
@@ -541,7 +541,7 @@ fn escape_typst_string(s: &str) -> String {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use resume_core::{PersonalInfo, RoleProfile, ScoringWeights};
+    use shared_types::{PersonalInfo, RoleProfile, ScoringWeights};
     use std::collections::HashMap;
 
     fn create_minimal_payload() -> GenerationPayload {

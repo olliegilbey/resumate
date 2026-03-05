@@ -1,9 +1,8 @@
 {
-  "$comment": "AUTO-GENERATED from crates/shared-types/src/lib.rs at timestamp 1761610302",
-  "$schema": "http://json-schema.org/draft-07/schema#",
-  "definitions": {
+  "$comment": "AUTO-GENERATED from crates/shared-types/src/lib.rs at timestamp 1770374803",
+  "$defs": {
     "Bullet": {
-      "description": "Bullet - leaf level of hierarchy (individual achievement/responsibility)\n\nRepresents a single resume bullet point. This is the atomic unit of experience that gets selected for targeted resumes.",
+      "description": "Bullet - leaf level of hierarchy (individual achievement/responsibility)\n\nRepresents a single resume bullet point.\nThis is the atomic unit of experience that gets selected for targeted resumes.",
       "properties": {
         "dateEnd": {
           "description": "End date for time-bound achievements (optional)",
@@ -69,8 +68,8 @@
             "9"
           ],
           "format": "uint8",
-          "maximum": 10.0,
-          "minimum": 1.0,
+          "maximum": 10,
+          "minimum": 1,
           "type": "integer"
         },
         "summary": {
@@ -95,20 +94,20 @@
         }
       },
       "required": [
-        "description",
         "id",
-        "priority",
-        "tags"
+        "description",
+        "tags",
+        "priority"
       ],
       "type": "object"
     },
     "Company": {
-      "description": "Company - top level of experience hierarchy\n\nRepresents a company/organization where you worked. Contains positions (roles) held at this company.",
+      "description": "Company - top level of experience hierarchy\n\nRepresents a company/organization where you worked.\nContains positions (roles) held at this company.",
       "properties": {
         "children": {
           "description": "List of Position objects - roles held at this company (required)",
           "items": {
-            "$ref": "#/definitions/Position"
+            "$ref": "#/$defs/Position"
           },
           "type": "array"
         },
@@ -179,8 +178,8 @@
             "9"
           ],
           "format": "uint8",
-          "maximum": 10.0,
-          "minimum": 1.0,
+          "maximum": 10,
+          "minimum": 1,
           "type": "integer"
         },
         "summary": {
@@ -208,11 +207,11 @@
         }
       },
       "required": [
-        "children",
-        "dateStart",
         "id",
+        "dateStart",
+        "tags",
         "priority",
-        "tags"
+        "children"
       ],
       "type": "object"
     },
@@ -370,12 +369,12 @@
       "type": "object"
     },
     "Position": {
-      "description": "Position - middle level of hierarchy (role within a company)\n\nRepresents a specific role/title at a company. Contains bullets (achievements/responsibilities) for this role.",
+      "description": "Position - middle level of hierarchy (role within a company)\n\nRepresents a specific role/title at a company.\nContains bullets (achievements/responsibilities) for this role.",
       "properties": {
         "children": {
           "description": "List of Bullet objects - achievements/responsibilities for this role (required)",
           "items": {
-            "$ref": "#/definitions/Bullet"
+            "$ref": "#/$defs/Bullet"
           },
           "type": "array"
         },
@@ -443,8 +442,8 @@
             "9"
           ],
           "format": "uint8",
-          "maximum": 10.0,
-          "minimum": 1.0,
+          "maximum": 10,
+          "minimum": 1,
           "type": "integer"
         },
         "summary": {
@@ -472,17 +471,17 @@
         }
       },
       "required": [
-        "children",
-        "dateStart",
         "id",
         "name",
+        "dateStart",
+        "tags",
         "priority",
-        "tags"
+        "children"
       ],
       "type": "object"
     },
     "RoleProfile": {
-      "description": "Role profile for targeted resume generation\n\nDefines which tags/skills are most relevant for a specific role type, and how to weight different scoring components when selecting bullets.",
+      "description": "Role profile for targeted resume generation\n\nDefines which tags/skills are most relevant for a specific role type,\nand how to weight different scoring components when selecting bullets.",
       "properties": {
         "description": {
           "description": "Optional description of this role type (optional)",
@@ -506,11 +505,7 @@
           "type": "string"
         },
         "scoringWeights": {
-          "allOf": [
-            {
-              "$ref": "#/definitions/ScoringWeights"
-            }
-          ],
+          "$ref": "#/$defs/ScoringWeights",
           "description": "Weights for scoring algorithm components (required)"
         },
         "tagWeights": {
@@ -525,13 +520,13 @@
       "required": [
         "id",
         "name",
-        "scoringWeights",
-        "tagWeights"
+        "tagWeights",
+        "scoringWeights"
       ],
       "type": "object"
     },
     "ScoringWeights": {
-      "description": "Scoring weights for bullet selection algorithm\n\nDefines how to weight different factors when scoring bullets. All weights should sum to approximately 1.0.",
+      "description": "Scoring weights for bullet selection algorithm\n\nDefines how to weight different factors when scoring bullets.\nAll weights should sum to approximately 1.0.",
       "properties": {
         "priority": {
           "description": "Weight for manual priority 0.0-1.0 (required)",
@@ -555,18 +550,19 @@
         }
       },
       "required": [
-        "priority",
-        "tagRelevance"
+        "tagRelevance",
+        "priority"
       ],
       "type": "object"
     }
   },
-  "description": "Complete resume data structure\n\nTop-level container for all resume information. This is the root object stored in resume-data.json.",
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "description": "Complete resume data structure\n\nTop-level container for all resume information.\nThis is the root object stored in resume-data.json.",
   "properties": {
     "education": {
       "description": "List of Education objects - degrees earned (optional)",
       "items": {
-        "$ref": "#/definitions/Education"
+        "$ref": "#/$defs/Education"
       },
       "type": [
         "array",
@@ -576,7 +572,7 @@
     "experience": {
       "description": "List of Company objects - work experience (required)",
       "items": {
-        "$ref": "#/definitions/Company"
+        "$ref": "#/$defs/Company"
       },
       "type": "array"
     },
@@ -588,17 +584,13 @@
       ]
     },
     "personal": {
-      "allOf": [
-        {
-          "$ref": "#/definitions/PersonalInfo"
-        }
-      ],
+      "$ref": "#/$defs/PersonalInfo",
       "description": "Personal information (required)"
     },
     "roleProfiles": {
       "description": "List of RoleProfile objects for targeted resume generation (optional)",
       "items": {
-        "$ref": "#/definitions/RoleProfile"
+        "$ref": "#/$defs/RoleProfile"
       },
       "type": [
         "array",
@@ -627,8 +619,8 @@
     }
   },
   "required": [
-    "experience",
-    "personal"
+    "personal",
+    "experience"
   ],
   "title": "ResumeData",
   "type": "object"
