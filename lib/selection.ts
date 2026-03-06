@@ -9,7 +9,7 @@
  * @module lib/selection
  */
 
-import type { Bullet, ResumeData } from '@/lib/types/generated-resume'
+import type { Bullet, ResumeData } from '@/types/resume'
 
 /**
  * Configuration for bullet selection diversity constraints.
@@ -168,16 +168,16 @@ export function applyDiversityConstraints<T extends ScoredBullet>(
       break
     }
 
-    // Check per-company limit
-    if (maxPerCompany !== undefined) {
+    // Check per-company limit (0 or undefined = no limit)
+    if (maxPerCompany && maxPerCompany > 0) {
       const count = companyCount[bullet.companyId] || 0
       if (count >= maxPerCompany) {
         continue
       }
     }
 
-    // Check per-position limit
-    if (maxPerPosition !== undefined) {
+    // Check per-position limit (0 or undefined = no limit)
+    if (maxPerPosition && maxPerPosition > 0) {
       const count = positionCount[bullet.positionId] || 0
       if (count >= maxPerPosition) {
         continue
@@ -191,7 +191,7 @@ export function applyDiversityConstraints<T extends ScoredBullet>(
   }
 
   // Enforce minimum bullets per company (avoid single-bullet companies)
-  if (minPerCompany !== undefined && minPerCompany > 1) {
+  if (minPerCompany && minPerCompany > 1) {
     // Count bullets per company in selected set
     const finalCompanyCount: Record<string, number> = {}
     for (const bullet of selected) {

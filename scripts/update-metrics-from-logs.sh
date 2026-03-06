@@ -53,7 +53,6 @@ TS_TIME=$(grep "Duration" "$TS_LOG" | grep -oE "[0-9]+\.[0-9]+s" | head -1 || ec
 
 # Skip per-crate breakdown for simplicity (would require complex parsing)
 # Users can inspect the full log file for detailed per-crate information
-CORE_TESTS="See log"
 TYPST_TESTS="See log"
 WASM_TESTS="See log"
 SHARED_TESTS="See log"
@@ -147,7 +146,6 @@ To update: Run \`just test\` again
 
 ### Rust Tests (By Crate)
 
-- resume-core:    $CORE_TESTS  (scoring, selection, validation)
 - resume-typst:   $TYPST_TESTS  (PDF generation, Typst rendering)
 - resume-wasm:    $WASM_TESTS  (WASM bindings, JS interop)
 - shared-types:   $SHARED_TESTS  (type validation, schema)

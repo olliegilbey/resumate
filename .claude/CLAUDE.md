@@ -1,6 +1,12 @@
 # Resumate
 
-Dynamic resume website: experience explorer + intelligent PDF download via WASM client-side Typst compilation.
+Dynamic resume website for inbound career leads: experience explorer + intelligent resume curation and compilation to PDF download via WASM client-side.
+Data flow: compendium of experience -> bullets scored -> bullets selected with diversity -> PDF compiled client-side.
+
+Bullet scoring has two possible paths:
+
+1. Heuristic scoring against a known role-profile from drop-down.
+2. AI scoring with an LLM that assesses bullets against an input job description.
 
 **Stack:** Next.js 16 + React 19 + TypeScript 5 + Tailwind + Rust workspace + WASM + Typst
 
@@ -8,7 +14,7 @@ Dynamic resume website: experience explorer + intelligent PDF download via WASM 
 
 **Public repo** - keep PII private, operate as if everyone is watching.
 
-**Document public APIs** using TSDoc (TypeScript) and Rustdoc (Rust). Use pre-function doc comments for exported functions/types, inline comments for non-obvious logic.
+**Document public APIs** using TSDoc (TypeScript) and Rustdoc (Rust). Use pre-function doc comments for exported functions/types, inline comments for non-obvious logic. In-code context is important.
 
 ---
 
