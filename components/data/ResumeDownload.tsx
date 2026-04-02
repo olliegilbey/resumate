@@ -336,11 +336,16 @@ export function ResumeDownload({ resumeData }: ResumeDownloadProps) {
             console.log('✅ WASM already loaded from cache')
           }
 
-          // Wait for WASM to initialize
-          await new Promise((resolve) => {
+          // Wait for WASM to initialize (with 10s timeout)
+          await new Promise((resolve, reject) => {
+            const timeout = setTimeout(() => {
+              clearInterval(checkReady)
+              reject(new Error('WASM module failed to load — please refresh and try again'))
+            }, 10000)
             const checkReady = setInterval(() => {
               if (window.__wasmReady) {
                 clearInterval(checkReady)
+                clearTimeout(timeout)
                 resolve(null)
               }
             }, 100)

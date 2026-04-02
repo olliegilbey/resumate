@@ -97,7 +97,7 @@ export function formatSimplifiedError(error: ParseError): string {
     E010_INVALID_SALARY:
       'The AI salary extraction was malformed. Continuing without salary...',
     E011_PROVIDER_DOWN:
-      'The AI service is temporarily unavailable. Trying alternative...',
+      'This AI model is currently unavailable. Please try a different model.',
   }
 
   return simplified[error.code] || 'An unexpected error occurred. Please try again.'

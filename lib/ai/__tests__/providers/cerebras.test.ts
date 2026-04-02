@@ -65,7 +65,7 @@ describe('CerebrasProvider', () => {
       const provider = new CerebrasProvider('cerebras-gpt')
 
       expect(provider.name).toBe('cerebras-gpt')
-      expect(provider.config.model).toBe('gpt-oss-120b')
+      expect(provider.config.model).toBe('qwen-3-235b-a22b-instruct-2507')
       expect(provider.config.provider).toBe('cerebras')
       expect(provider.config.cost).toBe('free')
     })
@@ -74,10 +74,10 @@ describe('CerebrasProvider', () => {
       const provider = new CerebrasProvider('cerebras-llama')
 
       expect(provider.name).toBe('cerebras-llama')
-      expect(provider.config.model).toBe('llama-3.3-70b')
+      expect(provider.config.model).toBe('llama3.1-8b')
     })
 
-    it('defaults to gpt-oss-120b', () => {
+    it('defaults to qwen-3-235b-a22b-instruct-2507', () => {
       const provider = new CerebrasProvider()
 
       expect(provider.name).toBe('cerebras-gpt')
@@ -154,12 +154,12 @@ describe('CerebrasProvider', () => {
             Authorization: 'Bearer test-api-key',
             'Content-Type': 'application/json',
           },
-          body: expect.stringContaining('"model":"gpt-oss-120b"'),
+          body: expect.stringContaining('"model":"qwen-3-235b-a22b-instruct-2507"'),
         })
       )
 
       const body = JSON.parse(mockFetch.mock.calls[0][1].body)
-      expect(body.model).toBe('gpt-oss-120b')
+      expect(body.model).toBe('qwen-3-235b-a22b-instruct-2507')
       expect(body.messages).toHaveLength(2)
       expect(body.messages[0].role).toBe('system')
       expect(body.messages[1].role).toBe('user')
@@ -281,6 +281,30 @@ describe('CerebrasProvider', () => {
         status: 429,
         json: async () => ({
           error: { message: 'Rate limited', type: 'rate_limit_error' },
+        }),
+      })
+
+      const provider = new CerebrasProvider()
+
+      try {
+        await provider.select({
+          jobDescription: 'Test',
+          compendium: mockCompendium,
+          maxBullets: 2, minBullets: 2,
+        })
+        expect.fail('Should have thrown')
+      } catch (e) {
+        const err = e as AISelectionError
+        expect(err.errors[0].code).toBe('E011_PROVIDER_DOWN')
+      }
+    })
+
+    it('handles 404 (model not found) as provider down', async () => {
+      mockFetch.mockResolvedValueOnce({
+        ok: false,
+        status: 404,
+        json: async () => ({
+          error: { message: 'Model does not exist', type: 'not_found_error' },
         }),
       })
 
@@ -424,7 +448,7 @@ describe('CerebrasProvider', () => {
       })
 
       const body = JSON.parse(mockFetch.mock.calls[0][1].body)
-      expect(body.model).toBe('llama-3.3-70b')
+      expect(body.model).toBe('llama3.1-8b')
     })
   })
 

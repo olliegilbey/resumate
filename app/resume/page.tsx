@@ -91,23 +91,22 @@ export default function ResumePage() {
 
           <div className="space-y-4 text-slate-600 dark:text-slate-300">
             <p>
-              <strong className="text-slate-900 dark:text-slate-100">Resumate</strong> is an intelligent resume curation system that will eventually
-              use AI to tailor resumes based on specific role types and job descriptions.
+              <strong className="text-slate-900 dark:text-slate-100">Resumate</strong> is an intelligent resume curation system that
+              uses AI to tailor resumes to specific job descriptions, or heuristic scoring against predefined role profiles.
             </p>
 
             <p>
-              This current version showcases all of my professional experience in an interactive format,
-              allowing you to explore achievements by tags, search for specific skills or accomplishments,
-              and understand the full context behind each bullet point.
+              Explore all of my professional experience in an interactive format,
+              search by tags or skills, then download a tailored PDF compiled client-side with Rust/WASM.
             </p>
 
             <div className="bg-slate-50 dark:bg-slate-800/50 rounded-lg p-4 mt-6">
-              <h4 className="font-medium text-slate-900 dark:text-slate-100 mb-2">Now Available:</h4>
+              <h4 className="font-medium text-slate-900 dark:text-slate-100 mb-2">Features:</h4>
               <ul className="text-sm space-y-1">
-                <li>✅ Role-based bullet selection and scoring</li>
-                <li>✅ Dynamic PDF generation with Rust/WASM</li>
-                <li>• AI-powered customization via Claude API (coming soon)</li>
-                <li>• Open-source framework for developers (coming soon)</li>
+                <li>✅ AI-powered bullet selection via job description</li>
+                <li>✅ Heuristic role-based scoring and selection</li>
+                <li>✅ Dynamic PDF generation with Rust/WASM (client-side)</li>
+                <li>✅ Interactive experience explorer with tag filtering</li>
               </ul>
             </div>
           </div>

@@ -166,7 +166,6 @@ describe('selectBulletsWithAI', () => {
         'cerebras-gpt'
       )
 
-      // Orchestrator overrides attemptCount with totalRetries (2 in this case)
       expect(result).toEqual({ ...validResult, attemptCount: 2 })
       expect(mockSelect).toHaveBeenCalledTimes(2)
 
@@ -189,16 +188,12 @@ describe('selectBulletsWithAI', () => {
         select: mockSelect,
         name: 'cerebras-gpt',
       }))
-      ;(AnthropicProvider as unknown as ReturnType<typeof vi.fn>).mockImplementation(() => ({
-        isAvailable: () => false,
-        name: 'claude-haiku',
-      }))
 
       await expect(
         selectBulletsWithAI(
           { jobDescription: 'Test', compendium: mockCompendium, maxBullets: 2 },
           'cerebras-gpt',
-          { maxRetries: 2, enableFallback: false }
+          { maxRetries: 2 }
         )
       ).rejects.toThrow(AISelectionError)
 
@@ -206,55 +201,15 @@ describe('selectBulletsWithAI', () => {
     })
   })
 
-  describe('fallback logic', () => {
-    it('falls back on provider DOWN', async () => {
+  describe('provider down — fail fast', () => {
+    it('throws immediately on provider DOWN without retrying', async () => {
       const downError = new AISelectionError(
         'Rate limited',
         [{ code: 'E011_PROVIDER_DOWN', message: 'Down', help: 'Wait' }],
         'cerebras-gpt'
       )
 
-      const mockCerebrasSelect = vi.fn().mockRejectedValue(downError)
-      const fallbackResult: SelectionResult = {
-        ...validResult,
-        provider: 'claude-haiku',
-        promptUsed: 'test prompt',
-        attemptCount: 1,
-      }
-      const mockAnthropicSelect = vi.fn().mockResolvedValue(fallbackResult)
-
-      ;(CerebrasProvider as unknown as ReturnType<typeof vi.fn>).mockImplementation(() => ({
-        isAvailable: () => true,
-        select: mockCerebrasSelect,
-        name: 'cerebras-gpt',
-      }))
-      ;(AnthropicProvider as unknown as ReturnType<typeof vi.fn>).mockImplementation(() => ({
-        isAvailable: () => true,
-        select: mockAnthropicSelect,
-        name: 'claude-haiku',
-      }))
-
-      const result = await selectBulletsWithAI(
-        { jobDescription: 'Test', compendium: mockCompendium, maxBullets: 2 },
-        'cerebras-gpt'
-      )
-
-      expect(result.provider).toBe('claude-haiku')
-      expect(mockCerebrasSelect).toHaveBeenCalledTimes(1)
-      expect(mockAnthropicSelect).toHaveBeenCalledTimes(1)
-    })
-
-    it('does NOT fallback on output format error (retries same provider)', async () => {
-      const formatError = new AISelectionError(
-        'Invalid IDs',
-        [{ code: 'E005_INVALID_BULLET_ID', message: 'Bad ID', help: 'Fix' }],
-        'cerebras-gpt'
-      )
-
-      const mockSelect = vi
-        .fn()
-        .mockRejectedValueOnce(formatError)
-        .mockResolvedValueOnce(validResult)
+      const mockSelect = vi.fn().mockRejectedValue(downError)
 
       ;(CerebrasProvider as unknown as ReturnType<typeof vi.fn>).mockImplementation(() => ({
         isAvailable: () => true,
@@ -262,83 +217,29 @@ describe('selectBulletsWithAI', () => {
         name: 'cerebras-gpt',
       }))
 
-      const result = await selectBulletsWithAI(
-        { jobDescription: 'Test', compendium: mockCompendium, maxBullets: 2 },
-        'cerebras-gpt'
-      )
+      await expect(
+        selectBulletsWithAI(
+          { jobDescription: 'Test', compendium: mockCompendium, maxBullets: 2 },
+          'cerebras-gpt'
+        )
+      ).rejects.toThrow('unavailable')
 
-      // Should have succeeded with same provider after retry
-      expect(result.provider).toBe('cerebras-gpt')
-      expect(mockSelect).toHaveBeenCalledTimes(2)
+      // Should NOT retry — fail fast on provider down
+      expect(mockSelect).toHaveBeenCalledTimes(1)
     })
 
-    it('skips unavailable providers in fallback chain', async () => {
-      const downError = new AISelectionError(
-        'Down',
-        [{ code: 'E011_PROVIDER_DOWN', message: 'Down', help: '' }],
-        'cerebras-gpt'
-      )
-
-      const mockCerebrasGptSelect = vi.fn().mockRejectedValue(downError)
-      const fallbackResult: SelectionResult = {
-        ...validResult,
-        provider: 'claude-haiku',
-        promptUsed: 'test prompt',
-        attemptCount: 1,
-      }
-      const mockAnthropicSelect = vi.fn().mockResolvedValue(fallbackResult)
-
-      // cerebras-gpt available but DOWN, claude-haiku available
-      ;(CerebrasProvider as unknown as ReturnType<typeof vi.fn>).mockImplementation(
-        (model: string) => {
-          if (model === 'cerebras-gpt') {
-            return {
-              isAvailable: () => true,
-              select: mockCerebrasGptSelect,
-              name: 'cerebras-gpt',
-            }
-          }
-          // cerebras-llama not available
-          return {
-            isAvailable: () => false,
-            name: 'cerebras-llama',
-          }
-        }
-      )
-      ;(AnthropicProvider as unknown as ReturnType<typeof vi.fn>).mockImplementation(() => ({
-        isAvailable: () => true,
-        select: mockAnthropicSelect,
-        name: 'claude-haiku',
-      }))
-
-      const result = await selectBulletsWithAI(
-        { jobDescription: 'Test', compendium: mockCompendium, maxBullets: 2 },
-        'cerebras-gpt'
-      )
-
-      expect(result.provider).toBe('claude-haiku')
-    })
-
-    it('respects enableFallback=false', async () => {
-      const downError = new AISelectionError(
-        'Down',
-        [{ code: 'E011_PROVIDER_DOWN', message: 'Down', help: '' }],
-        'cerebras-gpt'
-      )
-
+    it('throws when provider is not configured', async () => {
       ;(CerebrasProvider as unknown as ReturnType<typeof vi.fn>).mockImplementation(() => ({
-        isAvailable: () => true,
-        select: vi.fn().mockRejectedValue(downError),
+        isAvailable: () => false,
         name: 'cerebras-gpt',
       }))
 
       await expect(
         selectBulletsWithAI(
           { jobDescription: 'Test', compendium: mockCompendium, maxBullets: 2 },
-          'cerebras-gpt',
-          { enableFallback: false }
+          'cerebras-gpt'
         )
-      ).rejects.toThrow('unavailable')
+      ).rejects.toThrow('not configured')
     })
   })
 
@@ -365,16 +266,12 @@ describe('selectBulletsWithAI', () => {
         select: mockSelect,
         name: 'cerebras-gpt',
       }))
-      ;(AnthropicProvider as unknown as ReturnType<typeof vi.fn>).mockImplementation(() => ({
-        isAvailable: () => false,
-        name: 'claude-haiku',
-      }))
 
       try {
         await selectBulletsWithAI(
           { jobDescription: 'Test', compendium: mockCompendium, maxBullets: 2 },
           'cerebras-gpt',
-          { maxRetries: 2, enableFallback: false }
+          { maxRetries: 2 }
         )
         expect.fail('Should have thrown')
       } catch (e) {

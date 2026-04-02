@@ -209,15 +209,15 @@ export class CerebrasProvider implements AIProviderInterface {
    * Check if HTTP status indicates provider is down
    */
   private isProviderDownStatus(status: number): boolean {
-    // 5xx = server issues, 429 = rate limited, 401/403 = auth issues
-    const downStatuses = [401, 403, 429, 500, 502, 503, 504]
+    // 5xx = server issues, 429 = rate limited, 401/403 = auth issues, 404 = model removed
+    const downStatuses = [401, 403, 404, 429, 500, 502, 503, 504]
     return downStatuses.includes(status)
   }
 }
 
 /**
  * Create Cerebras provider for specific model
- * Defaults to gpt-oss-120b (fast + free)
+ * Defaults to Qwen 3 235B (fast + free)
  */
 export function createCerebrasProvider(
   model: 'cerebras-gpt' | 'cerebras-llama' = 'cerebras-gpt'

@@ -1,10 +1,10 @@
 /**
- * AI Provider Factory + Selection with Retry/Fallback
+ * AI Provider Factory + Selection with Retry
  *
  * Orchestrates AI bullet selection with:
  * - Provider factory
  * - Retry logic (3 attempts, includes error context)
- * - Provider fallback (only on provider DOWN)
+ * - Fail-fast on provider down (user picks a different model)
  */
 
 import type {
@@ -14,7 +14,7 @@ import type {
   SelectionResult,
   SelectionOptions,
 } from './types'
-import { FALLBACK_ORDER, getNextFallback, DEFAULT_SELECTION_OPTIONS } from './types'
+import { FALLBACK_ORDER, DEFAULT_SELECTION_OPTIONS } from './types'
 import { AnthropicProvider } from './anthropic'
 import { CerebrasProvider } from './cerebras'
 import { AISelectionError, formatRustStyleError, type ParseError } from '../errors'
@@ -72,145 +72,113 @@ export async function selectBulletsWithAI(
   providerName: AIProvider = FALLBACK_ORDER[0],
   options: SelectionOptions = {}
 ): Promise<SelectionResult> {
-  const { maxRetries, enableFallback } = {
+  const { maxRetries } = {
     ...DEFAULT_SELECTION_OPTIONS,
     ...options,
   }
 
-  let currentProvider = providerName
+  const provider = getProvider(providerName)
+
+  if (!provider.isAvailable()) {
+    throw new AISelectionError(
+      `Provider ${providerName} is not configured`,
+      [
+        {
+          code: 'E011_PROVIDER_DOWN',
+          message: `${providerName} API key not set`,
+          help: 'Please select a different AI model.',
+        },
+      ],
+      providerName,
+      0
+    )
+  }
+
   const allErrors: ParseError[] = []
-  let totalRetries = 0
+  let retryRequest = { ...request }
 
-  // Outer loop: provider fallback
-  while (currentProvider) {
-    const provider = getProvider(currentProvider)
+  for (let attempt = 1; attempt <= maxRetries; attempt++) {
+    console.log(`[AI] Attempt ${attempt}/${maxRetries} with ${providerName}`)
 
-    if (!provider.isAvailable()) {
-      console.warn(`[AI] Provider ${currentProvider} not available, trying fallback`)
-      if (enableFallback) {
-        currentProvider = getNextFallback(currentProvider)!
+    try {
+      const result = await provider.select(retryRequest)
+      console.log(`[AI] Success with ${providerName} after ${attempt} attempt(s)`)
+      return {
+        ...result,
+        attemptCount: attempt,
+      }
+    } catch (error) {
+      if (!(error instanceof AISelectionError)) {
+        const parseError: ParseError = {
+          code: 'E000_PROVIDER_ERROR',
+          message: error instanceof Error ? error.message : String(error),
+          help: 'Unexpected error',
+        }
+        allErrors.push(parseError)
+        console.error(`[AI] Unexpected error:`, error)
+
+        if (attempt === maxRetries) {
+          throw new AISelectionError(
+            `Failed after ${maxRetries} attempts with ${providerName}`,
+            allErrors,
+            providerName,
+            attempt
+          )
+        }
         continue
       }
-      break
-    }
 
-    // Inner loop: retry same provider
-    let retryRequest = { ...request }
+      allErrors.push(...error.errors)
 
-    for (let attempt = 1; attempt <= maxRetries; attempt++) {
-      totalRetries++
-      console.log(`[AI] Attempt ${attempt}/${maxRetries} with ${currentProvider}`)
+      // Provider DOWN → fail fast, let user pick a different model
+      if (error.isProviderDown()) {
+        console.warn(`[AI] Provider ${providerName} is DOWN`)
+        throw new AISelectionError(
+          `${providerName} is unavailable. Please select a different model.`,
+          allErrors,
+          providerName,
+          attempt
+        )
+      }
 
-      try {
-        const result = await provider.select(retryRequest)
-        console.log(`[AI] Success with ${currentProvider} after ${attempt} attempt(s)`)
-        // Override attemptCount with orchestrator's total count
-        return {
-          ...result,
-          attemptCount: totalRetries,
+      const isFormatError = error.isOutputFormatError()
+
+      // Output format error → retry with error context
+      if (isFormatError && attempt < maxRetries) {
+        const errorContext = formatRustStyleError(error.errors[0])
+        console.log(`[AI] Output format error, retrying with context`)
+        retryRequest = {
+          ...request,
+          retryContext: errorContext,
         }
-      } catch (error) {
-        if (!(error instanceof AISelectionError)) {
-          // Unknown error - wrap and track
-          const parseError: ParseError = {
-            code: 'E000_PROVIDER_ERROR',
-            message: error instanceof Error ? error.message : String(error),
-            help: 'Unexpected error',
-          }
-          allErrors.push(parseError)
-          console.error(`[AI] Unexpected error:`, error)
+        continue
+      }
 
-          // Check if this is the last retry - if so, try fallback or throw
-          if (attempt === maxRetries) {
-            console.error(`[AI] All ${maxRetries} retries exhausted for ${currentProvider}`)
-            if (enableFallback) {
-              const nextProvider = getNextFallback(currentProvider)
-              if (nextProvider) {
-                console.log(`[AI] Trying fallback provider: ${nextProvider}`)
-                currentProvider = nextProvider
-                break // Break inner loop to try next provider
-              }
-            }
-            // No more fallbacks - throw aggregated error
-            throw new AISelectionError(
-              `Failed after ${maxRetries} attempts with ${currentProvider}`,
-              allErrors,
-              currentProvider,
-              totalRetries
-            )
-          }
-          continue // Try again with same provider
-        }
-
-        allErrors.push(...error.errors)
-
-        // Provider DOWN → fallback immediately
-        if (error.isProviderDown()) {
-          console.warn(`[AI] Provider ${currentProvider} is DOWN, trying fallback`)
-          if (enableFallback) {
-            currentProvider = getNextFallback(currentProvider)!
-            break // Break inner loop, continue outer
-          }
-          // No fallback enabled - throw
-          throw new AISelectionError(
-            `Provider ${currentProvider} unavailable`,
-            allErrors,
-            currentProvider,
-            totalRetries
-          )
-        }
-
-        // Output format error → retry with error context
-        if (error.isOutputFormatError() && attempt < maxRetries) {
-          const errorContext = formatRustStyleError(error.errors[0])
-          console.log(`[AI] Output format error, retrying with context`)
-          retryRequest = {
-            ...request,
-            retryContext: errorContext,
-          }
-          continue
-        }
-
-        // Last retry exhausted
-        if (attempt === maxRetries) {
-          console.error(`[AI] All ${maxRetries} retries exhausted for ${currentProvider}`)
-
-          // Try fallback if enabled
-          if (enableFallback) {
-            const nextProvider = getNextFallback(currentProvider)
-            if (nextProvider) {
-              console.log(`[AI] Trying fallback provider: ${nextProvider}`)
-              currentProvider = nextProvider
-              break // Break inner loop, continue outer
-            }
-          }
-
-          // No more fallbacks
-          throw new AISelectionError(
-            `Failed after ${maxRetries} attempts with ${currentProvider}`,
-            allErrors,
-            currentProvider,
-            totalRetries
-          )
-        }
+      // Non-format provider errors should fail immediately
+      if (attempt === maxRetries || !isFormatError) {
+        console.error(
+          isFormatError
+            ? `[AI] All ${maxRetries} retries exhausted for ${providerName}`
+            : `[AI] Non-retryable error from ${providerName}`
+        )
+        throw new AISelectionError(
+          isFormatError
+            ? `Failed after ${maxRetries} attempts with ${providerName}`
+            : `Selection failed with ${providerName}`,
+          allErrors,
+          providerName,
+          attempt
+        )
       }
     }
   }
 
-  // No providers available
+  // Unreachable — the for-loop always throws on maxRetries
   throw new AISelectionError(
-    'No AI providers available',
-    allErrors.length > 0
-      ? allErrors
-      : [
-          {
-            code: 'E011_PROVIDER_DOWN',
-            message: 'All providers unavailable',
-            help: 'Check API keys in environment variables',
-          },
-        ],
+    `Selection failed with ${providerName}`,
+    allErrors,
     providerName,
-    totalRetries
+    0
   )
 }
 
