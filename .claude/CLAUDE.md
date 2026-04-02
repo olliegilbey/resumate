@@ -14,7 +14,7 @@ Bullet scoring has two possible paths:
 
 **Public repo** - keep PII private, operate as if everyone is watching.
 
-**Document public APIs** using TSDoc (TypeScript) and Rustdoc (Rust). Use pre-function doc comments for exported functions/types, inline comments for non-obvious logic. In-code context is important.
+**Document all code** using TSDoc (TypeScript) and Rustdoc (Rust). Use pre-function doc comments for exported functions/types, inline comments for non-obvious logic. In-code context is important.
 
 ---
 

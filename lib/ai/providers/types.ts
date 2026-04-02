@@ -35,16 +35,16 @@ export interface ModelConfig {
 export const AI_MODELS: Record<AIProvider, ModelConfig> = {
   'cerebras-gpt': {
     provider: 'cerebras',
-    model: 'gpt-oss-120b', // Cerebras reasoning model
-    label: 'GPT OSS 120B (Fast)',
+    model: 'qwen-3-235b-a22b-instruct-2507', // Cerebras free-tier replacement for gpt-oss-120b
+    label: 'Qwen 3 235B (Fast)',
     cost: 'free',
     contextWindow: 128000,
     maxOutputTokens: 4096,
   },
   'cerebras-llama': {
     provider: 'cerebras',
-    model: 'llama-3.3-70b',
-    label: 'Llama 3.3 70B',
+    model: 'llama3.1-8b',
+    label: 'Llama 3.1 8B',
     cost: 'free',
     contextWindow: 128000,
     maxOutputTokens: 4096,
@@ -79,17 +79,6 @@ export const FALLBACK_ORDER: AIProvider[] = [
   'cerebras-llama', // Alternative free
   'claude-sonnet', // Premium paid (last resort)
 ]
-
-/**
- * Get the next fallback provider after the current one
- */
-export function getNextFallback(current: AIProvider): AIProvider | null {
-  const currentIndex = FALLBACK_ORDER.indexOf(current)
-  if (currentIndex === -1 || currentIndex === FALLBACK_ORDER.length - 1) {
-    return null
-  }
-  return FALLBACK_ORDER[currentIndex + 1]
-}
 
 // Salary information extracted from job description
 export interface SalaryInfo {
@@ -148,7 +137,6 @@ export interface AIProviderInterface {
 export interface SelectionOptions {
   maxRetries?: number
   timeoutMs?: number
-  enableFallback?: boolean
 }
 
 // Note: DEFAULT_SELECTION_CONFIG is in lib/selection.ts (source of truth)
@@ -158,5 +146,4 @@ export interface SelectionOptions {
 export const DEFAULT_SELECTION_OPTIONS: Required<SelectionOptions> = {
   maxRetries: 3,
   timeoutMs: 30000,
-  enableFallback: true,
 }
