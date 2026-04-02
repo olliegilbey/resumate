@@ -141,8 +141,10 @@ export async function selectBulletsWithAI(
         )
       }
 
+      const isFormatError = error.isOutputFormatError()
+
       // Output format error → retry with error context
-      if (error.isOutputFormatError() && attempt < maxRetries) {
+      if (isFormatError && attempt < maxRetries) {
         const errorContext = formatRustStyleError(error.errors[0])
         console.log(`[AI] Output format error, retrying with context`)
         retryRequest = {
@@ -152,11 +154,17 @@ export async function selectBulletsWithAI(
         continue
       }
 
-      // Last retry exhausted
-      if (attempt === maxRetries) {
-        console.error(`[AI] All ${maxRetries} retries exhausted for ${providerName}`)
+      // Non-format provider errors should fail immediately
+      if (attempt === maxRetries || !isFormatError) {
+        console.error(
+          isFormatError
+            ? `[AI] All ${maxRetries} retries exhausted for ${providerName}`
+            : `[AI] Non-retryable error from ${providerName}`
+        )
         throw new AISelectionError(
-          `Failed after ${maxRetries} attempts with ${providerName}`,
+          isFormatError
+            ? `Failed after ${maxRetries} attempts with ${providerName}`
+            : `Selection failed with ${providerName}`,
           allErrors,
           providerName,
           attempt
