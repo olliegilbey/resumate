@@ -57,6 +57,7 @@
     "dotenv": "^17.2.3",
     "eslint": "^9.36.0",
     "eslint-config-next": "^16.0.0",
+    "eslint-plugin-functional": "^9.0.4",
     "husky": "^9.1.7",
     "jsdom": "^27.0.0",
     "json-schema-to-typescript": "^15.0.4",

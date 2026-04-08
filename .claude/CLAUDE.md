@@ -151,3 +151,28 @@ Single source of truth per fact. Don't duplicate.
 **Deployment:** `just` for local, `bun` on Vercel. Requires env vars from `.env.example`.
 
 **Discovery:** Use `just`, `rg`, WebFetch for latest docs (include version numbers).
+
+---
+
+## Immutability Conventions
+
+- `const` over `let`. The linter warns on `let`.
+- Function parameters: `Readonly<T>` or `readonly` arrays. The linter warns on mutable params (when typed linting is enabled).
+- Never mutate in place. Use spread: `{...obj, key: newValue}`, `[...arr, item]`.
+- Enforced by `eslint-plugin-functional` (`immutable-data` + `no-let`) as warnings. Will promote to errors once gaps are addressed.
+- WASM boundary data is already immutable by design (serialised payloads).
+- See `docs/IMMUTABILITY_GAPS.md` for known hotspots and refactoring plan.
+
+## Agent Feedback Loop
+
+- After changes: run `just agent-check` (type-check → lint → tests).
+- Fix all errors before considering work complete.
+- Warnings from functional lint rules: address where practical, do not block on them.
+- Pure functions over classes. Data in, data out, no side effects.
+- Colocate types with usage. Shared types live in Rust (`crates/shared-types/`).
+
+## Documentation Gaps
+
+- TSDoc coverage is tracked in `docs/TSDOC_GAPS.md`.
+- When touching a file listed there, add TSDoc as part of the change — don't leave it for later.
+- Every exported function gets: one-line description, `@param`, `@returns`, `@example`.
