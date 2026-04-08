@@ -11,7 +11,12 @@ import { AI_MODELS, type AIProvider } from '@/lib/ai/providers/types'
 
 const CEREBRAS_MODELS_URL = 'https://api.cerebras.ai/v1/models'
 
-/** Cache: stores result + timestamp */
+/**
+ * In-memory cache: stores result + timestamp.
+ * NOTE: In serverless (Vercel), each function instance has its own cache.
+ * Cold starts trigger fresh fetches. This is acceptable for non-critical
+ * availability data — staleness window is at most 5 minutes per instance.
+ */
 let cache: { data: ModelAvailability[]; timestamp: number } | null = null
 const CACHE_TTL_MS = 5 * 60 * 1000 // 5 minutes
 
@@ -86,14 +91,15 @@ export async function GET(): Promise<NextResponse<{ models: ModelAvailability[] 
       }
     }
 
-    // Anthropic: not wired up yet
+    // Anthropic: available if API key is configured
     if (config.provider === 'anthropic') {
+      const hasKey = !!process.env.ANTHROPIC_API_KEY
       return {
         id,
         label: config.label,
         cost: config.cost,
-        available: false,
-        reason: 'Coming soon',
+        available: hasKey,
+        ...(!hasKey && { reason: 'Coming soon' }),
       }
     }
 

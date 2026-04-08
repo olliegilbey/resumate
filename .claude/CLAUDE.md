@@ -152,5 +152,4 @@ Single source of truth per fact. Don't duplicate.
 
 **Discovery:** Use `just`, `rg`, WebFetch for latest docs (include version numbers).
 
-**Document all code** using TSDoc (TypeScript) and Rustdoc (Rust). Use pre-function doc comments for exported functions/types, inline comments for non-obvious logic. In-code context is important, with good @example blocks.
-
+**Code documentation is mandatory.** Every exported function/type gets TSDoc (TS) or Rustdoc (Rust) with `@example` blocks. Inline comments for non-obvious logic. Don't skip this.

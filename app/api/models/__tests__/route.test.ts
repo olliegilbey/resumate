@@ -18,20 +18,24 @@ const mockCerebrasModels = {
 }
 
 let originalFetch: typeof global.fetch
-let originalEnv: string | undefined
+let originalCerebrasKey: string | undefined
+let originalAnthropicKey: string | undefined
 
 describe('GET /api/models', () => {
   beforeEach(() => {
     originalFetch = global.fetch
-    originalEnv = process.env.CEREBRAS_API_KEY
+    originalCerebrasKey = process.env.CEREBRAS_API_KEY
+    originalAnthropicKey = process.env.ANTHROPIC_API_KEY
     process.env.CEREBRAS_API_KEY = 'test-key'
+    delete process.env.ANTHROPIC_API_KEY
     // Clear module-level cache by re-importing (cache is module-scoped)
     vi.resetModules()
   })
 
   afterEach(() => {
     global.fetch = originalFetch
-    process.env.CEREBRAS_API_KEY = originalEnv
+    process.env.CEREBRAS_API_KEY = originalCerebrasKey
+    process.env.ANTHROPIC_API_KEY = originalAnthropicKey
   })
 
   it('returns available models from Cerebras', async () => {
@@ -57,7 +61,7 @@ describe('GET /api/models', () => {
     expect(cerebrasLlama).toBeDefined()
     expect(cerebrasLlama.available).toBe(true)
 
-    // Claude models should be unavailable (not wired up)
+    // Claude models should be unavailable (no ANTHROPIC_API_KEY set)
     const claudeSonnet = body.models.find((m: { id: string }) => m.id === 'claude-sonnet')
     expect(claudeSonnet).toBeDefined()
     expect(claudeSonnet.available).toBe(false)
@@ -66,6 +70,25 @@ describe('GET /api/models', () => {
     const claudeHaiku = body.models.find((m: { id: string }) => m.id === 'claude-haiku')
     expect(claudeHaiku).toBeDefined()
     expect(claudeHaiku.available).toBe(false)
+  })
+
+  it('marks Anthropic models available when API key is set', async () => {
+    process.env.ANTHROPIC_API_KEY = 'test-anthropic-key'
+    global.fetch = vi.fn().mockResolvedValue({
+      ok: true,
+      json: () => Promise.resolve(mockCerebrasModels),
+    }) as unknown as typeof fetch
+
+    const { GET: freshGET } = await import('../route')
+    const response = await freshGET()
+    const body = await response.json()
+
+    const claudeSonnet = body.models.find((m: { id: string }) => m.id === 'claude-sonnet')
+    expect(claudeSonnet.available).toBe(true)
+    expect(claudeSonnet.reason).toBeUndefined()
+
+    const claudeHaiku = body.models.find((m: { id: string }) => m.id === 'claude-haiku')
+    expect(claudeHaiku.available).toBe(true)
   })
 
   it('marks Cerebras models unavailable when model not in API response', async () => {

@@ -60,7 +60,10 @@ export function ResumeDownload({ resumeData }: ResumeDownloadProps) {
   // Fetch available models on mount
   useEffect(() => {
     fetch('/api/models')
-      .then((res) => res.json() as Promise<{ models: ModelAvailability[] }>)
+      .then((res) => {
+        if (!res.ok) throw new Error('Failed to fetch models')
+        return res.json() as Promise<{ models: ModelAvailability[] }>
+      })
       .then(({ models }) => {
         const map = new Map<AIProvider, ModelAvailability>()
         for (const m of models) map.set(m.id, m)
