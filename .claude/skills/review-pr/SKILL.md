@@ -54,7 +54,19 @@ For each comment classified as "Fix":
 
 Group related fixes into a single commit when possible.
 
-## Step 4: Reply to each comment thread
+## Step 4: Commit and push
+
+Fixes must be pushed **before** replying to or resolving any comments. This ensures the code backs up your replies.
+
+1. Run the full test suite: `npx vitest run`
+2. Run typecheck: `npx tsc --noEmit`
+3. Stage only the files you changed
+4. Commit with message format: `fix: address PR review feedback from [reviewer names]`
+5. Push to the current branch
+
+## Step 5: Reply to each comment thread
+
+Only reply after the fix commit is pushed.
 
 For **inline comments** (have `id` and `path`), reply directly to the thread:
 
@@ -79,17 +91,27 @@ Keep replies concise. Use one of these patterns:
 
 Do NOT be defensive or over-explain. One sentence per comment is ideal.
 
-## Step 5: Commit and push
+## Step 6: Resolve review threads
 
-After all fixes are applied:
+After replying, resolve each thread via the GraphQL API. This requires thread IDs (not comment IDs).
 
-1. Run the full test suite: `npx vitest run`
-2. Run typecheck: `npx tsc --noEmit`
-3. Stage only the files you changed
-4. Commit with message format: `fix: address PR review feedback from [reviewer names]`
-5. Push to the current branch
+**Fetch thread IDs and resolution status:**
 
-## Step 6: Post summary
+```bash
+gh api graphql -f query='{ repository(owner: "OWNER", name: "REPO") { pullRequest(number: PR_NUMBER) { reviewThreads(first: 50) { nodes { id isResolved comments(first: 1) { nodes { body author { login } } } } } } } }' --jq '.data.repository.pullRequest.reviewThreads.nodes[] | select(.isResolved == false) | {id, author: .comments.nodes[0].author.login, body: (.comments.nodes[0].body[:100])}'
+```
+
+Replace `OWNER`, `REPO`, and `PR_NUMBER` with actual values (use `gh repo view --json owner,name` to resolve).
+
+**Resolve each thread:**
+
+```bash
+gh api graphql -f query='mutation { resolveReviewThread(input: {threadId: "THREAD_ID"}) { thread { isResolved } } }'
+```
+
+Resolve all threads that have been addressed (fixed, acknowledged, or rejected with explanation).
+
+## Step 7: Post summary
 
 Post a single PR comment listing how each comment was handled:
 
