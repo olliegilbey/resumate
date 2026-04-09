@@ -14,7 +14,7 @@ Bullet scoring has two possible paths:
 
 **Public repo** - keep PII private, operate as if everyone is watching.
 
-**Document all code** using TSDoc (TypeScript) and Rustdoc (Rust). Use pre-function doc comments for exported functions/types, inline comments for non-obvious logic. In-code context is important.
+**Document all code** using TSDoc (TypeScript) and Rustdoc (Rust). Use pre-function doc comments for exported functions/types, inline comments for non-obvious logic. In-code context is important, with good @example blocks.
 
 ---
 
@@ -151,3 +151,5 @@ Single source of truth per fact. Don't duplicate.
 **Deployment:** `just` for local, `bun` on Vercel. Requires env vars from `.env.example`.
 
 **Discovery:** Use `just`, `rg`, WebFetch for latest docs (include version numbers).
+
+**Code documentation is mandatory.** Every exported function/type gets TSDoc (TS) or Rustdoc (Rust) with `@example` blocks. Inline comments for non-obvious logic. Don't skip this.
