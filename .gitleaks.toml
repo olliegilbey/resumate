@@ -37,7 +37,7 @@ description = "Allowlist for test files and safe patterns"
 
 # Paths to ignore completely (only for truly irrelevant files)
 paths = [
-  '''^data/resume-data\.json$''',  # Gitignored personal data (allowed)
+  '''^data/resume-data.*\.json$''', # Gitignored personal data (allowed)
   '''^\.env\.local$''',             # Gitignored env vars
   '''^target/''',                   # Rust build artifacts
   '''^node_modules/''',             # Node dependencies

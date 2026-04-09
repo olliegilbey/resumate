@@ -45,7 +45,8 @@ next-env.d.ts
 .env.local
 
 # Personal resume data (keep template, gitignore personal data)
-data/resume-data.json
+data/resume-data*.json
+!data/resume-data-template.json
 
 # Session/local files
 .claude/settings.local.json
