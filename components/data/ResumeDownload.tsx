@@ -10,8 +10,7 @@ import { useTheme } from '@/contexts/ThemeContext'
 import { getTotalBullets, getTotalPositions } from '@/lib/resume-metrics'
 import { usePostHogResume } from '@/lib/posthog-client'
 import { AIProgressIndicator, type AIProgressStage } from '@/components/ui/AIProgressIndicator'
-import { AI_MODELS, FALLBACK_ORDER, type AIProvider } from '@/lib/ai/providers/types'
-import type { ModelAvailability } from '@/app/api/models/route'
+import { AI_MODELS, FALLBACK_ORDER, type AIProvider, type ModelAvailability } from '@/lib/ai/providers/types'
 
 // Extend Window interface for WASM functions
 declare global {
@@ -68,18 +67,20 @@ export function ResumeDownload({ resumeData }: ResumeDownloadProps) {
         const map = new Map<AIProvider, ModelAvailability>()
         for (const m of models) map.set(m.id, m)
         setModelAvailability(map)
-
-        // If current selection is unavailable, switch to first available
-        const current = map.get(aiProvider)
-        if (current && !current.available) {
-          const firstAvailable = models.find((m) => m.available)
-          if (firstAvailable) setAiProvider(firstAvailable.id)
-        }
       })
       .catch(() => {
         // Silently fail — dropdown falls back to static list
       })
-  }, []) // eslint-disable-line react-hooks/exhaustive-deps
+  }, [])
+
+  // If current selection is unavailable, switch to first available
+  useEffect(() => {
+    const current = modelAvailability.get(aiProvider)
+    if (current && !current.available) {
+      const firstAvailable = [...modelAvailability.values()].find((m) => m.available)
+      if (firstAvailable) setAiProvider(firstAvailable.id)
+    }
+  }, [modelAvailability, aiProvider])
 
   // Mutual exclusivity: job description disables dropdown and vice versa
   const isJobDescriptionMode = jobDescription.trim().length > 0

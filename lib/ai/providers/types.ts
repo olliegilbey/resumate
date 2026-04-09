@@ -27,6 +27,15 @@ export interface ModelConfig {
   maxOutputTokens: number
 }
 
+// Model availability status returned by /api/models
+export interface ModelAvailability {
+  id: AIProvider
+  label: string
+  cost: 'free' | 'paid'
+  available: boolean
+  reason?: string
+}
+
 /**
  * AI Model configurations
  *

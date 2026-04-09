@@ -7,7 +7,7 @@
  */
 
 import { NextResponse } from 'next/server'
-import { AI_MODELS, type AIProvider } from '@/lib/ai/providers/types'
+import { AI_MODELS, type AIProvider, type ModelAvailability } from '@/lib/ai/providers/types'
 
 const CEREBRAS_MODELS_URL = 'https://api.cerebras.ai/v1/models'
 
@@ -30,14 +30,6 @@ interface CerebrasModelEntry {
 interface CerebrasModelsResponse {
   object: string
   data: CerebrasModelEntry[]
-}
-
-export interface ModelAvailability {
-  id: AIProvider
-  label: string
-  cost: 'free' | 'paid'
-  available: boolean
-  reason?: string
 }
 
 export async function GET(): Promise<NextResponse<{ models: ModelAvailability[] }>> {

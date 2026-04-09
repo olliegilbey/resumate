@@ -4,7 +4,7 @@ description: Fetch PR review comments from CodeRabbit/Codex, triage, fix valid i
 user-invocable: true
 disable-model-invocation: true
 argument-hint: [pr-number]
-allowed-tools: Bash(gh *) Bash(git *) Bash(npx *) Read Edit Grep Glob
+allowed-tools: Bash(gh *) Bash(git *) Bash(npx *) Read Edit Grep Glob TaskCreate TaskUpdate
 ---
 
 # Address PR Review Comments
@@ -13,16 +13,16 @@ You are resolving automated review feedback on PR #$ARGUMENTS.
 
 ## Step 1: Gather context
 
-Fetch all review data in parallel using these exact commands. This is critical — only pull what's needed to avoid context bloat.
+Fetch all review data using these commands. This is critical — only pull what's needed to avoid context bloat.
 
 **Inline review comments** (file-specific, actionable):
 ```!
-gh api repos/$(gh repo view --json nameWithOwner -q .nameWithOwner)/pulls/$ARGUMENTS/comments --jq '.[] | {id, user: .user.login, path: .path, line: .line, body: .body, in_reply_to_id: .in_reply_to_id}' 2>&1 | head -200
+gh api --paginate repos/$(gh repo view --json nameWithOwner -q .nameWithOwner)/pulls/$ARGUMENTS/comments --jq '.[] | {id, user: .user.login, path: .path, line: .line, body: .body, in_reply_to_id: .in_reply_to_id}' 2>&1 | head -300
 ```
 
 **Review bodies** (summary-level feedback):
 ```!
-gh api repos/$(gh repo view --json nameWithOwner -q .nameWithOwner)/pulls/$ARGUMENTS/reviews --jq '.[] | select(.body != "") | {id, user: .user.login, body: .body}' 2>&1 | head -200
+gh api --paginate repos/$(gh repo view --json nameWithOwner -q .nameWithOwner)/pulls/$ARGUMENTS/reviews --jq '.[] | select(.body != "") | {id, user: .user.login, body: .body}' 2>&1 | head -300
 ```
 
 **PR diff** (for verifying comments against current code):
