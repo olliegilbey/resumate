@@ -10,7 +10,7 @@ import { useTheme } from '@/contexts/ThemeContext'
 import { getTotalBullets, getTotalPositions } from '@/lib/resume-metrics'
 import { usePostHogResume } from '@/lib/posthog-client'
 import { AIProgressIndicator, type AIProgressStage } from '@/components/ui/AIProgressIndicator'
-import { AI_MODELS, FALLBACK_ORDER, type AIProvider } from '@/lib/ai/providers/types'
+import { AI_MODELS, FALLBACK_ORDER, type AIProvider, type ModelAvailability } from '@/lib/ai/providers/types'
 
 // Extend Window interface for WASM functions
 declare global {
@@ -35,6 +35,7 @@ export function ResumeDownload({ resumeData }: ResumeDownloadProps) {
   const [selectedRoleId, setSelectedRoleId] = useState<string>('')
   const [jobDescription, setJobDescription] = useState<string>('')
   const [aiProvider, setAiProvider] = useState<AIProvider>(FALLBACK_ORDER[0])
+  const [modelAvailability, setModelAvailability] = useState<Map<AIProvider, ModelAvailability>>(new Map())
   const [email, setEmail] = useState<string>('')
   const [linkedin, setLinkedin] = useState<string>('')
   const [status, setStatus] = useState<DownloadStatus>('idle')
@@ -54,6 +55,32 @@ export function ResumeDownload({ resumeData }: ResumeDownloadProps) {
     return getTotalBullets(resumeData.experience) + getTotalPositions(resumeData.experience)
   }, [resumeData.experience])
   const siteKey = process.env.NEXT_PUBLIC_TURNSTILE_SITE_KEY
+
+  // Fetch available models on mount
+  useEffect(() => {
+    fetch('/api/models')
+      .then((res) => {
+        if (!res.ok) throw new Error('Failed to fetch models')
+        return res.json() as Promise<{ models: ModelAvailability[] }>
+      })
+      .then(({ models }) => {
+        const map = new Map<AIProvider, ModelAvailability>()
+        for (const m of models) map.set(m.id, m)
+        setModelAvailability(map)
+      })
+      .catch(() => {
+        // Silently fail — dropdown falls back to static list
+      })
+  }, [])
+
+  // If current selection is unavailable, switch to first available
+  useEffect(() => {
+    const current = modelAvailability.get(aiProvider)
+    if (current && !current.available) {
+      const firstAvailable = [...modelAvailability.values()].find((m) => m.available)
+      if (firstAvailable) setAiProvider(firstAvailable.id)
+    }
+  }, [modelAvailability, aiProvider])
 
   // Mutual exclusivity: job description disables dropdown and vice versa
   const isJobDescriptionMode = jobDescription.trim().length > 0
@@ -687,12 +714,24 @@ export function ResumeDownload({ resumeData }: ResumeDownloadProps) {
                     backgroundImage: `url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 20 20'%3e%3cpath stroke='%236b7280' stroke-linecap='round' stroke-linejoin='round' stroke-width='1.5' d='M6 8l4 4 4-4'/%3e%3c/svg%3e")`
                   }}
                 >
-                  {FALLBACK_ORDER.map((provider) => (
-                    <option key={provider} value={provider}>
-                      {AI_MODELS[provider].label}
-                      {AI_MODELS[provider].cost === 'free' ? ' ⚡' : ' ✨'}
-                    </option>
-                  ))}
+                  {[...FALLBACK_ORDER]
+                    .sort((a, b) => {
+                      const aAvail = modelAvailability.size === 0 || modelAvailability.get(a)?.available !== false
+                      const bAvail = modelAvailability.size === 0 || modelAvailability.get(b)?.available !== false
+                      if (aAvail !== bAvail) return aAvail ? -1 : 1
+                      return AI_MODELS[a].label.localeCompare(AI_MODELS[b].label)
+                    })
+                    .map((provider) => {
+                      const availability = modelAvailability.get(provider)
+                      const unavailable = availability && !availability.available
+                      return (
+                        <option key={provider} value={provider} disabled={!!unavailable}>
+                          {AI_MODELS[provider].label}
+                          {AI_MODELS[provider].cost === 'free' ? ' ⚡' : ' ✨'}
+                          {unavailable && availability.reason ? ` (${availability.reason})` : ''}
+                        </option>
+                      )
+                    })}
                 </select>
               </div>
             )}

@@ -90,8 +90,16 @@ describe('ResumeDownload', () => {
     // Reset analytics mocks
     Object.values(mockAnalytics).forEach(fn => fn.mockClear())
 
-    // Mock fetch
-    global.fetch = vi.fn()
+    // Mock fetch — return empty models for /api/models, reject unknown URLs
+    global.fetch = vi.fn().mockImplementation((url: string) => {
+      if (url === '/api/models') {
+        return Promise.resolve({
+          ok: true,
+          json: () => Promise.resolve({ models: [] }),
+        })
+      }
+      throw new Error(`Unexpected fetch call: ${url}`)
+    })
 
     // Mock URL methods
     global.URL.createObjectURL = vi.fn(() => 'blob:test')
