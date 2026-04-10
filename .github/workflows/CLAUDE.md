@@ -147,7 +147,7 @@
   if: steps.validate.outputs.valid == 'true'
   run: |
     VERCEL_RESPONSE=$(curl -s -H "Authorization: Bearer ${{ secrets.VERCEL_TOKEN }}" \
-      "https://api.vercel.com/v6/deployments?projectId=${{ secrets.VERCEL_PROJECT_ID }}&limit=1&state=READY")
+      "https://api.vercel.com/v6/deployments?projectId=${{ secrets.VERCEL_PROJECT_ID }}&limit=1&state=READY&target=production")
 
     LAST_DEPLOY=$(echo "$VERCEL_RESPONSE" | jq -r '.deployments[0].created')
     LAST_DEPLOY_ISO=$(date -u -d @$((LAST_DEPLOY / 1000)) +"%Y-%m-%dT%H:%M:%SZ")
