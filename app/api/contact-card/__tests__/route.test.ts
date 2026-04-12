@@ -7,6 +7,7 @@ import {
   mockTurnstileFailure,
   restoreFetch,
 } from "@/lib/__tests__/helpers/mock-fetch";
+import { setupRateLimitCleanup } from "@/lib/__tests__/helpers/rate-limit-helper";
 
 /**
  * Tests for /api/contact-card (GET and POST)
@@ -18,6 +19,8 @@ import {
  * - Generates vCard files with env var data
  */
 describe("/api/contact-card", () => {
+  setupRateLimitCleanup();
+
   // Token counter to ensure unique tokens per test (token replay protection)
   let tokenCounter = 0;
 
@@ -25,6 +28,12 @@ describe("/api/contact-card", () => {
     setMockEnv();
     tokenCounter++;
   });
+
+  /** Build a unique IP per test so rate-limit buckets do not leak across tests. */
+  function testIP(): string {
+    // tokenCounter increments per test; wrap within 254 to stay in a valid range
+    return `10.0.0.${(tokenCounter % 254) + 1}`;
+  }
 
   afterEach(() => {
     restoreMockEnv();
@@ -318,6 +327,168 @@ describe("/api/contact-card", () => {
       const response = await GET(request);
 
       expect(response.status).toBe(500);
+    });
+  });
+
+  describe("Rate Limiting", () => {
+    it("includes rate limit headers in successful GET response", async () => {
+      mockTurnstileSuccess();
+
+      const url = new URL("http://localhost:3000/api/contact-card");
+      url.searchParams.set("token", getUniqueToken());
+
+      const request = new NextRequest(url.toString(), {
+        method: "GET",
+        headers: { "x-forwarded-for": testIP() },
+      });
+      const response = await GET(request);
+
+      expect(response.status).toBe(200);
+      expect(response.headers.get("X-RateLimit-Limit")).toBe("20");
+      expect(response.headers.get("X-RateLimit-Remaining")).toBe("19");
+      const reset = response.headers.get("X-RateLimit-Reset");
+      expect(reset).toBeDefined();
+      expect(Number.isNaN(Date.parse(reset!))).toBe(false);
+    });
+
+    it("blocks GET after 20 requests from same IP within the minute window", async () => {
+      mockTurnstileSuccess();
+      const ip = testIP();
+
+      // Make 20 successful GETs
+      for (let i = 0; i < 20; i++) {
+        const url = new URL("http://localhost:3000/api/contact-card");
+        url.searchParams.set("token", getUniqueToken());
+        const request = new NextRequest(url.toString(), {
+          method: "GET",
+          headers: { "x-forwarded-for": ip },
+        });
+        const response = await GET(request);
+        expect(response.status).toBe(200);
+      }
+
+      // 21st must be rate limited
+      const url = new URL("http://localhost:3000/api/contact-card");
+      url.searchParams.set("token", getUniqueToken());
+      const blocked = await GET(
+        new NextRequest(url.toString(), {
+          method: "GET",
+          headers: { "x-forwarded-for": ip },
+        }),
+      );
+
+      expect(blocked.status).toBe(429);
+      expect(blocked.headers.get("X-RateLimit-Limit")).toBe("20");
+      expect(blocked.headers.get("X-RateLimit-Remaining")).toBe("0");
+      expect(blocked.headers.get("X-RateLimit-Reset")).toBeDefined();
+      const body = (await blocked.json()) as {
+        error: string;
+        message: string;
+        resetAt: number;
+      };
+      expect(body.error).toBe("Rate limit exceeded");
+      expect(body.message).toContain("20 requests per minute");
+      expect(typeof body.resetAt).toBe("number");
+    });
+
+    it("includes rate limit headers in successful POST response", async () => {
+      mockTurnstileSuccess();
+
+      const request = new NextRequest("http://localhost:3000/api/contact-card", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          "x-forwarded-for": testIP(),
+        },
+        body: JSON.stringify({ token: getUniqueToken() }),
+      });
+
+      const response = await POST(request);
+
+      expect(response.status).toBe(200);
+      expect(response.headers.get("X-RateLimit-Limit")).toBe("10");
+      expect(response.headers.get("X-RateLimit-Remaining")).toBe("9");
+      expect(response.headers.get("X-RateLimit-Reset")).toBeDefined();
+    });
+
+    it("blocks POST after 10 requests from same IP within the minute window", async () => {
+      mockTurnstileSuccess();
+      const ip = testIP();
+
+      for (let i = 0; i < 10; i++) {
+        const request = new NextRequest("http://localhost:3000/api/contact-card", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            "x-forwarded-for": ip,
+          },
+          body: JSON.stringify({ token: getUniqueToken() }),
+        });
+        const response = await POST(request);
+        expect(response.status).toBe(200);
+      }
+
+      const blocked = await POST(
+        new NextRequest("http://localhost:3000/api/contact-card", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            "x-forwarded-for": ip,
+          },
+          body: JSON.stringify({ token: getUniqueToken() }),
+        }),
+      );
+
+      expect(blocked.status).toBe(429);
+      expect(blocked.headers.get("X-RateLimit-Limit")).toBe("10");
+      expect(blocked.headers.get("X-RateLimit-Remaining")).toBe("0");
+      const body = (await blocked.json()) as {
+        error: string;
+        message: string;
+        resetAt: number;
+      };
+      expect(body.error).toBe("Rate limit exceeded");
+      expect(body.message).toContain("10 requests per minute");
+      expect(typeof body.resetAt).toBe("number");
+    });
+
+    it("uses independent rate limit buckets for GET and POST", async () => {
+      mockTurnstileSuccess();
+      const ip = testIP();
+
+      // Exhaust the GET bucket
+      for (let i = 0; i < 20; i++) {
+        const url = new URL("http://localhost:3000/api/contact-card");
+        url.searchParams.set("token", getUniqueToken());
+        await GET(
+          new NextRequest(url.toString(), {
+            method: "GET",
+            headers: { "x-forwarded-for": ip },
+          }),
+        );
+      }
+
+      const getBlocked = await GET(
+        new NextRequest(
+          `http://localhost:3000/api/contact-card?token=${getUniqueToken()}`,
+          { method: "GET", headers: { "x-forwarded-for": ip } },
+        ),
+      );
+      expect(getBlocked.status).toBe(429);
+
+      // POST from same IP should still succeed (independent bucket)
+      const postResponse = await POST(
+        new NextRequest("http://localhost:3000/api/contact-card", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            "x-forwarded-for": ip,
+          },
+          body: JSON.stringify({ token: getUniqueToken() }),
+        }),
+      );
+      expect(postResponse.status).toBe(200);
+      expect(postResponse.headers.get("X-RateLimit-Remaining")).toBe("9");
     });
   });
 

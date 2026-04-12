@@ -4,10 +4,14 @@
  * Returns available AI models by querying provider APIs.
  * Proxies requests so API keys stay server-side.
  * Response is cached for 5 minutes to avoid hammering upstream.
+ *
+ * Rate limit: 30 requests per minute per IP. X-RateLimit-* headers are
+ * included on both successful and 429 responses.
  */
 
-import { NextResponse } from "next/server";
+import { NextRequest, NextResponse } from "next/server";
 import { AI_MODELS, type AIProvider, type ModelAvailability } from "@/lib/ai/providers/types";
+import { checkRateLimit, getClientIP } from "@/lib/rate-limit";
 
 const CEREBRAS_MODELS_URL = "https://api.cerebras.ai/v1/models";
 
@@ -32,10 +36,45 @@ interface CerebrasModelsResponse {
   data: CerebrasModelEntry[];
 }
 
-export async function GET(): Promise<NextResponse<{ models: ModelAvailability[] }>> {
+const RATE_LIMIT = { limit: 30, window: 60 * 1000 } as const;
+
+/**
+ * Handle GET /api/models.
+ *
+ * @param request - Incoming Next.js request; used to derive the client IP for
+ *   per-IP rate limiting. Optional to remain backward-compatible with call sites
+ *   (such as tests) that previously invoked this handler with no arguments.
+ */
+export async function GET(
+  request?: NextRequest,
+): Promise<
+  NextResponse<
+    { models: ModelAvailability[] } | { error: string; message: string; resetAt: number }
+  >
+> {
+  // Rate limit check first (before cache lookup or upstream fetch)
+  const clientIP = request ? getClientIP(request) : "unknown";
+  const rateLimit = checkRateLimit(`models:${clientIP}`, RATE_LIMIT);
+
+  const rateLimitHeaders = new Headers();
+  rateLimitHeaders.set("X-RateLimit-Limit", rateLimit.limit.toString());
+  rateLimitHeaders.set("X-RateLimit-Remaining", rateLimit.remaining.toString());
+  rateLimitHeaders.set("X-RateLimit-Reset", new Date(rateLimit.reset).toISOString());
+
+  if (!rateLimit.success) {
+    return NextResponse.json(
+      {
+        error: "Rate limit exceeded",
+        message: `Maximum ${RATE_LIMIT.limit} requests per minute. Please try again later.`,
+        resetAt: rateLimit.reset,
+      },
+      { status: 429, headers: rateLimitHeaders },
+    );
+  }
+
   // Return cached response if fresh
   if (cache && Date.now() - cache.timestamp < CACHE_TTL_MS) {
-    return NextResponse.json({ models: cache.data });
+    return NextResponse.json({ models: cache.data }, { headers: rateLimitHeaders });
   }
 
   // Fetch available Cerebras models
@@ -113,5 +152,5 @@ export async function GET(): Promise<NextResponse<{ models: ModelAvailability[] 
   // Cache the result
   cache = { data: models, timestamp: Date.now() };
 
-  return NextResponse.json({ models });
+  return NextResponse.json({ models }, { headers: rateLimitHeaders });
 }

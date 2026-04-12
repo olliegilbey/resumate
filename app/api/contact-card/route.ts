@@ -3,7 +3,7 @@ import { generateVCard } from "@/lib/vcard";
 import type { ResumeData } from "@/types/resume";
 import { captureEvent, flushEvents } from "@/lib/posthog-server";
 import { ANALYTICS_EVENTS } from "@/lib/analytics/events";
-import { getClientIP } from "@/lib/rate-limit";
+import { checkRateLimit, getClientIP } from "@/lib/rate-limit";
 
 /**
  * Server-side vCard generation with Turnstile protection
@@ -64,23 +64,44 @@ async function loadResumeData(): Promise<ResumeData | null> {
 }
 
 /**
- * Shared function to generate and return vCard after token verification
+ * Merge rate-limit (and any other) seed headers into a fresh Headers object.
+ * Callers then set response-specific headers on top.
+ */
+function seededHeaders(seed?: Headers): Headers {
+  const headers = new Headers();
+  if (seed) {
+    seed.forEach((value, key) => {
+      headers.set(key, value);
+    });
+  }
+  return headers;
+}
+
+/**
+ * Shared function to generate and return vCard after token verification.
+ *
+ * @param token - Turnstile token previously issued by /api/resume/prepare
+ * @param request - The incoming Next.js request (used for IP/GeoIP analytics)
+ * @param extraHeaders - Optional seed headers to include on every response
+ *   this helper returns (used by callers to thread X-RateLimit-* headers
+ *   through success, 4xx, and 5xx branches).
  */
 async function generateContactCardResponse(
   token: string,
   request: NextRequest,
+  extraHeaders?: Headers,
 ): Promise<NextResponse> {
   // Check if token was already used (replay attack prevention)
   if (usedTokens.has(token)) {
     console.warn("Duplicate Turnstile token blocked");
-    return new NextResponse("Token already used", { status: 403 });
+    return new NextResponse("Token already used", { status: 403, headers: seededHeaders(extraHeaders) });
   }
 
   // Verify Turnstile token with Cloudflare
   const isValid = await verifyTurnstileToken(token);
 
   if (!isValid) {
-    return new NextResponse("Verification failed", { status: 403 });
+    return new NextResponse("Verification failed", { status: 403, headers: seededHeaders(extraHeaders) });
   }
 
   // Mark token as used (one-time use only)
@@ -89,7 +110,7 @@ async function generateContactCardResponse(
   // Load resume data
   const resumeData = await loadResumeData();
   if (!resumeData) {
-    return new NextResponse("Resume data not available", { status: 500 });
+    return new NextResponse("Resume data not available", { status: 500, headers: seededHeaders(extraHeaders) });
   }
 
   // Get sensitive data from environment variables (never exposed to client)
@@ -100,7 +121,7 @@ async function generateContactCardResponse(
   // Require at least one email and phone
   if ((!emailPersonal && !emailProfessional) || !phone) {
     console.error("Contact information not configured in environment variables");
-    return new NextResponse("Server configuration error", { status: 500 });
+    return new NextResponse("Server configuration error", { status: 500, headers: seededHeaders(extraHeaders) });
   }
 
   // Build email array (personal first if available, otherwise professional)
@@ -167,28 +188,70 @@ async function generateContactCardResponse(
   // Flush events before serverless function exits
   await flushEvents();
 
-  // Return as downloadable file
-  return new NextResponse(vcardContent, {
-    headers: {
-      "Content-Type": "text/vcard;charset=utf-8",
-      "Content-Disposition": `attachment; filename="${filename}"`,
-      "Cache-Control": "no-store, must-revalidate",
-      "X-Robots-Tag": "noindex, nofollow",
-    },
-  });
+  // Return as downloadable file (seeded with any caller-provided headers, e.g. X-RateLimit-*)
+  const responseHeaders = seededHeaders(extraHeaders);
+  responseHeaders.set("Content-Type", "text/vcard;charset=utf-8");
+  responseHeaders.set("Content-Disposition", `attachment; filename="${filename}"`);
+  responseHeaders.set("Cache-Control", "no-store, must-revalidate");
+  responseHeaders.set("X-Robots-Tag", "noindex, nofollow");
+
+  return new NextResponse(vcardContent, { headers: responseHeaders });
 }
+
+/**
+ * Build a Headers object populated with X-RateLimit-* values.
+ *
+ * @param result - Result returned by checkRateLimit
+ * @returns Headers carrying Limit / Remaining / Reset (ISO) entries
+ */
+function buildRateLimitHeaders(result: {
+  limit: number;
+  remaining: number;
+  reset: number;
+}): Headers {
+  const headers = new Headers();
+  headers.set("X-RateLimit-Limit", result.limit.toString());
+  headers.set("X-RateLimit-Remaining", result.remaining.toString());
+  headers.set("X-RateLimit-Reset", new Date(result.reset).toISOString());
+  return headers;
+}
+
+// Rate limit: 20 GET / 10 POST per minute per IP. GET is a lightweight vCard
+// fetch; POST also parses request bodies (JSON + form-data) and is tuned lower.
+// Identifiers are namespaced per method so the two handlers use independent buckets.
+const GET_RATE_LIMIT = { limit: 20, window: 60 * 1000 } as const;
+const POST_RATE_LIMIT = { limit: 10, window: 60 * 1000 } as const;
 
 // GET route - for direct navigation downloads (works in all browsers including Arc)
 export async function GET(request: NextRequest) {
   try {
+    // Rate limit check first (before any processing)
+    const clientIP = getClientIP(request);
+    const rateLimit = checkRateLimit(`contact-card:get:${clientIP}`, GET_RATE_LIMIT);
+    const rateLimitHeaders = buildRateLimitHeaders(rateLimit);
+
+    if (!rateLimit.success) {
+      return NextResponse.json(
+        {
+          error: "Rate limit exceeded",
+          message: `Maximum ${GET_RATE_LIMIT.limit} requests per minute. Please try again later.`,
+          resetAt: rateLimit.reset,
+        },
+        { status: 429, headers: rateLimitHeaders },
+      );
+    }
+
     const { searchParams } = new URL(request.url);
     const token = searchParams.get("token");
 
     if (!token) {
-      return new NextResponse("Missing verification token", { status: 400 });
+      return new NextResponse("Missing verification token", {
+        status: 400,
+        headers: rateLimitHeaders,
+      });
     }
 
-    return await generateContactCardResponse(token, request);
+    return await generateContactCardResponse(token, request, rateLimitHeaders);
   } catch (error) {
     console.error("Contact card GET error:", error);
     return new NextResponse("Internal server error", { status: 500 });
@@ -198,6 +261,22 @@ export async function GET(request: NextRequest) {
 // POST route - for form submissions (deprecated in favor of GET, but kept for backwards compatibility)
 export async function POST(request: NextRequest) {
   try {
+    // Rate limit check first (before any processing)
+    const clientIP = getClientIP(request);
+    const rateLimit = checkRateLimit(`contact-card:post:${clientIP}`, POST_RATE_LIMIT);
+    const rateLimitHeaders = buildRateLimitHeaders(rateLimit);
+
+    if (!rateLimit.success) {
+      return NextResponse.json(
+        {
+          error: "Rate limit exceeded",
+          message: `Maximum ${POST_RATE_LIMIT.limit} requests per minute. Please try again later.`,
+          resetAt: rateLimit.reset,
+        },
+        { status: 429, headers: rateLimitHeaders },
+      );
+    }
+
     // Get Turnstile token from request (handle both JSON and form data)
     const contentType = request.headers.get("content-type") || "";
     let token: string | null = null;
@@ -215,10 +294,13 @@ export async function POST(request: NextRequest) {
     }
 
     if (!token) {
-      return new NextResponse("Missing verification token", { status: 400 });
+      return new NextResponse("Missing verification token", {
+        status: 400,
+        headers: rateLimitHeaders,
+      });
     }
 
-    return await generateContactCardResponse(token, request);
+    return await generateContactCardResponse(token, request, rateLimitHeaders);
   } catch (error) {
     console.error("Contact card POST error:", error);
     return new NextResponse("Internal server error", { status: 500 });
