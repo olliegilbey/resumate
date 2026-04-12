@@ -18,6 +18,7 @@ retention_policy: Keep all historical versions in git
 **Principle:** Tests define contracts, drive design, prevent regressions.
 
 **Why TDD?**
+
 - Tests written first force clear requirements
 - Implementation guided by passing tests
 - Refactoring safe with test safety net
@@ -44,11 +45,13 @@ retention_policy: Keep all historical versions in git
 **Purpose:** Test single function/method in isolation
 
 **Characteristics:**
+
 - Fast (<1ms each)
 - Isolated (mock dependencies)
 - Focused (one assertion per test)
 
 **Rust Pattern:**
+
 ```rust
 #[cfg(test)]
 mod tests {
@@ -69,24 +72,26 @@ mod tests {
 ```
 
 **TypeScript Pattern:**
-```typescript
-import { describe, it, expect } from 'vitest'
 
-describe('Feature Name', () => {
-  it('should do specific thing', () => {
+```typescript
+import { describe, it, expect } from "vitest";
+
+describe("Feature Name", () => {
+  it("should do specific thing", () => {
     // Arrange
-    const input = setupTestData()
+    const input = setupTestData();
 
     // Act
-    const result = functionUnderTest(input)
+    const result = functionUnderTest(input);
 
     // Assert
-    expect(result).toEqual(expected)
-  })
-})
+    expect(result).toEqual(expected);
+  });
+});
 ```
 
 **When to Use:**
+
 - New functions added
 - Bug fixes (write failing test first)
 - Refactoring (tests prevent regressions)
@@ -98,15 +103,18 @@ describe('Feature Name', () => {
 **Purpose:** Test multiple modules working together
 
 **Characteristics:**
+
 - Slower (10-100ms each)
 - Uses real data (not mocks)
 - Tests interactions between systems
 
 **Example Locations:**
+
 - Rust: `crates/resume-core/tests/`
 - TypeScript: `app/api/**/__tests__/route.test.ts`
 
 **When to Use:**
+
 - Testing API routes
 - Testing data pipelines
 - Testing cross-module interactions
@@ -122,6 +130,7 @@ describe('Feature Name', () => {
 **Tool:** `proptest` (Rust)
 
 **Example:**
+
 ```rust
 proptest! {
     #[test]
@@ -138,6 +147,7 @@ proptest! {
 ```
 
 **When to Use:**
+
 - Testing algorithms with mathematical invariants
 - Validating bounds (scores must be 0-1)
 - Finding edge cases humans miss
@@ -151,12 +161,14 @@ proptest! {
 **Example:** `crates/resume-core/tests/pdf_permutation.rs`
 
 **What It Does:**
+
 - Generates PDFs for all 6 role profiles
 - Analyzes PDF size, generation time, page count
 - Saves baseline PDFs for visual inspection
 - Validates consistency across profiles
 
 **When to Use:**
+
 - Features with multiple variants (role profiles)
 - Ensuring consistency across configurations
 - Regression detection (compare to baselines)
@@ -175,6 +187,7 @@ src/
 ```
 
 **Advantages:**
+
 - Tests close to implementation
 - Easy to find relevant tests
 - Clear module boundaries
@@ -194,6 +207,7 @@ components/
 ```
 
 **Advantages:**
+
 - Clear separation of test code
 - Easy to exclude from production builds
 - Follows Next.js conventions
@@ -210,6 +224,7 @@ crates/resume-core/tests/
 ```
 
 **Advantages:**
+
 - Heavy tests separated from fast unit tests
 - Shared test utilities
 - Can run independently
@@ -223,6 +238,7 @@ crates/resume-core/tests/
 **Pattern:** `test_<what>_<scenario>`
 
 **Examples:**
+
 - `test_tag_relevance_perfect_match()`
 - `test_company_multiplier_min_priority()`
 - `test_select_bullets_respects_max_count()`
@@ -232,6 +248,7 @@ crates/resume-core/tests/
 **Pattern:** `it('should <expected behavior>')`
 
 **Examples:**
+
 - `it('should allow first request')`
 - `it('should block requests after limit exceeded')`
 - `it('should reset after window expires')`
@@ -244,18 +261,19 @@ crates/resume-core/tests/
 
 ### Target Coverage by Category
 
-| Category | Target | Rationale |
-|----------|--------|-----------|
-| **Core Business Logic** | 100% | Scoring, selection - mission critical |
-| **API Routes** | 80%+ | User-facing, security critical |
-| **Utilities** | 75%+ | Reusable, high leverage |
-| **Components** | 60%+ | UI will be tested via E2E (planned - Phase 5.9) + unit |
-| **Generated Code** | 0% | Don't test generated files |
-| **Scripts** | 0% | Deployment tools, not production |
+| Category                | Target | Rationale                                              |
+| ----------------------- | ------ | ------------------------------------------------------ |
+| **Core Business Logic** | 100%   | Scoring, selection - mission critical                  |
+| **API Routes**          | 80%+   | User-facing, security critical                         |
+| **Utilities**           | 75%+   | Reusable, high leverage                                |
+| **Components**          | 60%+   | UI will be tested via E2E (planned - Phase 5.9) + unit |
+| **Generated Code**      | 0%     | Don't test generated files                             |
+| **Scripts**             | 0%     | Deployment tools, not production                       |
 
 ### What NOT to Test
 
 **Excluded from Coverage:**
+
 - Generated TypeScript types (`lib/types/generated-*.ts`)
 - Next.js pages (`app/**/page.tsx` - integration tested)
 - Static metadata (`app/icon.tsx`, `app/robots.ts`)
@@ -271,28 +289,30 @@ crates/resume-core/tests/
 ### XSS Prevention
 
 **Test Pattern:**
+
 ```typescript
-it('sanitizes javascript: protocol', () => {
-  const malicious = '[Link](javascript:alert(1))'
-  const sanitized = parseMarkdownLinks(malicious)
-  expect(sanitized).not.toContain('javascript:')
-})
+it("sanitizes javascript: protocol", () => {
+  const malicious = "[Link](javascript:alert(1))";
+  const sanitized = parseMarkdownLinks(malicious);
+  expect(sanitized).not.toContain("javascript:");
+});
 ```
 
 ### Rate Limiting
 
 **Test Pattern:**
+
 ```typescript
-it('blocks requests after limit exceeded', async () => {
+it("blocks requests after limit exceeded", async () => {
   // Make 5 requests (limit)
   for (let i = 0; i < 5; i++) {
-    await checkRateLimit(ip)
+    await checkRateLimit(ip);
   }
 
   // 6th request should be blocked
-  const result = await checkRateLimit(ip)
-  expect(result.allowed).toBe(false)
-})
+  const result = await checkRateLimit(ip);
+  expect(result.allowed).toBe(false);
+});
 ```
 
 ### CAPTCHA Verification
@@ -308,11 +328,13 @@ it('blocks requests after limit exceeded', async () => {
 **Philosophy:** Integration tests use actual `resume-data.json`
 
 **Why?**
+
 - Catches schema mismatches immediately
 - Validates with real structure complexity
 - Detects drift between Rust ↔ TypeScript types
 
 **Implementation:**
+
 ```rust
 pub fn load_resume_data() -> ResumeData {
     // Loads actual data/resume-data.json
@@ -322,11 +344,12 @@ pub fn load_resume_data() -> ResumeData {
 ### Sanitized Test Data
 
 **For sensitive data (contact info):**
+
 ```typescript
 export async function loadSanitizedResumeData() {
-  const data = await import('@/data/resume-data.json')
+  const data = await import("@/data/resume-data.json");
   // Replace real email with test@example.com
-  return sanitize(data)
+  return sanitize(data);
 }
 ```
 
@@ -350,11 +373,13 @@ export async function loadSanitizedResumeData() {
 ## Test Execution Speed
 
 **Targets:**
+
 - Unit tests: <1ms each
 - Integration tests: <100ms each
 - Full suite: <10s total
 
 **Why Speed Matters:**
+
 - Enables continuous testing during development
 - Fast feedback loop = TDD-friendly
 - No excuse not to run frequently
@@ -370,10 +395,12 @@ export async function loadSanitizedResumeData() {
 **Philosophy:** Use real data where possible
 
 **When to Mock:**
+
 - External API calls (if any)
 - File system operations (sometimes)
 
 **Example:**
+
 ```rust
 // Don't mock - use real data
 let resume = load_resume_data();
@@ -384,29 +411,32 @@ let resume = load_resume_data();
 ### TypeScript: Strategic Mocking
 
 **What to Mock:**
+
 - Cloudflare Turnstile responses
 - Environment variables (secrets)
 - Fetch API (external services)
 - Rate limit state (per-test isolation)
 
 **What NOT to Mock:**
+
 - Domain logic (test the real thing)
 - Data structures (use real resume data)
 
 **Implementation:**
+
 ```typescript
 // Mock external dependency
 export function mockTurnstileSuccess() {
   global.fetch = vi.fn(() =>
     Promise.resolve({
-      json: () => ({ success: true })
-    })
-  )
+      json: () => ({ success: true }),
+    }),
+  );
 }
 
 // Use real domain logic
-import { scoreResumeBullet } from '@/lib/scoring'
-const score = scoreResumeBullet(bullet, profile) // Real function
+import { scoreResumeBullet } from "@/lib/scoring";
+const score = scoreResumeBullet(bullet, profile); // Real function
 ```
 
 ---
@@ -418,11 +448,13 @@ const score = scoreResumeBullet(bullet, profile) // Real function
 **Tool:** `cargo-llvm-cov`
 
 **Installation:**
+
 ```bash
 cargo install cargo-llvm-cov
 ```
 
 **Commands:**
+
 ```bash
 just coverage-rust        # Generate HTML report
 just coverage-rust-open   # Open in browser
@@ -437,6 +469,7 @@ just coverage-rust-open   # Open in browser
 **Configuration:** `vitest.config.ts`
 
 **Commands:**
+
 ```bash
 just coverage-ts          # Generate HTML report
 just coverage-ts-open     # Open in browser
@@ -453,6 +486,7 @@ just coverage-ts-open     # Open in browser
 **Location:** `crates/resume-core/tests/common/mod.rs`
 
 **Utilities:**
+
 ```rust
 pub fn get_project_root() -> PathBuf
 pub fn get_resume_data_path() -> PathBuf
@@ -466,6 +500,7 @@ pub fn load_resume_data() -> ResumeData
 **Location:** `lib/__tests__/helpers/`
 
 **Utilities:**
+
 - `mock-data.ts` - Resume data loading with sanitization
 - `mock-fetch.ts` - HTTP mocking for Turnstile
 - `mock-env.ts` - Environment variable mocking
@@ -478,6 +513,7 @@ pub fn load_resume_data() -> ResumeData
 ### Pre-Commit Hooks
 
 **Enforced via Husky + lint-staged:**
+
 - ESLint auto-fix
 - TypeScript type check
 - Vitest run
@@ -491,10 +527,12 @@ pub fn load_resume_data() -> ResumeData
 ### GitHub Actions
 
 **Triggers:**
+
 - Every push to main
 - Every pull request
 
 **Checks:**
+
 - All tests pass
 - Coverage thresholds met
 - Type drift detection

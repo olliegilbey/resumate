@@ -123,8 +123,8 @@
       }
     },
     {
-      "id": "developer-relations",
-      "name": "Developer Relations",
+      "id": "developer-relations-lead",
+      "name": "Developer Relations Lead",
       "description": "Community building and developer advocacy",
       "tagWeights": {
         "developer-relations": 1.0,

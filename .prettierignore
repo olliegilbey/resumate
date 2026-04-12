@@ -1,0 +1,25 @@
+# Build outputs
+.next/
+out/
+build/
+coverage/
+target/
+node_modules/
+public/wasm/
+
+# Lockfiles
+bun.lock
+Cargo.lock
+tsconfig.tsbuildinfo
+
+# Generated types / schemas (regenerate via `bun types:generate`)
+schemas/resume.schema.json
+lib/types/generated-resume.ts
+
+# Local logs / artifacts
+test-outputs/
+pdf-logs/
+.logs/
+
+# User data (PII, gitignored) — anchor to repo root so components/data/ etc. are still formatted
+/data/

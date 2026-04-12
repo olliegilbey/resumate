@@ -1,239 +1,239 @@
-"use client"
+"use client";
 
-import { useState, useRef, useEffect, useCallback } from "react"
-import { Button } from "@/components/ui/Button"
-import { GlassPanel } from "@/components/ui/GlassPanel"
-import { ContactLinks } from "@/components/ui/ContactLinks"
-import Link from "next/link"
-import { ArrowRight, Briefcase, Download, AlertCircle, X, Calendar } from "lucide-react"
-import resumeData from "@/data/resume-data.json"
-import { Turnstile, type TurnstileInstance } from "@marsidev/react-turnstile"
-import { useTheme } from "@/contexts/ThemeContext"
-import { useTrackEvent } from "@/lib/posthog-client"
+import { useState, useRef, useEffect, useCallback } from "react";
+import { Button } from "@/components/ui/Button";
+import { GlassPanel } from "@/components/ui/GlassPanel";
+import { ContactLinks } from "@/components/ui/ContactLinks";
+import Link from "next/link";
+import { ArrowRight, Briefcase, Download, AlertCircle, X, Calendar } from "lucide-react";
+import resumeData from "@/data/resume-data.json";
+import { Turnstile, type TurnstileInstance } from "@marsidev/react-turnstile";
+import { useTheme } from "@/contexts/ThemeContext";
+import { useTrackEvent } from "@/lib/posthog-client";
 
 export default function HomePage() {
-  const { theme } = useTheme()
-  const [showTurnstileModal, setShowTurnstileModal] = useState(false)
-  const [isVerifying, setIsVerifying] = useState(false)
-  const [verifiedToken, setVerifiedToken] = useState<string | null>(null)
-  const [errorMessage, setErrorMessage] = useState<string | null>(null)
-  const [downloadInitiated, setDownloadInitiated] = useState(false)
-  const turnstileRef = useRef<TurnstileInstance>(null)
-  const autoDownloadTimerRef = useRef<NodeJS.Timeout | null>(null)
+  const { theme } = useTheme();
+  const [showTurnstileModal, setShowTurnstileModal] = useState(false);
+  const [isVerifying, setIsVerifying] = useState(false);
+  const [verifiedToken, setVerifiedToken] = useState<string | null>(null);
+  const [errorMessage, setErrorMessage] = useState<string | null>(null);
+  const [downloadInitiated, setDownloadInitiated] = useState(false);
+  const turnstileRef = useRef<TurnstileInstance>(null);
+  const autoDownloadTimerRef = useRef<NodeJS.Timeout | null>(null);
 
   // Analytics tracking
-  const trackEvent = useTrackEvent()
-  const flowStartTimeRef = useRef<number | null>(null)
-  const verifiedTimeRef = useRef<number | null>(null)
+  const trackEvent = useTrackEvent();
+  const flowStartTimeRef = useRef<number | null>(null);
+  const verifiedTimeRef = useRef<number | null>(null);
 
   // Validate Turnstile site key
-  const siteKey = process.env.NEXT_PUBLIC_TURNSTILE_SITE_KEY
+  const siteKey = process.env.NEXT_PUBLIC_TURNSTILE_SITE_KEY;
   if (!siteKey) {
-    console.error('NEXT_PUBLIC_TURNSTILE_SITE_KEY is not configured')
+    console.error("NEXT_PUBLIC_TURNSTILE_SITE_KEY is not configured");
   }
 
   // When Turnstile succeeds, store token
   const handleTurnstileSuccess = (token: string) => {
-    console.log('Turnstile verified, token ready')
-    const now = Date.now()
-    verifiedTimeRef.current = now
+    console.warn("Turnstile verified, token ready");
+    const now = Date.now();
+    verifiedTimeRef.current = now;
 
     // Track verification with turnstile duration
     if (flowStartTimeRef.current) {
-      trackEvent('contact_card_verified', {
-        download_type: 'vcard',
+      trackEvent("contact_card_verified", {
+        download_type: "vcard",
         turnstile_duration_ms: now - flowStartTimeRef.current,
-      })
+      });
     }
 
-    setVerifiedToken(token)
-    setIsVerifying(false)
-    setErrorMessage(null)
-  }
+    setVerifiedToken(token);
+    setIsVerifying(false);
+    setErrorMessage(null);
+  };
 
   const handleOpenModal = () => {
-    const now = Date.now()
-    flowStartTimeRef.current = now
-    verifiedTimeRef.current = null
+    const now = Date.now();
+    flowStartTimeRef.current = now;
+    verifiedTimeRef.current = null;
 
-    trackEvent('contact_card_initiated', {
-      download_type: 'vcard',
+    trackEvent("contact_card_initiated", {
+      download_type: "vcard",
       timestamp: now,
-    })
+    });
 
-    setShowTurnstileModal(true)
-    setVerifiedToken(null)
-    setErrorMessage(null)
-    setDownloadInitiated(false)
-  }
+    setShowTurnstileModal(true);
+    setVerifiedToken(null);
+    setErrorMessage(null);
+    setDownloadInitiated(false);
+  };
 
   // Manual download button click handler
   const handleManualDownloadClick = (e: React.MouseEvent<HTMLAnchorElement>) => {
-    e.preventDefault()
+    e.preventDefault();
 
     // Cancel auto-download timer if it's pending
     if (autoDownloadTimerRef.current) {
-      clearTimeout(autoDownloadTimerRef.current)
-      autoDownloadTimerRef.current = null
+      clearTimeout(autoDownloadTimerRef.current);
+      autoDownloadTimerRef.current = null;
     }
 
     // If download already initiated, don't trigger again
     if (downloadInitiated) {
-      return
+      return;
     }
 
     // Mark as initiated and allow the download
-    setDownloadInitiated(true)
+    setDownloadInitiated(true);
 
     // Trigger download immediately
     if (verifiedToken) {
       // Track download with timing (client-side: funnel completion + duration)
       // Server separately tracks contact_card_served (delivery confirmation + geoIP)
       if (flowStartTimeRef.current) {
-        trackEvent('contact_card_downloaded', {
-          download_type: 'vcard',
+        trackEvent("contact_card_downloaded", {
+          download_type: "vcard",
           total_duration_ms: Date.now() - flowStartTimeRef.current,
-        })
+        });
       }
 
-      const link = document.createElement('a')
-      link.href = `/api/contact-card?token=${encodeURIComponent(verifiedToken)}`
-      link.style.display = 'none'
-      document.body.appendChild(link)
-      link.click()
-      document.body.removeChild(link)
+      const link = document.createElement("a");
+      link.href = `/api/contact-card?token=${encodeURIComponent(verifiedToken)}`;
+      link.style.display = "none";
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
     }
 
     // Close modal after download starts
     setTimeout(() => {
-      flowStartTimeRef.current = null
-      verifiedTimeRef.current = null
-      setShowTurnstileModal(false)
-      setVerifiedToken(null)
-      setErrorMessage(null)
-      setDownloadInitiated(false)
-    }, 1000)
-  }
+      flowStartTimeRef.current = null;
+      verifiedTimeRef.current = null;
+      setShowTurnstileModal(false);
+      setVerifiedToken(null);
+      setErrorMessage(null);
+      setDownloadInitiated(false);
+    }, 1000);
+  };
 
   const handleCloseModal = useCallback(() => {
-    if (isVerifying) return // Don't close while verifying
+    if (isVerifying) return; // Don't close while verifying
 
     // Clear auto-download timer if pending
     if (autoDownloadTimerRef.current) {
-      clearTimeout(autoDownloadTimerRef.current)
-      autoDownloadTimerRef.current = null
+      clearTimeout(autoDownloadTimerRef.current);
+      autoDownloadTimerRef.current = null;
     }
 
     // Track cancellation if download wasn't completed
     if (flowStartTimeRef.current) {
-      trackEvent('contact_card_cancelled', {
-        download_type: 'vcard',
-        stage: verifiedTimeRef.current ? 'verified' : 'turnstile',
+      trackEvent("contact_card_cancelled", {
+        download_type: "vcard",
+        stage: verifiedTimeRef.current ? "verified" : "turnstile",
         duration_ms: Date.now() - flowStartTimeRef.current,
-      })
-      flowStartTimeRef.current = null
-      verifiedTimeRef.current = null
+      });
+      flowStartTimeRef.current = null;
+      verifiedTimeRef.current = null;
     }
 
-    setShowTurnstileModal(false)
-    setVerifiedToken(null)
-    setErrorMessage(null)
-    setDownloadInitiated(false)
-    turnstileRef.current?.reset()
-  }, [isVerifying, trackEvent])
+    setShowTurnstileModal(false);
+    setVerifiedToken(null);
+    setErrorMessage(null);
+    setDownloadInitiated(false);
+    turnstileRef.current?.reset();
+  }, [isVerifying, trackEvent]);
 
   const handleTurnstileError = useCallback(() => {
     if (flowStartTimeRef.current) {
-      trackEvent('contact_card_error', {
-        download_type: 'vcard',
-        error_code: 'TN_001',
-        error_category: 'turnstile',
-        error_stage: 'turnstile',
-        error_message: 'Turnstile verification failed',
+      trackEvent("contact_card_error", {
+        download_type: "vcard",
+        error_code: "TN_001",
+        error_category: "turnstile",
+        error_stage: "turnstile",
+        error_message: "Turnstile verification failed",
         is_retryable: true,
         duration_ms: Date.now() - flowStartTimeRef.current,
-      })
+      });
     }
-    setErrorMessage('Verification failed. Please try again.')
-    setIsVerifying(false)
-  }, [trackEvent])
+    setErrorMessage("Verification failed. Please try again.");
+    setIsVerifying(false);
+  }, [trackEvent]);
 
   const handleTurnstileExpire = useCallback(() => {
     if (flowStartTimeRef.current) {
-      trackEvent('contact_card_error', {
-        download_type: 'vcard',
-        error_code: 'TN_002',
-        error_category: 'turnstile',
-        error_stage: 'turnstile',
-        error_message: 'Turnstile verification expired',
+      trackEvent("contact_card_error", {
+        download_type: "vcard",
+        error_code: "TN_002",
+        error_category: "turnstile",
+        error_stage: "turnstile",
+        error_message: "Turnstile verification expired",
         is_retryable: true,
         duration_ms: Date.now() - flowStartTimeRef.current,
-      })
+      });
     }
-    setErrorMessage('Verification expired. Please refresh and try again.')
-    setIsVerifying(false)
-    setVerifiedToken(null)
-  }, [trackEvent])
+    setErrorMessage("Verification expired. Please refresh and try again.");
+    setIsVerifying(false);
+    setVerifiedToken(null);
+  }, [trackEvent]);
 
   // Auto-download when token is verified (with slight delay for UX)
   useEffect(() => {
     if (verifiedToken && !downloadInitiated) {
-      console.log('Auto-triggering download...')
+      console.warn("Auto-triggering download...");
 
       const timer = setTimeout(async () => {
         // Mark as initiated WHEN download actually triggers (not before)
-        setDownloadInitiated(true)
+        setDownloadInitiated(true);
 
         // Track download with timing (client-side: funnel completion + duration)
         // Server separately tracks contact_card_served (delivery confirmation + geoIP)
         if (flowStartTimeRef.current) {
-          trackEvent('contact_card_downloaded', {
-            download_type: 'vcard',
+          trackEvent("contact_card_downloaded", {
+            download_type: "vcard",
             total_duration_ms: Date.now() - flowStartTimeRef.current,
-          })
+          });
         }
 
         // Create a temporary anchor element and trigger download
-        const link = document.createElement('a')
-        link.href = `/api/contact-card?token=${encodeURIComponent(verifiedToken)}`
-        link.style.display = 'none'
-        document.body.appendChild(link)
-        link.click()
-        document.body.removeChild(link)
+        const link = document.createElement("a");
+        link.href = `/api/contact-card?token=${encodeURIComponent(verifiedToken)}`;
+        link.style.display = "none";
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
 
         // Wait briefly to show "Download Starting..." state
-        await new Promise(resolve => setTimeout(resolve, 500))
+        await new Promise((resolve) => setTimeout(resolve, 500));
 
         // Close modal after download starts
         setTimeout(() => {
-          flowStartTimeRef.current = null
-          verifiedTimeRef.current = null
-          setShowTurnstileModal(false)
-          setVerifiedToken(null)
-          setErrorMessage(null)
-          setDownloadInitiated(false)
-        }, 1500)
-      }, 300) // Short delay to show success state - feels snappier
+          flowStartTimeRef.current = null;
+          verifiedTimeRef.current = null;
+          setShowTurnstileModal(false);
+          setVerifiedToken(null);
+          setErrorMessage(null);
+          setDownloadInitiated(false);
+        }, 1500);
+      }, 300); // Short delay to show success state - feels snappier
 
-      autoDownloadTimerRef.current = timer
+      autoDownloadTimerRef.current = timer;
       return () => {
-        clearTimeout(timer)
-        autoDownloadTimerRef.current = null
-      }
+        clearTimeout(timer);
+        autoDownloadTimerRef.current = null;
+      };
     }
-  }, [verifiedToken, downloadInitiated, trackEvent])
+  }, [verifiedToken, downloadInitiated, trackEvent]);
 
   // Handle ESC key to close modal
   useEffect(() => {
     const handleEscape = (e: KeyboardEvent) => {
-      if (e.key === 'Escape' && showTurnstileModal && !isVerifying) {
-        handleCloseModal()
+      if (e.key === "Escape" && showTurnstileModal && !isVerifying) {
+        handleCloseModal();
       }
-    }
+    };
 
-    window.addEventListener('keydown', handleEscape)
-    return () => window.removeEventListener('keydown', handleEscape)
-  }, [showTurnstileModal, isVerifying, handleCloseModal])
+    window.addEventListener("keydown", handleEscape);
+    return () => window.removeEventListener("keydown", handleEscape);
+  }, [showTurnstileModal, isVerifying, handleCloseModal]);
   return (
     <main className="min-h-screen">
       {/* Hero Section */}
@@ -241,15 +241,15 @@ export default function HomePage() {
         <div className="max-w-4xl mx-auto px-4 md:px-8 pt-16 pb-8 md:pt-24 md:pb-12">
           <div className="text-center">
             <h1 className="text-5xl md:text-7xl font-bold tracking-tight mb-6 pb-2 bg-gradient-to-r from-cyan-600 via-blue-600 to-purple-600 dark:from-blue-500 dark:via-purple-500 dark:to-pink-500 bg-clip-text text-transparent">
-              {resumeData?.personal?.name || 'Name Not Available'}
+              {resumeData?.personal?.name || "Name Not Available"}
             </h1>
 
             {/* Contact Links - Compact Horizontal Style */}
             {resumeData?.personal && (
               <ContactLinks
-                linkedin={resumeData.personal.linkedin || ''}
-                github={resumeData.personal.github || ''}
-                location={resumeData.personal.location || ''}
+                linkedin={resumeData.personal.linkedin || ""}
+                github={resumeData.personal.github || ""}
+                location={resumeData.personal.location || ""}
                 variant="compact"
               />
             )}
@@ -273,11 +273,7 @@ export default function HomePage() {
                   rel="noopener noreferrer"
                   className="w-full sm:w-auto"
                 >
-                  <Button
-                    size="lg"
-                    variant="outline"
-                    className="w-full min-w-[200px]"
-                  >
+                  <Button size="lg" variant="outline" className="w-full min-w-[200px]">
                     <Calendar className="mr-2 h-4 w-4" />
                     Book in my Cal
                   </Button>
@@ -327,8 +323,8 @@ export default function HomePage() {
                         <p className="text-sm text-red-800">{errorMessage}</p>
                         <button
                           onClick={() => {
-                            setErrorMessage(null)
-                            turnstileRef.current?.reset()
+                            setErrorMessage(null);
+                            turnstileRef.current?.reset();
                           }}
                           className="text-sm text-red-600 hover:text-red-800 font-medium mt-1"
                         >
@@ -347,8 +343,18 @@ export default function HomePage() {
                     <div className="flex flex-col items-center justify-center py-8">
                       <div className="text-center mb-6">
                         <div className="w-16 h-16 bg-green-100 dark:bg-green-900/30 rounded-full flex items-center justify-center mx-auto mb-4">
-                          <svg className="w-8 h-8 text-green-600 dark:text-green-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                          <svg
+                            className="w-8 h-8 text-green-600 dark:text-green-400"
+                            fill="none"
+                            viewBox="0 0 24 24"
+                            stroke="currentColor"
+                          >
+                            <path
+                              strokeLinecap="round"
+                              strokeLinejoin="round"
+                              strokeWidth={2}
+                              d="M5 13l4 4L19 7"
+                            />
                           </svg>
                         </div>
                         <p className="text-lg font-medium text-slate-900 dark:text-slate-100 mb-2">
@@ -377,13 +383,13 @@ export default function HomePage() {
                       <div className="relative z-10">
                         <Turnstile
                           ref={turnstileRef}
-                          siteKey={siteKey || ''}
+                          siteKey={siteKey || ""}
                           onSuccess={handleTurnstileSuccess}
                           onError={handleTurnstileError}
                           onExpire={handleTurnstileExpire}
                           options={{
                             theme: theme,
-                            size: 'normal',
+                            size: "normal",
                           }}
                         />
                       </div>
@@ -407,14 +413,17 @@ export default function HomePage() {
       {/* About Section */}
       <div className="max-w-3xl mx-auto px-4 md:px-8 py-12">
         <GlassPanel padding="xl" radius="2xl">
-          <h2 className="text-2xl font-semibold text-slate-900 dark:text-slate-100 mb-4">About Me</h2>
+          <h2 className="text-2xl font-semibold text-slate-900 dark:text-slate-100 mb-4">
+            About Me
+          </h2>
           <div className="prose prose-slate max-w-none">
             <p className="text-lg text-slate-700 dark:text-slate-200 leading-relaxed mb-4">
-              {resumeData?.summary || `Professional with expertise in various domains. Based in ${resumeData?.personal?.location || 'various locations'}.`}
+              {resumeData?.summary ||
+                `Professional with expertise in various domains. Based in ${resumeData?.personal?.location || "various locations"}.`}
             </p>
             {resumeData?.interests && resumeData.interests.length > 0 && (
               <p className="text-lg text-slate-700 dark:text-slate-200 leading-relaxed">
-                When not working, you&apos;ll find me exploring: {resumeData.interests.join(', ')}.
+                When not working, you&apos;ll find me exploring: {resumeData.interests.join(", ")}.
               </p>
             )}
           </div>
@@ -425,9 +434,12 @@ export default function HomePage() {
       <div className="max-w-3xl mx-auto px-4 md:px-8 pb-16">
         <GlassPanel padding="xl" radius="2xl" align="center">
           <Briefcase className="h-12 w-12 text-blue-600 dark:text-blue-400 mx-auto mb-4" />
-          <h2 className="text-2xl font-semibold text-slate-900 dark:text-slate-100 mb-3">Looking to Hire?</h2>
+          <h2 className="text-2xl font-semibold text-slate-900 dark:text-slate-100 mb-3">
+            Looking to Hire?
+          </h2>
           <p className="text-slate-600 dark:text-slate-300 mb-6 max-w-lg mx-auto">
-            View my full professional experience, download my resume, or explore my work history interactively.
+            View my full professional experience, download my resume, or explore my work history
+            interactively.
           </p>
           <Link href="/resume">
             <Button size="lg" variant="gradient">
@@ -438,5 +450,5 @@ export default function HomePage() {
         </GlassPanel>
       </div>
     </main>
-  )
+  );
 }

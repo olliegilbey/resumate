@@ -1,0 +1,23 @@
+{
+  "$schema": "https://unpkg.com/knip@6/schema.json",
+  "ignore": [
+    "public/theme-init.js",
+    "public/wasm/resume_wasm.js",
+    "scripts/test-bullet-selection-api.ts",
+    "scripts/transform-resume-data.ts",
+    "lib/__tests__/helpers/mock-data.ts",
+    "lib/analytics/types.ts",
+    "lib/analytics/errors.ts",
+    "lib/analytics/events.ts",
+    "lib/posthog-client.tsx",
+    "lib/vcard.ts",
+    "lib/__tests__/helpers/mock-fetch.ts",
+    "lib/__tests__/helpers/rate-limit-helper.ts",
+    "lib/types/generated-resume.ts",
+    "types/resume.ts",
+    "types/wasm.d.ts"
+  ],
+  "ignoreDependencies": ["@eslint/eslintrc", "playwright", "postcss"],
+  "ignoreExportsUsedInFile": true,
+  "ignoreBinaries": []
+}

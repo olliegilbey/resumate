@@ -21,6 +21,7 @@ retention_policy: All versions preserved in git
 **Flow:** TypeScript payload → WASM boundary → Rust Typst compiler → PDF bytes → Browser download
 
 **Security Model:**
+
 - Server-side bullet selection (rate-limited, Turnstile-protected)
 - Client receives only selected bullets (not full resume JSON)
 - PDF generation happens client-side (server never sees final PDF)
@@ -42,6 +43,7 @@ mv LiberationSerif-Bold.ttf fonts/
 ```
 
 **Output:** `typst/fonts/`
+
 - `LiberationSerif-Regular.ttf` (394KB)
 - `LiberationSerif-Bold.ttf` (370KB)
 - **Total:** ~764KB (Regular + Bold only)
@@ -73,6 +75,7 @@ wasm-pack build crates/wasm \
 ```
 
 **Compiler Flags (Cargo.toml profile.release):**
+
 ```toml
 opt-level = "z"        # Size optimization
 lto = true             # Link-time optimization
@@ -82,6 +85,7 @@ strip = true           # Remove debug symbols
 ```
 
 **Output:** `public/wasm/`
+
 - `resume_wasm_bg.wasm` - See [METRICS.md](./METRICS.md) for current sizes
 - `resume_wasm.js` - JS bindings
 - `resume_wasm.d.ts` - TypeScript types
@@ -97,6 +101,7 @@ wasm-opt = ["-Oz", "--enable-bulk-memory", "--enable-nontrapping-float-to-int"]
 ```
 
 **Effect:**
+
 - Significant size reduction via wasm-opt
 - See [METRICS.md](./METRICS.md) for current raw and gzipped sizes
 
@@ -114,12 +119,14 @@ pub fn generate_pdf_typst(payload_json: &str, dev_mode: bool) -> Result<Vec<u8>,
 ```
 
 **Parameters:**
+
 - `payload_json`: Serialized `GenerationPayload` (personal info + selected bullets + role profile)
 - `dev_mode`: If true, adds build metadata page to PDF (localhost only)
 
 **Returns:** `Vec<u8>` (PDF bytes) or `JsValue` error message
 
 **Implementation:**
+
 1. Parse JSON → `GenerationPayload` struct
 2. Validate payload (name, role, weights, bullet count ≤50)
 3. Call `resume_typst::render_resume(&payload, dev_mode)`
@@ -144,19 +151,20 @@ pub fn generate_pdf_typst(payload_json: &str, dev_mode: bool) -> Result<Vec<u8>,
 
 ```typescript
 // Create module script for dynamic import
-const script = document.createElement('script')
-script.type = 'module'
+const script = document.createElement("script");
+script.type = "module";
 script.textContent = `
   import init, { generate_pdf_typst } from '/wasm/resume_wasm.js';
   await init('/wasm/resume_wasm_bg.wasm');
 
   window.__wasmReady = true;
   window.__generatePdfTypst = generate_pdf_typst;
-`
-document.head.appendChild(script)
+`;
+document.head.appendChild(script);
 ```
 
 **Why Dynamic:**
+
 - Non-blocking (user sees UI before WASM download - see [METRICS.md](./METRICS.md) for current gzipped size)
 - Browser caching (instant subsequent loads)
 - Progress indicator during first load
@@ -172,19 +180,22 @@ const payload = {
   skills: resumeData.skills,
   summary: resumeData.summary,
   metadata: null,
-}
+};
 
-const isDevMode = window.location.hostname === 'localhost'
-const generatePdfTypst = window.__generatePdfTypst as (payload: string, devMode: boolean) => Uint8Array
-const pdfBytes = generatePdfTypst(JSON.stringify(payload), isDevMode)
+const isDevMode = window.location.hostname === "localhost";
+const generatePdfTypst = window.__generatePdfTypst as (
+  payload: string,
+  devMode: boolean,
+) => Uint8Array;
+const pdfBytes = generatePdfTypst(JSON.stringify(payload), isDevMode);
 
 // Download
-const blob = new Blob([pdfBytes.slice()], { type: 'application/pdf' })
-const url = URL.createObjectURL(blob)
-const link = document.createElement('a')
-link.href = url
-link.download = `${fullName}-${roleName}-${timestamp}.pdf`
-link.click()
+const blob = new Blob([pdfBytes.slice()], { type: "application/pdf" });
+const url = URL.createObjectURL(blob);
+const link = document.createElement("a");
+link.href = url;
+link.download = `${fullName}-${roleName}-${timestamp}.pdf`;
+link.click();
 ```
 
 **Type Safety:** TypeScript sees `Uint8Array` return type (wasm-bindgen generates `.d.ts` files).
@@ -205,6 +216,7 @@ ecow = "0.2"               # Efficient clone-on-write strings
 ```
 
 **Tree-Shaking Opportunities:**
+
 - `typst` uses default features (no feature flags set)
 - Potential savings: Disable unused Typst features (bibliography, math layout, SVG)
 - Investigate: `cargo tree -i typst` to see feature dependencies
@@ -217,16 +229,19 @@ ecow = "0.2"               # Efficient clone-on-write strings
 **Size limits:** See `justfile` lines 11-34 (single source of truth)
 
 **Components:**
+
 - Liberation Serif fonts: 764KB (embedded at compile-time)
 - WASM binary: Raw + gzipped sizes in METRICS.md
 - JS bindings: ~16KB (resume_wasm.js)
 - TypeScript defs: ~6KB (type safety)
 
 **Browser loading:**
+
 - First load: ~2-5s (depends on connection)
 - Subsequent loads: ~0ms (browser cached)
 
 **Historical Context:**
+
 - Original: Full Typst assets (~8MB fonts) → 24MB WASM, ~10MB gzipped
 - Current: Liberation Serif only → Smaller binary (see METRICS.md)
 - Savings: ~37% reduction from original
@@ -248,6 +263,7 @@ just dev     # Dev server (uses cached WASM if exists)
 ## Font Directory Status
 
 ### Font Directory: `typst/fonts/`
+
 - `LiberationSerif-Regular.ttf` (394KB)
 - `LiberationSerif-Bold.ttf` (370KB)
 - `README.md` (936B)
@@ -260,15 +276,18 @@ just dev     # Dev server (uses cached WASM if exists)
 **WASM size:** See `docs/METRICS.md` for current gzipped transfer size
 
 **WASM Initialization:**
+
 - First load (cold): ~2-5s (download + parse + instantiate)
 - Cached (warm): ~500ms (parse + instantiate only)
 
 **PDF Generation (typical):**
+
 - Small resume (10 bullets): ~200ms
 - Medium resume (20 bullets): ~500ms
 - Large resume (50 bullets): ~800ms
 
 **Total Time:**
+
 - First visit: ~2-6s
 - Subsequent: ~1-2s
 
@@ -282,6 +301,7 @@ just dev     # Dev server (uses cached WASM if exists)
 - Validates: Payload structure, scoring weights (sum ≈ 1.0), bullet count (≤50), empty fields
 
 **Integration Test:**
+
 ```bash
 just dev
 # Visit http://localhost:3000/resume
@@ -290,6 +310,7 @@ just dev
 ```
 
 **Verify WASM Build:**
+
 ```bash
 just wasm
 # Expected output: "[INFO]: Optimizing wasm binaries with `wasm-opt`..."
@@ -311,17 +332,20 @@ just wasm
 ## Key File References
 
 **WASM Pipeline:**
+
 - WASM exports: `crates/resume-wasm/src/lib.rs`
 - Font embedding: `crates/resume-typst/src/fonts.rs`
 - Build script: `scripts/check-wasm.sh` (validation), `justfile` (build)
 - Optimization: `crates/resume-wasm/Cargo.toml`
 
 **TypeScript Integration:**
+
 - Component: `components/data/ResumeDownload.tsx:305-330`
 - Dynamic loading: ES module script injection
 - Type safety: wasm-bindgen generates `.d.ts` files
 
 **Critical Facts:**
+
 - Fonts embedded at compile-time (not runtime)
 - Size: See `docs/METRICS.md` and `justfile` for limits
 - First load: ~2-5s, subsequent: ~500ms (cached)

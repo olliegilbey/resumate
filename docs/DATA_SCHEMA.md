@@ -24,6 +24,7 @@ TypeScript Types (frontend)
 ```
 
 **Implementation:**
+
 ```
 crates/shared-types/src/lib.rs (Rust with schemars)
   ↓ cargo run --bin generate_schema
@@ -35,6 +36,7 @@ types/resume.ts ← ALWAYS IMPORT FROM HERE
 ```
 
 **Why this approach:**
+
 - ✅ Single source of truth (Rust types)
 - ✅ Type safety across Rust and TypeScript
 - ✅ Runtime validation via JSON Schema
@@ -48,10 +50,12 @@ types/resume.ts ← ALWAYS IMPORT FROM HERE
 ### By Language
 
 **TypeScript & JSON:**
+
 - Style: `camelCase`
 - Examples: `tags`, `priority`, `scoringWeights`, `tagRelevance`
 
 **Rust:**
+
 - Style: `snake_case`
 - Examples: `tags`, `priority`, `scoring_weights`, `tag_relevance`
 
@@ -70,14 +74,15 @@ pub struct Company {
 
 ```json
 {
-    "tags": ["blockchain"],
-    "priority": 8
+  "tags": ["blockchain"],
+  "priority": 8
 }
 ```
 
 ### Field Naming Patterns
 
 **Hierarchy Fields:**
+
 - **Company-level**: `tags: string[]`, `priority: number (1-10)`
 - **Position-level**: `tags: string[]`, `priority: number (1-10)`
 - **Bullet-level**: `tags: string[]`, `priority: number (1-10)`
@@ -85,15 +90,17 @@ pub struct Company {
 All three levels use the same `tags` and `priority` field names for consistency.
 
 **Scoring Weights:**
+
 ```typescript
 interface ScoringWeights {
-    tagRelevance: number // 0.0-1.0, typically 0.6 (60%)
-    priority: number     // 0.0-1.0, typically 0.4 (40%)
-    // Must sum to 1.0 (validated in Rust)
+  tagRelevance: number; // 0.0-1.0, typically 0.6 (60%)
+  priority: number; // 0.0-1.0, typically 0.4 (40%)
+  // Must sum to 1.0 (validated in Rust)
 }
 ```
 
 **ID Field Conventions:**
+
 - Format: Kebab-case, descriptive
 - Examples: `"interchain-foundation"`, `"developer-relations-lead"`, `"icf-001"`
 
@@ -104,6 +111,7 @@ interface ScoringWeights {
 ### Data Structure
 
 The resume data follows a strict 3-level hierarchy:
+
 - **Company** (top level) - Organizations where you worked
 - **Position** (middle level) - Specific roles/titles at each company
 - **Bullet** (leaf level) - Individual achievements/responsibilities
@@ -206,6 +214,7 @@ Each level uses the generic `children` field to contain the next level, creating
 ## Field Details
 
 ### Personal Info
+
 - **name** (required): Display name
 - **email**, **phone**, **location** (optional): Contact information
 - **linkedin**, **github**, **website**, **twitter** (optional): URLs or handles
@@ -214,6 +223,7 @@ Each level uses the generic `children` field to contain the next level, creating
 ### Experience Hierarchy
 
 #### Company (Top Level)
+
 - **id** (required): Unique identifier
 - **name** (optional): Company name
 - **dateStart** (required): Start date (YYYY or YYYY-MM format)
@@ -225,6 +235,7 @@ Each level uses the generic `children` field to contain the next level, creating
 - **children** (required): Array of Position objects
 
 #### Position (Middle Level)
+
 - **id** (required): Unique identifier
 - **name** (required): Job title or role name
 - **dateStart** (required): Start date (YYYY or YYYY-MM format)
@@ -235,6 +246,7 @@ Each level uses the generic `children` field to contain the next level, creating
 - **children** (required): Array of Bullet objects
 
 #### Bullet (Leaf Level)
+
 - **id** (required): Unique identifier
 - **description** (required): The actual bullet text that appears on resume
 - **priority** (required): Bullet importance (1-10, higher = more impressive/relevant)
@@ -243,6 +255,7 @@ Each level uses the generic `children` field to contain the next level, creating
 - **link** (optional): URL to work, recording, demo, or additional context
 
 ### Role Profiles
+
 - **id** (required): Unique identifier (e.g., "product-manager")
 - **name** (required): Display name
 - **description** (optional): Description of role type
@@ -253,10 +266,12 @@ Each level uses the generic `children` field to contain the next level, creating
   - **Must sum to approximately 1.0**
 
 ### Skills
+
 - Object with category keys mapping to string arrays
 - Common categories: `technical`, `soft`, `languages`, `tools`
 
 ### Education
+
 - **id** (required): Unique identifier
 - **institution** (required): University/school name
 - **dateStart** (required): Start date (YYYY format)
@@ -269,6 +284,7 @@ Each level uses the generic `children` field to contain the next level, creating
 - **honors** (optional): Array of honors and awards
 
 ### MetaFooter (Optional)
+
 - **metaFooter** (optional): Footer text for PDF output (e.g., timestamp, version info)
 
 ---
@@ -305,6 +321,7 @@ just types-drift  # Ensures schemas/types are in sync with Rust
 ### 5. Commit
 
 Pre-commit hooks automatically:
+
 - Re-emit schemas if Rust types changed
 - Validate all JSON data files
 - Format Rust code (`cargo fmt`, `cargo clippy`)
@@ -314,15 +331,18 @@ Pre-commit hooks automatically:
 ## Validation Strategy
 
 ### Build-time Validation
+
 - **Pre-commit hooks**: Validate JSON against schema before commit
 - **CI/GitHub Actions**: Block builds if gist data is malformed
 - **Gist push**: Validate before uploading to prevent bad data
 
 ### Runtime Validation
+
 - **Rust**: Normalize `ScoringWeights` if sum ≠ 1.0 (with warning)
 - **Rust**: Validate ranges (priority 1-10, weights 0.0-1.0)
 
 ### Validation Points
+
 1. **Pre-commit**: `lint-staged` runs `validate-compendium.mjs` on `data/*.json`
 2. **Gist push**: `scripts/gist-push.js` validates before upload
 3. **Gist pull**: `scripts/fetch-gist-data.js` validates after download
@@ -390,13 +410,13 @@ just types-schema && just types-ts
 
 ```json
 {
-    "companies": [
-        {
-            "id": "example-corp",
-            "name": "Example Corp",
-            "industryTags": ["fintech", "b2b"]
-        }
-    ]
+  "companies": [
+    {
+      "id": "example-corp",
+      "name": "Example Corp",
+      "industryTags": ["fintech", "b2b"]
+    }
+  ]
 }
 ```
 
@@ -405,10 +425,12 @@ just types-schema && just types-ts
 ## Common Pitfalls
 
 ### ❌ Don't manually edit generated files
+
 - `schemas/resume.schema.json` - Generated from Rust
 - `lib/types/generated-resume.ts` - Generated from schema
 
 ### ❌ Don't mix naming styles
+
 ```typescript
 // Bad
 { "company_tags": [...] }
@@ -418,12 +440,14 @@ just types-schema && just types-ts
 ```
 
 ### ❌ Don't forget to validate after changes
+
 ```bash
 just data-validate data/resume-data.json
 just data-validate-template
 ```
 
 ### ✅ Do use descriptive field names
+
 ```rust
 // Good
 pub company_priority: Option<u8>
@@ -439,6 +463,7 @@ pub co_pri: Option<u8>
 **Edit gist → update roleProfiles → automatic deploy → new roles appear in dropdown**
 
 The resume data is stored in a GitHub Gist and automatically deployed to production:
+
 1. Edit `resume-data.json` in your gist
 2. Push changes with `just data-push`
 3. Hourly GitHub Action checks for updates
@@ -463,6 +488,7 @@ The resume data is stored in a GitHub Gist and automatically deployed to product
 If migrating from the old schema format:
 
 **Field Renames:**
+
 - `companies` → `experience`
 - `positions` → `children` (at company level)
 - `bullets` → `children` (at position level)
@@ -474,16 +500,19 @@ If migrating from the old schema format:
 - `descriptionPriority` → `priority` (at position level) - **Note:** Use `priority` now
 
 **Removed Fields:**
+
 - `metrics` - No longer supported (include in description text instead)
 - `accomplishments` - Moved to bullets within positions
 - `fullName`, `citizenship`, `calendar` - Simplified PersonalInfo
 
 **New Required Fields:**
+
 - Company: `priority`, `tags`
 - Position: `priority` (was `descriptionPriority`)
 - All dates: `dateStart` instead of `dateRange`
 
 **RoleProfile Changes:**
+
 - `primaryTags`/`secondaryTags` → `tagWeights` (weighted map)
 - `targetBulletCount` → removed (use selection config instead)
 - Added `scoringWeights` (required)
@@ -493,11 +522,13 @@ If migrating from the old schema format:
 ## FAQ
 
 **Q: Why Rust as source of truth instead of TypeScript?**
+
 - Rust provides stronger type safety (u8 for 1-10 ranges, HashMap for tag weights)
 - Rust validation logic (ScoringWeights.normalize()) closer to business logic
 - Demonstrates systems programming skills (meta-resume principle)
 
 **Q: Why not JSON Schema as source of truth?**
+
 - Rust is more expressive (methods, trait impls, compile-time checks)
 - schemars generates excellent schemas from Rust automatically
 - Single source of truth in language closest to domain logic

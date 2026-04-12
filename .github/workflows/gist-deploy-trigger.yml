@@ -3,8 +3,8 @@ name: Gist Update Deploy Trigger
 # Runs every hour to check if gist has been updated
 on:
   schedule:
-    - cron: '0 * * * *'  # Every hour at minute 0
-  workflow_dispatch:  # Allow manual trigger from GitHub UI
+    - cron: "0 * * * *" # Every hour at minute 0
+  workflow_dispatch: # Allow manual trigger from GitHub UI
 
 jobs:
   check-gist-and-deploy:

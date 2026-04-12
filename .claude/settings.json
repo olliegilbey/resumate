@@ -36,7 +36,7 @@
       "Bash(__NEW_LINE__ ou:*)",
       "Bash(__NEW_LINE__ ok:*)",
       "Bash(__NEW_LINE__ er:*)",
-			"Bash(rg:*)",
+      "Bash(rg:*)",
       "Bash(tree:*)",
       "Bash(~/bin/jai check:*)",
       "Bash(~/bin/jai:*)",
@@ -121,5 +121,5 @@
     "deny": [],
     "ask": []
   },
-	"includeCoAuthoredBy": false
+  "includeCoAuthoredBy": false
 }

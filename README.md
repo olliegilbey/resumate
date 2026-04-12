@@ -30,6 +30,7 @@ Resumate is **not** an AI resume generator. It's a curation system that helps yo
 ## Features
 
 ### 🎯 Core Functionality
+
 - **Experience Data Explorer** - Beautiful, filterable view of all your career history
 - **Smart Search** - Filter experiences by text across all fields
 - **Tag-Based Filtering** - Multi-select tags with OR logic (shows items with any selected tag)
@@ -38,6 +39,7 @@ Resumate is **not** an AI resume generator. It's a curation system that helps yo
 - **Metrics Highlighting** - Emphasize quantifiable achievements
 
 ### 🔒 Security & Privacy
+
 - **Protected Contact Info** - Email and phone never exposed to client-side code
 - **Cloudflare Turnstile** - CAPTCHA protection for vCard downloads
 - **Server-Side vCard Generation** - Contact details only used in API routes
@@ -46,6 +48,7 @@ Resumate is **not** an AI resume generator. It's a curation system that helps yo
 - **Security Headers** - CSP, X-Frame-Options, X-Content-Type-Options
 
 ### 📱 User Experience
+
 - **Auto-Download** - vCard download triggers automatically after verification (works in Chrome & Arc)
 - **Fallback Button** - Manual download option if auto-download fails
 - **Mobile-First** - Responsive design with Tailwind CSS
@@ -88,6 +91,7 @@ just dev
 **Available Commands**: Run `just` to see 40+ automation targets.
 
 **Routes**:
+
 - `/` - Landing page with contact links
 - `/resume` - Resume overview
 - `/resume/view` - Full data explorer (search, filter, explore all experiences)
@@ -123,6 +127,7 @@ POSTHOG_API_KEY=phc_...
 ## Cloudflare Turnstile Setup
 
 ### Why Turnstile?
+
 Free, privacy-friendly CAPTCHA that protects your contact information from bots.
 
 ### Setup Steps
@@ -148,7 +153,9 @@ Free, privacy-friendly CAPTCHA that protects your contact information from bots.
    ```
 
 ### Testing Keys (Development Only)
+
 Cloudflare provides test keys that always pass:
+
 ```env
 NEXT_PUBLIC_TURNSTILE_SITE_KEY=1x00000000000000000000AA
 TURNSTILE_SECRET_KEY=1x0000000000000000000000000000000AA
@@ -204,12 +211,14 @@ See `data/TEMPLATE_GUIDE.md` for complete documentation.
 This project uses [CodeRabbit](https://coderabbit.ai) for AI-powered code reviews.
 
 **Installation**:
+
 ```bash
 bun install -g @coderabbit/cli
 coderabbit auth
 ```
 
 **Usage**:
+
 ```bash
 # Review uncommitted changes with context from CLAUDE.md
 coderabbit review --plain --type uncommitted --config CLAUDE.md
@@ -222,6 +231,7 @@ coderabbit review --plain --type committed
 ```
 
 **When to run**:
+
 - ✅ Before committing (catch issues early)
 - ✅ After major refactors (verify quality)
 - ✅ When stuck (get AI suggestions)
@@ -236,12 +246,14 @@ Claude Code and Warp editors should run this extensively when making changes.
 ### Vercel Setup
 
 1. **Install Vercel CLI**
+
    ```bash
    npm i -g vercel
    vercel login
    ```
 
 2. **Link Project**
+
    ```bash
    vercel link
    ```
@@ -293,11 +305,13 @@ Set up automatic deploys when your gist is updated:
    - Scope: your project
 
 3. **Get Project ID**
+
    ```bash
    vercel project inspect resumate | grep "ID"
    ```
 
 4. **Set GitHub Secrets**
+
    ```bash
    # Project ID
    printf "%s" "prj_..." | gh secret set VERCEL_PROJECT_ID -R your-username/resumate
@@ -310,12 +324,14 @@ Set up automatic deploys when your gist is updated:
    ```
 
 The GitHub Action (`.github/workflows/gist-deploy-trigger.yml`) will:
+
 - Run hourly via cron
 - Check if gist was updated since last Vercel deployment
 - Validate JSON format
 - Trigger deploy if changes detected
 
 ### Security Checklist
+
 - ✅ Environment variables set in Vercel (no newlines!)
 - ✅ `.env.local` is gitignored
 - ✅ No secrets in repository
@@ -435,18 +451,21 @@ just metrics-generate # Update METRICS.md from test logs
 ## AI Philosophy in Practice
 
 ### What You Do (Human)
+
 1. ✍️ Write every bullet point yourself
 2. 📝 Add context, metrics, links
 3. 🏷️ Tag each experience with categories
 4. ⭐ Prioritize manually (1-10)
 
 ### What AI Does (Curation)
+
 1. 🔍 Helps you find relevant experiences for a role
 2. 📊 Suggests which bullets are most applicable
 3. 🎯 Organizes content by relevance
 4. ✨ Refines presentation (never content)
 
 ### What AI NEVER Does
+
 - ❌ Generate bullet points
 - ❌ Fabricate achievements
 - ❌ Create experiences you haven't had
@@ -459,6 +478,7 @@ This distinction is crucial for compliance with Anthropic's guidance and maintai
 ## Contributing
 
 Contributions welcome! Please:
+
 1. Fork the repository
 2. Create a feature branch
 3. Run CodeRabbit review before committing
@@ -485,6 +505,7 @@ Built with [Claude Code](https://claude.com/claude-code) following best practice
 ## Support
 
 For questions or issues:
+
 - 📖 Check `data/TEMPLATE_GUIDE.md` for data structure help
 - 🔒 See `SECURITY.md` for security details
 - 💻 See `CLAUDE.md` for development notes

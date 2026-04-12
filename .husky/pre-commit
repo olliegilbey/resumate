@@ -72,6 +72,19 @@ printf "${GREEN}✅ Phase 1 complete: No secrets detected${NC}\n"
 echo ""
 
 # ============================================
+# PHASE 1.5: AUTO-FORMAT STAGED (lint-staged, ~1-3s)
+# Prettier --write + eslint --fix on staged files only.
+# Re-stages under the hood. Complements Phase 2's full-project checks.
+# ============================================
+printf "${BLUE}→ Phase 1.5/7: Auto-format staged${NC}\n"
+if ! bun x lint-staged 2>&1; then
+  printf "${RED}❌ lint-staged failed${NC}\n"
+  exit 1
+fi
+printf "${GREEN}✅ Phase 1.5 complete: staged files formatted${NC}\n"
+echo ""
+
+# ============================================
 # PHASE 2: LINT + TYPECHECK (~5-10s)
 # Fast validation before expensive operations
 # ============================================
@@ -124,6 +137,16 @@ if [ -n "$RS_STAGED" ]; then
   fi
   printf "${GREEN}  ✓${NC} Clippy passed (zero warnings)"
 fi
+
+# 2.5 Knip dead-code scan (fast — ~3s via bun runtime)
+# Keeps dead exports/files from accumulating. Runs under bun explicitly because
+# oxc-parser 0.121.x allocates a 6 GiB ArrayBuffer that exceeds Node 22's limit.
+printf "${YELLOW}  → Knip dead-code scan${NC}\n"
+if ! bun --bun x knip 2>&1; then
+  printf "${RED}❌ Knip found dead code — fix or add to knip.json with a reason in AGENTS.md${NC}\n"
+  exit 1
+fi
+printf "${GREEN}  ✓${NC} Knip clean"
 
 printf "${GREEN}✅ Phase 2 complete: Lint & typecheck passed${NC}\n"
 echo ""
@@ -277,6 +300,30 @@ if [ -n "$TS_STAGED" ] || echo "$RS_STAGED" | grep -q "crates/shared-types/"; th
     exit 1
   fi
   printf "${GREEN}  ✓${NC} TypeScript tests passed"
+
+  # CI-sim: re-run typecheck against the template (CI has no gist access, so
+  # this catches the "works locally, fails in CI" class of bugs caused by
+  # diverging data/resume-data.json PII vs data/resume-data-template.json).
+  if [ -f data/resume-data.json ] && [ -f data/resume-data-template.json ]; then
+    printf "${YELLOW}  → CI-sim: typecheck against template${NC}\n"
+    cp data/resume-data.json "$TMPDIR/.precommit-resume-data.json.bak" 2>/dev/null || \
+      cp data/resume-data.json /tmp/.precommit-resume-data.json.bak
+    cp data/resume-data-template.json data/resume-data.json
+    TEMPLATE_CHECK_OK=true
+    bun x tsc --noEmit 2>&1 || TEMPLATE_CHECK_OK=false
+    # Restore real data file regardless of outcome
+    if [ -f "$TMPDIR/.precommit-resume-data.json.bak" ]; then
+      mv "$TMPDIR/.precommit-resume-data.json.bak" data/resume-data.json
+    else
+      mv /tmp/.precommit-resume-data.json.bak data/resume-data.json
+    fi
+    if [ "$TEMPLATE_CHECK_OK" != "true" ]; then
+      printf "${RED}❌ CI-sim typecheck failed against template — CI will fail${NC}\n"
+      printf "${YELLOW}  Fix: update data/resume-data-template.json to match real data shape${NC}\n"
+      exit 1
+    fi
+    printf "${GREEN}  ✓${NC} CI-sim typecheck passed"
+  fi
 fi
 
 # Data validation (if data files changed)

@@ -1,29 +1,38 @@
-"use client"
+"use client";
 
-import { Tag, BulletPoint } from "@/types/resume"
-import { Badge } from "@/components/ui/Badge"
-import { Button } from "@/components/ui/Button"
-import { cn } from "@/lib/utils"
+import { Tag, BulletPoint } from "@/types/resume";
+import { Badge } from "@/components/ui/Badge";
+import { Button } from "@/components/ui/Button";
+import { cn } from "@/lib/utils";
 
 interface TagFilterProps {
-  selectedTags: Tag[]
-  onTagToggle: (tag: Tag) => void
-  bullets: BulletPoint[]
-  allTags: string[]
-  className?: string
+  selectedTags: Tag[];
+  onTagToggle: (tag: Tag) => void;
+  bullets: BulletPoint[];
+  allTags: string[];
+  className?: string;
 }
 
-export function TagFilter({ selectedTags, onTagToggle, bullets, allTags, className }: TagFilterProps) {
+export function TagFilter({
+  selectedTags,
+  onTagToggle,
+  bullets,
+  allTags,
+  className,
+}: TagFilterProps) {
   // Get tag counts for display
-  const tagCounts = bullets.reduce((acc, bullet) => {
-    bullet.tags.forEach(tag => {
-      acc[tag] = (acc[tag] || 0) + 1
-    })
-    return acc
-  }, {} as Record<Tag, number>)
+  const tagCounts = bullets.reduce(
+    (acc, bullet) => {
+      bullet.tags.forEach((tag) => {
+        acc[tag] = (acc[tag] || 0) + 1;
+      });
+      return acc;
+    },
+    {} as Record<Tag, number>,
+  );
 
   // Filter to only tags that have bullets (with counts), preserving sorted order
-  const displayTags = allTags.filter(tag => tagCounts[tag] > 0)
+  const displayTags = allTags.filter((tag) => (tagCounts[tag] ?? 0) > 0);
 
   return (
     <div className={cn("space-y-4", className)}>
@@ -32,10 +41,10 @@ export function TagFilter({ selectedTags, onTagToggle, bullets, allTags, classNa
         <Button
           variant="outline"
           size="sm"
-          onClick={() => selectedTags.forEach(tag => onTagToggle(tag))}
+          onClick={() => selectedTags.forEach((tag) => onTagToggle(tag))}
           className={cn(
             "transition-opacity",
-            selectedTags.length === 0 && "opacity-0 pointer-events-none"
+            selectedTags.length === 0 && "opacity-0 pointer-events-none",
           )}
         >
           Clear All
@@ -43,11 +52,8 @@ export function TagFilter({ selectedTags, onTagToggle, bullets, allTags, classNa
       </div>
 
       <div className="space-y-2">
-        {displayTags.map(tag => (
-          <label
-            key={tag}
-            className="flex items-center space-x-3 cursor-pointer group"
-          >
+        {displayTags.map((tag) => (
+          <label key={tag} className="flex items-center space-x-3 cursor-pointer group">
             <input
               type="checkbox"
               checked={selectedTags.includes(tag)}
@@ -62,5 +68,5 @@ export function TagFilter({ selectedTags, onTagToggle, bullets, allTags, classNa
         ))}
       </div>
     </div>
-  )
+  );
 }

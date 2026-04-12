@@ -17,25 +17,25 @@ retention_policy: All versions preserved in git
 
 ### Server-Side Only (Never Exposed to Client)
 
-| Variable | Purpose | Required |
-|----------|---------|----------|
-| `CONTACT_EMAIL_PERSONAL` | Primary email address | ✅ Yes |
-| `CONTACT_EMAIL_PROFESSIONAL` | Work/professional email | ✅ Yes |
-| `CONTACT_PHONE` | Phone number (international format) | ✅ Yes |
-| `TURNSTILE_SECRET_KEY` | Cloudflare Turnstile secret key | ✅ Yes |
-| `RESUME_DATA_GIST_URL` | GitHub Gist raw URL for resume data | ✅ Yes |
-| `POSTHOG_API_KEY` | PostHog server API key | ✅ Yes |
-| `N8N_WEBHOOK_URL` | N8N webhook for notifications | ✅ Yes |
-| `N8N_WEBHOOK_SECRET` | N8N webhook authentication secret | ✅ Yes |
-| `POSTHOG_ENABLE_DEV` | Enable PostHog in dev mode | ❌ Optional |
+| Variable                     | Purpose                             | Required    |
+| ---------------------------- | ----------------------------------- | ----------- |
+| `CONTACT_EMAIL_PERSONAL`     | Primary email address               | ✅ Yes      |
+| `CONTACT_EMAIL_PROFESSIONAL` | Work/professional email             | ✅ Yes      |
+| `CONTACT_PHONE`              | Phone number (international format) | ✅ Yes      |
+| `TURNSTILE_SECRET_KEY`       | Cloudflare Turnstile secret key     | ✅ Yes      |
+| `RESUME_DATA_GIST_URL`       | GitHub Gist raw URL for resume data | ✅ Yes      |
+| `POSTHOG_API_KEY`            | PostHog server API key              | ✅ Yes      |
+| `N8N_WEBHOOK_URL`            | N8N webhook for notifications       | ✅ Yes      |
+| `N8N_WEBHOOK_SECRET`         | N8N webhook authentication secret   | ✅ Yes      |
+| `POSTHOG_ENABLE_DEV`         | Enable PostHog in dev mode          | ❌ Optional |
 
 ### Client-Side (Public)
 
-| Variable | Purpose | Required |
-|----------|---------|----------|
-| `NEXT_PUBLIC_TURNSTILE_SITE_KEY` | Cloudflare Turnstile site key | ✅ Yes |
-| `NEXT_PUBLIC_POSTHOG_KEY` | PostHog project API key | ✅ Yes |
-| `NEXT_PUBLIC_POSTHOG_HOST` | PostHog host URL | ✅ Yes |
+| Variable                         | Purpose                       | Required |
+| -------------------------------- | ----------------------------- | -------- |
+| `NEXT_PUBLIC_TURNSTILE_SITE_KEY` | Cloudflare Turnstile site key | ✅ Yes   |
+| `NEXT_PUBLIC_POSTHOG_KEY`        | PostHog project API key       | ✅ Yes   |
+| `NEXT_PUBLIC_POSTHOG_HOST`       | PostHog host URL              | ✅ Yes   |
 
 **Security Note:** Phone and email should not be exposed to the client (see P0-1 in `docs/CODEBASE_REVIEW.md` for remediation status). They're only intended for server-side use in the vCard generation API route.
 
@@ -153,6 +153,7 @@ git push origin main
 **Workflow:** `.github/workflows/gist-deploy-trigger.yml`
 
 **Process:**
+
 1. Fetch gist metadata (GitHub API)
 2. Validate JSON syntax + schema
 3. Query Vercel API for last deployment
@@ -168,6 +169,7 @@ git push origin main
 **For complete build details:** See [BUILD_PIPELINE.md](./BUILD_PIPELINE.md)
 
 **Quick reference:**
+
 - Local: `just build` (full build)
 - Vercel: Automatic (prebuild hook validates WASM + fetches gist)
 - Philosophy: WASM compiled locally once, validated everywhere
@@ -183,6 +185,7 @@ git push origin main
 **Problem:** WASM binaries missing in build
 
 **Solution:**
+
 ```bash
 just wasm                        # Build locally
 ls -lh public/wasm/*.wasm       # Verify artifacts
@@ -197,6 +200,7 @@ git commit -m "chore: update WASM binaries"
 **Problem:** Gist data not updating
 
 **Solution:** Check prebuild hook runs successfully:
+
 ```bash
 # Test locally
 bun scripts/fetch-gist-data.js --force
@@ -206,6 +210,7 @@ bun scripts/fetch-gist-data.js --force
 **Problem:** Environment variables not working
 
 **Solution:** Verify no trailing newlines:
+
 ```bash
 # Check variable length
 vercel env pull .env.vercel.json
@@ -218,6 +223,7 @@ cat .env.vercel.json | jq '.CONTACT_EMAIL_PERSONAL | length'
 **Problem:** Gist updated but no deployment
 
 **Solution:** Check GitHub Action logs:
+
 ```bash
 # GitHub repo → Actions → "Check Gist and Trigger Deploy"
 # Verify:
@@ -230,6 +236,7 @@ cat .env.vercel.json | jq '.CONTACT_EMAIL_PERSONAL | length'
 **Problem:** Deploy hook not working
 
 **Solution:** Regenerate deploy hook in Vercel dashboard:
+
 ```bash
 # Vercel dashboard → Settings → Deploy Hooks
 # Delete old hook, create new one

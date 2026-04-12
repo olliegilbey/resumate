@@ -28,6 +28,7 @@ retention_policy: All versions preserved in git
 All limits defined in `justfile`. Scripts source limits via `just --evaluate variable_name`.
 
 **Limit types:**
+
 - WASM size limits (raw + gzipped)
 - Pre-commit duration targets
 - Test count minimums
@@ -42,11 +43,13 @@ All limits defined in `justfile`. Scripts source limits via `just --evaluate var
 ### Why Binaries Are Committed
 
 **Problem:** Rust compilation slow + storage heavy
+
 - Local: 9GB target/ directory (24,631 files)
 - Vercel: Would take 8-12min + 9GB storage per build
 - GitHub Actions: Would take 8-10min per run
 
 **Solution:** Pre-compile locally, commit binaries
+
 - Pre-commit validates freshness (hash-based)
 - Vercel build: See [METRICS.md](./METRICS.md) for current times (was 12min pre-optimization)
 - GitHub Actions: Skip Rust entirely
@@ -57,12 +60,14 @@ All limits defined in `justfile`. Scripts source limits via `just --evaluate var
 ### WASM Build Process
 
 **Local:**
+
 ```bash
 just wasm          # Full WASM build (release mode)
 just wasm-dev      # Dev build (faster, larger)
 ```
 
 **Pre-commit:**
+
 ```bash
 scripts/check-wasm.sh --fresh
 # Hash-based rebuild detection
@@ -70,12 +75,14 @@ scripts/check-wasm.sh --fresh
 ```
 
 **Vercel:**
+
 ```bash
 scripts/check-wasm.sh --exists
 # Fail-fast if missing (no rebuild)
 ```
 
 **Output:** `public/wasm/`
+
 - `resume_wasm_bg.wasm` (size limits in justfile)
 - `resume_wasm.js` (JS bindings)
 - `resume_wasm.d.ts` (TypeScript types)
@@ -138,12 +145,14 @@ scripts/check-wasm.sh --exists
 **Workflow:** `.github/workflows/gist-deploy-trigger.yml`
 
 **Trigger:**
+
 - Cron: Every hour at :00
 - Manual: workflow_dispatch
 
 **Duration:** ~30s (no Rust, no builds, no tests)
 
 **Process:**
+
 1. Fetch gist metadata (GitHub API)
 2. Validate JSON syntax + schema
 3. Get last Vercel deployment time (Vercel API)
@@ -151,6 +160,7 @@ scripts/check-wasm.sh --exists
 5. If gist newer → POST to Vercel deploy hook
 
 **NOT for:**
+
 - Code testing (pre-commit handles)
 - Artifact validation (pre-commit handles)
 - PR validation (deleted, redundant)
@@ -164,11 +174,13 @@ scripts/check-wasm.sh --exists
 **Build command:** `bun run build`
 
 **Prebuild hook:**
+
 ```bash
 bash scripts/check-wasm.sh --exists && bun scripts/fetch-gist-data.js --force
 ```
 
 **Process:**
+
 1. Check WASM exists (fail-fast if missing)
 2. Fetch gist data (fail-fast if invalid)
 3. Build Next.js + Turbopack
@@ -176,6 +188,7 @@ bash scripts/check-wasm.sh --exists && bun scripts/fetch-gist-data.js --force
 **Duration:** See [METRICS.md](./METRICS.md) for current build times
 
 **Triggers:**
+
 - Git push to main
 - Gist update (via GitHub Actions)
 - Manual (vercel --prod)
@@ -189,6 +202,7 @@ bash scripts/check-wasm.sh --exists && bun scripts/fetch-gist-data.js --force
 **Local:** `data/resume-data.json` (gitignored, PII)
 
 **Commands:**
+
 - `just data-pull` - Fetch from gist (interactive, conflict detection)
 - `just data-push` - Push to gist (interactive, conflict detection)
 - `just data-validate` - Schema validation
@@ -196,6 +210,7 @@ bash scripts/check-wasm.sh --exists && bun scripts/fetch-gist-data.js --force
 **Server:** Always fetches from `RESUME_DATA_GIST_URL` (environment variable)
 
 **Validation:**
+
 - JSON syntax (jq)
 - Schema validation (validate-compendium.mjs)
 - Both local (pre-commit) and server (GitHub Actions, Vercel prebuild)
@@ -209,6 +224,7 @@ bash scripts/check-wasm.sh --exists && bun scripts/fetch-gist-data.js --force
 **Single source of truth:** `crates/shared-types/src/lib.rs`
 
 **Generation:**
+
 ```bash
 just types-sync
 # Runs:
@@ -217,15 +233,18 @@ just types-sync
 ```
 
 **Output:**
+
 - `schemas/resume.schema.json` (generated)
 - `lib/types/generated-resume.ts` (generated)
 
 **Enforcement:**
+
 - Pre-commit auto-generates if `shared-types/` changed
 - Pre-commit fails if uncommitted changes detected
 - Server never regenerates (uses committed artifacts)
 
 **Flow:**
+
 ```
 Rust types (source of truth)
   ↓ just types-sync
@@ -241,12 +260,14 @@ TypeScript types (generated)
 ## Security (Public Repo)
 
 **Zero tolerance:**
+
 - 3 secret scanners EVERY commit
 - PII detection (phone, email patterns)
 - Build artifacts excluded from scans
 - Contact info server-side only, hashed in WASM
 
 **Gitleaks findings:**
+
 - 2 personal emails in old Cargo.toml commits (acceptable, metadata only)
 - No API keys, tokens, or credentials
 - Current protection prevents new leaks
@@ -256,16 +277,19 @@ TypeScript types (generated)
 ## Performance Comparison
 
 **Before optimization (2025-11):**
+
 - Local: 30-90s
 - GitHub Actions: ~11min
 - Vercel: ~12min
 
 **After optimization:**
+
 - Local: Conditional based on changes (see justfile limits)
 - GitHub Actions: ~30s (gist watcher only, no builds)
 - Vercel: See [METRICS.md](./METRICS.md) for current build times
 
 **Savings:**
+
 - Vercel build time reduced ~95%
 - GitHub Actions: 700min/month saved (deleted redundant PR workflow)
 
@@ -274,6 +298,7 @@ TypeScript types (generated)
 ## Local Development
 
 **Common commands:**
+
 ```bash
 just build          # Full build (WASM + Next.js)
 just test           # All tests (Rust + TS), updates METRICS.md
@@ -291,6 +316,7 @@ just health         # Diagnostics
 ## Quality Gates
 
 **Pre-commit (non-negotiable):**
+
 - Zero secrets/PII detected
 - All linters pass
 - WASM fresh (hash validated)
@@ -299,11 +325,13 @@ just health         # Diagnostics
 - All tests pass
 
 **Gist validation (non-negotiable):**
+
 - Valid JSON syntax
 - Passes schema validation
 - All required fields present
 
 **Deploy validation (non-negotiable):**
+
 - WASM binaries exist
 - Gist data fetched
 - Next.js build succeeds
@@ -313,6 +341,7 @@ just health         # Diagnostics
 ## Troubleshooting
 
 **WASM missing on Vercel:**
+
 ```bash
 # Build locally
 just wasm
@@ -326,6 +355,7 @@ git commit -m "chore: update WASM binaries"
 ```
 
 **Gist not updating:**
+
 ```bash
 # Test fetch
 bun scripts/fetch-gist-data.js --force
@@ -333,12 +363,14 @@ bun scripts/fetch-gist-data.js --force
 ```
 
 **Deployment not triggering:**
+
 - Check GitHub Actions logs (repo → Actions tab)
 - Verify workflow detected gist change
 - Check deploy hook called successfully
 - See DEPLOYMENT_GUIDE.md for details
 
 **Pre-commit slow:**
+
 - Fast path (no rebuilds): See justfile target
 - Rebuild path: See justfile target
 - If exceeds hard limit: Check what changed
@@ -350,12 +382,14 @@ bun scripts/fetch-gist-data.js --force
 The `target/` directory grows large (several GB) due to multiple compilation targets.
 
 **Why large:**
+
 - 4 compilation targets (debug, release, wasm32, coverage)
 - Typst embeds fonts per target
 - Incremental compilation caches
 - Normal Rust behavior
 
 **Optimization:**
+
 - Clean `llvm-cov-target` after coverage runs
 - Keep others for incremental build speed
 - Never pushed to git (gitignored)

@@ -1,29 +1,29 @@
-"use client"
+"use client";
 
-import Link from "next/link"
-import { usePathname } from "next/navigation"
-import { cn } from "@/lib/utils"
-import { Home, Briefcase, Eye } from "lucide-react"
-import { ThemeToggle } from "./ThemeToggle"
-import resumeData from "@/data/resume-data.json"
+import Link from "next/link";
+import { usePathname } from "next/navigation";
+import { cn } from "@/lib/utils";
+import { Home, Briefcase, Eye } from "lucide-react";
+import { ThemeToggle } from "./ThemeToggle";
+import resumeData from "@/data/resume-data.json";
 
 export function Navbar() {
-  const pathname = usePathname()
-  const fullName = resumeData.personal.name
+  const pathname = usePathname();
+  const fullName = resumeData.personal.name;
 
   // Generate initials from name (e.g., "John Doe" → "JD")
   const initials = fullName
-    .split(' ')
-    .map(word => word[0])
-    .join('')
+    .split(" ")
+    .map((word) => word[0])
+    .join("")
     .toUpperCase()
-    .slice(0, 2) // Maximum 2 letters
+    .slice(0, 2); // Maximum 2 letters
 
   const links = [
     { href: "/", label: "Home", icon: Home },
     { href: "/resume", label: "Resume", icon: Briefcase },
     { href: "/resume/view", label: "Experience", icon: Eye },
-  ]
+  ];
 
   return (
     <nav className="sticky top-0 z-50 w-full glass-light border-b border-slate-200 dark:border-slate-700">
@@ -42,8 +42,8 @@ export function Navbar() {
           {/* Navigation Links + Theme Toggle */}
           <div className="flex items-center space-x-1">
             {links.map((link) => {
-              const Icon = link.icon
-              const isActive = pathname === link.href
+              const Icon = link.icon;
+              const isActive = pathname === link.href;
 
               return (
                 <Link
@@ -54,13 +54,13 @@ export function Navbar() {
                     "flex items-center space-x-2 px-3 py-2 rounded-md text-sm font-medium outline-none focus:outline-none",
                     isActive
                       ? "glass text-slate-900 dark:text-slate-100 shadow-sm transition-none"
-                      : "text-slate-700 hover:bg-slate-200/60 hover:text-slate-900 dark:text-slate-300 dark:hover:bg-slate-700/40 dark:hover:text-slate-100 transition-colors duration-200"
+                      : "text-slate-700 hover:bg-slate-200/60 hover:text-slate-900 dark:text-slate-300 dark:hover:bg-slate-700/40 dark:hover:text-slate-100 transition-colors duration-200",
                   )}
                 >
                   <Icon className="h-4 w-4" aria-hidden="true" />
                   <span className="hidden sm:inline">{link.label}</span>
                 </Link>
-              )
+              );
             })}
             <div className="ml-2 pl-2 border-l border-slate-200 dark:border-slate-700">
               <ThemeToggle />
@@ -69,5 +69,5 @@ export function Navbar() {
         </div>
       </div>
     </nav>
-  )
+  );
 }

@@ -1,22 +1,22 @@
-"use client"
+"use client";
 
-import { Linkedin, Github, MapPin } from "lucide-react"
-import { cn } from "@/lib/utils"
+import { Linkedin, Github, MapPin } from "lucide-react";
+import { cn } from "@/lib/utils";
 
 interface ContactLink {
-  href: string
-  icon: React.ComponentType<{ className?: string }>
-  label: string
-  description?: string
-  target?: string
+  href: string;
+  icon: React.ComponentType<{ className?: string }>;
+  label: string;
+  description?: string;
+  target?: string;
 }
 
 interface ContactLinksProps {
-  linkedin: string
-  github: string
-  location: string
-  className?: string
-  variant?: "compact" | "full"
+  linkedin: string;
+  github: string;
+  location: string;
+  className?: string;
+  variant?: "compact" | "full";
 }
 
 export function ContactLinks({
@@ -24,7 +24,7 @@ export function ContactLinks({
   github,
   location,
   className,
-  variant = "compact"
+  variant = "compact",
 }: ContactLinksProps) {
   const links: ContactLink[] = [
     {
@@ -41,20 +41,20 @@ export function ContactLinks({
       description: `@${github}`,
       target: "_blank",
     },
-  ]
+  ];
 
   // Non-clickable location display
   const locationDisplay = {
     icon: MapPin,
     label: "Location",
     description: location,
-  }
+  };
 
   if (variant === "compact") {
     return (
       <div className={cn("flex flex-wrap justify-center gap-4", className)}>
         {links.map((link) => {
-          const Icon = link.icon
+          const Icon = link.icon;
           return (
             <a
               key={link.href}
@@ -66,22 +66,22 @@ export function ContactLinks({
               <Icon className="h-5 w-5 mr-2" />
               {link.label}
             </a>
-          )
+          );
         })}
         <span className="flex items-center text-slate-600 dark:text-slate-400">
           <MapPin className="h-5 w-5 mr-2" />
           {location}
         </span>
       </div>
-    )
+    );
   }
 
   // Full Linktree-style layout
   return (
     <div className={cn("w-full max-w-md mx-auto space-y-3", className)}>
       {links.map((link) => {
-        const Icon = link.icon
-        
+        const Icon = link.icon;
+
         return (
           <a
             key={link.href}
@@ -119,7 +119,7 @@ export function ContactLinks({
               </div>
             </div>
           </a>
-        )
+        );
       })}
 
       {/* Location (non-clickable) */}
@@ -135,5 +135,5 @@ export function ContactLinks({
         </div>
       </div>
     </div>
-  )
+  );
 }
