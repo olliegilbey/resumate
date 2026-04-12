@@ -132,7 +132,7 @@ def diff_education(old_list: list, new_list: list) -> list[str]:
                 entry_lines.extend(diff_scalar(k, ov, nv))
         if entry_lines:
             lines.append(f"  [{label}]")
-            lines.extend(f"  {l}" for l in entry_lines)
+            lines.extend(f"  {line}" for line in entry_lines)
     return lines
 
 
@@ -166,7 +166,7 @@ def diff_accomplishments(old_list: list, new_list: list) -> list[str]:
                 entry_lines.extend(diff_scalar(k, ov, nv))
         if entry_lines:
             lines.append(f"  ~ MODIFIED {aid}: {na.get('title', '?')}")
-            lines.extend(f"    {l.strip()}" for l in entry_lines)
+            lines.extend(f"    {line.strip()}" for line in entry_lines)
 
     # Check reordering
     old_order = [a["id"] for a in old_list]
@@ -225,7 +225,7 @@ def diff_role_profiles(old_list: list, new_list: list) -> list[str]:
             )
         if entry_lines:
             lines.append(f"  ~ MODIFIED {rid}: {nr.get('name', '?')}")
-            lines.extend(f"    {l.strip()}" for l in entry_lines)
+            lines.extend(f"    {line.strip()}" for line in entry_lines)
 
     return lines
 
@@ -255,15 +255,15 @@ def diff_bullets(old_bullets: list, new_bullets: list, indent: str = "") -> list
             if ob.get(k) == nb.get(k):
                 continue
             if k == "description":
-                changes.append(f"description changed")
+                changes.append("description changed")
                 changes.append(f"  old: {ob.get(k, '')[:100]}")
                 changes.append(f"  new: {nb.get(k, '')[:100]}")
             elif isinstance(ob.get(k), list) and isinstance(nb.get(k), list):
-                for l in diff_list_of_strings(k, ob.get(k, []), nb.get(k, [])):
-                    changes.append(l.strip())
+                for line in diff_list_of_strings(k, ob.get(k, []), nb.get(k, [])):
+                    changes.append(line.strip())
             else:
-                for l in diff_scalar(k, ob.get(k), nb.get(k)):
-                    changes.append(l.strip())
+                for line in diff_scalar(k, ob.get(k), nb.get(k)):
+                    changes.append(line.strip())
         if changes:
             lines.append(f"{indent}~ MODIFIED {bid}:")
             lines.extend(f"{indent}  {c}" for c in changes)
@@ -339,12 +339,12 @@ def diff_experience(old_list: list, new_list: list) -> list[str]:
             )
             if pos_lines or bullet_lines:
                 exp_lines.append(f"  Position: {np_.get('name', '?')} ({pid})")
-                exp_lines.extend(f"    {l.strip()}" for l in pos_lines)
+                exp_lines.extend(f"    {line.strip()}" for line in pos_lines)
                 exp_lines.extend(bullet_lines)
 
         if exp_lines:
             lines.append(f"  ~ {ne.get('name', '?')} ({eid})")
-            lines.extend(f"    {l.strip() if not l.startswith('      ') else l}" for l in exp_lines)
+            lines.extend(f"    {line.strip() if not line.startswith('      ') else line}" for line in exp_lines)
 
     return lines
 
@@ -459,4 +459,10 @@ def main():
 
 
 if __name__ == "__main__":
-    main()
+    try:
+        main()
+    except SystemExit:
+        raise
+    except Exception as e:
+        print(f"ERROR: Unexpected failure: {e}", file=sys.stderr)
+        sys.exit(2)
