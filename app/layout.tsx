@@ -5,7 +5,10 @@ import { Navbar } from "@/components/ui/Navbar";
 import { ThemeProvider } from "@/contexts/ThemeContext";
 import { PostHogProvider } from "@/lib/posthog-client";
 import { SpeedInsights } from "@vercel/speed-insights/next";
-import resumeData from "@/data/resume-data.json";
+import type { ResumeData } from "@/types/resume";
+import rawResumeData from "@/data/resume-data.json";
+
+const resumeData = rawResumeData as unknown as ResumeData;
 
 const geistSans = Geist({
   variable: "--font-geist-sans",

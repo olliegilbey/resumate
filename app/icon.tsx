@@ -1,5 +1,8 @@
 import { ImageResponse } from "next/og";
-import resumeData from "@/data/resume-data.json";
+import type { ResumeData } from "@/types/resume";
+import rawResumeData from "@/data/resume-data.json";
+
+const resumeData = rawResumeData as unknown as ResumeData;
 
 // Route segment config
 export const runtime = "edge";
