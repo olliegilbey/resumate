@@ -18,8 +18,9 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: `${resumeData.personal.name} - ${resumeData.tagline || 'Professional Portfolio'}`,
-  description: resumeData.summary || `${resumeData.personal.name}'s professional portfolio and resume.`,
+  title: `${resumeData.personal.name} - ${resumeData.tagline || "Professional Portfolio"}`,
+  description:
+    resumeData.summary || `${resumeData.personal.name}'s professional portfolio and resume.`,
 };
 
 export default function RootLayout({
@@ -53,9 +54,7 @@ export default function RootLayout({
           }}
         />
       </head>
-      <body
-        className={`${geistSans.variable} ${geistMono.variable} antialiased`}
-      >
+      <body className={`${geistSans.variable} ${geistMono.variable} antialiased`}>
         <PostHogProvider>
           <ThemeProvider>
             <Navbar />

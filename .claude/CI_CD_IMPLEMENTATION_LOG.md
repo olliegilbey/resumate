@@ -34,6 +34,7 @@
 **Public repo = Assume adversaries watching**
 
 **Guardrails:**
+
 - 3 secret scanners (gitleaks, ripsecrets, trufflehog) - EVERY commit
 - PII detection (phone, email) - EVERY commit
 - Build artifacts excluded from scans (avoid false positive fatigue)
@@ -49,17 +50,20 @@
 ### Why WASM Binaries Are Committed (16MB)
 
 **Problem:** Rust compilation slow + storage heavy
+
 - Local: 9GB `target/` directory (24,631 files)
 - Vercel: Would take 8-12min + 9GB storage per build
 - GitHub Actions: Would take 8-10min per run
 
 **Solution:** Pre-compile locally, commit binaries
+
 - Pre-commit hook validates freshness (hash-based)
 - Vercel build: 47s (was 12min) - saves 11min, 95% reduction
 - GitHub Actions: Skip Rust entirely - saves 7min
 - **Cost:** $3.60/deploy saved, 700min/month saved
 
 **Tradeoff:** 16MB in git (6.28MB gzipped over wire)
+
 - ✅ Justified: 10x faster deploys
 - ✅ Pre-commit ensures never stale
 - ✅ CDN gzips automatically (no pre-compression needed)
@@ -102,6 +106,7 @@
 **Problem:** PII in repo + remote editing needed
 
 **Solution:** Secret gist as data source
+
 - Resume data lives in gist (not git)
 - Local: Interactive pull/push with conflict detection
 - Server: Force-fetch on build (--force, non-interactive)
@@ -114,6 +119,7 @@
 **NOT for:** Testing code, building artifacts, validating PRs
 
 **Flow:**
+
 1. Fetch gist `updated_at` timestamp
 2. Validate JSON syntax + schema
 3. Compare vs last Vercel deploy time
@@ -124,14 +130,14 @@
 
 ### Gist Fetch Behavior by Environment
 
-| Environment | Flag | Missing GIST_URL | Fetch Fails | Invalid Data |
-|-------------|------|------------------|-------------|--------------|
-| Local dev | none | Use template* | Prompt user | Block commit |
-| Local pre-commit | none | Block commit | Block commit | Block commit |
-| GitHub Actions | --force | Fail workflow | Fail workflow | Fail workflow |
-| Vercel | --force | Fail build | Fail build | Fail build |
+| Environment      | Flag    | Missing GIST_URL | Fetch Fails   | Invalid Data  |
+| ---------------- | ------- | ---------------- | ------------- | ------------- |
+| Local dev        | none    | Use template\*   | Prompt user   | Block commit  |
+| Local pre-commit | none    | Block commit     | Block commit  | Block commit  |
+| GitHub Actions   | --force | Fail workflow    | Fail workflow | Fail workflow |
+| Vercel           | --force | Fail build       | Fail build    | Fail build    |
 
-*Template fallback: Only if `NODE_ENV=development` AND `--allow-template` flag
+\*Template fallback: Only if `NODE_ENV=development` AND `--allow-template` flag
 **Never silent failures in production environments**
 
 ---
@@ -143,6 +149,7 @@
 **Last line of defense before public repo**
 
 **Duration:** 10-60s depending on changes
+
 - Fast path (no rebuilds): ~10-15s
 - WASM rebuild path: ~45-60s
 - **Acceptable:** Better 60s wait than ONE PII leak
@@ -163,23 +170,27 @@
 ### Smart Test Execution (Conditional)
 
 **WASM-dependent Rust tests:**
+
 - Run ONLY if WASM rebuilt in this commit
 - Tests: `pdf_validation.rs`, `pdf_permutation.rs`, `pdf_snapshot.rs`
 - Why: WASM unchanged = these tests would pass (already validated)
 - Saves ~10s on typical commits
 
 **TypeScript tests:**
+
 - ALWAYS run in pre-commit (fast, ~5-10s)
 - Cover non-WASM logic (API routes, components, utils)
 - No conditional logic needed (cheap to run)
 
 **Rust test suite:**
+
 - Run if ANY Rust file changed (not just WASM)
 - Includes integration tests with real gist data
 - Skip if only TS/docs changed
-- Conditional: Check git diff for crates/**/*.rs
+- Conditional: Check git diff for crates/\*_/_.rs
 
 **Coverage generation:**
+
 - Run AFTER all tests pass
 - Non-blocking (warnings OK)
 - Generated for local viewing, not committed
@@ -196,6 +207,7 @@
 **Storage:** 9GB target/ (local only)
 
 **Responsibilities:**
+
 - ✅ Secret scanning (3 tools)
 - ✅ WASM compilation
 - ✅ Type generation (Rust → Schema → TS)
@@ -212,6 +224,7 @@
 **Workflow:** `gist-deploy-trigger.yml`
 
 **Responsibilities:**
+
 - ✅ Fetch gist metadata (GitHub API)
 - ✅ Validate JSON syntax + schema
 - ✅ Compare timestamps (gist vs last Vercel deploy)
@@ -231,6 +244,7 @@
 **Solution:** Deleted workflow entirely
 
 **Rationale:**
+
 - Pre-commit hook already validates everything (6s local)
 - Every push is blocked until validation passes
 - No external contributors (private project)
@@ -240,6 +254,7 @@
 - Zero value add over local validation
 
 **Validation Gates (Sufficient):**
+
 1. **Pre-commit** (local, 6s, blocks push)
    - Secret scanning (gitleaks, ripsecrets, trufflehog)
    - Lint + typecheck (ESLint, TSC, clippy, cargo fmt)
@@ -251,6 +266,7 @@
    - Gist fetch validation (fail-fast if invalid)
 
 **Edge Cases Covered:**
+
 - Developer bypasses pre-commit (`--no-verify`)? → Vercel catches missing WASM/invalid gist
 - Broken code pushed? → PR review catches it (solo developer)
 - Fork contributors? → Husky hooks install automatically, same validation
@@ -263,12 +279,14 @@
 **Duration:** 0s CI time
 
 **Philosophy:** Heavy pre-commit IS the PR validation
+
 - ✅ Developer runs pre-commit locally (4-60s)
 - ✅ Vercel preview deploy validates build (45-47s)
 - ❌ NO GitHub Actions for PR testing (deleted, redundant)
 - ❌ NO cargo test in CI (already ran locally)
 
 **Rationale:**
+
 - Pre-commit enforces all quality gates before push
 - Cannot push without passing validation
 - If bypassed → Vercel build catches it
@@ -277,6 +295,7 @@
 - GitHub Actions reserved for gist watching only
 
 **Deleted Workflows:**
+
 - `rust-type-validation.yml` (2025-11-12) - 100% redundant with pre-commit
 
 ---
@@ -288,6 +307,7 @@
 **Triggers:** Git push OR deploy hook (from Actions)
 
 **Responsibilities:**
+
 - ✅ Install Node deps
 - ✅ Check WASM exists (early exit)
 - ✅ Fetch gist data (fail-fast if missing)
@@ -304,12 +324,14 @@
 **Current:** Commit `resume_wasm_bg.wasm` (16MB uncompressed)
 
 **What happens:**
+
 1. Vercel/CDN auto-gzips (6.28MB)
 2. Sets `Content-Encoding: gzip` header
 3. Browser transparently decompresses
 4. WASM loader gets raw bytes
 
 **If we pre-compressed:**
+
 - ❌ Would need custom Next.js serving logic
 - ❌ Would break browser WASM loading
 - ❌ Would save ZERO bandwidth (CDN already does it)
@@ -377,6 +399,7 @@ fi
 **Single source of truth:** `crates/shared-types/src/lib.rs`
 
 **Flow:**
+
 1. Rust types changed
 2. Pre-commit runs: `cargo run --bin generate_schema`
 3. Output: `schemas/resume.schema.json`
@@ -394,21 +417,22 @@ fi
 
 ### Before Optimization
 
-| Environment | Duration | Rust Build | Target Size |
-|-------------|----------|------------|-------------|
-| Local | 30-90s | ✅ | 9GB |
-| GitHub Actions | ~11min | ✅ | 9GB |
-| Vercel | ~12min | ✅ | 9GB |
+| Environment    | Duration | Rust Build | Target Size |
+| -------------- | -------- | ---------- | ----------- |
+| Local          | 30-90s   | ✅         | 9GB         |
+| GitHub Actions | ~11min   | ✅         | 9GB         |
+| Vercel         | ~12min   | ✅         | 9GB         |
 
 ### After Optimization
 
-| Environment | Duration | Rust Build | Target Size | Workflows |
-|-------------|----------|------------|-------------|-----------|
-| Local | 4-60s | ✅ (if needed) | 9GB | Pre-commit hook |
-| GitHub Actions | ~30s | ❌ | 0GB | Gist watcher only |
-| Vercel | ~3min | ❌ | 0GB | N/A |
+| Environment    | Duration | Rust Build     | Target Size | Workflows         |
+| -------------- | -------- | -------------- | ----------- | ----------------- |
+| Local          | 4-60s    | ✅ (if needed) | 9GB         | Pre-commit hook   |
+| GitHub Actions | ~30s     | ❌             | 0GB         | Gist watcher only |
+| Vercel         | ~3min    | ❌             | 0GB         | N/A               |
 
 **Savings:**
+
 - Vercel: 9min/deploy = $3.60/deploy
 - GitHub Actions: 700min/month (deleted PR workflow)
 - Local: Faster feedback (4-60s vs 11min CI)
@@ -453,6 +477,7 @@ fi
 **File Deleted:** `rust-type-validation.yml`
 
 **Rationale:**
+
 - Pre-commit runs all tests locally (4-60s, blocks push)
 - Cannot push without passing validation
 - 100% redundant to run same tests in CI (11min wasted)
@@ -461,6 +486,7 @@ fi
 - GitHub Actions reserved for gist watching
 
 **Previous workflow did:**
+
 - cargo fmt --check (pre-commit does this)
 - cargo clippy (pre-commit does this)
 - cargo test --all (pre-commit does this)
@@ -476,6 +502,7 @@ fi
 **Decision:** Commit 16MB WASM binaries
 **Date:** 2025-11-11
 **Rationale:**
+
 - Saves 9min per Vercel deploy
 - Saves 7min per GitHub Actions run
 - Pre-commit ensures freshness (hash-based)
@@ -489,6 +516,7 @@ fi
 **Decision:** 10-60s pre-commit acceptable
 **Date:** 2025-11-11
 **Rationale:**
+
 - Public repo = one PII leak is catastrophic
 - Last line of defense before push
 - Fast path (no rebuilds) is ~10-15s
@@ -502,16 +530,19 @@ fi
 ## 🎯 Success Metrics
 
 ### Security
+
 - ✅ Zero PII leaks in commit history
 - ✅ Zero secrets in git
 - ✅ 100% pre-commit secret scan rate
 
 ### Performance
+
 - ✅ Vercel builds 45-47s (exceeded target)
 - ✅ GitHub Actions <2min (target: 30s)
 - ✅ Pre-commit <15s fast path
 
 ### Reliability
+
 - ✅ Zero stale WASM deploys
 - ✅ Zero invalid gist deploys
 - ✅ 100% artifact freshness
@@ -535,6 +566,7 @@ fi
 See active todo list in conversation for detailed steps.
 
 **Critical Path:**
+
 1. Remove PII from committed files
 2. Fix gitleaks false positives
 3. Optimize pre-commit hook order
@@ -543,6 +575,7 @@ See active todo list in conversation for detailed steps.
 6. Test end-to-end
 
 **Success Criteria:**
+
 - [ ] No email in git history/files
 - [ ] Gitleaks runs clean on commits
 - [ ] Pre-commit <15s fast path
@@ -560,86 +593,93 @@ See active todo list in conversation for detailed steps.
 ## 📋 Implementation Todos (Phased)
 
 ### PHASE 1: Security & Cleanup ✅ COMPLETE (2025-11-11)
-  ✅ Removed email from Cargo.toml authors field
-  ✅ Created .gitleaks.toml with specific PII patterns (not generic)
-  ✅ Configured gitleaks protect --staged (scans staged only, not history)
-  ✅ Configured ripsecrets for PII detection
-  ✅ Configured trufflehog for verified secrets
-  ✅ Email remains in old commits (acceptable - focus on preventing new leaks)
-  ✅ Triple secret scanning active in pre-commit
-  ✅ Commit: "chore: security hardening + PII detection config"
+
+✅ Removed email from Cargo.toml authors field
+✅ Created .gitleaks.toml with specific PII patterns (not generic)
+✅ Configured gitleaks protect --staged (scans staged only, not history)
+✅ Configured ripsecrets for PII detection
+✅ Configured trufflehog for verified secrets
+✅ Email remains in old commits (acceptable - focus on preventing new leaks)
+✅ Triple secret scanning active in pre-commit
+✅ Commit: "chore: security hardening + PII detection config"
 
 ### PHASE 2: Pre-Commit Hook ✅ COMPLETE (2025-11-11)
-  ✅ Audit current .git/hooks/pre-commit (understand what runs)
-  ✅ Create new .husky/pre-commit with optimized order
-  ✅ Add secret scanning (gitleaks + ripsecrets + trufflehog) FIRST
-  ✅ Add PII regex detection (phone/email) to pre-commit
-  ✅ Add lint + typecheck SECOND (fail fast)
-  ✅ Add conditional WASM rebuild detection THIRD
-  ✅ Add conditional WASM tests (if rebuilt) FOURTH
-  ✅ Add conditional type sync (if shared-types changed) FIFTH
-  ✅ Add conditional Rust tests (if any .rs changed) SIXTH
-  ✅ Test pre-commit with TS-only changes (should skip Rust)
-  ✅ Test pre-commit with Rust changes (should run all)
-  ✅ Test pre-commit with doc-only changes (should skip most)
-  ✅ Test pre-commit end-to-end with all scanners
-  ✅ Remove orphaned .git/hooks/pre-commit file
-  ✅ Commit: "ci: optimize pre-commit hook with conditional execution"
+
+✅ Audit current .git/hooks/pre-commit (understand what runs)
+✅ Create new .husky/pre-commit with optimized order
+✅ Add secret scanning (gitleaks + ripsecrets + trufflehog) FIRST
+✅ Add PII regex detection (phone/email) to pre-commit
+✅ Add lint + typecheck SECOND (fail fast)
+✅ Add conditional WASM rebuild detection THIRD
+✅ Add conditional WASM tests (if rebuilt) FOURTH
+✅ Add conditional type sync (if shared-types changed) FIFTH
+✅ Add conditional Rust tests (if any .rs changed) SIXTH
+✅ Test pre-commit with TS-only changes (should skip Rust)
+✅ Test pre-commit with Rust changes (should run all)
+✅ Test pre-commit with doc-only changes (should skip most)
+✅ Test pre-commit end-to-end with all scanners
+✅ Remove orphaned .git/hooks/pre-commit file
+✅ Commit: "ci: optimize pre-commit hook with conditional execution"
 
 ### PHASE 3: Build Scripts ✅ COMPLETE (2025-11-12)
-  ✅ Update scripts/build-wasm.sh with early exit check
-  ✅ Add WASM exists check to build-wasm.sh (exit 0 if present)
-  ✅ Add fail-fast error if WASM missing in production
-  ✅ Test build-wasm.sh early exit locally
-  ✅ Update scripts/fetch-gist-data.js fail-fast logic
-  ✅ Add NODE_ENV=production check for GIST_URL requirement
-  ✅ Add template fallback for NODE_ENV=development only
-  ✅ Add --allow-template flag for explicit dev testing
-  ✅ Add data file existence validation after fetch
-  ✅ Add JSON syntax validation after fetch
-  ✅ Test fetch-gist-data.js in dev mode (should allow template)
-  ✅ Test fetch-gist-data.js in prod mode (should fail-fast)
-  ✅ Commit: "ci: add fail-fast validation to build scripts"
+
+✅ Update scripts/build-wasm.sh with early exit check
+✅ Add WASM exists check to build-wasm.sh (exit 0 if present)
+✅ Add fail-fast error if WASM missing in production
+✅ Test build-wasm.sh early exit locally
+✅ Update scripts/fetch-gist-data.js fail-fast logic
+✅ Add NODE_ENV=production check for GIST_URL requirement
+✅ Add template fallback for NODE_ENV=development only
+✅ Add --allow-template flag for explicit dev testing
+✅ Add data file existence validation after fetch
+✅ Add JSON syntax validation after fetch
+✅ Test fetch-gist-data.js in dev mode (should allow template)
+✅ Test fetch-gist-data.js in prod mode (should fail-fast)
+✅ Commit: "ci: add fail-fast validation to build scripts"
 
 ### PHASE 4: GitHub Actions (Gist-Only) ✅ COMPLETE
-  ✅ Decided: Delete rust-type-validation.yml entirely (Option 1)
-  ✅ Deleted rust-type-validation.yml (100% redundant with pre-commit)
-  ✅ Updated CI_CD_PRINCIPLES.md to reflect actual strategy
-  ✅ Verified gist-deploy-trigger.yml unchanged (hourly, gist only)
-  ✅ GitHub Actions now exclusively for gist watching
-  ✅ Commit: "ci: delete redundant PR validation workflow"
+
+✅ Decided: Delete rust-type-validation.yml entirely (Option 1)
+✅ Deleted rust-type-validation.yml (100% redundant with pre-commit)
+✅ Updated CI_CD_PRINCIPLES.md to reflect actual strategy
+✅ Verified gist-deploy-trigger.yml unchanged (hourly, gist only)
+✅ GitHub Actions now exclusively for gist watching
+✅ Commit: "ci: delete redundant PR validation workflow"
 
 ### PHASE 5: Vercel Configuration (Pre-Built Artifacts) ✅ COMPLETE
-  ✅ Verified RESUME_DATA_GIST_URL set in Vercel (Production, Preview, Development)
-  ✅ Verified NODE_ENV=production set in Vercel (default)
-  ✅ Fixed: ENV vars were only set for Production (not Preview/Dev)
-  ✅ Added .vercelignore to prevent manual deploy artifacts (target/ dir)
-  ✅ Test Vercel preview build: SUCCESS (45s)
-  ✅ Test Vercel production build: SUCCESS (47s)
-  ✅ Verified WASM: "✅ WASM binaries present (using pre-built artifacts)"
-  ✅ Verified Gist: "✅ Resume data fetched successfully from gist"
-  ✅ Verified no Rust compilation in Vercel logs
-  ✅ Build time: 45-47s (vs 12min before - **95% reduction!**)
-  ✅ Production URL: https://resumate-olliegilbeys-projects.vercel.app
-  ✅ Commits: "ci: add vercelignore to prevent manual deploy artifacts"
+
+✅ Verified RESUME_DATA_GIST_URL set in Vercel (Production, Preview, Development)
+✅ Verified NODE_ENV=production set in Vercel (default)
+✅ Fixed: ENV vars were only set for Production (not Preview/Dev)
+✅ Added .vercelignore to prevent manual deploy artifacts (target/ dir)
+✅ Test Vercel preview build: SUCCESS (45s)
+✅ Test Vercel production build: SUCCESS (47s)
+✅ Verified WASM: "✅ WASM binaries present (using pre-built artifacts)"
+✅ Verified Gist: "✅ Resume data fetched successfully from gist"
+✅ Verified no Rust compilation in Vercel logs
+✅ Build time: 45-47s (vs 12min before - **95% reduction!**)
+✅ Production URL: https://resumate-olliegilbeys-projects.vercel.app
+✅ Commits: "ci: add vercelignore to prevent manual deploy artifacts"
 
 ### PHASE 6: End-to-End Validation ✅ COMPLETE (2025-11-13)
-  ✅ Updated gist content manually (test tagline)
-  ✅ Triggered workflow manually (gh workflow run --ref feature/...)
-  ✅ Verified workflow detects gist change and triggers Vercel deploy
-  ✅ Verified Vercel production deploy succeeds with updated data
-  ✅ Ran gitleaks on full git history (--no-git flag)
-  ✅ Verified no secrets in entire git history (2 email metadata entries acceptable)
-  ✅ Fixed workflow timestamp extraction (jq instead of grep)
-  ✅ Consolidated documentation (CI_CD_PRINCIPLES → BUILD_PIPELINE.md)
-  ✅ Updated ARCHITECTURE.md (remove times, reference justfile + METRICS.md)
-  ✅ Updated DEPLOYMENT_GUIDE.md (streamlined, reference BUILD_PIPELINE)
-  ✅ Archived CI_CD_PRINCIPLES → CI_CD_IMPLEMENTATION_LOG.md
-  ✅ Cleaned up dead code (removed time-pre-commit.sh)
-  ✅ Verified all doc cross-references
-  ✅ Commits: "fix(ci): gist timestamp extraction" + "docs: consolidate CI/CD docs"
+
+✅ Updated gist content manually (test tagline)
+✅ Triggered workflow manually (gh workflow run --ref feature/...)
+✅ Verified workflow detects gist change and triggers Vercel deploy
+✅ Verified Vercel production deploy succeeds with updated data
+✅ Ran gitleaks on full git history (--no-git flag)
+✅ Verified no secrets in entire git history (2 email metadata entries acceptable)
+✅ Fixed workflow timestamp extraction (jq instead of grep)
+✅ Consolidated documentation (CI_CD_PRINCIPLES → BUILD_PIPELINE.md)
+✅ Updated ARCHITECTURE.md (remove times, reference justfile + METRICS.md)
+✅ Updated DEPLOYMENT_GUIDE.md (streamlined, reference BUILD_PIPELINE)
+✅ Archived CI_CD_PRINCIPLES → CI_CD_IMPLEMENTATION_LOG.md
+✅ Cleaned up dead code (removed time-pre-commit.sh)
+✅ Verified all doc cross-references
+✅ Commits: "fix(ci): gist timestamp extraction" + "docs: consolidate CI/CD docs"
 
 **Final Status:**
+
 - All 6 phases complete (security, pre-commit, build scripts, GitHub Actions, Vercel, E2E)
 - Documentation consolidated and SSOT enforced
 - Build pipeline optimized and validated end-to-end

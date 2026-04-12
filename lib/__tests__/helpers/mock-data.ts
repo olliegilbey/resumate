@@ -1,4 +1,4 @@
-import { vi } from 'vitest'
+import { vi } from "vitest";
 
 /**
  * Mock resume data imports for testing
@@ -13,25 +13,25 @@ import { vi } from 'vitest'
 export async function loadSanitizedResumeData() {
   try {
     // Dynamic import to load actual data structure
-    const data = await import('@/data/resume-data.json')
-    const resumeData = data.default || data
+    const data = await import("@/data/resume-data.json");
+    const resumeData = data.default || data;
 
     // Sanitize personal contact info
     const sanitized = {
       ...resumeData,
       personal: {
         ...resumeData.personal,
-        email: 'test@example.com', // Never use real email in tests
-        phone: '+1234567890', // Never use real phone in tests
+        email: "test@example.com", // Never use real email in tests
+        phone: "+1234567890", // Never use real phone in tests
       },
-    }
+    };
 
-    return sanitized
+    return sanitized;
   } catch (error) {
-    console.warn('Could not load resume-data.json, using fixture:', error)
+    console.warn("Could not load resume-data.json, using fixture:", error);
     // Fallback to fixture if data file doesn't exist
-    const { mockResumeData } = await import('../fixtures/resume-data.fixture')
-    return mockResumeData
+    const { mockResumeData } = await import("../fixtures/resume-data.fixture");
+    return mockResumeData;
   }
 }
 
@@ -40,13 +40,13 @@ export async function loadSanitizedResumeData() {
  * Call this in beforeAll/beforeEach to replace imports
  */
 export async function mockResumeDataImport() {
-  const sanitizedData = await loadSanitizedResumeData()
+  const sanitizedData = await loadSanitizedResumeData();
 
-  vi.mock('@/data/resume-data.json', () => ({
+  vi.mock("@/data/resume-data.json", () => ({
     default: sanitizedData,
-  }))
+  }));
 
-  return sanitizedData
+  return sanitizedData;
 }
 
 /**
@@ -54,5 +54,5 @@ export async function mockResumeDataImport() {
  * Call in afterAll to restore
  */
 export function unmockResumeDataImport() {
-  vi.unmock('@/data/resume-data.json')
+  vi.unmock("@/data/resume-data.json");
 }

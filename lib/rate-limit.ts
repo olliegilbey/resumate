@@ -4,38 +4,41 @@
  */
 
 interface RateLimitRecord {
-  count: number
-  resetAt: number
+  count: number;
+  resetAt: number;
 }
 
 // WARNING: In-memory rate limiter is lost on serverless cold starts.
 // For production at scale, consider using Redis/Vercel KV for persistent rate limiting
 // across function instances. Current implementation provides protection within a
 // single warm function instance only.
-const rateLimitStore = new Map<string, RateLimitRecord>()
+const rateLimitStore = new Map<string, RateLimitRecord>();
 
 // Cleanup old entries every 10 minutes
-setInterval(() => {
-  const now = Date.now()
-  for (const [key, record] of rateLimitStore.entries()) {
-    if (record.resetAt < now) {
-      rateLimitStore.delete(key)
+setInterval(
+  () => {
+    const now = Date.now();
+    for (const [key, record] of rateLimitStore.entries()) {
+      if (record.resetAt < now) {
+        rateLimitStore.delete(key);
+      }
     }
-  }
-}, 10 * 60 * 1000)
+  },
+  10 * 60 * 1000,
+);
 
 export interface RateLimitConfig {
   /** Maximum requests per window */
-  limit: number
+  limit: number;
   /** Window duration in milliseconds */
-  window: number
+  window: number;
 }
 
 export interface RateLimitResult {
-  success: boolean
-  limit: number
-  remaining: number
-  reset: number
+  success: boolean;
+  limit: number;
+  remaining: number;
+  reset: number;
 }
 
 /**
@@ -45,24 +48,21 @@ export interface RateLimitResult {
  * @param config - Rate limit configuration
  * @returns Rate limit result
  */
-export function checkRateLimit(
-  identifier: string,
-  config: RateLimitConfig
-): RateLimitResult {
-  const now = Date.now()
-  const record = rateLimitStore.get(identifier)
+export function checkRateLimit(identifier: string, config: RateLimitConfig): RateLimitResult {
+  const now = Date.now();
+  const record = rateLimitStore.get(identifier);
 
   // No record or expired window - allow and create new record
   if (!record || record.resetAt < now) {
-    const resetAt = now + config.window
-    rateLimitStore.set(identifier, { count: 1, resetAt })
+    const resetAt = now + config.window;
+    rateLimitStore.set(identifier, { count: 1, resetAt });
 
     return {
       success: true,
       limit: config.limit,
       remaining: config.limit - 1,
       reset: resetAt,
-    }
+    };
   }
 
   // Within window - check if limit exceeded
@@ -72,19 +72,19 @@ export function checkRateLimit(
       limit: config.limit,
       remaining: 0,
       reset: record.resetAt,
-    }
+    };
   }
 
   // Increment count
-  record.count++
-  rateLimitStore.set(identifier, record)
+  record.count++;
+  rateLimitStore.set(identifier, record);
 
   return {
     success: true,
     limit: config.limit,
     remaining: config.limit - record.count,
     reset: record.resetAt,
-  }
+  };
 }
 
 /**
@@ -96,23 +96,23 @@ export function checkRateLimit(
  */
 export function getClientIP(request: Request): string {
   // Try various headers in order of preference
-  const headers = request.headers
+  const headers = request.headers;
 
   // Cloudflare
-  const cfConnectingIP = headers.get('cf-connecting-ip')
-  if (cfConnectingIP) return cfConnectingIP
+  const cfConnectingIP = headers.get("cf-connecting-ip");
+  if (cfConnectingIP) return cfConnectingIP;
 
   // Vercel
-  const xRealIP = headers.get('x-real-ip')
-  if (xRealIP) return xRealIP
+  const xRealIP = headers.get("x-real-ip");
+  if (xRealIP) return xRealIP;
 
   // Standard forwarded-for (take first IP)
-  const xForwardedFor = headers.get('x-forwarded-for')
+  const xForwardedFor = headers.get("x-forwarded-for");
   if (xForwardedFor) {
-    return xForwardedFor.split(',')[0].trim()
+    return xForwardedFor.split(",")[0].trim();
   }
 
-  return 'unknown'
+  return "unknown";
 }
 
 /**
@@ -120,5 +120,5 @@ export function getClientIP(request: Request): string {
  * @internal
  */
 export function clearRateLimitStore(): void {
-  rateLimitStore.clear()
+  rateLimitStore.clear();
 }

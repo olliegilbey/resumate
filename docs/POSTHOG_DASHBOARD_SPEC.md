@@ -22,18 +22,18 @@
 
 ## Architecture Decisions
 
-| Decision | Choice | Rationale |
-|----------|--------|-----------|
-| Historical data | **Ignore** | Current data is test; fresh start with production schema |
-| Event naming | **Unified** | `resume_prepared` with `generation_method` discriminator |
-| Field naming | **snake_case** | Consistent queries across client/server |
-| Environment tracking | **All events** | Filter by local/preview/production |
-| Duplicate events | **Keep both** | Different purposes: GeoIP (client) vs n8n (server) |
-| Type safety | **Registry pattern** | Single source of truth for event names and schemas |
-| Download pipeline | **Unified stages** | Common flow for resume (AI/heuristic) and vCard |
-| Error format | **Rust-style** | Clear, debuggable, unified across all download types |
-| Currency format | **ISO 4217** | Consistent salary data (GBP, USD, EUR, not £/$) |
-| AI prompt tracking | **Placeholders** | User prompt with `[SYSTEM_PROMPT:hash]` and `[JOB_DESCRIPTION]` placeholders. Full JD in separate field. Enables prompt analysis without duplication. |
+| Decision             | Choice               | Rationale                                                                                                                                             |
+| -------------------- | -------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Historical data      | **Ignore**           | Current data is test; fresh start with production schema                                                                                              |
+| Event naming         | **Unified**          | `resume_prepared` with `generation_method` discriminator                                                                                              |
+| Field naming         | **snake_case**       | Consistent queries across client/server                                                                                                               |
+| Environment tracking | **All events**       | Filter by local/preview/production                                                                                                                    |
+| Duplicate events     | **Keep both**        | Different purposes: GeoIP (client) vs n8n (server)                                                                                                    |
+| Type safety          | **Registry pattern** | Single source of truth for event names and schemas                                                                                                    |
+| Download pipeline    | **Unified stages**   | Common flow for resume (AI/heuristic) and vCard                                                                                                       |
+| Error format         | **Rust-style**       | Clear, debuggable, unified across all download types                                                                                                  |
+| Currency format      | **ISO 4217**         | Consistent salary data (GBP, USD, EUR, not £/$)                                                                                                       |
+| AI prompt tracking   | **Placeholders**     | User prompt with `[SYSTEM_PROMPT:hash]` and `[JOB_DESCRIPTION]` placeholders. Full JD in separate field. Enables prompt analysis without duplication. |
 
 ---
 
@@ -45,15 +45,16 @@ Every event MUST include these fields:
 
 ```typescript
 interface EnvironmentContext {
-  env: 'development' | 'production' | 'test'     // NODE_ENV
-  source: 'local' | 'preview' | 'production'     // Deployment target
-  is_server: boolean                              // Client vs server origin
+  env: "development" | "production" | "test"; // NODE_ENV
+  source: "local" | "preview" | "production"; // Deployment target
+  is_server: boolean; // Client vs server origin
 }
 ```
 
 ### Implementation
 
 **Server-side** (already partially implemented in `captureEvent`):
+
 ```typescript
 {
   env: process.env.NODE_ENV,
@@ -63,6 +64,7 @@ interface EnvironmentContext {
 ```
 
 **Client-side** (MISSING - needs implementation):
+
 ```typescript
 {
   env: process.env.NODE_ENV,                           // Build-time
@@ -98,6 +100,7 @@ WHERE properties.is_server = false AND properties.source = 'preview'
 ### Events
 
 #### `tag_filter_changed` (Client)
+
 Fired when user changes tag filters (debounced 1s).
 
 ```typescript
@@ -113,16 +116,17 @@ Fired when user changes tag filters (debounced 1s).
 ```
 
 #### `search_performed` (Client)
+
 Fired when user completes a search (on blur).
 
 ```typescript
 {
-  env: string
-  source: string
-  is_server: false
+  env: string;
+  source: string;
+  is_server: false;
 
-  query: string            // Search query text
-  result_count: number     // Matching bullets
+  query: string; // Search query text
+  result_count: number; // Matching bullets
 }
 ```
 
@@ -191,28 +195,28 @@ All three download types share a common flow with consistent stages:
 
 ### Download Types
 
-| Type | Event Prefix | Server Event | Has WASM Step |
-|------|--------------|--------------|---------------|
-| Resume (AI) | `resume_*` | `resume_prepared` (generation_method='ai') | Yes |
-| Resume (Heuristic) | `resume_*` | `resume_prepared` (generation_method='heuristic') | Yes |
-| vCard | `contact_card_*` | `contact_card_served` | No |
+| Type               | Event Prefix     | Server Event                                      | Has WASM Step |
+| ------------------ | ---------------- | ------------------------------------------------- | ------------- |
+| Resume (AI)        | `resume_*`       | `resume_prepared` (generation_method='ai')        | Yes           |
+| Resume (Heuristic) | `resume_*`       | `resume_prepared` (generation_method='heuristic') | Yes           |
+| vCard              | `contact_card_*` | `contact_card_served`                             | No            |
 
 ### Common Fields (All Download Events)
 
 ```typescript
 interface DownloadEventBase {
   // Environment
-  env: string
-  source: string
-  is_server: boolean
+  env: string;
+  source: string;
+  is_server: boolean;
 
   // Download identification
-  download_type: 'resume_ai' | 'resume_heuristic' | 'vcard'
+  download_type: "resume_ai" | "resume_heuristic" | "vcard";
 
   // Timing (varies by stage)
-  duration_ms?: number
-  turnstile_duration_ms?: number
-  total_duration_ms?: number
+  duration_ms?: number;
+  turnstile_duration_ms?: number;
+  total_duration_ms?: number;
 }
 ```
 
@@ -220,25 +224,25 @@ interface DownloadEventBase {
 
 #### Resume Downloads
 
-| Stage | Client Event | Server Event |
-|-------|--------------|--------------|
-| 1. Initiated | `resume_initiated` | - |
-| 2. Verified | `resume_verified` | - |
-| 3. Prepared | - | `resume_prepared` |
-| 4. Compiled | `resume_compiled` | - |
+| Stage         | Client Event        | Server Event               |
+| ------------- | ------------------- | -------------------------- |
+| 1. Initiated  | `resume_initiated`  | -                          |
+| 2. Verified   | `resume_verified`   | -                          |
+| 3. Prepared   | -                   | `resume_prepared`          |
+| 4. Compiled   | `resume_compiled`   | -                          |
 | 5. Downloaded | `resume_downloaded` | `resume_download_notified` |
-| Error | `resume_error` | `resume_failed` |
-| Cancel | `resume_cancelled` | - |
+| Error         | `resume_error`      | `resume_failed`            |
+| Cancel        | `resume_cancelled`  | -                          |
 
 #### vCard Downloads
 
-| Stage | Client Event | Server Event |
-|-------|--------------|--------------|
-| 1. Initiated | `contact_card_initiated` | - |
-| 2. Verified | `contact_card_verified` | - |
-| 3-5. Served | `contact_card_downloaded` | `contact_card_served` |
-| Error | `contact_card_error` | - |
-| Cancel | `contact_card_cancelled` | - |
+| Stage        | Client Event              | Server Event          |
+| ------------ | ------------------------- | --------------------- |
+| 1. Initiated | `contact_card_initiated`  | -                     |
+| 2. Verified  | `contact_card_verified`   | -                     |
+| 3-5. Served  | `contact_card_downloaded` | `contact_card_served` |
+| Error        | `contact_card_error`      | -                     |
+| Cancel       | `contact_card_cancelled`  | -                     |
 
 **Note:** vCard combines stages 3-5 because server generates and returns file in one step.
 
@@ -265,31 +269,31 @@ Errors follow Rust compiler style for clarity and debuggability:
 
 type DownloadErrorCode =
   // Turnstile errors
-  | 'TN_001'  // Turnstile expired
-  | 'TN_002'  // Turnstile failed
-  | 'TN_003'  // Turnstile timeout
+  | "TN_001" // Turnstile expired
+  | "TN_002" // Turnstile failed
+  | "TN_003" // Turnstile timeout
   // WASM errors
-  | 'WM_001'  // WASM load failed
-  | 'WM_002'  // WASM timeout
-  | 'WM_003'  // WASM memory error
+  | "WM_001" // WASM load failed
+  | "WM_002" // WASM timeout
+  | "WM_003" // WASM memory error
   // PDF generation errors
-  | 'PDF_001' // PDF generation failed
-  | 'PDF_002' // PDF too large
-  | 'PDF_003' // Font loading failed
+  | "PDF_001" // PDF generation failed
+  | "PDF_002" // PDF too large
+  | "PDF_003" // Font loading failed
   // AI errors (existing codes in lib/ai/errors.ts)
-  | 'AI_001'  // Provider error
-  | 'AI_002'  // Response parse failed
-  | 'AI_003'  // Invalid response format
-  | 'AI_004'  // Provider timeout
-  | 'AI_005'  // Provider rate limited
+  | "AI_001" // Provider error
+  | "AI_002" // Response parse failed
+  | "AI_003" // Invalid response format
+  | "AI_004" // Provider timeout
+  | "AI_005" // Provider rate limited
   // Network errors
-  | 'NT_001'  // Network timeout
-  | 'NT_002'  // Server unreachable
-  | 'NT_003'  // Response error
+  | "NT_001" // Network timeout
+  | "NT_002" // Server unreachable
+  | "NT_003" // Response error
   // Validation errors
-  | 'VL_001'  // Invalid input
-  | 'VL_002'  // Missing required field
-  | 'VL_003'  // Data integrity error
+  | "VL_001" // Invalid input
+  | "VL_002" // Missing required field
+  | "VL_003"; // Data integrity error
 ```
 
 ### Error Event Schema
@@ -297,33 +301,33 @@ type DownloadErrorCode =
 ```typescript
 interface DownloadError {
   // Environment
-  env: string
-  source: string
-  is_server: boolean
-  client_ip?: string         // Server only
+  env: string;
+  source: string;
+  is_server: boolean;
+  client_ip?: string; // Server only
 
   // Download context
-  download_type: 'resume_ai' | 'resume_heuristic' | 'vcard'
-  session_id?: string
+  download_type: "resume_ai" | "resume_heuristic" | "vcard";
+  session_id?: string;
 
   // Error identification
-  error_code: DownloadErrorCode
-  error_category: 'turnstile' | 'wasm' | 'pdf' | 'ai' | 'network' | 'validation'
-  error_stage: ErrorStage
+  error_code: DownloadErrorCode;
+  error_category: "turnstile" | "wasm" | "pdf" | "ai" | "network" | "validation";
+  error_stage: ErrorStage;
 
   // Human-readable
-  error_message: string      // Brief description
-  error_detail?: string      // Extended context
+  error_message: string; // Brief description
+  error_detail?: string; // Extended context
 
   // Technical
-  error_stack?: string       // Development only
+  error_stack?: string; // Development only
 
   // Timing
-  duration_ms: number        // Time before error occurred
+  duration_ms: number; // Time before error occurred
 
   // Recovery hints
-  is_retryable: boolean
-  suggested_action?: string
+  is_retryable: boolean;
+  suggested_action?: string;
 }
 ```
 
@@ -354,14 +358,14 @@ error[WM_001]: WASM module failed to load
 
 Align client and server error stages:
 
-| Current Client | Current Server | Unified |
-|----------------|----------------|---------|
-| `turnstile` | - | `turnstile` |
-| `selection` | `bullet_selection` | `bullet_selection` |
-| `ai_selection` | - | `ai_selection` |
-| `wasm_load` | `wasm_load` | `wasm_load` |
-| `compilation` | `pdf_generation` | `pdf_generation` |
-| - | `network` | `network` |
+| Current Client | Current Server     | Unified            |
+| -------------- | ------------------ | ------------------ |
+| `turnstile`    | -                  | `turnstile`        |
+| `selection`    | `bullet_selection` | `bullet_selection` |
+| `ai_selection` | -                  | `ai_selection`     |
+| `wasm_load`    | `wasm_load`        | `wasm_load`        |
+| `compilation`  | `pdf_generation`   | `pdf_generation`   |
+| -              | `network`          | `network`          |
 
 ---
 
@@ -370,6 +374,7 @@ Align client and server error stages:
 ### Problem
 
 AI may return inconsistent currency formats:
+
 - Symbols: `$`, `£`, `€`
 - Variations: `gb`, `uk`, `british`, `pounds`
 - Mixed: `$USD`, `£GBP`
@@ -416,12 +421,46 @@ Add ISO 4217 validation (around line 96-99):
 
 ```typescript
 // Validate currency is ISO 4217
-const iso4217Codes = ['USD', 'GBP', 'EUR', 'JPY', 'CAD', 'AUD', 'CHF', 'CNY', 'INR', 'NZD', 'SGD', 'HKD', 'SEK', 'NOK', 'DKK', 'PLN', 'CZK', 'HUF', 'ILS', 'MXN', 'BRL', 'ZAR', 'AED', 'THB', 'KRW', 'TWD', 'MYR', 'PHP', 'IDR', 'VND']
-if (typeof s.currency !== 'string' || !iso4217Codes.includes(s.currency.toUpperCase())) {
-  return { valid: false, error: `salary.currency must be ISO 4217 code (e.g., USD, GBP, EUR). Got: ${s.currency}` }
+const iso4217Codes = [
+  "USD",
+  "GBP",
+  "EUR",
+  "JPY",
+  "CAD",
+  "AUD",
+  "CHF",
+  "CNY",
+  "INR",
+  "NZD",
+  "SGD",
+  "HKD",
+  "SEK",
+  "NOK",
+  "DKK",
+  "PLN",
+  "CZK",
+  "HUF",
+  "ILS",
+  "MXN",
+  "BRL",
+  "ZAR",
+  "AED",
+  "THB",
+  "KRW",
+  "TWD",
+  "MYR",
+  "PHP",
+  "IDR",
+  "VND",
+];
+if (typeof s.currency !== "string" || !iso4217Codes.includes(s.currency.toUpperCase())) {
+  return {
+    valid: false,
+    error: `salary.currency must be ISO 4217 code (e.g., USD, GBP, EUR). Got: ${s.currency}`,
+  };
 }
 // Normalize to uppercase
-s.currency = s.currency.toUpperCase()
+s.currency = s.currency.toUpperCase();
 ```
 
 ---
@@ -451,37 +490,43 @@ client.capture({
 // Event name constants - single source of truth
 export const ANALYTICS_EVENTS = {
   // Explorer (behavioral, not download)
-  TAG_FILTER_CHANGED: 'tag_filter_changed',
-  SEARCH_PERFORMED: 'search_performed',
+  TAG_FILTER_CHANGED: "tag_filter_changed",
+  SEARCH_PERFORMED: "search_performed",
 
   // Contact Card (vCard)
-  CONTACT_CARD_INITIATED: 'contact_card_initiated',
-  CONTACT_CARD_VERIFIED: 'contact_card_verified',
-  CONTACT_CARD_DOWNLOADED: 'contact_card_downloaded',
-  CONTACT_CARD_ERROR: 'contact_card_error',
-  CONTACT_CARD_CANCELLED: 'contact_card_cancelled',
-  CONTACT_CARD_SERVED: 'contact_card_served',
+  CONTACT_CARD_INITIATED: "contact_card_initiated",
+  CONTACT_CARD_VERIFIED: "contact_card_verified",
+  CONTACT_CARD_DOWNLOADED: "contact_card_downloaded",
+  CONTACT_CARD_ERROR: "contact_card_error",
+  CONTACT_CARD_CANCELLED: "contact_card_cancelled",
+  CONTACT_CARD_SERVED: "contact_card_served",
 
   // Resume
-  RESUME_INITIATED: 'resume_initiated',
-  RESUME_VERIFIED: 'resume_verified',
-  RESUME_COMPILED: 'resume_compiled',
-  RESUME_DOWNLOADED: 'resume_downloaded',
-  RESUME_ERROR: 'resume_error',
-  RESUME_CANCELLED: 'resume_cancelled',
-  RESUME_PREPARED: 'resume_prepared',
-  RESUME_GENERATED: 'resume_generated',
-  RESUME_DOWNLOAD_NOTIFIED: 'resume_download_notified',
-  RESUME_FAILED: 'resume_failed',
-} as const
+  RESUME_INITIATED: "resume_initiated",
+  RESUME_VERIFIED: "resume_verified",
+  RESUME_COMPILED: "resume_compiled",
+  RESUME_DOWNLOADED: "resume_downloaded",
+  RESUME_ERROR: "resume_error",
+  RESUME_CANCELLED: "resume_cancelled",
+  RESUME_PREPARED: "resume_prepared",
+  RESUME_GENERATED: "resume_generated",
+  RESUME_DOWNLOAD_NOTIFIED: "resume_download_notified",
+  RESUME_FAILED: "resume_failed",
+} as const;
 
-export type AnalyticsEvent = typeof ANALYTICS_EVENTS[keyof typeof ANALYTICS_EVENTS]
-export type DownloadType = 'resume_ai' | 'resume_heuristic' | 'vcard'
-export type GenerationMethod = 'ai' | 'heuristic'
-export type AIProvider = 'cerebras-gpt' | 'cerebras-llama' | 'claude-sonnet' | 'claude-haiku'
-export type ErrorStage = 'turnstile' | 'bullet_selection' | 'ai_selection' | 'wasm_load' | 'pdf_generation' | 'network'
-export type ErrorCategory = 'turnstile' | 'wasm' | 'pdf' | 'ai' | 'network' | 'validation'
-export type CancelStage = 'turnstile' | 'verified' | 'compiling' | 'ai_analyzing'
+export type AnalyticsEvent = (typeof ANALYTICS_EVENTS)[keyof typeof ANALYTICS_EVENTS];
+export type DownloadType = "resume_ai" | "resume_heuristic" | "vcard";
+export type GenerationMethod = "ai" | "heuristic";
+export type AIProvider = "cerebras-gpt" | "cerebras-llama" | "claude-sonnet" | "claude-haiku";
+export type ErrorStage =
+  | "turnstile"
+  | "bullet_selection"
+  | "ai_selection"
+  | "wasm_load"
+  | "pdf_generation"
+  | "network";
+export type ErrorCategory = "turnstile" | "wasm" | "pdf" | "ai" | "network" | "validation";
+export type CancelStage = "turnstile" | "verified" | "compiling" | "ai_analyzing";
 ```
 
 ---
@@ -489,42 +534,46 @@ export type CancelStage = 'turnstile' | 'verified' | 'compiling' | 'ai_analyzing
 ### Contact Card Events
 
 #### `contact_card_initiated` (Client)
+
 ```typescript
 {
-  env: string
-  source: string
-  is_server: false
-  download_type: 'vcard'
+  env: string;
+  source: string;
+  is_server: false;
+  download_type: "vcard";
 
-  timestamp: number
+  timestamp: number;
 }
 ```
 
 #### `contact_card_verified` (Client)
+
 ```typescript
 {
-  env: string
-  source: string
-  is_server: false
-  download_type: 'vcard'
+  env: string;
+  source: string;
+  is_server: false;
+  download_type: "vcard";
 
-  turnstile_duration_ms: number
+  turnstile_duration_ms: number;
 }
 ```
 
 #### `contact_card_downloaded` (Client)
+
 ```typescript
 {
-  env: string
-  source: string
-  is_server: false
-  download_type: 'vcard'
+  env: string;
+  source: string;
+  is_server: false;
+  download_type: "vcard";
 
-  total_duration_ms: number
+  total_duration_ms: number;
 }
 ```
 
 #### `contact_card_error` (Client)
+
 ```typescript
 {
   env: string
@@ -543,34 +592,36 @@ export type CancelStage = 'turnstile' | 'verified' | 'compiling' | 'ai_analyzing
 ```
 
 #### `contact_card_cancelled` (Client)
+
 ```typescript
 {
-  env: string
-  source: string
-  is_server: false
-  download_type: 'vcard'
+  env: string;
+  source: string;
+  is_server: false;
+  download_type: "vcard";
 
-  stage: 'turnstile' | 'verified'
-  duration_ms: number
+  stage: "turnstile" | "verified";
+  duration_ms: number;
 }
 ```
 
 #### `contact_card_served` (Server)
+
 ```typescript
 {
-  env: string
-  source: string
-  is_server: true
-  client_ip: string
-  download_type: 'vcard'
+  env: string;
+  source: string;
+  is_server: true;
+  client_ip: string;
+  download_type: "vcard";
 
-  filename: string
-  full_name: string
-  email_count: number
-  vcard_size: number
-  has_linkedin: boolean
-  has_github: boolean
-  has_location: boolean
+  filename: string;
+  full_name: string;
+  email_count: number;
+  vcard_size: number;
+  has_linkedin: boolean;
+  has_github: boolean;
+  has_location: boolean;
 }
 ```
 
@@ -612,6 +663,7 @@ export type CancelStage = 'turnstile' | 'verified' | 'compiling' | 'ai_analyzing
 ```
 
 #### `resume_verified` (Client)
+
 ```typescript
 {
   env: string
@@ -627,6 +679,7 @@ export type CancelStage = 'turnstile' | 'verified' | 'compiling' | 'ai_analyzing
 ```
 
 #### `resume_compiled` (Client)
+
 ```typescript
 {
   env: string
@@ -648,6 +701,7 @@ export type CancelStage = 'turnstile' | 'verified' | 'compiling' | 'ai_analyzing
 ```
 
 #### `resume_downloaded` (Client)
+
 ```typescript
 {
   env: string
@@ -669,6 +723,7 @@ export type CancelStage = 'turnstile' | 'verified' | 'compiling' | 'ai_analyzing
 ```
 
 #### `resume_error` (Client)
+
 ```typescript
 {
   env: string
@@ -692,6 +747,7 @@ export type CancelStage = 'turnstile' | 'verified' | 'compiling' | 'ai_analyzing
 ```
 
 #### `resume_cancelled` (Client)
+
 ```typescript
 {
   env: string
@@ -767,6 +823,7 @@ export type CancelStage = 'turnstile' | 'verified' | 'compiling' | 'ai_analyzing
 ```
 
 #### `resume_generated` (Server via /api/resume/log)
+
 ```typescript
 {
   env: string
@@ -791,6 +848,7 @@ export type CancelStage = 'turnstile' | 'verified' | 'compiling' | 'ai_analyzing
 ```
 
 #### `resume_download_notified` (Server via /api/resume/log)
+
 ```typescript
 {
   env: string
@@ -823,6 +881,7 @@ export type CancelStage = 'turnstile' | 'verified' | 'compiling' | 'ai_analyzing
 ```
 
 #### `resume_failed` (Server via /api/resume/log)
+
 ```typescript
 {
   env: string
@@ -895,6 +954,7 @@ export type CancelStage = 'turnstile' | 'verified' | 'compiling' | 'ai_analyzing
 All queries include production filter: `AND properties.source = 'production'`
 
 #### 1. Downloads Over Time
+
 ```sql
 -- Three series on same chart
 -- Series 1: AI downloads
@@ -916,6 +976,7 @@ WHERE event = 'contact_card_downloaded'
 ```
 
 #### 2. Role Demand (Combined)
+
 ```sql
 SELECT
   COALESCE(
@@ -934,6 +995,7 @@ LIMIT 20
 ```
 
 #### 3. Salary Ranges Table
+
 ```sql
 SELECT
   formatDateTime(timestamp, '%Y-%m-%d %H:%i') AS time,
@@ -951,6 +1013,7 @@ LIMIT 50
 ```
 
 #### 4. Average Salary by Title
+
 ```sql
 SELECT
   properties.job_title AS title,
@@ -968,6 +1031,7 @@ ORDER BY avg_salary_min DESC
 ```
 
 #### 5. Top Cities
+
 ```sql
 SELECT
   properties.$geoip_city_name AS city,
@@ -984,6 +1048,7 @@ LIMIT 20
 ```
 
 #### 6. Recent Activity Log
+
 ```sql
 SELECT
   formatDateTime(timestamp, '%Y-%m-%d %H:%i') AS time,
@@ -1016,6 +1081,7 @@ LIMIT 25
 ```
 
 #### 8. Error Breakdown (All Downloads)
+
 ```sql
 SELECT
   properties.download_type AS download_type,
@@ -1033,6 +1099,7 @@ LIMIT 50
 ```
 
 #### 9. Most Explored Tags
+
 ```sql
 SELECT
   arrayJoin(properties.tags) AS tag,
@@ -1109,7 +1176,7 @@ LIMIT 20
 - [ ] **Update `app/api/resume/log/route.ts`**
   - Accept generation_method from client
   - Accept download_type from client
-  - Accept AI fields (job_title, salary_*, ai_provider) for passthrough
+  - Accept AI fields (job*title, salary*\*, ai_provider) for passthrough
   - Accept unified error fields
   - Convert all fields to snake_case
   - Add environment context
@@ -1180,23 +1247,23 @@ LIMIT 20
 
 ## File Change Summary
 
-| File | Changes |
-|------|---------|
-| `lib/analytics/events.ts` | **NEW** - Event registry |
-| `lib/analytics/types.ts` | **NEW** - Type definitions |
-| `lib/analytics/errors.ts` | **NEW** - Unified error system |
-| `lib/posthog-client.tsx` | Add env context, download_type, import from registry |
-| `lib/posthog-server.ts` | Add typed function, download_type, import from registry |
-| `lib/ai/prompts/system-prompt.ts` | Add ISO 4217 requirement |
-| `lib/ai/prompts/user-template.ts` | Add ISO 4217 in example |
-| `lib/ai/output-parser.ts` | Add ISO 4217 validation |
-| `app/api/resume/select/route.ts` | Add generation_method, download_type, snake_case |
-| `app/api/resume/ai-select/route.ts` | Rename event, add download_type, snake_case |
-| `app/api/resume/log/route.ts` | Accept new fields, unified errors, snake_case |
-| `app/api/contact-card/route.ts` | Add download_type, snake_case |
-| `components/data/ResumeDownload.tsx` | Add download_type, unified errors, import registry |
-| `components/data/DataExplorer.tsx` | Import from registry |
-| `app/page.tsx` | Add download_type, unified errors, import registry |
+| File                                 | Changes                                                 |
+| ------------------------------------ | ------------------------------------------------------- |
+| `lib/analytics/events.ts`            | **NEW** - Event registry                                |
+| `lib/analytics/types.ts`             | **NEW** - Type definitions                              |
+| `lib/analytics/errors.ts`            | **NEW** - Unified error system                          |
+| `lib/posthog-client.tsx`             | Add env context, download_type, import from registry    |
+| `lib/posthog-server.ts`              | Add typed function, download_type, import from registry |
+| `lib/ai/prompts/system-prompt.ts`    | Add ISO 4217 requirement                                |
+| `lib/ai/prompts/user-template.ts`    | Add ISO 4217 in example                                 |
+| `lib/ai/output-parser.ts`            | Add ISO 4217 validation                                 |
+| `app/api/resume/select/route.ts`     | Add generation_method, download_type, snake_case        |
+| `app/api/resume/ai-select/route.ts`  | Rename event, add download_type, snake_case             |
+| `app/api/resume/log/route.ts`        | Accept new fields, unified errors, snake_case           |
+| `app/api/contact-card/route.ts`      | Add download_type, snake_case                           |
+| `components/data/ResumeDownload.tsx` | Add download_type, unified errors, import registry      |
+| `components/data/DataExplorer.tsx`   | Import from registry                                    |
+| `app/page.tsx`                       | Add download_type, unified errors, import registry      |
 
 ---
 
@@ -1220,14 +1287,14 @@ After implementation, verify:
 
 ## Event Count Summary
 
-| Category | Count | Events |
-|----------|-------|--------|
-| Explorer | 2 | tag_filter_changed, search_performed |
-| Contact Card | 6 | initiated, verified, downloaded, error, cancelled, served |
-| Resume Client | 6 | initiated, verified, compiled, downloaded, error, cancelled |
-| Resume Server | 4 | prepared, generated, download_notified, failed |
-| **Total** | **18** | |
+| Category      | Count  | Events                                                      |
+| ------------- | ------ | ----------------------------------------------------------- |
+| Explorer      | 2      | tag_filter_changed, search_performed                        |
+| Contact Card  | 6      | initiated, verified, downloaded, error, cancelled, served   |
+| Resume Client | 6      | initiated, verified, compiled, downloaded, error, cancelled |
+| Resume Server | 4      | prepared, generated, download_notified, failed              |
+| **Total**     | **18** |                                                             |
 
 ---
 
-*This specification is complete and ready for implementation.*
+_This specification is complete and ready for implementation._

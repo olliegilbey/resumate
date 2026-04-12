@@ -1,5 +1,5 @@
-import { beforeEach, afterEach } from 'vitest'
-import { clearRateLimitStore } from '@/lib/rate-limit'
+import { beforeEach, afterEach } from "vitest";
+import { clearRateLimitStore } from "@/lib/rate-limit";
 
 /**
  * Helper to reset rate limit store between tests
@@ -21,12 +21,12 @@ import { clearRateLimitStore } from '@/lib/rate-limit'
  */
 export function setupRateLimitCleanup() {
   beforeEach(() => {
-    clearRateLimitStore()
-  })
+    clearRateLimitStore();
+  });
 
   afterEach(() => {
-    clearRateLimitStore()
-  })
+    clearRateLimitStore();
+  });
 }
 
 /**
@@ -34,5 +34,5 @@ export function setupRateLimitCleanup() {
  * Use when you need explicit control
  */
 export function clearRateLimits() {
-  clearRateLimitStore()
+  clearRateLimitStore();
 }

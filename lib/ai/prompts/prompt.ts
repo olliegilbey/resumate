@@ -16,8 +16,8 @@
  * - {{BULLETS}} - Formatted compendium bullets with [bracket-ids]
  */
 
-import type { ResumeData } from '@/lib/types/generated-resume'
-import type { SelectionConfig } from '../output-parser'
+import type { ResumeData } from "@/lib/types/generated-resume";
+import type { SelectionConfig } from "../output-parser";
 
 // ============================================================================
 // SYSTEM PROMPT
@@ -141,7 +141,7 @@ Note: job_title and salary can be \`null\` if not found in the job description.
 }
 \`\`\`
 
-Note: Continue this pattern for all scored bullets. Include more bullets to give the server selection options.`
+Note: Continue this pattern for all scored bullets. Include more bullets to give the server selection options.`;
 
 // ============================================================================
 // USER PROMPT TEMPLATE
@@ -201,7 +201,7 @@ Notes:
 - job_title: extract from JD, or null if not found
 - salary: extract from JD, or null if not mentioned
 
-NO markdown, NO code blocks, NO extra text.`
+NO markdown, NO code blocks, NO extra text.`;
 
 // ============================================================================
 // RETRY CONTEXT TEMPLATE
@@ -218,7 +218,7 @@ Please fix the issues above. Score more bullets if needed, and ensure all IDs ex
 
 ---
 
-`
+`;
 
 // ============================================================================
 // CONFIGURATION
@@ -228,19 +228,19 @@ Please fix the issues above. Score more bullets if needed, and ensure all IDs ex
  * Buffer added to maxBullets for AI scoring.
  * AI scores maxBullets + buffer, server picks top N with diversity constraints.
  */
-export const AI_BULLET_BUFFER = 10
+export const AI_BULLET_BUFFER = 10;
 
 /**
  * Generate a short hash of the system prompt for analytics.
  * Uses first 8 chars of SHA-256 to identify prompt version without storing full text.
  */
 export async function getSystemPromptHash(): Promise<string> {
-  const encoder = new TextEncoder()
-  const data = encoder.encode(SYSTEM_PROMPT)
-  const hashBuffer = await crypto.subtle.digest('SHA-256', data)
-  const hashArray = Array.from(new Uint8Array(hashBuffer))
-  const hashHex = hashArray.map((b) => b.toString(16).padStart(2, '0')).join('')
-  return hashHex.slice(0, 8)
+  const encoder = new TextEncoder();
+  const data = encoder.encode(SYSTEM_PROMPT);
+  const hashBuffer = await crypto.subtle.digest("SHA-256", data);
+  const hashArray = Array.from(new Uint8Array(hashBuffer));
+  const hashHex = hashArray.map((b) => b.toString(16).padStart(2, "0")).join("");
+  return hashHex.slice(0, 8);
 }
 
 /**
@@ -262,13 +262,13 @@ export async function getSystemPromptHash(): Promise<string> {
  */
 export async function formatPromptForAnalytics(
   userPrompt: string,
-  jobDescription: string
+  jobDescription: string,
 ): Promise<string> {
-  const hash = await getSystemPromptHash()
-  const withSystemPlaceholder = `[SYSTEM_PROMPT:${hash}]\n\n---\n\n${userPrompt}`
+  const hash = await getSystemPromptHash();
+  const withSystemPlaceholder = `[SYSTEM_PROMPT:${hash}]\n\n---\n\n${userPrompt}`;
 
   // Replace JD with placeholder (full text in separate job_description field)
-  return withSystemPlaceholder.replace(jobDescription, '[JOB_DESCRIPTION]')
+  return withSystemPlaceholder.replace(jobDescription, "[JOB_DESCRIPTION]");
 }
 
 // ============================================================================
@@ -276,7 +276,7 @@ export async function formatPromptForAnalytics(
 // ============================================================================
 
 export interface PromptConfig extends SelectionConfig {
-  retryContext?: string // Error context from previous failed attempt
+  retryContext?: string; // Error context from previous failed attempt
 }
 
 /**
@@ -285,32 +285,32 @@ export interface PromptConfig extends SelectionConfig {
 export function buildUserPrompt(
   jobDescription: string,
   compendium: ResumeData,
-  config: PromptConfig
+  config: PromptConfig,
 ): string {
-  const minBullets = getMinBullets(config.maxBullets || 24)
-  const bullets = formatBulletsForPrompt(compendium)
+  const minBullets = getMinBullets(config.maxBullets || 24);
+  const bullets = formatBulletsForPrompt(compendium);
   const retryContext = config.retryContext
-    ? RETRY_CONTEXT_TEMPLATE.replace('{{ERROR_CONTEXT}}', config.retryContext)
-    : ''
+    ? RETRY_CONTEXT_TEMPLATE.replace("{{ERROR_CONTEXT}}", config.retryContext)
+    : "";
 
-  return USER_PROMPT_TEMPLATE.replace('{{RETRY_CONTEXT}}', retryContext)
+  return USER_PROMPT_TEMPLATE.replace("{{RETRY_CONTEXT}}", retryContext)
     .replace(/\{\{MIN_BULLETS\}\}/g, String(minBullets))
-    .replace('{{JOB_DESCRIPTION}}', jobDescription)
-    .replace('{{BULLETS}}', bullets)
+    .replace("{{JOB_DESCRIPTION}}", jobDescription)
+    .replace("{{BULLETS}}", bullets);
 }
 
 /**
  * Load system prompt (for backward compatibility)
  */
 export function loadSystemPrompt(): string {
-  return SYSTEM_PROMPT
+  return SYSTEM_PROMPT;
 }
 
 /**
  * Calculate minimum bullets AI should score
  */
 export function getMinBullets(maxBullets: number): number {
-  return maxBullets + AI_BULLET_BUFFER
+  return maxBullets + AI_BULLET_BUFFER;
 }
 
 // ============================================================================
@@ -330,30 +330,30 @@ export function getMinBullets(maxBullets: number): number {
  *     tags: typescript, leadership | priority: 8/10
  */
 function formatBulletsForPrompt(compendium: ResumeData): string {
-  const lines: string[] = []
+  const lines: string[] = [];
 
   for (const company of compendium.experience) {
-    const companyName = company.name || company.id
-    const dateRange = formatDateRange(company.dateStart, company.dateEnd)
-    lines.push(`### ${companyName} (${dateRange})`)
+    const companyName = company.name || company.id;
+    const dateRange = formatDateRange(company.dateStart, company.dateEnd);
+    lines.push(`### ${companyName} (${dateRange})`);
     if (company.location) {
-      lines.push(`Location: ${company.location}`)
+      lines.push(`Location: ${company.location}`);
     }
-    lines.push('')
+    lines.push("");
 
     for (const position of company.children) {
-      const posDateRange = formatDateRange(position.dateStart, position.dateEnd)
-      lines.push(`#### ${position.name} (${posDateRange})`)
-      lines.push('')
+      const posDateRange = formatDateRange(position.dateStart, position.dateEnd);
+      lines.push(`#### ${position.name} (${posDateRange})`);
+      lines.push("");
 
       for (const bullet of position.children) {
-        lines.push(formatBullet(bullet))
+        lines.push(formatBullet(bullet));
       }
-      lines.push('')
+      lines.push("");
     }
   }
 
-  return lines.join('\n')
+  return lines.join("\n");
 }
 
 /**
@@ -364,17 +364,17 @@ function formatBulletsForPrompt(compendium: ResumeData): string {
  *     tags: typescript, api | priority: 8/10
  */
 function formatBullet(bullet: {
-  id: string
-  description: string
-  tags: string[]
-  priority: number
-  name?: string | null
+  id: string;
+  description: string;
+  tags: string[];
+  priority: number;
+  name?: string | null;
 }): string {
-  const idLine = `- [${bullet.id}]`
-  const desc = bullet.description
-  const meta = `  tags: ${bullet.tags.join(', ')} | priority: ${bullet.priority}/10`
+  const idLine = `- [${bullet.id}]`;
+  const desc = bullet.description;
+  const meta = `  tags: ${bullet.tags.join(", ")} | priority: ${bullet.priority}/10`;
 
-  return `${idLine} ${desc}\n${meta}`
+  return `${idLine} ${desc}\n${meta}`;
 }
 
 /**
@@ -385,9 +385,9 @@ function formatBullet(bullet: {
  * @returns "2020–2023" or "2022–Present"
  */
 function formatDateRange(start: string, end?: string | null): string {
-  const startYear = start.split('-')[0]
-  const endYear = end ? end.split('-')[0] : 'Present'
-  return `${startYear}–${endYear}`
+  const startYear = start.split("-")[0];
+  const endYear = end ? end.split("-")[0] : "Present";
+  return `${startYear}–${endYear}`;
 }
 
 // ============================================================================
@@ -398,7 +398,7 @@ function formatDateRange(start: string, end?: string | null): string {
  * Rough token estimate (~4 chars per token for English)
  */
 export function estimateTokenCount(text: string): number {
-  return Math.ceil(text.length / 4)
+  return Math.ceil(text.length / 4);
 }
 
 /**
@@ -406,20 +406,20 @@ export function estimateTokenCount(text: string): number {
  */
 export function checkCompendiumSize(
   compendium: ResumeData,
-  contextLimit: number = 128000
+  contextLimit: number = 128000,
 ): { ok: boolean; warning?: string; estimatedTokens: number } {
-  const bulletList = formatBulletsForPrompt(compendium)
-  const estimatedTokens = estimateTokenCount(bulletList)
+  const bulletList = formatBulletsForPrompt(compendium);
+  const estimatedTokens = estimateTokenCount(bulletList);
 
   // Use max 60% of context for compendium (leave room for system prompt + response)
-  const safeLimit = contextLimit * 0.6
+  const safeLimit = contextLimit * 0.6;
 
   if (estimatedTokens > safeLimit) {
     return {
       ok: false,
       warning: `Compendium too large: ~${estimatedTokens} tokens (limit: ${Math.floor(safeLimit)})`,
       estimatedTokens,
-    }
+    };
   }
 
   if (estimatedTokens > safeLimit * 0.8) {
@@ -427,8 +427,8 @@ export function checkCompendiumSize(
       ok: true,
       warning: `Compendium approaching limit: ~${estimatedTokens} tokens`,
       estimatedTokens,
-    }
+    };
   }
 
-  return { ok: true, estimatedTokens }
+  return { ok: true, estimatedTokens };
 }

@@ -9,20 +9,20 @@
  * @module lib/selection
  */
 
-import type { Bullet, ResumeData } from '@/types/resume'
+import type { Bullet, ResumeData } from "@/types/resume";
 
 /**
  * Configuration for bullet selection diversity constraints.
  */
 export interface SelectionConfig {
   /** Maximum total bullets to select (ceiling - may select fewer based on constraints) */
-  maxBullets: number
+  maxBullets: number;
   /** Maximum bullets per company (for diversity across employers) */
-  maxPerCompany?: number
+  maxPerCompany?: number;
   /** Minimum bullets per company (avoid single-bullet companies that look sparse) */
-  minPerCompany?: number
+  minPerCompany?: number;
   /** Maximum bullets per position (prevent one role dominating) */
-  maxPerPosition?: number
+  maxPerPosition?: number;
 }
 
 /**
@@ -31,40 +31,40 @@ export interface SelectionConfig {
  */
 export interface ScoredBullet {
   /** The bullet content (can be a real bullet or synthesized position description) */
-  bullet: Bullet | { id: string; description: string; tags: string[]; priority: number }
+  bullet: Bullet | { id: string; description: string; tags: string[]; priority: number };
   /** Computed relevance score (higher = more relevant to role profile) */
-  score: number
+  score: number;
   /** Company identifier for diversity constraints */
-  companyId: string
+  companyId: string;
   /** Company display name */
-  companyName: string | null | undefined
+  companyName: string | null | undefined;
   /** Company description/tagline */
-  companyDescription: string | null | undefined
+  companyDescription: string | null | undefined;
   /** Company website URL */
-  companyLink: string | null | undefined
+  companyLink: string | null | undefined;
   /** Company start date (ISO format) */
-  companyDateStart: string
+  companyDateStart: string;
   /** Company end date (ISO format, null if current) */
-  companyDateEnd: string | null | undefined
+  companyDateEnd: string | null | undefined;
   /** Company location */
-  companyLocation: string | null | undefined
+  companyLocation: string | null | undefined;
   /** Position identifier for diversity constraints */
-  positionId: string
+  positionId: string;
   /** Position/role title */
-  positionName: string
+  positionName: string;
   /** Position description */
-  positionDescription: string | null | undefined
+  positionDescription: string | null | undefined;
   /** Position start date (ISO format) */
-  positionDateStart: string
+  positionDateStart: string;
   /** Position end date (ISO format, null if current) */
-  positionDateEnd: string | null | undefined
+  positionDateEnd: string | null | undefined;
 }
 
 /**
  * Selected bullet after diversity constraints applied.
  * Alias for ScoredBullet - the shape doesn't change, just the semantics.
  */
-export type SelectedBullet = ScoredBullet
+export type SelectedBullet = ScoredBullet;
 
 /**
  * Default selection config values
@@ -74,7 +74,7 @@ export const DEFAULT_SELECTION_CONFIG: SelectionConfig = {
   maxPerCompany: 6,
   minPerCompany: 2, // Avoid standalone single bullets
   maxPerPosition: 4,
-}
+};
 
 /**
  * Select top bullets applying diversity constraints
@@ -92,16 +92,16 @@ export const DEFAULT_SELECTION_CONFIG: SelectionConfig = {
 export function selectBulletsWithConstraints(
   resumeData: ResumeData,
   scores: Map<string, number>,
-  config: SelectionConfig = DEFAULT_SELECTION_CONFIG
+  config: SelectionConfig = DEFAULT_SELECTION_CONFIG,
 ): SelectedBullet[] {
   // Step 1: Build all bullet candidates with scores
-  const allBullets: SelectedBullet[] = []
+  const allBullets: SelectedBullet[] = [];
 
   for (const company of resumeData.experience) {
     for (const position of company.children) {
       for (const bullet of position.children) {
-        const score = scores.get(bullet.id)
-        if (score === undefined) continue // Bullet wasn't scored
+        const score = scores.get(bullet.id);
+        if (score === undefined) continue; // Bullet wasn't scored
 
         allBullets.push({
           bullet,
@@ -118,18 +118,18 @@ export function selectBulletsWithConstraints(
           positionDescription: position.description,
           positionDateStart: position.dateStart,
           positionDateEnd: position.dateEnd,
-        })
+        });
       }
     }
   }
 
   // Step 2: Sort by score descending
-  allBullets.sort((a, b) => b.score - a.score)
+  allBullets.sort((a, b) => b.score - a.score);
 
   // Step 3: Apply diversity constraints
-  const selected = applyDiversityConstraints(allBullets, config)
+  const selected = applyDiversityConstraints(allBullets, config);
 
-  return selected
+  return selected;
 }
 
 /**
@@ -154,60 +154,60 @@ export function selectBulletsWithConstraints(
  */
 export function applyDiversityConstraints<T extends ScoredBullet>(
   sortedBullets: T[],
-  config: SelectionConfig
+  config: SelectionConfig,
 ): T[] {
-  const { maxBullets, maxPerCompany, maxPerPosition, minPerCompany } = config
+  const { maxBullets, maxPerCompany, maxPerPosition, minPerCompany } = config;
 
-  const selected: T[] = []
-  const companyCount: Record<string, number> = {}
-  const positionCount: Record<string, number> = {}
+  const selected: T[] = [];
+  const companyCount: Record<string, number> = {};
+  const positionCount: Record<string, number> = {};
 
   for (const bullet of sortedBullets) {
     // Check maxBullets limit (ceiling)
     if (selected.length >= maxBullets) {
-      break
+      break;
     }
 
     // Check per-company limit (0 or undefined = no limit)
     if (maxPerCompany && maxPerCompany > 0) {
-      const count = companyCount[bullet.companyId] || 0
+      const count = companyCount[bullet.companyId] || 0;
       if (count >= maxPerCompany) {
-        continue
+        continue;
       }
     }
 
     // Check per-position limit (0 or undefined = no limit)
     if (maxPerPosition && maxPerPosition > 0) {
-      const count = positionCount[bullet.positionId] || 0
+      const count = positionCount[bullet.positionId] || 0;
       if (count >= maxPerPosition) {
-        continue
+        continue;
       }
     }
 
     // Add bullet and increment counters
-    companyCount[bullet.companyId] = (companyCount[bullet.companyId] || 0) + 1
-    positionCount[bullet.positionId] = (positionCount[bullet.positionId] || 0) + 1
-    selected.push(bullet)
+    companyCount[bullet.companyId] = (companyCount[bullet.companyId] || 0) + 1;
+    positionCount[bullet.positionId] = (positionCount[bullet.positionId] || 0) + 1;
+    selected.push(bullet);
   }
 
   // Enforce minimum bullets per company (avoid single-bullet companies)
   if (minPerCompany && minPerCompany > 1) {
     // Count bullets per company in selected set
-    const finalCompanyCount: Record<string, number> = {}
+    const finalCompanyCount: Record<string, number> = {};
     for (const bullet of selected) {
-      finalCompanyCount[bullet.companyId] = (finalCompanyCount[bullet.companyId] || 0) + 1
+      finalCompanyCount[bullet.companyId] = (finalCompanyCount[bullet.companyId] || 0) + 1;
     }
 
     // Filter out companies with fewer than minimum bullets
     const filtered = selected.filter((bullet) => {
-      const count = finalCompanyCount[bullet.companyId] || 0
-      return count >= minPerCompany
-    })
+      const count = finalCompanyCount[bullet.companyId] || 0;
+      return count >= minPerCompany;
+    });
 
-    return filtered
+    return filtered;
   }
 
-  return selected
+  return selected;
 }
 
 /**
@@ -219,39 +219,39 @@ export function applyDiversityConstraints<T extends ScoredBullet>(
  */
 export function reorderByCompanyChronology(
   selected: SelectedBullet[],
-  resumeData: ResumeData
+  resumeData: ResumeData,
 ): SelectedBullet[] {
   // Build company order map from resume data
-  const companyOrder = new Map<string, number>()
+  const companyOrder = new Map<string, number>();
   resumeData.experience.forEach((company, index) => {
-    companyOrder.set(company.id, index)
-  })
+    companyOrder.set(company.id, index);
+  });
 
   // Group selected bullets by company
-  const byCompany = new Map<string, SelectedBullet[]>()
+  const byCompany = new Map<string, SelectedBullet[]>();
   for (const bullet of selected) {
-    const existing = byCompany.get(bullet.companyId) || []
-    existing.push(bullet)
-    byCompany.set(bullet.companyId, existing)
+    const existing = byCompany.get(bullet.companyId) || [];
+    existing.push(bullet);
+    byCompany.set(bullet.companyId, existing);
   }
 
   // Sort each company's bullets by score (already sorted, but ensure)
   for (const bullets of byCompany.values()) {
-    bullets.sort((a, b) => b.score - a.score)
+    bullets.sort((a, b) => b.score - a.score);
   }
 
   // Build result in company chronological order
-  const result: SelectedBullet[] = []
+  const result: SelectedBullet[] = [];
   const sortedCompanyIds = Array.from(byCompany.keys()).sort((a, b) => {
-    const orderA = companyOrder.get(a) ?? Infinity
-    const orderB = companyOrder.get(b) ?? Infinity
-    return orderA - orderB
-  })
+    const orderA = companyOrder.get(a) ?? Infinity;
+    const orderB = companyOrder.get(b) ?? Infinity;
+    return orderA - orderB;
+  });
 
   for (const companyId of sortedCompanyIds) {
-    const bullets = byCompany.get(companyId) || []
-    result.push(...bullets)
+    const bullets = byCompany.get(companyId) || [];
+    result.push(...bullets);
   }
 
-  return result
+  return result;
 }

@@ -7,44 +7,44 @@
  * Rate limit: 5 requests per hour per IP (stricter due to AI costs)
  */
 
-import { NextRequest, NextResponse } from 'next/server'
-import { checkRateLimit, getClientIP } from '@/lib/rate-limit'
-import { selectBulletsWithAI, FALLBACK_ORDER } from '@/lib/ai/providers'
-import { formatPromptForAnalytics } from '@/lib/ai/prompts/prompt'
-import type { AIProvider } from '@/lib/ai/providers/types'
-import { AISelectionError } from '@/lib/ai/errors'
-import { captureEvent, flushEvents } from '@/lib/posthog-server'
-import { ANALYTICS_EVENTS } from '@/lib/analytics/events'
-import type { ResumeData } from '@/types/resume'
+import { NextRequest, NextResponse } from "next/server";
+import { checkRateLimit, getClientIP } from "@/lib/rate-limit";
+import { selectBulletsWithAI, FALLBACK_ORDER } from "@/lib/ai/providers";
+import { formatPromptForAnalytics } from "@/lib/ai/prompts/prompt";
+import type { AIProvider } from "@/lib/ai/providers/types";
+import { AISelectionError } from "@/lib/ai/errors";
+import { captureEvent, flushEvents } from "@/lib/posthog-server";
+import { ANALYTICS_EVENTS } from "@/lib/analytics/events";
+import type { ResumeData } from "@/types/resume";
 import {
   selectBulletsWithConstraints,
   reorderByCompanyChronology,
   DEFAULT_SELECTION_CONFIG,
   type SelectedBullet,
-} from '@/lib/selection'
+} from "@/lib/selection";
 
 // WARNING: In-memory token replay prevention is lost on serverless cold starts.
 // For production at scale, consider storing used tokens in Redis/KV with TTL
 // matching Turnstile token validity (~5 min). Current implementation provides
 // protection within a single function instance only.
-const usedTokens = new Set<string>()
+const usedTokens = new Set<string>();
 
 // Rate limit config: 5 requests per hour (stricter for AI)
 const AI_RATE_LIMIT = {
   limit: 5,
   window: 60 * 60 * 1000, // 1 hour
-}
+};
 
 // Minimum job description length
-const MIN_JOB_DESCRIPTION_LENGTH = 50
+const MIN_JOB_DESCRIPTION_LENGTH = 50;
 
 export async function POST(request: NextRequest) {
-  const headers = new Headers()
-  const clientIP = getClientIP(request)
+  const headers = new Headers();
+  const clientIP = getClientIP(request);
 
   try {
     // Parse request body
-    const body = await request.json()
+    const body = await request.json();
     const {
       jobDescription,
       turnstileToken,
@@ -53,14 +53,14 @@ export async function POST(request: NextRequest) {
       email,
       linkedin,
       sessionId,
-    } = body
+    } = body;
 
     // Validate required fields
     if (!jobDescription || !turnstileToken) {
       return NextResponse.json(
-        { error: 'Missing required fields: jobDescription, turnstileToken' },
-        { status: 400 }
-      )
+        { error: "Missing required fields: jobDescription, turnstileToken" },
+        { status: 400 },
+      );
     }
 
     // Validate job description length
@@ -70,78 +70,78 @@ export async function POST(request: NextRequest) {
           error: `Job description too short (minimum ${MIN_JOB_DESCRIPTION_LENGTH} characters)`,
           received: jobDescription.length,
         },
-        { status: 400 }
-      )
+        { status: 400 },
+      );
     }
 
     // Validate provider
     const validProviders: AIProvider[] = [
-      'cerebras-gpt',
-      'cerebras-llama',
-      'claude-sonnet',
-      'claude-haiku',
-    ]
+      "cerebras-gpt",
+      "cerebras-llama",
+      "claude-sonnet",
+      "claude-haiku",
+    ];
     if (!validProviders.includes(provider)) {
       return NextResponse.json(
-        { error: `Invalid provider. Must be one of: ${validProviders.join(', ')}` },
-        { status: 400 }
-      )
+        { error: `Invalid provider. Must be one of: ${validProviders.join(", ")}` },
+        { status: 400 },
+      );
     }
 
     // Rate limit check
-    const rateLimit = checkRateLimit(clientIP, AI_RATE_LIMIT)
+    const rateLimit = checkRateLimit(clientIP, AI_RATE_LIMIT);
 
-    headers.set('X-RateLimit-Limit', rateLimit.limit.toString())
-    headers.set('X-RateLimit-Remaining', rateLimit.remaining.toString())
-    headers.set('X-RateLimit-Reset', new Date(rateLimit.reset).toISOString())
+    headers.set("X-RateLimit-Limit", rateLimit.limit.toString());
+    headers.set("X-RateLimit-Remaining", rateLimit.remaining.toString());
+    headers.set("X-RateLimit-Reset", new Date(rateLimit.reset).toISOString());
 
     if (!rateLimit.success) {
       return NextResponse.json(
         {
-          error: 'Rate limit exceeded',
-          message: 'Maximum 5 AI requests per hour. Please try again later.',
+          error: "Rate limit exceeded",
+          message: "Maximum 5 AI requests per hour. Please try again later.",
           resetAt: rateLimit.reset,
         },
-        { status: 429, headers }
-      )
+        { status: 429, headers },
+      );
     }
 
     // Token replay check (mark used immediately to prevent TOCTOU race)
     if (usedTokens.has(turnstileToken)) {
-      console.warn('[AI Select] Duplicate Turnstile token blocked')
-      return NextResponse.json({ error: 'Token already used' }, { status: 403 })
+      console.warn("[AI Select] Duplicate Turnstile token blocked");
+      return NextResponse.json({ error: "Token already used" }, { status: 403 });
     }
-    usedTokens.add(turnstileToken)
+    usedTokens.add(turnstileToken);
 
     // Turnstile verification
-    const turnstileSecret = process.env.TURNSTILE_SECRET_KEY
+    const turnstileSecret = process.env.TURNSTILE_SECRET_KEY;
     if (!turnstileSecret) {
-      console.error('[AI Select] TURNSTILE_SECRET_KEY not configured')
-      return NextResponse.json({ error: 'Server configuration error' }, { status: 500 })
+      console.error("[AI Select] TURNSTILE_SECRET_KEY not configured");
+      return NextResponse.json({ error: "Server configuration error" }, { status: 500 });
     }
 
     const turnstileResponse = await fetch(
-      'https://challenges.cloudflare.com/turnstile/v0/siteverify',
+      "https://challenges.cloudflare.com/turnstile/v0/siteverify",
       {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           secret: turnstileSecret,
           response: turnstileToken,
         }),
         signal: AbortSignal.timeout(5000), // 5s timeout
-      }
-    )
+      },
+    );
 
-    const turnstileData = await turnstileResponse.json()
+    const turnstileData = await turnstileResponse.json();
     if (!turnstileData.success) {
-      return NextResponse.json({ error: 'Turnstile verification failed' }, { status: 403 })
+      return NextResponse.json({ error: "Turnstile verification failed" }, { status: 403 });
     }
 
     // Load resume data
-    const resumeData = await loadResumeData()
+    const resumeData = await loadResumeData();
     if (!resumeData) {
-      return NextResponse.json({ error: 'Resume data not available' }, { status: 500 })
+      return NextResponse.json({ error: "Resume data not available" }, { status: 500 });
     }
 
     // Selection config with defaults (matches Rust SelectionConfig)
@@ -150,48 +150,48 @@ export async function POST(request: NextRequest) {
       maxPerCompany: config?.maxPerCompany ?? DEFAULT_SELECTION_CONFIG.maxPerCompany,
       maxPerPosition: config?.maxPerPosition ?? DEFAULT_SELECTION_CONFIG.maxPerPosition,
       minPerCompany: config?.minPerCompany ?? DEFAULT_SELECTION_CONFIG.minPerCompany,
-    }
+    };
 
     // Call AI provider with retry + fallback
     // AI scores many bullets, server applies diversity constraints
-    const startTime = Date.now()
+    const startTime = Date.now();
     const result = await selectBulletsWithAI(
       {
         jobDescription,
         compendium: resumeData,
         maxBullets: selectionConfig.maxBullets, // Passed to AI for context
       },
-      provider as AIProvider
-    )
-    const aiDuration = Date.now() - startTime
+      provider as AIProvider,
+    );
+    const aiDuration = Date.now() - startTime;
 
     // Build score map from AI response
-    const scoreMap = new Map<string, number>()
+    const scoreMap = new Map<string, number>();
     for (const b of result.bullets) {
-      scoreMap.set(b.id, b.score)
+      scoreMap.set(b.id, b.score);
     }
 
     // Apply diversity constraints server-side (ported from Rust)
-    const selectedRaw = selectBulletsWithConstraints(resumeData, scoreMap, selectionConfig)
+    const selectedRaw = selectBulletsWithConstraints(resumeData, scoreMap, selectionConfig);
 
     // Reorder to maintain company chronology (companies in resume order, bullets by score)
-    const selected = reorderByCompanyChronology(selectedRaw, resumeData)
+    const selected = reorderByCompanyChronology(selectedRaw, resumeData);
 
     // Build analytics data (snake_case per spec)
-    const bullets_by_company: Record<string, number> = {}
-    const bullets_by_tag: Record<string, number> = {}
-    const bullet_ids: string[] = []
+    const bullets_by_company: Record<string, number> = {};
+    const bullets_by_tag: Record<string, number> = {};
+    const bullet_ids: string[] = [];
 
     for (const item of selected) {
-      bullet_ids.push(item.bullet.id)
-      bullets_by_company[item.companyId] = (bullets_by_company[item.companyId] || 0) + 1
+      bullet_ids.push(item.bullet.id);
+      bullets_by_company[item.companyId] = (bullets_by_company[item.companyId] || 0) + 1;
       for (const tag of item.bullet.tags || []) {
-        bullets_by_tag[tag] = (bullets_by_tag[tag] || 0) + 1
+        bullets_by_tag[tag] = (bullets_by_tag[tag] || 0) + 1;
       }
     }
 
     // Format prompt for analytics (replaces system prompt + JD with placeholders)
-    const aiPromptForAnalytics = await formatPromptForAnalytics(result.promptUsed, jobDescription)
+    const aiPromptForAnalytics = await formatPromptForAnalytics(result.promptUsed, jobDescription);
 
     // Track resume_prepared event (unified for AI and heuristic)
     // NOTE: PII (email, linkedin, client_ip, job_description) is intentionally captured.
@@ -204,8 +204,8 @@ export async function POST(request: NextRequest) {
         session_id: sessionId,
         email,
         linkedin,
-        generation_method: 'ai',
-        download_type: 'resume_ai',
+        generation_method: "ai",
+        download_type: "resume_ai",
         ai_provider: result.provider,
         job_description: jobDescription, // Full JD for n8n automation
         job_description_length: jobDescription.length,
@@ -230,10 +230,10 @@ export async function POST(request: NextRequest) {
         ai_attempt_count: result.attemptCount, // 1 = success first try, >1 = retries
         client_ip: clientIP,
       },
-      clientIP
-    )
+      clientIP,
+    );
 
-    await flushEvents()
+    await flushEvents();
 
     return NextResponse.json(
       {
@@ -251,25 +251,25 @@ export async function POST(request: NextRequest) {
         config: selectionConfig,
         timestamp: Date.now(),
       },
-      { headers }
-    )
+      { headers },
+    );
   } catch (error) {
-    console.error('[AI Select] Error:', error)
+    console.error("[AI Select] Error:", error);
 
     // Handle AI-specific errors with user-friendly message
     if (error instanceof AISelectionError) {
       return NextResponse.json(
         {
-          error: 'AI selection failed',
+          error: "AI selection failed",
           userMessage: error.getSimplifiedMessage(),
           provider: error.provider,
           retriesAttempted: error.retriesAttempted,
         },
-        { status: 500, headers }
-      )
+        { status: 500, headers },
+      );
     }
 
-    return NextResponse.json({ error: 'Internal server error' }, { status: 500, headers })
+    return NextResponse.json({ error: "Internal server error" }, { status: 500, headers });
   }
 }
 
@@ -278,11 +278,11 @@ export async function POST(request: NextRequest) {
  */
 async function loadResumeData(): Promise<ResumeData | null> {
   try {
-    const data = await import('@/data/resume-data.json')
-    return (data.default || data) as unknown as ResumeData
+    const data = await import("@/data/resume-data.json");
+    return (data.default || data) as unknown as ResumeData;
   } catch (error) {
-    console.error('[AI Select] Failed to load resume data:', error)
-    return null
+    console.error("[AI Select] Failed to load resume data:", error);
+    return null;
   }
 }
 

@@ -53,17 +53,20 @@ WASM binaries committed to git. Pre-commit validates freshness via hash. Vercel 
 ### PDF Generation Pipeline
 
 **1. Scoring (Server, TypeScript)**
+
 - Heuristic: `app/api/resume/select/route.ts` scores bullets against role profile
 - AI: `app/api/resume/ai-select/route.ts` uses Claude API for job-description matching
 - Output: `ScoredBullet[]` — identical structure from both paths
 
 **2. Selection (Server, TypeScript)**
+
 - Location: `lib/selection.ts` (single source of truth)
 - Input: `ScoredBullet[]` from either scoring path
 - Applies: diversity constraints (max/min per company/position), chronology ordering
 - Output: `SelectedBullet[]`
 
 **3. Compilation (Client, WASM)**
+
 - API returns: `SelectedBullet[]` + personal info + education + skills + summary
 - Client builds payload, calls `generate_pdf_typst(payload)`
 - WASM compiles Typst → PDF bytes → browser download

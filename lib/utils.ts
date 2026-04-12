@@ -1,15 +1,15 @@
-import { type ClassValue, clsx } from "clsx"
-import { twMerge } from "tailwind-merge"
+import { type ClassValue, clsx } from "clsx";
+import { twMerge } from "tailwind-merge";
 
 export function cn(...inputs: ClassValue[]) {
-  return twMerge(clsx(inputs))
+  return twMerge(clsx(inputs));
 }
 
 export interface TextPart {
-  type: 'text' | 'link'
-  content: string
-  url?: string
-  key: number
+  type: "text" | "link";
+  content: string;
+  url?: string;
+  key: number;
 }
 
 /**
@@ -17,7 +17,7 @@ export interface TextPart {
  * Only allows https, http, and mailto protocols
  */
 function isValidProtocol(url: string): boolean {
-  return /^(https?|mailto):/i.test(url)
+  return /^(https?|mailto):/i.test(url);
 }
 
 /**
@@ -25,53 +25,53 @@ function isValidProtocol(url: string): boolean {
  * Sanitizes URLs to prevent XSS attacks via javascript: or data: protocols
  */
 export function parseMarkdownLinks(text: string): TextPart[] {
-  const parts: TextPart[] = []
-  const regex = /\[([^\]]+)\]\(([^)]+)\)/g
-  let lastIndex = 0
-  let match
-  let keyCounter = 0
+  const parts: TextPart[] = [];
+  const regex = /\[([^\]]+)\]\(([^)]+)\)/g;
+  let lastIndex = 0;
+  let match;
+  let keyCounter = 0;
 
   while ((match = regex.exec(text)) !== null) {
     // Add text before the link
     if (match.index > lastIndex) {
       parts.push({
-        type: 'text',
+        type: "text",
         content: text.substring(lastIndex, match.index),
-        key: keyCounter++
-      })
+        key: keyCounter++,
+      });
     }
 
-    const url = match[2]
+    const url = match[2];
 
     // Validate URL protocol - if invalid, render as plain text instead of link
     if (isValidProtocol(url)) {
       parts.push({
-        type: 'link',
+        type: "link",
         content: match[1],
         url: url,
-        key: keyCounter++
-      })
+        key: keyCounter++,
+      });
     } else {
       // Invalid protocol - render as plain text to prevent XSS
       parts.push({
-        type: 'text',
+        type: "text",
         content: match[1],
-        key: keyCounter++
-      })
+        key: keyCounter++,
+      });
     }
 
-    lastIndex = regex.lastIndex
+    lastIndex = regex.lastIndex;
   }
 
   // Add remaining text after the last link
   if (lastIndex < text.length) {
     parts.push({
-      type: 'text',
+      type: "text",
       content: text.substring(lastIndex),
-      key: keyCounter++
-    })
+      key: keyCounter++,
+    });
   }
 
-  return parts.length > 0 ? parts : [{ type: 'text', content: text, key: 0 }]
+  return parts.length > 0 ? parts : [{ type: "text", content: text, key: 0 }];
 }
 // Test TS change

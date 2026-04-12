@@ -11,7 +11,7 @@
  * - Run: npm run schemas:emit && npm run types:gen
  */
 
-import type { Bullet as GeneratedBullet } from '../lib/types/generated-resume'
+import type { Bullet as GeneratedBullet } from "../lib/types/generated-resume";
 
 export type {
   ResumeData,
@@ -21,9 +21,9 @@ export type {
   Position,
   RoleProfile,
   ScoringWeights,
-} from '../lib/types/generated-resume'
+} from "../lib/types/generated-resume";
 
 // Backwards compatibility aliases
-export type Bullet = GeneratedBullet
-export type BulletPoint = GeneratedBullet
-export type Tag = string
+export type Bullet = GeneratedBullet;
+export type BulletPoint = GeneratedBullet;
+export type Tag = string;

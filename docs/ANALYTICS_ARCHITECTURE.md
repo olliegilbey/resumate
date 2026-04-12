@@ -8,6 +8,7 @@
 Full-stack analytics system tracking resume and contact card download funnels with PostHog + N8N + ntfy.sh notifications.
 
 **Implemented:**
+
 - ✅ Client-side events: `resume_initiated`, `resume_verified`, `resume_compiled`, `resume_downloaded`, `resume_error`, `resume_cancelled`
 - ✅ Server-side events: `resume_prepared`, `resume_generated`, `resume_download_notified`, `resume_failed`
 - ✅ Contact card funnel: `contact_card_initiated` → `contact_card_verified` → `contact_card_downloaded` → `contact_card_served`
@@ -25,6 +26,7 @@ Full-stack analytics system tracking resume and contact card download funnels wi
 ### Client-Side Events (PostHog Direct)
 
 #### 1. `resume_initiated`
+
 Captured when user clicks "Download PDF" button.
 
 ```typescript
@@ -42,6 +44,7 @@ Captured when user clicks "Download PDF" button.
 ```
 
 #### 2. `resume_verified`
+
 Captured after Turnstile verification succeeds.
 
 ```typescript
@@ -56,65 +59,70 @@ Captured after Turnstile verification succeeds.
 ```
 
 #### 3. `resume_compiled`
+
 Captured after WASM PDF generation completes (before download).
 
 ```typescript
 {
-  session_id: string
-  generation_method: 'ai' | 'heuristic'
-  bullet_count: number
-  pdf_size: number
-  wasm_load_ms: number
-  generation_ms: number
-  total_duration_ms: number
-  wasm_cached: boolean
+  session_id: string;
+  generation_method: "ai" | "heuristic";
+  bullet_count: number;
+  pdf_size: number;
+  wasm_load_ms: number;
+  generation_ms: number;
+  total_duration_ms: number;
+  wasm_cached: boolean;
 }
 ```
 
 #### 4. `resume_downloaded`
+
 Captured when PDF download is triggered in browser.
 
 ```typescript
 {
-  session_id: string
-  generation_method: 'ai' | 'heuristic'
-  download_type: 'resume_ai' | 'resume_heuristic'
-  bullet_count: number
-  pdf_size: number
-  filename: string
-  total_duration_ms: number
+  session_id: string;
+  generation_method: "ai" | "heuristic";
+  download_type: "resume_ai" | "resume_heuristic";
+  bullet_count: number;
+  pdf_size: number;
+  filename: string;
+  total_duration_ms: number;
 }
 ```
 
 #### 5. `resume_error`
+
 Captured on any failure during download flow.
 
 ```typescript
 {
-  session_id: string
-  generation_method: 'ai' | 'heuristic'
-  error_code: DownloadErrorCode  // e.g., 'TN_001', 'WM_001', 'AI_001'
-  error_category: ErrorCategory  // 'turnstile' | 'wasm' | 'pdf' | 'ai' | 'network' | 'validation'
-  error_stage: ErrorStage        // 'turnstile' | 'bullet_selection' | 'ai_selection' | 'wasm_load' | 'pdf_generation' | 'network'
-  error_message: string
-  is_retryable: boolean
+  session_id: string;
+  generation_method: "ai" | "heuristic";
+  error_code: DownloadErrorCode; // e.g., 'TN_001', 'WM_001', 'AI_001'
+  error_category: ErrorCategory; // 'turnstile' | 'wasm' | 'pdf' | 'ai' | 'network' | 'validation'
+  error_stage: ErrorStage; // 'turnstile' | 'bullet_selection' | 'ai_selection' | 'wasm_load' | 'pdf_generation' | 'network'
+  error_message: string;
+  is_retryable: boolean;
 }
 ```
 
 #### 6. `resume_cancelled`
+
 Captured when user cancels during any stage.
 
 ```typescript
 {
-  session_id: string
-  stage: 'turnstile' | 'verified' | 'compiling' | 'ai_analyzing'
-  generation_method: 'ai' | 'heuristic'
+  session_id: string;
+  stage: "turnstile" | "verified" | "compiling" | "ai_analyzing";
+  generation_method: "ai" | "heuristic";
 }
 ```
 
 ### Server-Side Events (via /api/resume/log)
 
 #### 1. `resume_prepared` (POST /api/resume/select)
+
 Captured when bullet selection completes.
 
 ```typescript
@@ -134,22 +142,24 @@ Captured when bullet selection completes.
 ```
 
 #### 2. `resume_generated` (POST /api/resume/log)
+
 Captured after PDF generation succeeds.
 
 ```typescript
 {
-  session_id: string
-  generation_method: 'ai' | 'heuristic'
-  bullet_count: number
-  pdf_size: number
-  wasm_load_ms: number
-  generation_ms: number
-  total_duration_ms: number
-  wasm_cached: boolean
+  session_id: string;
+  generation_method: "ai" | "heuristic";
+  bullet_count: number;
+  pdf_size: number;
+  wasm_load_ms: number;
+  generation_ms: number;
+  total_duration_ms: number;
+  wasm_cached: boolean;
 }
 ```
 
 #### 3. `resume_download_notified` (POST /api/resume/log)
+
 Server-side notification event - triggers N8N webhook.
 
 **Note:** This differs from client-side `resume_downloaded`. Server event is for N8N/notifications; client event has accurate browser context.
@@ -182,6 +192,7 @@ Server-side notification event - triggers N8N webhook.
 **Triggers:** N8N webhook → ntfy.sh push notification
 
 #### 4. `resume_failed` (POST /api/resume/log)
+
 Captured on server when generation fails.
 
 ```typescript
@@ -255,14 +266,14 @@ Captured on server when generation fails.
 
 Six error stages for precise failure tracking:
 
-| Stage | Description | Error Codes |
-|-------|-------------|-------------|
-| `turnstile` | Turnstile verification failed | TN_001, TN_002, TN_003 |
-| `bullet_selection` | Heuristic selection failed | VL_001, VL_002, VL_003 |
-| `ai_selection` | AI provider error | AI_001, AI_002, AI_003, AI_004, AI_005 |
-| `wasm_load` | WASM module failed to load | WM_001, WM_002, WM_003 |
-| `pdf_generation` | PDF/Typst compilation failed | PDF_001, PDF_002, PDF_003 |
-| `network` | Network/fetch error | NT_001, NT_002, NT_003 |
+| Stage              | Description                   | Error Codes                            |
+| ------------------ | ----------------------------- | -------------------------------------- |
+| `turnstile`        | Turnstile verification failed | TN_001, TN_002, TN_003                 |
+| `bullet_selection` | Heuristic selection failed    | VL_001, VL_002, VL_003                 |
+| `ai_selection`     | AI provider error             | AI_001, AI_002, AI_003, AI_004, AI_005 |
+| `wasm_load`        | WASM module failed to load    | WM_001, WM_002, WM_003                 |
+| `pdf_generation`   | PDF/Typst compilation failed  | PDF_001, PDF_002, PDF_003              |
+| `network`          | Network/fetch error           | NT_001, NT_002, NT_003                 |
 
 ---
 
@@ -289,6 +300,7 @@ Error events: `contact_card_error`, `contact_card_cancelled`
 When using AI mode (job description analysis):
 
 **Additional properties tracked:**
+
 - `ai_provider`: Which model was used
 - `job_title`: Extracted from job description
 - `extracted_salary_min` / `extracted_salary_max`: If found in JD
@@ -296,6 +308,7 @@ When using AI mode (job description analysis):
 - `reasoning`: AI's explanation of bullet selection (truncated for analytics)
 
 **Providers:**
+
 - `cerebras-gpt` / `cerebras-llama`: Fast inference
 - `claude-sonnet` / `claude-haiku`: Anthropic models
 
@@ -304,16 +317,19 @@ When using AI mode (job description analysis):
 ## N8N Webhook Integration
 
 ### Configuration
+
 ```env
 N8N_WEBHOOK_URL=https://your-n8n-instance.com/webhook/resume-downloads
 N8N_WEBHOOK_SECRET=your-random-secret-here
 ```
 
 ### Trigger Conditions
+
 - **Always:** `resume_download_notified` events
 - **Serious errors only:** `resume_failed` where `error_stage` is `wasm_load` or `pdf_generation`
 
 ### Authentication
+
 ```http
 POST https://your-n8n-instance.com/webhook/resume-downloads
 Authorization: Bearer <N8N_WEBHOOK_SECRET>
@@ -321,6 +337,7 @@ Content-Type: application/json
 ```
 
 ### Payload (resume_download_notified)
+
 ```json
 {
   "event": "resume_download_notified",
@@ -332,7 +349,9 @@ Content-Type: application/json
   "ai_provider": "cerebras-llama",
   "job_title": "Senior Developer",
   "bullet_count": 24,
-  "bullets": [ /* full bullet content */ ],
+  "bullets": [
+    /* full bullet content */
+  ],
   "pdf_size": 102400,
   "client_ip": "203.0.113.45",
   "timestamp": "2026-02-04T14:32:00.000Z"
@@ -340,12 +359,14 @@ Content-Type: application/json
 ```
 
 ### N8N Workflow
+
 1. **Webhook Trigger** - Receives event payload
 2. **Extract Data** - Parse JSON, extract key fields
 3. **Format Notification** - Build readable message
 4. **Send to ntfy.sh** - Push notification to phone
 
 ### Error Handling
+
 - Non-blocking: Webhook failures don't affect user experience
 - Logged to console for debugging
 - PostHog events captured even if webhook fails
@@ -355,14 +376,16 @@ Content-Type: application/json
 ## Session Tracking
 
 **Generation:**
+
 ```typescript
-const sessionId = sessionStorage.getItem('resumate_session') || crypto.randomUUID()
-sessionStorage.setItem('resumate_session', sessionId)
+const sessionId = sessionStorage.getItem("resumate_session") || crypto.randomUUID();
+sessionStorage.setItem("resumate_session", sessionId);
 ```
 
 **Persistence:** Across page reloads in same browser session
 
 **Linking:**
+
 - All events use same `session_id`
 - Server events include `client_ip`
 - PostHog queries can reconstruct full funnel
@@ -372,6 +395,7 @@ sessionStorage.setItem('resumate_session', sessionId)
 ## Analytics Queries (PostHog)
 
 ### Conversion Funnel
+
 ```sql
 SELECT
   COUNT(DISTINCT CASE WHEN event = 'resume_initiated' THEN session_id END) as initiated,
@@ -382,6 +406,7 @@ WHERE timestamp > NOW() - INTERVAL '7 days'
 ```
 
 ### AI vs Heuristic Downloads
+
 ```sql
 SELECT
   properties->>'generation_method' as method,
@@ -392,6 +417,7 @@ GROUP BY method
 ```
 
 ### Error Rate by Stage
+
 ```sql
 SELECT
   properties->>'error_stage' as stage,
@@ -407,7 +433,9 @@ ORDER BY failures DESC
 ## Privacy & Security
 
 ### Data Handling
+
 ✅ **Tracked:**
+
 - Session ID (UUID, not fingerprint)
 - Optional contact info (user-provided consent)
 - Bullet IDs and content (for analysis)
@@ -416,12 +444,14 @@ ORDER BY failures DESC
 - Client IP (server-side only)
 
 ❌ **NOT tracked:**
+
 - Browser fingerprinting
 - User location beyond IP
 - Third-party cookies
 - Error stacks in production
 
 ### GDPR Compliance
+
 - Contact info optional (explicit consent)
 - Data used for analytics and follow-up only
 - No sharing with third parties
@@ -432,11 +462,13 @@ ORDER BY failures DESC
 ## Testing
 
 ### Unit Tests
+
 ```bash
 just test-ts  # Run all TypeScript tests
 ```
 
 **Coverage:**
+
 - All client-side event tracking
 - Server-side `/api/resume/log` endpoint
 - Error stage classification
@@ -444,6 +476,7 @@ just test-ts  # Run all TypeScript tests
 - AI selection event properties
 
 ### Manual Testing
+
 1. Visit http://localhost:3002/resume
 2. Click "Download PDF"
 3. Enter email/LinkedIn (optional)
@@ -457,20 +490,24 @@ just test-ts  # Run all TypeScript tests
 ## Files Reference
 
 ### Event Definitions
+
 - `lib/analytics/events.ts` - Event names and core types
 - `lib/analytics/types.ts` - Full event property types
 - `lib/analytics/errors.ts` - Error codes and metadata
 
 ### Client-Side
+
 - `lib/posthog-client.tsx` - PostHog client wrapper
 - `components/data/ResumeDownload.tsx` - Download flow with analytics
 
 ### Server-Side
+
 - `lib/posthog-server.ts` - PostHog server capture
 - `app/api/resume/log/route.ts` - Event logging endpoint
 - `app/api/resume/select/route.ts` - Bullet selection with `resume_prepared`
 
 ### Environment Variables
+
 ```env
 # PostHog
 NEXT_PUBLIC_POSTHOG_KEY=phc_...

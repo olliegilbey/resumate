@@ -15,21 +15,21 @@ To update: Run `just test` again
 
 ## Test Counts
 
-**Rust:**       69 tests (0 ignored) in 0.29s  ✅ Passing
-**TypeScript:** 391 tests in 4.12s  ✅ Passing
-**TOTAL:**      460 tests  ✅ All Passing
+**Rust:** 69 tests (0 ignored) in 0.29s ✅ Passing
+**TypeScript:** 391 tests in 4.12s ✅ Passing
+**TOTAL:** 460 tests ✅ All Passing
 
 ### Rust Tests (By Crate)
 
-- resume-typst:   See log  (PDF generation, Typst rendering)
-- resume-wasm:    See log  (WASM bindings, JS interop)
-- shared-types:   See log  (type validation, schema)
+- resume-typst: See log (PDF generation, Typst rendering)
+- resume-wasm: See log (WASM bindings, JS interop)
+- shared-types: See log (type validation, schema)
 
 ### TypeScript Tests
 
-- Total tests:  391
-- Test files:   21
-- Execution:    4.12s
+- Total tests: 391
+- Test files: 21
+- Execution: 4.12s
 
 **Test files breakdown available in log:** `.logs/ts-tests.log`
 
@@ -38,8 +38,9 @@ To update: Run `just test` again
 ## Build Artifacts
 
 **WASM Binary:**
-- Raw size:     15.18MB  (limit: ≤17MB)   ✅ Pass
-- Gzipped size: 6.33MB  (limit: ≤6.5MB)  ✅ Pass
+
+- Raw size: 15.18MB (limit: ≤17MB) ✅ Pass
+- Gzipped size: 6.33MB (limit: ≤6.5MB) ✅ Pass
 
 **Limits configured in:** justfile (wasm_max_raw_mb, wasm_max_gzip_mb)
 **Enforcement:** Pre-commit hook blocks commits if limits exceeded
@@ -53,6 +54,7 @@ To update: Run `just test` again
 **Line Coverage:** 83.51%
 
 **Command to generate detailed report:**
+
 ```bash
 just coverage-rust        # Generate HTML report
 just coverage-rust-open   # Open in browser
@@ -65,10 +67,12 @@ just coverage-rust-open   # Open in browser
 **Line Coverage:** Run 'just coverage-ts' to generate
 
 **Breakdown:**
+
 - Overall: See coverage-summary.json
 - Per-file: Run `just coverage-ts-open`
 
 **Command to generate detailed report:**
+
 ```bash
 just coverage-ts          # Generate HTML report
 just coverage-ts-open     # Open in browser
@@ -79,12 +83,14 @@ just coverage-ts-open     # Open in browser
 ## Test Execution Details
 
 **Rust Tests:**
+
 - Command: `cargo test --all`
 - Log: `.logs/rust-tests.log`
 - Duration: 0.29s
 - Suites: Multiple (core, typst, wasm, shared-types, integration, doc-tests)
 
 **TypeScript Tests:**
+
 - Command: `bun run test --run`
 - Log: `.logs/ts-tests.log`
 - Duration: 4.12s
@@ -95,6 +101,7 @@ just coverage-ts-open     # Open in browser
 ## Commands
 
 **Run all tests:**
+
 ```bash
 just test              # Runs tests and updates this file
 just test-rust         # Rust only
@@ -102,6 +109,7 @@ just test-ts           # TypeScript only
 ```
 
 **Coverage reports:**
+
 ```bash
 just coverage          # Generate both Rust + TypeScript
 just coverage-rust     # Rust coverage report
@@ -109,6 +117,7 @@ just coverage-ts       # TypeScript coverage report
 ```
 
 **View logs:**
+
 ```bash
 cat .logs/rust-tests.log     # View Rust test output
 cat .logs/ts-tests.log       # View TypeScript test output
@@ -123,6 +132,7 @@ cat .logs/ts-tests.log       # View TypeScript test output
 **Logs Valid For:** Current session (stored in .logs/)
 
 **To verify counts:**
+
 ```bash
 # Check Rust
 grep "test result: ok" .logs/rust-tests.log | grep -oE "[0-9]+ passed"
@@ -133,6 +143,6 @@ grep "Tests.*passed" .logs/ts-tests.log
 
 ---
 
-*This file is auto-generated from test execution logs.*
-*For testing strategy and philosophy, see: docs/TESTING_STRATEGY.md*
-*For current project phase and status, see: docs/CURRENT_PHASE.md*
+_This file is auto-generated from test execution logs._
+_For testing strategy and philosophy, see: docs/TESTING_STRATEGY.md_
+_For current project phase and status, see: docs/CURRENT_PHASE.md_

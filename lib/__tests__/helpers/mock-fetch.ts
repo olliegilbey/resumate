@@ -1,4 +1,4 @@
-import { vi } from 'vitest'
+import { vi } from "vitest";
 
 /**
  * Mock fetch for Turnstile API verification
@@ -6,14 +6,14 @@ import { vi } from 'vitest'
  */
 
 interface TurnstileResponse {
-  success: boolean
-  'error-codes'?: string[]
-  challenge_ts?: string
-  hostname?: string
+  success: boolean;
+  "error-codes"?: string[];
+  challenge_ts?: string;
+  hostname?: string;
 }
 
 // Store original fetch to restore later
-const originalFetch = global.fetch
+const originalFetch = global.fetch;
 
 /**
  * Mock successful Turnstile verification
@@ -24,38 +24,38 @@ export function mockTurnstileSuccess() {
     json: async (): Promise<TurnstileResponse> => ({
       success: true,
       challenge_ts: new Date().toISOString(),
-      hostname: 'localhost',
+      hostname: "localhost",
     }),
-  })
+  });
 
-  global.fetch = mockFetch as any
-  return mockFetch
+  global.fetch = mockFetch as any;
+  return mockFetch;
 }
 
 /**
  * Mock failed Turnstile verification
  */
-export function mockTurnstileFailure(errorCodes: string[] = ['invalid-input-response']) {
+export function mockTurnstileFailure(errorCodes: string[] = ["invalid-input-response"]) {
   const mockFetch = vi.fn().mockResolvedValue({
     ok: true,
     json: async (): Promise<TurnstileResponse> => ({
       success: false,
-      'error-codes': errorCodes,
+      "error-codes": errorCodes,
     }),
-  })
+  });
 
-  global.fetch = mockFetch as any
-  return mockFetch
+  global.fetch = mockFetch as any;
+  return mockFetch;
 }
 
 /**
  * Mock Turnstile API network error
  */
 export function mockTurnstileNetworkError() {
-  const mockFetch = vi.fn().mockRejectedValue(new Error('Network error'))
+  const mockFetch = vi.fn().mockRejectedValue(new Error("Network error"));
 
-  global.fetch = mockFetch as any
-  return mockFetch
+  global.fetch = mockFetch as any;
+  return mockFetch;
 }
 
 /**
@@ -63,9 +63,9 @@ export function mockTurnstileNetworkError() {
  * Useful for testing edge cases
  */
 export function mockFetch(response: Partial<Response> & { json?: () => Promise<any> }) {
-  const mockFetch = vi.fn().mockResolvedValue(response)
-  global.fetch = mockFetch as any
-  return mockFetch
+  const mockFetch = vi.fn().mockResolvedValue(response);
+  global.fetch = mockFetch as any;
+  return mockFetch;
 }
 
 /**
@@ -73,6 +73,6 @@ export function mockFetch(response: Partial<Response> & { json?: () => Promise<a
  * Use in afterEach cleanup
  */
 export function restoreFetch() {
-  global.fetch = originalFetch
-  vi.restoreAllMocks()
+  global.fetch = originalFetch;
+  vi.restoreAllMocks();
 }

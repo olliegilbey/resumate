@@ -5,44 +5,44 @@
  * Validates bullet_ids, job_title, salary, and reasoning.
  */
 
-import { createParseError, type ParseError } from './errors'
-import { AI_BULLET_BUFFER } from './prompts/prompt'
-import type { SalaryInfo } from './providers/types'
+import { createParseError, type ParseError } from "./errors";
+import { AI_BULLET_BUFFER } from "./prompts/prompt";
+import type { SalaryInfo } from "./providers/types";
 
 // Re-export SalaryInfo for backward compatibility
-export type { SalaryInfo } from './providers/types'
+export type { SalaryInfo } from "./providers/types";
 
 export interface SelectionConfig {
-  maxBullets: number // Target bullets for final selection (used by route)
-  minBullets?: number // Minimum bullets AI must return (default: maxBullets + AI_BULLET_BUFFER)
-  maxPerCompany?: number // For server-side diversity (not validated in parser)
-  maxPerPosition?: number // For server-side diversity (not validated in parser)
+  maxBullets: number; // Target bullets for final selection (used by route)
+  minBullets?: number; // Minimum bullets AI must return (default: maxBullets + AI_BULLET_BUFFER)
+  maxPerCompany?: number; // For server-side diversity (not validated in parser)
+  maxPerPosition?: number; // For server-side diversity (not validated in parser)
 }
 
 export interface ScoredBulletId {
-  id: string
-  score: number
+  id: string;
+  score: number;
 }
 
 export interface ParsedAIResponse {
-  bullets: ScoredBulletId[]
-  reasoning: string
-  jobTitle: string | null
-  salary: SalaryInfo | null
+  bullets: ScoredBulletId[];
+  reasoning: string;
+  jobTitle: string | null;
+  salary: SalaryInfo | null;
 }
 
 export interface ParseResult {
-  success: boolean
-  data?: ParsedAIResponse
-  error?: ParseError
+  success: boolean;
+  data?: ParsedAIResponse;
+  error?: ParseError;
 }
 
 // Map bullet IDs to their company/position for diversity validation
 export interface BulletHierarchy {
   [bulletId: string]: {
-    companyId: string
-    positionId: string
-  }
+    companyId: string;
+    positionId: string;
+  };
 }
 
 /**
@@ -51,86 +51,113 @@ export interface BulletHierarchy {
  */
 export function extractJSON(raw: string): string | null {
   // Try to find JSON in markdown code block first
-  const codeBlockMatch = raw.match(/```(?:json)?\s*(\{[\s\S]*?\})\s*```/)
+  const codeBlockMatch = raw.match(/```(?:json)?\s*(\{[\s\S]*?\})\s*```/);
   if (codeBlockMatch) {
-    return codeBlockMatch[1]
+    return codeBlockMatch[1];
   }
 
   // Try to find raw JSON object with bullets array (new format)
-  const bulletsMatch = raw.match(/\{[\s\S]*"bullets"[\s\S]*\}/)
+  const bulletsMatch = raw.match(/\{[\s\S]*"bullets"[\s\S]*\}/);
   if (bulletsMatch) {
-    return bulletsMatch[0]
+    return bulletsMatch[0];
   }
 
   // Try to find raw JSON object with bullet_ids (legacy format)
-  const jsonMatch = raw.match(/\{[\s\S]*"bullet_ids"[\s\S]*\}/)
+  const jsonMatch = raw.match(/\{[\s\S]*"bullet_ids"[\s\S]*\}/);
   if (jsonMatch) {
-    return jsonMatch[0]
+    return jsonMatch[0];
   }
 
   // Try any JSON object
-  const anyJsonMatch = raw.match(/\{[\s\S]*\}/)
+  const anyJsonMatch = raw.match(/\{[\s\S]*\}/);
   if (anyJsonMatch) {
-    return anyJsonMatch[0]
+    return anyJsonMatch[0];
   }
 
-  return null
+  return null;
 }
 
 /**
  * ISO 4217 currency codes (common subset)
  */
 const ISO_4217_CURRENCIES = new Set([
-  'USD', 'EUR', 'GBP', 'JPY', 'CNY', 'CAD', 'AUD', 'CHF', 'HKD', 'SGD',
-  'SEK', 'NOK', 'DKK', 'NZD', 'MXN', 'BRL', 'INR', 'KRW', 'PLN', 'CZK',
-  'ILS', 'THB', 'PHP', 'MYR', 'IDR', 'ZAR', 'AED', 'SAR', 'TRY', 'RUB',
-])
+  "USD",
+  "EUR",
+  "GBP",
+  "JPY",
+  "CNY",
+  "CAD",
+  "AUD",
+  "CHF",
+  "HKD",
+  "SGD",
+  "SEK",
+  "NOK",
+  "DKK",
+  "NZD",
+  "MXN",
+  "BRL",
+  "INR",
+  "KRW",
+  "PLN",
+  "CZK",
+  "ILS",
+  "THB",
+  "PHP",
+  "MYR",
+  "IDR",
+  "ZAR",
+  "AED",
+  "SAR",
+  "TRY",
+  "RUB",
+]);
 
 /**
  * Validate salary structure with ISO 4217 currency validation
  */
 function validateSalary(
-  salary: unknown
+  salary: unknown,
 ): { valid: true; data: SalaryInfo } | { valid: false; error: string } {
   if (salary === null || salary === undefined) {
-    return { valid: true, data: null as unknown as SalaryInfo }
+    return { valid: true, data: null as unknown as SalaryInfo };
   }
 
-  if (typeof salary !== 'object') {
-    return { valid: false, error: 'salary must be an object or null' }
+  if (typeof salary !== "object") {
+    return { valid: false, error: "salary must be an object or null" };
   }
 
-  const s = salary as Record<string, unknown>
+  const s = salary as Record<string, unknown>;
 
   // Validate currency is non-empty string
-  if (typeof s.currency !== 'string' || s.currency.length === 0) {
-    return { valid: false, error: 'salary.currency must be a non-empty string' }
+  if (typeof s.currency !== "string" || s.currency.length === 0) {
+    return { valid: false, error: "salary.currency must be a non-empty string" };
   }
 
   // Normalize and validate ISO 4217 currency code
-  const currencyUpper = s.currency.toUpperCase()
+  const currencyUpper = s.currency.toUpperCase();
   if (!ISO_4217_CURRENCIES.has(currencyUpper)) {
     return {
       valid: false,
       error: `salary.currency must be ISO 4217 (USD, GBP, EUR, etc.). Got: ${s.currency}`,
-    }
+    };
   }
 
   // Validate period
-  const validPeriods = ['annual', 'monthly', 'hourly', 'daily', 'weekly']
+  const validPeriods = ["annual", "monthly", "hourly", "daily", "weekly"];
   if (!validPeriods.includes(s.period as string)) {
     return {
       valid: false,
-      error: `salary.period must be one of: ${validPeriods.join(', ')}`,
-    }
+      error: `salary.period must be one of: ${validPeriods.join(", ")}`,
+    };
   }
 
   // Validate min/max (optional but must be numbers if present)
-  if (s.min !== undefined && typeof s.min !== 'number') {
-    return { valid: false, error: 'salary.min must be a number' }
+  if (s.min !== undefined && typeof s.min !== "number") {
+    return { valid: false, error: "salary.min must be a number" };
   }
-  if (s.max !== undefined && typeof s.max !== 'number') {
-    return { valid: false, error: 'salary.max must be a number' }
+  if (s.max !== undefined && typeof s.max !== "number") {
+    return { valid: false, error: "salary.max must be a number" };
   }
 
   return {
@@ -139,9 +166,9 @@ function validateSalary(
       min: s.min as number | undefined,
       max: s.max as number | undefined,
       currency: currencyUpper, // Normalized to uppercase
-      period: s.period as SalaryInfo['period'],
+      period: s.period as SalaryInfo["period"],
     },
-  }
+  };
 }
 
 // Note: Diversity validation removed - now handled server-side in route.ts
@@ -159,41 +186,41 @@ export function parseAIOutput(
   raw: string,
   validBulletIds: Set<string>,
   hierarchy: BulletHierarchy,
-  config: SelectionConfig
+  config: SelectionConfig,
 ): ParseResult {
   // Step 1: Extract JSON from response
-  const jsonStr = extractJSON(raw)
+  const jsonStr = extractJSON(raw);
   if (!jsonStr) {
     return {
       success: false,
       error: createParseError(
-        'E001_NO_JSON_FOUND',
-        'No JSON object found in AI response',
+        "E001_NO_JSON_FOUND",
+        "No JSON object found in AI response",
         `Expected format: {"bullet_ids": [...], "reasoning": "...", "job_title": "...", "salary": {...}}
 
-Got: ${raw.slice(0, 200)}${raw.length > 200 ? '...' : ''}`
+Got: ${raw.slice(0, 200)}${raw.length > 200 ? "..." : ""}`,
       ),
-    }
+    };
   }
 
   // Step 2: Parse JSON
-  let parsed: Record<string, unknown>
+  let parsed: Record<string, unknown>;
   try {
-    parsed = JSON.parse(jsonStr)
+    parsed = JSON.parse(jsonStr);
   } catch (e) {
-    const errorMessage = e instanceof Error ? e.message : 'Unknown parse error'
+    const errorMessage = e instanceof Error ? e.message : "Unknown parse error";
     return {
       success: false,
       error: createParseError(
-        'E002_INVALID_JSON',
+        "E002_INVALID_JSON",
         `JSON parse error: ${errorMessage}`,
         `The AI returned malformed JSON.
 
 Attempted to parse:
-${jsonStr.slice(0, 300)}${jsonStr.length > 300 ? '...' : ''}`,
-        { start: 0, end: jsonStr.length, content: jsonStr.slice(0, 60) }
+${jsonStr.slice(0, 300)}${jsonStr.length > 300 ? "..." : ""}`,
+        { start: 0, end: jsonStr.length, content: jsonStr.slice(0, 60) },
       ),
-    }
+    };
   }
 
   // Step 3: Validate bullets array exists (new format with scores)
@@ -201,137 +228,135 @@ ${jsonStr.slice(0, 300)}${jsonStr.length > 300 ? '...' : ''}`,
     return {
       success: false,
       error: createParseError(
-        'E003_MISSING_BULLET_IDS',
+        "E003_MISSING_BULLET_IDS",
         'Response missing "bullets" array',
         `The AI response must contain a "bullets" array with {id, score} objects.
 
-Got keys: ${Object.keys(parsed).join(', ')}
+Got keys: ${Object.keys(parsed).join(", ")}
 
-Expected: bullets, reasoning, job_title, salary`
+Expected: bullets, reasoning, job_title, salary`,
       ),
-    }
+    };
   }
 
-  const rawBullets = parsed.bullets as Array<unknown>
+  const rawBullets = parsed.bullets as Array<unknown>;
 
   // Step 4: Validate each bullet has id (string) and score (number 0-1)
-  const bullets: ScoredBulletId[] = []
+  const bullets: ScoredBulletId[] = [];
   for (let i = 0; i < rawBullets.length; i++) {
-    const b = rawBullets[i] as Record<string, unknown>
-    if (typeof b?.id !== 'string') {
+    const b = rawBullets[i] as Record<string, unknown>;
+    if (typeof b?.id !== "string") {
       return {
         success: false,
         error: createParseError(
-          'E005_INVALID_BULLET_ID',
+          "E005_INVALID_BULLET_ID",
           `Bullet at index ${i} missing valid "id" string`,
-          `Each bullet must have an "id" string. Got: ${JSON.stringify(b)}`
+          `Each bullet must have an "id" string. Got: ${JSON.stringify(b)}`,
         ),
-      }
+      };
     }
-    if (typeof b?.score !== 'number' || b.score < 0 || b.score > 1) {
+    if (typeof b?.score !== "number" || b.score < 0 || b.score > 1) {
       return {
         success: false,
         error: createParseError(
-          'E009_INVALID_SCORE',
+          "E009_INVALID_SCORE",
           `Bullet "${b.id}" has invalid score`,
-          `Score must be a number between 0.0 and 1.0. Got: ${b.score}`
+          `Score must be a number between 0.0 and 1.0. Got: ${b.score}`,
         ),
-      }
+      };
     }
-    bullets.push({ id: b.id, score: b.score })
+    bullets.push({ id: b.id, score: b.score });
   }
 
   // Step 5: Validate minimum count (derive from maxBullets if not provided)
-  const minRequired = config.minBullets ?? config.maxBullets + AI_BULLET_BUFFER
-  const actual = bullets.length
+  const minRequired = config.minBullets ?? config.maxBullets + AI_BULLET_BUFFER;
+  const actual = bullets.length;
   if (actual < minRequired) {
     return {
       success: false,
       error: createParseError(
-        'E004_WRONG_BULLET_COUNT',
+        "E004_WRONG_BULLET_COUNT",
         `Expected at least ${minRequired} bullets, got ${actual}`,
         `The AI must score at least ${minRequired} bullets (maxBullets=${config.maxBullets} + buffer=${AI_BULLET_BUFFER}) to give the server selection options.
 
-Received only ${actual} bullets. Please score more bullets from the compendium.`
+Received only ${actual} bullets. Please score more bullets from the compendium.`,
       ),
-    }
+    };
   }
 
   // Step 6: Validate each ID exists in compendium
-  const invalid = bullets.filter((b) => !validBulletIds.has(b.id))
+  const invalid = bullets.filter((b) => !validBulletIds.has(b.id));
   if (invalid.length > 0) {
-    const sampleValid = Array.from(validBulletIds).slice(0, 5)
+    const sampleValid = Array.from(validBulletIds).slice(0, 5);
     return {
       success: false,
       error: createParseError(
-        'E005_INVALID_BULLET_ID',
+        "E005_INVALID_BULLET_ID",
         `${invalid.length} invalid bullet ID(s) found`,
         `These IDs do not exist in the compendium:
 
-${invalid.map((b) => `  - "${b.id}"`).join('\n')}
+${invalid.map((b) => `  - "${b.id}"`).join("\n")}
 
 Valid IDs look like:
-${sampleValid.map((id) => `  - "${id}"`).join('\n')}...`
+${sampleValid.map((id) => `  - "${id}"`).join("\n")}...`,
       ),
-    }
+    };
   }
 
   // Step 7: Check for duplicates
-  const seen = new Set<string>()
-  const dupes: string[] = []
+  const seen = new Set<string>();
+  const dupes: string[] = [];
   for (const b of bullets) {
-    if (seen.has(b.id)) dupes.push(b.id)
-    seen.add(b.id)
+    if (seen.has(b.id)) dupes.push(b.id);
+    seen.add(b.id);
   }
   if (dupes.length > 0) {
     return {
       success: false,
       error: createParseError(
-        'E006_DUPLICATE_BULLET_ID',
+        "E006_DUPLICATE_BULLET_ID",
         `${dupes.length} duplicate bullet ID(s)`,
         `Each bullet can only be selected once:
 
-Duplicates: ${dupes.join(', ')}
+Duplicates: ${dupes.join(", ")}
 
-Remove duplicates and select unique bullets.`
+Remove duplicates and select unique bullets.`,
       ),
-    }
+    };
   }
 
   // Step 8: Diversity validation removed - server handles constraints
 
   // Step 9: Validate reasoning exists
-  if (typeof parsed.reasoning !== 'string' || parsed.reasoning.length === 0) {
+  if (typeof parsed.reasoning !== "string" || parsed.reasoning.length === 0) {
     return {
       success: false,
       error: createParseError(
-        'E008_MISSING_REASONING',
+        "E008_MISSING_REASONING",
         'Response missing "reasoning" field',
         `The AI response must include a "reasoning" string explaining the selection.
 
-Got: ${typeof parsed.reasoning === 'string' ? '(empty string)' : typeof parsed.reasoning}`
+Got: ${typeof parsed.reasoning === "string" ? "(empty string)" : typeof parsed.reasoning}`,
       ),
-    }
+    };
   }
 
   // Step 10: Validate salary (optional, but must be valid if present)
-  let salary: SalaryInfo | null = null
+  let salary: SalaryInfo | null = null;
   if (parsed.salary !== null && parsed.salary !== undefined) {
-    const salaryResult = validateSalary(parsed.salary)
+    const salaryResult = validateSalary(parsed.salary);
     if (!salaryResult.valid) {
       // Salary errors are warnings, not failures - we continue without salary
-      console.warn(`[AI Parser] Invalid salary: ${salaryResult.error}`)
-      salary = null
+      console.warn(`[AI Parser] Invalid salary: ${salaryResult.error}`);
+      salary = null;
     } else {
-      salary = salaryResult.data
+      salary = salaryResult.data;
     }
   }
 
   // Step 11: Extract job_title (optional)
   const jobTitle =
-    typeof parsed.job_title === 'string' && parsed.job_title.length > 0
-      ? parsed.job_title
-      : null
+    typeof parsed.job_title === "string" && parsed.job_title.length > 0 ? parsed.job_title : null;
 
   return {
     success: true,
@@ -341,7 +366,7 @@ Got: ${typeof parsed.reasoning === 'string' ? '(empty string)' : typeof parsed.r
       jobTitle,
       salary,
     },
-  }
+  };
 }
 
 /**
@@ -349,14 +374,14 @@ Got: ${typeof parsed.reasoning === 'string' ? '(empty string)' : typeof parsed.r
  */
 export function buildBulletHierarchy(
   experience: Array<{
-    id: string
+    id: string;
     children: Array<{
-      id: string
-      children: Array<{ id: string }>
-    }>
-  }>
+      id: string;
+      children: Array<{ id: string }>;
+    }>;
+  }>,
 ): BulletHierarchy {
-  const hierarchy: BulletHierarchy = {}
+  const hierarchy: BulletHierarchy = {};
 
   for (const company of experience) {
     for (const position of company.children) {
@@ -364,12 +389,12 @@ export function buildBulletHierarchy(
         hierarchy[bullet.id] = {
           companyId: company.id,
           positionId: position.id,
-        }
+        };
       }
     }
   }
 
-  return hierarchy
+  return hierarchy;
 }
 
 /**
@@ -378,19 +403,19 @@ export function buildBulletHierarchy(
 export function extractAllBulletIds(
   experience: Array<{
     children: Array<{
-      children: Array<{ id: string }>
-    }>
-  }>
+      children: Array<{ id: string }>;
+    }>;
+  }>,
 ): Set<string> {
-  const ids = new Set<string>()
+  const ids = new Set<string>();
 
   for (const company of experience) {
     for (const position of company.children) {
       for (const bullet of position.children) {
-        ids.add(bullet.id)
+        ids.add(bullet.id);
       }
     }
   }
 
-  return ids
+  return ids;
 }

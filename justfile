@@ -278,8 +278,8 @@ coverage-clean:
 # Code Quality
 # ============================================
 
-# Run all checks (lint, typecheck, clippy)
-check: check-ts check-rust
+# Run all checks (format + lint, typecheck, clippy)
+check: format-check check-ts check-rust
     @echo "✅ All checks passed"
 
 # Run TypeScript type checking and linting
@@ -305,6 +305,18 @@ fmt:
     @echo "🎨 Formatting TypeScript code..."
     bun x prettier --write "**/*.{ts,tsx,js,jsx,json,md}"
     @echo "✅ Code formatted"
+
+# Format all files with Prettier (TS/JS/JSON/MD/YAML/CSS)
+format:
+    bun x prettier --write .
+
+# Check formatting without writing (used by CI + `just check`)
+format-check:
+    bun x prettier --check .
+
+# Find unused exports, deps, files
+deadcode:
+    bun x knip
 
 # ============================================
 # Dependency Management

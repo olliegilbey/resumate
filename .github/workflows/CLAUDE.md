@@ -1,12 +1,14 @@
 # CI/CD & GitHub Actions Context
 
 **You're reading this because you're working with:**
+
 - Files in `.github/workflows/`
 - GitHub Actions workflows
 - CI/CD automation
 - Deployment triggers
 
 **Shared project context already loaded via `.claude/CLAUDE.md`:**
+
 - Architecture, workflows, status, Linear, deployment
 
 **This file contains CI/CD-specific patterns and conventions.**
@@ -27,10 +29,12 @@
 **Purpose:** Automatically deploy to Vercel when resume gist is updated
 
 **Trigger Schedule:**
+
 - **Cron**: Every hour at minute 0 (`0 * * * *`)
 - **Manual**: Can be triggered from GitHub Actions UI (`workflow_dispatch`)
 
 **Why Hourly:**
+
 - Balance between responsiveness and API rate limits
 - Gist updates are infrequent (manual edits only)
 - Reduces unnecessary Vercel builds
@@ -64,6 +68,7 @@
 ```
 
 **What it does:**
+
 - Fetches gist metadata from GitHub API
 - Extracts `updated_at` timestamp (ISO 8601 format)
 - **Handles malformed JSON** (rate limit HTML pages, API errors) via `2>/dev/null || echo ""`
@@ -108,6 +113,7 @@
 ```
 
 **What it does:**
+
 - Fetches raw gist content to temp file
 - Validates JSON syntax with `jq empty`
 - **Validates against full schema** using `validate-compendium.mjs`
@@ -115,6 +121,7 @@
 - **Fail-fast**: Prevents deployment if data doesn't match schema
 
 **Why validate here:**
+
 - Prevents Vercel build failures from invalid data
 - Catches schema violations early (not just JSON syntax)
 - Provides clear error in GitHub Actions UI
@@ -122,16 +129,19 @@
 - Same validation as local `just data-validate`
 
 **Dependencies:**
+
 - Requires repository checkout (`actions/checkout@v4`)
 - Requires bun setup (`oven-sh/setup-bun@v2`)
 - Requires dependencies installed (`bun install --frozen-lockfile`)
 
 **Error Handling:**
+
 - Invalid JSON syntax → Skip deploy, fail workflow with syntax error
 - Schema validation failure → Skip deploy, fail workflow with detailed schema errors
 - Network error → Workflow fails (retry on next hourly run)
 
 **Example Errors Caught:**
+
 - Missing required fields (e.g., `personal.name`)
 - Invalid priority values (outside 1-10 range)
 - Malformed date formats (not YYYY or YYYY-MM)
@@ -155,6 +165,7 @@
 ```
 
 **What it does:**
+
 - Queries Vercel API for last successful deployment
 - Converts millisecond timestamp to ISO 8601
 - Handles case where no deployment exists (first deploy)
@@ -162,6 +173,7 @@
 **API Endpoint:** `https://api.vercel.com/v6/deployments`
 
 **Required Secrets:**
+
 - `VERCEL_TOKEN` - API token from https://vercel.com/account/tokens
 - `VERCEL_PROJECT_ID` - From `vercel project inspect`
 
@@ -185,16 +197,19 @@
 ```
 
 **What it does:**
+
 - Compares gist `updated_at` vs Vercel `last_deploy` timestamps
 - String comparison (ISO 8601 strings are lexicographically sortable)
 - Sets `changed` flag for next step
 
 **Logic:**
+
 - `LAST_DEPLOY = "0"` → First deploy, always trigger
 - `GIST_UPDATE > LAST_DEPLOY` → Gist updated since last deploy, trigger
 - Otherwise → No changes, skip deploy
 
 **Edge Cases:**
+
 - First deployment: `LAST_DEPLOY` set to "0", always triggers
 - Same-minute updates: ISO 8601 includes seconds, handles this
 - Clock skew: GitHub/Vercel both use UTC, no issue
@@ -219,18 +234,22 @@
 ```
 
 **What it does:**
+
 - Sends POST request to Vercel deploy hook
 - Checks HTTP status code
 - Exits with error if deploy fails
 
 **Required Secret:**
+
 - `VERCEL_DEPLOY_HOOK_URL` - From Vercel project settings
 
 **Success Codes:**
+
 - `201 Created` - Deploy queued successfully
 - `200 OK` - Also acceptable
 
 **Vercel Deploy Hook:**
+
 - Created in Vercel dashboard: Settings → Git → Deploy Hooks
 - Each POST triggers a new production deployment
 - Deployment fetches latest gist via `prebuild` hook
@@ -253,22 +272,26 @@
 ```
 
 **What it does:**
+
 - Creates GitHub Actions error annotation with detailed error message
 - Shows full validation errors from schema validator
 - Visible in workflow run UI
 - Fails workflow to prevent silent failures
 
 **Error Format:**
+
 ```
 ::error title={title}::{message}
 ```
 
 **Error Details Include:**
+
 - JSON syntax errors (if applicable)
 - Schema validation errors (field names, expected types, constraint violations)
 - Guidance on next steps (fix gist, automatic retry)
 
 **Why fail the workflow:**
+
 - Alerts user to problem immediately
 - Prevents silent data corruption
 - Easy to spot in GitHub Actions UI
@@ -280,16 +303,17 @@
 
 Set these in GitHub repository settings: Settings → Secrets and variables → Actions
 
-| Secret | Description | How to get |
-|--------|-------------|------------|
-| `RESUME_DATA_GIST_ID` | Gist ID (hash only, not full URL) | From your gist URL: `https://gist.github.com/user/{THIS_PART}` |
-| `VERCEL_TOKEN` | Vercel API token | https://vercel.com/account/tokens |
-| `VERCEL_PROJECT_ID` | Project identifier | `vercel project inspect` |
-| `VERCEL_DEPLOY_HOOK_URL` | Deploy trigger webhook | Vercel dashboard → Settings → Git → Deploy Hooks |
+| Secret                   | Description                       | How to get                                                     |
+| ------------------------ | --------------------------------- | -------------------------------------------------------------- |
+| `RESUME_DATA_GIST_ID`    | Gist ID (hash only, not full URL) | From your gist URL: `https://gist.github.com/user/{THIS_PART}` |
+| `VERCEL_TOKEN`           | Vercel API token                  | https://vercel.com/account/tokens                              |
+| `VERCEL_PROJECT_ID`      | Project identifier                | `vercel project inspect`                                       |
+| `VERCEL_DEPLOY_HOOK_URL` | Deploy trigger webhook            | Vercel dashboard → Settings → Git → Deploy Hooks               |
 
 **Note:** GitHub username is automatically extracted from `github.repository_owner` context variable.
 
 **Security Notes:**
+
 - `VERCEL_TOKEN` has read-only deployment access (scoped to project)
 - `VERCEL_DEPLOY_HOOK_URL` can only trigger deploys, not read data
 - GitHub Actions secrets encrypted at rest
@@ -325,11 +349,13 @@ Vercel Build Process:
 ### Key Points
 
 **No git commits required:**
+
 - Timestamps tracked via APIs, not repo state
 - Gist updates don't create commits in this repo
 - Clean separation: resume data vs application code
 
 **Prebuild always fetches gist:**
+
 ```json
 {
   "scripts": {
@@ -337,11 +363,13 @@ Vercel Build Process:
   }
 }
 ```
+
 - Ensures production always has latest data
 - `--force` flag skips prompts (non-interactive)
 - Build fails if gist unreachable or invalid
 
 **Gist filename must be `resume-data.json`:**
+
 - Hardcoded in workflow and scripts
 - Generic name (works for any user fork)
 
@@ -358,6 +386,7 @@ Vercel Build Process:
 5. Click "Run workflow" button
 
 **Use Cases:**
+
 - Testing workflow changes
 - Force deploy without waiting for cron
 - Debugging deployment issues
@@ -365,16 +394,19 @@ Vercel Build Process:
 ### Testing Locally
 
 **Simulate gist fetch:**
+
 ```bash
 just data-pull -- --force
 ```
 
 **Validate JSON:**
+
 ```bash
 jq empty data/resume-data.json
 ```
 
 **Test build:**
+
 ```bash
 just build
 ```
@@ -386,11 +418,13 @@ just build
 ### Where to Check Status
 
 **GitHub Actions:**
+
 - Repository → Actions tab
 - See all workflow runs (success/failure)
 - Click run for detailed logs
 
 **Vercel Deployments:**
+
 - Vercel dashboard → Deployments tab
 - See build logs, deploy status
 - Click deployment for full details
@@ -398,22 +432,27 @@ just build
 ### Common Issues
 
 **Issue: Workflow runs but doesn't deploy**
+
 - **Cause**: Gist `updated_at` hasn't changed since last deploy
 - **Solution**: This is expected behavior, no action needed
 
 **Issue: "Invalid JSON" error**
+
 - **Cause**: Syntax error in gist (missing comma, bracket, etc.)
 - **Solution**: Edit gist, fix JSON, wait for next hourly run or trigger manually
 
 **Issue: "Deploy trigger failed (HTTP 500)"**
+
 - **Cause**: Vercel API issue or deploy hook URL incorrect
 - **Solution**: Check `VERCEL_DEPLOY_HOOK_URL` secret, try manual trigger
 
 **Issue: Build succeeds but old data shown**
+
 - **Cause**: Prebuild didn't fetch latest gist
 - **Solution**: Check Vercel build logs, verify `RESUME_DATA_GIST_URL` env var
 
 **Issue: Workflow skips with "Could not fetch gist timestamp"**
+
 - **Cause**: GitHub API returned null or malformed response (rate limit, HTML error page, transient error)
 - **Solution**: Expected behavior - workflow will retry next hour. No action needed.
 - **Note**: `jq` parse errors from malformed JSON are suppressed to prevent workflow failure
@@ -425,15 +464,18 @@ just build
 ### GitHub Actions Usage
 
 **Free Tier:**
+
 - 2,000 minutes/month for private repos
 - Unlimited for public repos
 
 **This Workflow:**
+
 - ~1-2 minutes per run (mostly API calls)
 - 24 runs/day × 30 days = 720 runs/month
 - ~720-1440 minutes/month (well within free tier)
 
 **Optimization:**
+
 - Early exit if gist timestamp null (prevents spurious deploys from API errors)
 - Early exit if JSON invalid (saves Vercel build minutes)
 - Only triggers deploy if gist changed (prevents unnecessary builds)
@@ -441,10 +483,12 @@ just build
 ### Vercel Deployments
 
 **Free Tier (Hobby):**
+
 - 100 GB-hours/month build time
 - 100 deployments/day
 
 **This Workflow:**
+
 - ~1-2 builds/day (only when gist updated)
 - Each build: ~2-3 minutes
 - Well within free tier limits
@@ -456,6 +500,7 @@ just build
 **Potential Improvements:**
 
 1. **Slack/Discord Notifications:**
+
    ```yaml
    - name: Notify on deploy
      run: |
@@ -464,6 +509,7 @@ just build
    ```
 
 2. **Schema Validation:**
+
    ```yaml
    - name: Validate against schema
      run: |
@@ -484,18 +530,21 @@ just build
 ## Notes for AI Assistants
 
 **When modifying workflows:**
+
 1. Test with `workflow_dispatch` (manual trigger) first
 2. Check GitHub Actions logs for each step
 3. Verify secrets are set correctly
 4. Test failure cases (invalid JSON, network errors)
 
 **Common tasks:**
+
 - Add new workflow → Create YAML in `.github/workflows/`
 - Test workflow → Use workflow_dispatch trigger
 - Debug workflow → Check Actions tab logs
 - Update secrets → Repository settings → Secrets
 
 **For hybrid work (workflows + app):**
+
 - Workflows are bash/curl, not Node.js or Next.js
 - Use GitHub API, Vercel API, curl for external calls
 - Environment: Ubuntu latest, pre-installed tools (jq, curl, git)

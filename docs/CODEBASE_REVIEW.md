@@ -29,6 +29,7 @@
 **Issue:** Email and phone number embedded in JavaScript bundles despite documentation claiming "email and phone never exposed to client-side code".
 
 **Evidence:**
+
 ```bash
 # Verified in actual build output
 .next/static/chunks/1169fd66759ebccd.js contains:
@@ -39,6 +40,7 @@ Full resume JSON with all PII fields
 ```
 
 **Affected Files:**
+
 - `data/resume-data.json:15-16` - Contains `"email":"[REDACTED_EMAIL]","phone":"[REDACTED_PHONE]"`
 - `app/page.tsx:9` - Client component: `import resumeData from "@/data/resume-data.json"`
 - `app/resume/page.tsx:6` - Same import (no 'use client' but used by client component)
@@ -51,6 +53,7 @@ Full resume JSON with all PII fields
 Next.js bundles any imported JSON into the component that imports it. Server components that import JSON and pass it as props to client components cause the JSON to be serialized in the RSC payload (`.rsc` files) which is sent to the browser.
 
 **Discovery Commands:**
+
 ```bash
 # Build and check bundles
 just build
@@ -64,6 +67,7 @@ rg 'import.*resume-data\.json' app/ components/ -n
 **Solution Approaches:**
 
 **Option A: Server-Only Data Access (Recommended)**
+
 ```typescript
 // Remove all client-side imports
 // ❌ DELETE from app/page.tsx, components/ui/Navbar.tsx, etc.
@@ -96,6 +100,7 @@ export default function ServerComponent() {
 ```
 
 **Option B: Move PII to Environment Variables**
+
 ```typescript
 // 1. Remove from resume-data.json
 // data/resume-data.json - delete email, phone fields
@@ -121,6 +126,7 @@ just types-sync
 ```
 
 **Considerations:**
+
 - README.md, SECURITY.md must be updated to reflect actual behavior
 - Gist sync scripts may need modification
 - Test fixtures need updating
@@ -144,6 +150,7 @@ just types-sync
 **Issue:** Rate limits use in-memory `Map`/`Set` that don't persist across Vercel lambda instances.
 
 **Evidence:**
+
 ```bash
 # Verified in code
 proxy.ts:6: const rateLimit = new Map<string, { count: number; resetTime: number }>()
@@ -152,12 +159,14 @@ app/api/contact-card/route.ts:20: const usedTokens = new Set<string>()
 ```
 
 **Affected Files:**
+
 - `proxy.ts:6-76` - In-memory Map for proxy-level rate limiting
 - `lib/rate-limit.ts:11-46` - In-memory Map for API route rate limiting
 - `app/api/contact-card/route.ts:20-71` - In-memory Set for Turnstile replay protection
 - All API routes using `checkRateLimit()`: `/api/resume/select`, `/api/resume/prepare`
 
 **How Vercel Serverless Works:**
+
 ```
 Request 1 → Lambda Instance A (rateLimitStore = { "ip1": 1 })
 Request 2 → Lambda Instance B (rateLimitStore = {})  ← Separate memory!
@@ -167,6 +176,7 @@ Request 3 → Lambda Instance A (rateLimitStore = { "ip1": 2 })
 Result: User can make N × (instance count) requests instead of N total.
 
 **Discovery Commands:**
+
 ```bash
 # Find in-memory storage
 rg "new Map|new Set" lib/rate-limit.ts proxy.ts app/api/contact-card/
@@ -178,50 +188,53 @@ rg "checkRateLimit" app/api/
 **Solution Approaches:**
 
 **Option A: Vercel KV (Redis)**
+
 ```typescript
 // Install @vercel/kv
 // bun add @vercel/kv
 
 // lib/rate-limit-redis.ts
-import { kv } from '@vercel/kv'
+import { kv } from "@vercel/kv";
 
 export async function checkRateLimit(
   identifier: string,
-  config: RateLimitConfig
+  config: RateLimitConfig,
 ): Promise<RateLimitResult> {
-  const key = `ratelimit:${identifier}`
+  const key = `ratelimit:${identifier}`;
 
   // Atomic increment
-  const count = await kv.incr(key)
+  const count = await kv.incr(key);
 
   if (count === 1) {
-    await kv.pexpire(key, config.window)
+    await kv.pexpire(key, config.window);
   }
 
-  const ttl = await kv.pttl(key)
+  const ttl = await kv.pttl(key);
 
   return {
     success: count <= config.limit,
     limit: config.limit,
     remaining: Math.max(0, config.limit - count),
     reset: Date.now() + ttl,
-  }
+  };
 }
 
 // Turnstile replay protection
 export async function isTokenUsed(token: string): Promise<boolean> {
-  const key = `turnstile:${token}`
-  const exists = await kv.exists(key)
-  if (exists) return true
+  const key = `turnstile:${token}`;
+  const exists = await kv.exists(key);
+  if (exists) return true;
 
-  await kv.set(key, '1', { ex: 3600 })
-  return false
+  await kv.set(key, "1", { ex: 3600 });
+  return false;
 }
 ```
 
 **Option B: Document Limitation**
+
 ```markdown
 // SECURITY.md
+
 ## Rate Limiting
 
 ⚠️ **Known Limitation:**
@@ -233,6 +246,7 @@ Future: Distributed rate limiting with Redis/KV.
 ```
 
 **Option C: Rely on Turnstile Only**
+
 ```typescript
 // Remove rate limiting code, rely solely on Turnstile
 // Document that Turnstile is the primary protection
@@ -252,21 +266,23 @@ Future: Distributed rate limiting with Redis/KV.
 **Issue:** Check-then-act pattern allows concurrent requests to both pass limit check.
 
 **Evidence:**
+
 ```typescript
 // proxy.ts:66-75 (verified in code)
 if (record.count >= maxRequests) {
   // Rate limit exceeded
-  return false
+  return false;
 }
 
 // Increment count
 // NOTE: This has a check-then-act race condition in concurrent Edge Runtime
 // For production with multiple instances, use Redis with atomic INCR/EXPIRE
-record.count++
-return true
+record.count++;
+return true;
 ```
 
 **Classic TOCTOU (Time-Of-Check-Time-Of-Use) vulnerability:**
+
 ```
 Thread A: read count = 9 (< 10)
 Thread B: read count = 9 (< 10)  ← Both read before either writes
@@ -280,13 +296,15 @@ Combined with P0-2, this is lower priority since in-memory limits don't work acr
 **Solution:**
 
 Redis atomic operations solve both P0-2 and P0-3:
+
 ```typescript
 // Atomic increment - no race condition possible
-const count = await kv.incr(key)  // Read and increment in single atomic operation
-const success = count <= config.limit
+const count = await kv.incr(key); // Read and increment in single atomic operation
+const success = count <= config.limit;
 ```
 
 **Discovery:**
+
 ```bash
 rg "check-then-act|race condition" proxy.ts -B 5 -A 5
 ```
@@ -302,6 +320,7 @@ rg "check-then-act|race condition" proxy.ts -B 5 -A 5
 **Issue:** PersonalInfo schema missing 4 fields present in actual data, and has 2 fields not in data.
 
 **Evidence:**
+
 ```bash
 # Rust PersonalInfo fields (verified in code)
 crates/shared-types/src/lib.rs:557-617:
@@ -316,6 +335,7 @@ calendar, citizenship, email, fullName, github, linkedin, location, name, nickna
 ```
 
 **Affected Files:**
+
 - `crates/shared-types/src/lib.rs:557-617` - PersonalInfo struct
 - `data/resume-data.json:3-18` - Has extra fields not in schema
 - `schemas/resume.schema.json` - Generated, doesn't enforce strict validation
@@ -326,6 +346,7 @@ calendar, citizenship, email, fullName, github, linkedin, location, name, nickna
 JSON Schema validation has `additionalProperties: true` (implicit default), so extra fields pass validation silently.
 
 **Discovery Commands:**
+
 ```bash
 # Compare fields
 jq '.personal | keys' data/resume-data.json | jq -r '.[]' | sort
@@ -338,6 +359,7 @@ jq '.definitions.PersonalInfo.additionalProperties' schemas/resume.schema.json
 **Solution Approaches:**
 
 **Option A: Add Missing Fields to Rust**
+
 ```rust
 // crates/shared-types/src/lib.rs
 pub struct PersonalInfo {
@@ -369,21 +391,22 @@ just types-sync
 ```
 
 **Option B: Strict Schema Validation**
+
 ```typescript
 // scripts/make-schema-strict.ts
-import fs from 'fs'
+import fs from "fs";
 
-const schema = JSON.parse(fs.readFileSync('schemas/resume.schema.json', 'utf-8'))
+const schema = JSON.parse(fs.readFileSync("schemas/resume.schema.json", "utf-8"));
 
 function enforceStrict(obj: any) {
-  if (obj.type === 'object' && obj.properties) {
-    obj.additionalProperties = false  // Reject unknown fields
-    Object.values(obj.properties).forEach(enforceStrict)
+  if (obj.type === "object" && obj.properties) {
+    obj.additionalProperties = false; // Reject unknown fields
+    Object.values(obj.properties).forEach(enforceStrict);
   }
 }
 
-enforceStrict(schema)
-fs.writeFileSync('schemas/resume.schema.json', JSON.stringify(schema, null, 2))
+enforceStrict(schema);
+fs.writeFileSync("schemas/resume.schema.json", JSON.stringify(schema, null, 2));
 
 // Add to types-sync workflow
 // justfile:
@@ -393,6 +416,7 @@ fs.writeFileSync('schemas/resume.schema.json', JSON.stringify(schema, null, 2))
 ```
 
 **Option C: CI Drift Detection**
+
 ```yaml
 # .github/workflows/schema-check.yml
 - name: Detect schema drift
@@ -415,6 +439,7 @@ fs.writeFileSync('schemas/resume.schema.json', JSON.stringify(schema, null, 2))
 **Issue:** Fully implemented API endpoint never called by client.
 
 **Evidence:**
+
 ```bash
 # Endpoint exists
 app/api/resume/prepare/route.ts: 141 lines
@@ -430,17 +455,20 @@ const selectResponse = await fetch('/api/resume/select', ...)
 ```
 
 **Affected Files:**
+
 - `app/api/resume/prepare/route.ts:1-141` - Unused endpoint
 - `components/data/ResumeDownload.tsx:92` - Calls `/select` directly, not `/prepare`
 
 **Why It Exists:**
 
 Originally planned two-step flow:
+
 ```
 Client → /prepare → get token → /select with token → results
 ```
 
 Actual implementation:
+
 ```
 Client → /select with turnstileToken → results
 ```
@@ -448,31 +476,34 @@ Client → /select with turnstileToken → results
 **Solution Approaches:**
 
 **Option A: Remove Dead Code**
+
 ```bash
 rm -rf app/api/resume/prepare/
 # Update docs to remove prepare references
 ```
 
 **Option B: Implement Intended Flow**
+
 ```typescript
 // If two-step flow is desired for Phase 6 (Claude API)
 // components/data/ResumeDownload.tsx
 
 // Step 1: Prepare
-const prepareRes = await fetch('/api/resume/prepare', {
-  method: 'POST',
+const prepareRes = await fetch("/api/resume/prepare", {
+  method: "POST",
   body: JSON.stringify({ turnstileToken }),
-})
-const { token, resumeData } = await prepareRes.json()
+});
+const { token, resumeData } = await prepareRes.json();
 
 // Step 2: Select with one-time token
-const selectRes = await fetch('/api/resume/select', {
-  method: 'POST',
+const selectRes = await fetch("/api/resume/select", {
+  method: "POST",
   body: JSON.stringify({ roleProfileId, generationToken: token }),
-})
+});
 ```
 
 **Recommendation:** Check git history and roadmap docs first:
+
 ```bash
 git log --all --oneline -- app/api/resume/prepare/
 rg "prepare|Phase 6" docs/CURRENT_PHASE.md
@@ -513,12 +544,14 @@ rg "prepare|Phase 6" docs/CURRENT_PHASE.md
 **Issue:** Rust selection/scoring code (~290 LOC + 1000+ LOC tests) never executed. Only TS version runs. TS missing `min_per_company` constraint that Rust has.
 
 **Actual Execution Flow:**
+
 ```
 Client → /api/resume/select → TS selectBullets() → WASM PDF generation
                                └─ Line 132: Uses TS algorithm only
 ```
 
 **Evidence:**
+
 ```bash
 # WASM exports (verified - only PDF, no selection)
 crates/resume-wasm/src/lib.rs exports:
@@ -547,6 +580,7 @@ rg "minPerCompany" app/api/resume/select/route.ts
 ```
 
 **Affected Files:**
+
 - `crates/resume-core/src/selector.rs:1-290` - Dead code (never called)
 - `crates/resume-core/src/scoring.rs:1-90` - Dead code (never called)
 - `crates/resume-core/tests/` - Dead tests (testing unused code)
@@ -555,6 +589,7 @@ rg "minPerCompany" app/api/resume/select/route.ts
 - `crates/resume-wasm/src/lib.rs` - Only exports PDF generation, not selection
 
 **Discovery:**
+
 ```bash
 # Verify WASM doesn't export selection
 rg "#\[wasm_bindgen\]" crates/resume-wasm/src/lib.rs -A 2
@@ -575,6 +610,7 @@ find crates/resume-core -name "*.rs" -exec wc -l {} + | tail -1
 **Why Rust Code Exists But Doesn't Run:**
 
 Original plan was to use Rust for selection, but:
+
 1. Selection happens **server-side** (security - don't send full resume to client)
 2. WASM only used **client-side** for PDF generation
 3. Server-side Rust would require napi-rs or Node WASM loader (added complexity)
@@ -583,13 +619,14 @@ Original plan was to use Rust for selection, but:
 **Phase 6 Status:** ✅ **PARTIALLY IMPLEMENTED** (2025-12-08, commit d0b9d1d)
 
 AI selection is now live with Cerebras provider:
+
 ```typescript
 if (jobDescription) {
   // AI selects bullets based on job description (Cerebras live, Claude pending)
-  selectedBullets = await selectWithAI(jobDescription, resumeData)
+  selectedBullets = await selectWithAI(jobDescription, resumeData);
 } else {
   // Heuristic selection (current TS algorithm)
-  selectedBullets = selectBullets(resumeData, roleProfile, config)
+  selectedBullets = selectBullets(resumeData, roleProfile, config);
 }
 ```
 
@@ -598,6 +635,7 @@ Both flows are TypeScript (API calls, async). Rust selection code remains dead a
 **Solution Approaches:**
 
 **Option A: Delete Rust Selection, Port Missing Feature (Recommended)**
+
 ```bash
 # Delete dead code
 rm crates/resume-core/src/selector.rs
@@ -638,12 +676,14 @@ function applyDiversityConstraints(
 ```
 
 **Benefits:**
+
 - Removes ~1300 LOC dead code
 - Eliminates maintenance of duplicate implementations
 - Aligns with future Claude API flow (TS)
 - WASM stays focused on what it's good at: PDF generation with Typst
 
 **Option B: Implement Server-Side Rust**
+
 ```bash
 # Add napi-rs for native Node.js module
 cargo install napi-rs
@@ -654,22 +694,25 @@ cargo install napi-rs
 ```
 
 **Drawbacks:**
+
 - Significant complexity (native compilation, build pipeline)
 - Doesn't help with Claude API flow (that's still TS)
 - WASM already provides the "Rust value-add" (PDF generation)
 - Heuristic selection is simple business logic (TS fine)
 
 **Option C: Keep Both, Add Parity Tests**
+
 ```typescript
 // Test TS matches Rust behavior
-describe('TS/Rust parity', () => {
-  it('should eventually match when we wire up Rust', () => {
+describe("TS/Rust parity", () => {
+  it("should eventually match when we wire up Rust", () => {
     // This will fail forever since Rust never runs
-  })
-})
+  });
+});
 ```
 
 **Drawbacks:**
+
 - Maintains dead code
 - False sense of safety (Rust tests pass but code never runs)
 - Drift continues (TS has bugs Rust doesn't, vice versa)
@@ -677,6 +720,7 @@ describe('TS/Rust parity', () => {
 **Recommendation:** **Option A** - Delete Rust selection code, keep TS as single source of truth. Port min_per_company (~30 LOC). WASM stays focused on PDF generation (its actual value).
 
 **Considerations:**
+
 - Rust selection/scoring well-tested, but tests are testing dead code
 - Future is Claude API (TS) for smart selection, heuristic (TS) for fallback
 - WASM PDF generation is already the technical achievement
@@ -691,6 +735,7 @@ describe('TS/Rust parity', () => {
 **Issue:** Tests call `generate_docx()` function that doesn't exist.
 
 **Evidence:**
+
 ```rust
 // crates/resume-wasm/src/lib.rs:507-530 (verified)
 #[test]
@@ -709,6 +754,7 @@ fn test_generate_docx_valid_payload() {
 Tests are `#[cfg(target_arch = "wasm32")]` gated, so `cargo test` (host architecture) skips them. Only fail on explicit `cargo test --target wasm32-unknown-unknown`.
 
 **Solution:**
+
 ```bash
 # Delete lines 507-530
 # Keep the NOTE comment explaining removal
@@ -726,6 +772,7 @@ rg "docx|DOCX" crates/ --type rust
 **Issue:** Limits defined in both `justfile` and `scripts/check-bundle-size.sh`.
 
 **Evidence:**
+
 ```bash
 # justfile:15-16
 wasm_max_raw_mb := "17"
@@ -737,6 +784,7 @@ MAX_GZIP_MB="${2:-6.5}"
 ```
 
 **Solution:**
+
 ```bash
 # scripts/check-bundle-size.sh
 # Read from justfile (single source of truth)
@@ -831,6 +879,7 @@ Issues that were previously flagged but have been verified as either fixed or in
 **Actual State:** Template IS compiled into binary via `include_str!()` macro. This is the correct Rust/WASM pattern - templates are embedded at compile-time, not loaded at runtime. The WASM binary contains the template.
 
 **Evidence:**
+
 ```rust
 // crates/resume-typst/src/lib.rs
 const TEMPLATE: &str = include_str!("../../typst/templates/resume.typ");
@@ -843,6 +892,7 @@ const TEMPLATE: &str = include_str!("../../typst/templates/resume.typ");
 **Actual State:** Tests DO import and test the POST handler. Full handler-level testing exists with proper mocking of dependencies.
 
 **Evidence:**
+
 ```bash
 # Verify imports exist
 rg "import.*POST|import.*route" app/api/resume/select/__tests__/route.test.ts
@@ -851,6 +901,7 @@ rg "import.*POST|import.*route" app/api/resume/select/__tests__/route.test.ts
 ### ✅ Phase 6 AI Implementation - PARTIALLY COMPLETE
 
 **Note:** Phase 6 (AI resume generation) was partially completed 2025-12-08, commit d0b9d1d:
+
 - ✅ Multi-provider architecture (Anthropic + Cerebras)
 - ✅ AI-curated bullet selection from job descriptions (Cerebras live)
 - ✅ Salary extraction

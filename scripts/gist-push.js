@@ -10,25 +10,25 @@
  *   just data-push -- --force # Skip prompts (for automation)
  */
 
-import { spawnSync } from 'child_process';
-import fs from 'fs';
-import https from 'https';
-import readline from 'readline';
-import dotenv from 'dotenv';
+import { spawnSync } from "child_process";
+import fs from "fs";
+import https from "https";
+import readline from "readline";
+import dotenv from "dotenv";
 
 // Load .env.local if it exists
 try {
-  dotenv.config({ path: '.env.local' });
+  dotenv.config({ path: ".env.local" });
 } catch {
   // dotenv not available
 }
 
 const GIST_URL = process.env.RESUME_DATA_GIST_URL;
-const FORCE_MODE = process.argv.includes('--force');
-const LOCAL_FILE = 'data/resume-data.json';
+const FORCE_MODE = process.argv.includes("--force");
+const LOCAL_FILE = "data/resume-data.json";
 
 if (!GIST_URL) {
-  console.error('❌ RESUME_DATA_GIST_URL not set in .env.local');
+  console.error("❌ RESUME_DATA_GIST_URL not set in .env.local");
   process.exit(1);
 }
 
@@ -37,8 +37,8 @@ if (!GIST_URL) {
 const match = GIST_URL.match(/gist\.githubusercontent\.com\/[^\/]+\/([a-f0-9]+)/);
 
 if (!match) {
-  console.error('❌ Could not extract gist ID from RESUME_DATA_GIST_URL');
-  console.error('   Expected format: https://gist.githubusercontent.com/[user]/[hash]/raw/...');
+  console.error("❌ Could not extract gist ID from RESUME_DATA_GIST_URL");
+  console.error("   Expected format: https://gist.githubusercontent.com/[user]/[hash]/raw/...");
   process.exit(1);
 }
 
@@ -51,12 +51,12 @@ function promptUser(question) {
   return new Promise((resolve) => {
     const rl = readline.createInterface({
       input: process.stdin,
-      output: process.stdout
+      output: process.stdout,
     });
 
     rl.question(question, (answer) => {
       rl.close();
-      resolve(answer.toLowerCase() === 'y' || answer.toLowerCase() === 'yes');
+      resolve(answer.toLowerCase() === "y" || answer.toLowerCase() === "yes");
     });
   });
 }
@@ -66,17 +66,21 @@ function promptUser(question) {
  */
 function fetchGistContent() {
   return new Promise((resolve, reject) => {
-    https.get(GIST_URL, (res) => {
-      let data = '';
-      res.on('data', (chunk) => { data += chunk; });
-      res.on('end', () => {
-        if (res.statusCode === 200) {
-          resolve(data);
-        } else {
-          reject(new Error(`HTTP ${res.statusCode}`));
-        }
-      });
-    }).on('error', reject);
+    https
+      .get(GIST_URL, (res) => {
+        let data = "";
+        res.on("data", (chunk) => {
+          data += chunk;
+        });
+        res.on("end", () => {
+          if (res.statusCode === 200) {
+            resolve(data);
+          } else {
+            reject(new Error(`HTTP ${res.statusCode}`));
+          }
+        });
+      })
+      .on("error", reject);
   });
 }
 
@@ -91,27 +95,27 @@ async function pushToGist() {
   }
 
   // Validate JSON schema before pushing
-  console.log('📋 Validating resume data against schema...');
-  const validateResult = spawnSync('node', ['scripts/validate-compendium.mjs', LOCAL_FILE], {
-    stdio: ['inherit', 'pipe', 'pipe'],
-    encoding: 'utf8'
+  console.log("📋 Validating resume data against schema...");
+  const validateResult = spawnSync("node", ["scripts/validate-compendium.mjs", LOCAL_FILE], {
+    stdio: ["inherit", "pipe", "pipe"],
+    encoding: "utf8",
   });
 
   if (validateResult.status !== 0) {
-    console.error('❌ Validation failed. Fix errors before pushing to gist.');
+    console.error("❌ Validation failed. Fix errors before pushing to gist.");
     console.error(validateResult.stderr);
     process.exit(1);
   }
-  console.log('✅ Validation passed\n');
+  console.log("✅ Validation passed\n");
 
   // Read local content
-  const localContent = fs.readFileSync(LOCAL_FILE, 'utf8');
+  const localContent = fs.readFileSync(LOCAL_FILE, "utf8");
 
   // Validate local JSON
   try {
     JSON.parse(localContent);
   } catch (error) {
-    console.error('❌ Invalid JSON in local file:', error.message);
+    console.error("❌ Invalid JSON in local file:", error.message);
     process.exit(1);
   }
 
@@ -121,34 +125,38 @@ async function pushToGist() {
       const gistContent = await fetchGistContent();
 
       if (gistContent !== localContent) {
-        console.warn('\n⚠️  Warning: Gist content differs from local file!');
-        console.warn('   This will OVERWRITE the gist with your local changes.');
+        console.warn("\n⚠️  Warning: Gist content differs from local file!");
+        console.warn("   This will OVERWRITE the gist with your local changes.");
 
-        const confirmed = await promptUser('\nContinue? (y/N): ');
+        const confirmed = await promptUser("\nContinue? (y/N): ");
 
         if (!confirmed) {
-          console.log('❌ Aborted. Gist unchanged.');
+          console.log("❌ Aborted. Gist unchanged.");
           console.log('💡 Tip: Run "just data-pull" to sync gist → local first.');
           process.exit(0);
         }
       }
     } catch (error) {
       console.warn(`⚠️  Could not fetch gist for comparison: ${error.message}`);
-      console.warn('   Proceeding with push...');
+      console.warn("   Proceeding with push...");
     }
   }
 
   console.log(`📤 Pushing ${LOCAL_FILE} to gist ${gistId}...`);
 
-  const result = spawnSync('gh', ['gist', 'edit', gistId, LOCAL_FILE, '--filename', 'resume-data.json'], {
-    stdio: 'inherit'
-  });
+  const result = spawnSync(
+    "gh",
+    ["gist", "edit", gistId, LOCAL_FILE, "--filename", "resume-data.json"],
+    {
+      stdio: "inherit",
+    },
+  );
 
   if (result.status === 0) {
-    console.log('✅ Successfully pushed to gist');
+    console.log("✅ Successfully pushed to gist");
   } else {
-    console.error('❌ Failed to push to gist');
-    console.error('💡 Tip: Make sure GitHub CLI is installed and authenticated (gh auth login)');
+    console.error("❌ Failed to push to gist");
+    console.error("💡 Tip: Make sure GitHub CLI is installed and authenticated (gh auth login)");
     process.exit(1);
   }
 }
