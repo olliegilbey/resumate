@@ -72,6 +72,19 @@ printf "${GREEN}✅ Phase 1 complete: No secrets detected${NC}\n"
 echo ""
 
 # ============================================
+# PHASE 1.5: AUTO-FORMAT STAGED (lint-staged, ~1-3s)
+# Prettier --write + eslint --fix on staged files only.
+# Re-stages under the hood. Complements Phase 2's full-project checks.
+# ============================================
+printf "${BLUE}→ Phase 1.5/7: Auto-format staged${NC}\n"
+if ! bun x lint-staged 2>&1; then
+  printf "${RED}❌ lint-staged failed${NC}\n"
+  exit 1
+fi
+printf "${GREEN}✅ Phase 1.5 complete: staged files formatted${NC}\n"
+echo ""
+
+# ============================================
 # PHASE 2: LINT + TYPECHECK (~5-10s)
 # Fast validation before expensive operations
 # ============================================

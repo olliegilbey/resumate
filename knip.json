@@ -1,0 +1,10 @@
+{
+  "$schema": "https://unpkg.com/knip@6/schema.json",
+  "ignore": [
+    "lib/types/generated-resume.ts",
+    "types/resume.ts",
+    "types/wasm.d.ts"
+  ],
+  "ignoreExportsUsedInFile": true,
+  "ignoreBinaries": []
+}
