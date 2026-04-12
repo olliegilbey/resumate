@@ -2,7 +2,6 @@
 name: review-pr
 description: Fetch PR review comments from CodeRabbit/Codex, triage, fix valid issues, reply to threads, and resolve. Use when addressing automated PR review feedback.
 user-invocable: true
-disable-model-invocation: true
 argument-hint: [pr-number]
 allowed-tools: Bash(gh *) Bash(git *) Bash(npx *) Read Edit Grep Glob TaskCreate TaskUpdate
 ---
@@ -16,17 +15,17 @@ You are resolving automated review feedback on PR #$ARGUMENTS.
 Fetch all review data using these commands. This is critical — only pull what's needed to avoid context bloat.
 
 **Inline review comments** (file-specific, actionable):
-```!
+```bash
 gh api --paginate repos/$(gh repo view --json nameWithOwner -q .nameWithOwner)/pulls/$ARGUMENTS/comments --jq '.[] | {id, user: .user.login, path: .path, line: .line, body: .body, in_reply_to_id: .in_reply_to_id}' 2>&1 | head -300
 ```
 
 **Review bodies** (summary-level feedback):
-```!
+```bash
 gh api --paginate repos/$(gh repo view --json nameWithOwner -q .nameWithOwner)/pulls/$ARGUMENTS/reviews --jq '.[] | select(.body != "") | {id, user: .user.login, body: .body}' 2>&1 | head -300
 ```
 
 **PR diff** (for verifying comments against current code):
-```!
+```bash
 gh pr diff $ARGUMENTS --name-only 2>&1
 ```
 
