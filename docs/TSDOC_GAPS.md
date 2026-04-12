@@ -1,7 +1,9 @@
 # TSDoc Coverage Gaps
 
 Files that need TSDoc added to exported functions/types, per CLAUDE.md conventions.
-Every exported symbol gets: one-line description, `@param`, `@returns`, `@example`.
+Every exported symbol gets a one-line description.
+Exported functions/methods get: `@param`, `@returns`, and `@example` where practical.
+Exported types/constants/interfaces get a short description (no `@param`/`@returns`); add `@example` when practical.
 
 **Current coverage: ~65% (60/93 exported symbols documented, 3 @example blocks)**
 

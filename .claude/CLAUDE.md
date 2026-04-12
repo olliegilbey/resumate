@@ -159,7 +159,7 @@ Single source of truth per fact. Don't duplicate.
 ## Immutability Conventions
 
 - `const` over `let`. The linter warns on `let`.
-- Function parameters: `Readonly<T>` or `readonly` arrays. The linter warns on mutable params (when typed linting is enabled).
+- Function parameters: prefer `Readonly<T>` or `readonly` arrays by convention. The `functional/immutable-data` rule is configured with `ignoreNonConstDeclarations: true`, so mutable parameters themselves are not flagged — only mutations of existing objects/arrays are.
 - Never mutate in place. Use spread: `{...obj, key: newValue}`, `[...arr, item]`.
 - Enforced by `eslint-plugin-functional` (`immutable-data` + `no-let`) as warnings. Will promote to errors once gaps are addressed.
 - WASM boundary data is already immutable by design (serialised payloads).

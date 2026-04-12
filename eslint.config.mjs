@@ -23,17 +23,14 @@ const eslintConfig = defineConfig([
   // All warnings — signal for agents, not a gate that blocks work.
   // Promote to errors once gaps in docs/IMMUTABILITY_GAPS.md are addressed.
   {
-    files: ['**/*.ts', '**/*.tsx'],
-    ignores: [
-      '**/__tests__/**',
-      '**/*.test.ts',
-      '**/*.test.tsx',
-      'scripts/**',
-      'components/**',
-      'contexts/**',
-      'app/page.tsx',
-      'app/layout.tsx',
+    files: [
+      'lib/**/*.ts',
+      'lib/**/*.tsx',
+      'app/api/**/*.ts',
+      'app/api/**/*.tsx',
+      '*.ts',
     ],
+    ignores: ['**/__tests__/**', '**/*.test.ts', '**/*.test.tsx'],
     plugins: { functional },
     languageOptions: {
       parserOptions: { projectService: true },
