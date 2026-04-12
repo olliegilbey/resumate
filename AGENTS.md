@@ -158,13 +158,50 @@ Timing SLO: **70 seconds** (sourced from `justfile`). Regressions fail the hook.
 
 ## Knip Exceptions (`knip.json`)
 
-Each ignored entry must have a documented reason:
+Every entry in `knip.json` `ignore` / `ignoreDependencies` must have a
+documented reason here. knip.json itself rejects unknown keys, so rationales
+live in this file.
+
+### Files
 
 - `lib/types/generated-resume.ts` — generated from schema, not hand-maintained
 - `types/resume.ts` — ambient type augmentation used across the app
 - `types/wasm.d.ts` — ambient module declarations for WASM imports
+- `public/theme-init.js` — loaded by `app/layout.tsx` via `<Script src=...>`,
+  not imported from TS
+- `public/wasm/resume_wasm.js` — emitted by wasm-pack, loaded dynamically at
+  runtime via the WASM loader
+- `scripts/test-bullet-selection-api.ts` — manual dev harness for hitting
+  `/api/resume/select` locally; run ad-hoc via bun
+- `scripts/transform-resume-data.ts` — one-off data migration script, kept
+  for provenance
+- `lib/__tests__/helpers/mock-data.ts` — mock fixtures consumed by tests via
+  relative imports that knip can't resolve through vitest
+- `lib/__tests__/helpers/mock-fetch.ts` — shared test helper used across
+  route integration tests
+- `lib/__tests__/helpers/rate-limit-helper.ts` — `clearRateLimits` is used
+  in per-test setup across multiple suites
+- `lib/analytics/types.ts` — shared analytics type definitions re-exported
+  from sibling files
+- `lib/analytics/errors.ts` — public error helpers kept for downstream
+  consumers even when currently unused internally
+- `lib/analytics/events.ts` — PostHog event type catalogue exported for
+  analytics authoring
+- `lib/posthog-client.tsx` — `usePostHogContactCard` is intentionally
+  exported for future call sites
+- `lib/vcard.ts` — `generateAndDownloadVCard` is a public helper; knip can't
+  trace the lazy import path from `components/data`
 
-New ignores require a one-line rationale added here.
+### Dependencies
+
+- `@eslint/eslintrc` — transitively used by the `next/core-web-vitals` flat
+  config bridge; knip can't see through it
+- `playwright` — reserved for upcoming E2E work, kept installed intentionally
+- `postcss` — required by `postcss.config.mjs` which Next.js resolves at
+  build time, not by direct import
+
+New ignores require a one-line rationale added to the appropriate section
+above.
 
 ---
 

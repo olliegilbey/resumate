@@ -12,7 +12,10 @@
     "lib/posthog-client.tsx",
     "lib/vcard.ts",
     "lib/__tests__/helpers/mock-fetch.ts",
-    "lib/__tests__/helpers/rate-limit-helper.ts"
+    "lib/__tests__/helpers/rate-limit-helper.ts",
+    "lib/types/generated-resume.ts",
+    "types/resume.ts",
+    "types/wasm.d.ts"
   ],
   "ignoreDependencies": ["@eslint/eslintrc", "playwright", "postcss"],
   "ignoreExportsUsedInFile": true,

@@ -306,7 +306,7 @@ agent-check:
     @echo "  → Linting..."
     @bun lint
     @echo "  → Running tests..."
-    @bun run test
+    @bun run test --run
     @echo "✅ Agent checks passed"
 
 # Format all code (Rust + TypeScript)
