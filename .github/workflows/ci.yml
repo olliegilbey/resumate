@@ -19,6 +19,9 @@ jobs:
         with:
           bun-version: latest
       - run: bun install --frozen-lockfile
+      # data/resume-data.json is gitignored PII; Vercel pulls from gist at build time.
+      # CI has no gist access, so fall back to the committed template for typecheck/lint/test.
+      - run: cp data/resume-data-template.json data/resume-data.json
       - run: bun run format:check
       - run: bun run lint
       - run: bun run typecheck

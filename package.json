@@ -11,7 +11,7 @@
     "lint": "eslint",
     "format": "prettier --write .",
     "format:check": "prettier --check .",
-    "deadcode": "knip",
+    "deadcode": "bun --bun x knip",
     "precommit": "lint-staged",
     "typecheck": "tsc --noEmit",
     "test": "vitest",
