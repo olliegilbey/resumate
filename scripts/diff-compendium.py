@@ -20,6 +20,24 @@ import sys
 from pathlib import Path
 
 
+def build_id_map(items: list, source: str, kind: str) -> dict:
+    """Build an {id: item} map, warning on duplicate IDs so they aren't silently dropped."""
+    seen: dict = {}
+    duplicates: dict[str, int] = {}
+    for item in items:
+        iid = item["id"]
+        if iid in seen:
+            duplicates[iid] = duplicates.get(iid, 1) + 1
+        seen[iid] = item
+    if duplicates:
+        for iid, count in sorted(duplicates.items()):
+            print(
+                f"WARNING: duplicate {kind} id '{iid}' in {source} ({count} occurrences, only last kept)",
+                file=sys.stderr,
+            )
+    return seen
+
+
 def load_json(path: str) -> dict:
     """Load and parse a JSON file, exiting on failure."""
     p = Path(path)
@@ -121,8 +139,8 @@ def diff_education(old_list: list, new_list: list) -> list[str]:
 def diff_accomplishments(old_list: list, new_list: list) -> list[str]:
     """Diff accomplishments by ID."""
     lines = []
-    old_map = {a["id"]: a for a in old_list}
-    new_map = {a["id"]: a for a in new_list}
+    old_map = build_id_map(old_list, "old.accomplishments", "accomplishment")
+    new_map = build_id_map(new_list, "new.accomplishments", "accomplishment")
 
     added_ids = set(new_map) - set(old_map)
     removed_ids = set(old_map) - set(new_map)
@@ -164,8 +182,8 @@ def diff_accomplishments(old_list: list, new_list: list) -> list[str]:
 def diff_role_profiles(old_list: list, new_list: list) -> list[str]:
     """Diff role profiles by ID."""
     lines = []
-    old_map = {r["id"]: r for r in old_list}
-    new_map = {r["id"]: r for r in new_list}
+    old_map = build_id_map(old_list, "old.roleProfiles", "role profile")
+    new_map = build_id_map(new_list, "new.roleProfiles", "role profile")
 
     for rid in sorted(set(new_map) - set(old_map)):
         r = new_map[rid]
@@ -215,8 +233,8 @@ def diff_role_profiles(old_list: list, new_list: list) -> list[str]:
 def diff_bullets(old_bullets: list, new_bullets: list, indent: str = "") -> list[str]:
     """Diff bullet children by ID."""
     lines = []
-    old_map = {b["id"]: b for b in old_bullets}
-    new_map = {b["id"]: b for b in new_bullets}
+    old_map = build_id_map(old_bullets, "old.bullets", "bullet")
+    new_map = build_id_map(new_bullets, "new.bullets", "bullet")
 
     for bid in sorted(set(new_map) - set(old_map)):
         b = new_map[bid]
@@ -256,8 +274,8 @@ def diff_bullets(old_bullets: list, new_bullets: list, indent: str = "") -> list
 def diff_experience(old_list: list, new_list: list) -> list[str]:
     """Diff experience (companies -> positions -> bullets) by ID."""
     lines = []
-    old_map = {e["id"]: e for e in old_list}
-    new_map = {e["id"]: e for e in new_list}
+    old_map = build_id_map(old_list, "old.experience", "experience")
+    new_map = build_id_map(new_list, "new.experience", "experience")
 
     # New experiences
     for eid in sorted(set(new_map) - set(old_map)):
@@ -292,8 +310,8 @@ def diff_experience(old_list: list, new_list: list) -> list[str]:
             )
 
         # Positions
-        old_pos = {p["id"]: p for p in oe.get("children", [])}
-        new_pos = {p["id"]: p for p in ne.get("children", [])}
+        old_pos = build_id_map(oe.get("children", []), f"old.experience[{eid}].positions", "position")
+        new_pos = build_id_map(ne.get("children", []), f"new.experience[{eid}].positions", "position")
 
         for pid in sorted(set(new_pos) - set(old_pos)):
             p = new_pos[pid]
