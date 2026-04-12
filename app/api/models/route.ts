@@ -4,6 +4,12 @@
  * Returns available AI models by querying provider APIs.
  * Proxies requests so API keys stay server-side.
  * Response is cached for 5 minutes to avoid hammering upstream.
+ *
+ * Cerebras probe semantics:
+ * - If the probe to `api.cerebras.ai/v1/models` fails (non-OK response or
+ *   network/timeout error), Cerebras models are reported as
+ *   `available: false` with `reason: "Provider unavailable"` so clients can
+ *   surface the outage rather than silently offering a broken option.
  */
 
 import { NextResponse } from "next/server";
@@ -76,8 +82,14 @@ export async function GET(): Promise<NextResponse<{ models: ModelAvailability[] 
         };
       }
       if (cerebrasFetchFailed) {
-        // Can't confirm — assume available so user can try
-        return { id, label: config.label, cost: config.cost, available: true };
+        // Probe failed — surface the outage instead of silently green-lighting
+        return {
+          id,
+          label: config.label,
+          cost: config.cost,
+          available: false,
+          reason: "Provider unavailable",
+        };
       }
       const available = cerebrasModelIds.includes(config.model);
       return {

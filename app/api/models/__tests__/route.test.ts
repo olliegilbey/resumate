@@ -133,16 +133,41 @@ describe("GET /api/models", () => {
     expect(cerebrasGpt.reason).toBe("API key not configured");
   });
 
-  it("assumes Cerebras models available when API fetch fails", async () => {
+  it("marks Cerebras models unavailable when API fetch throws", async () => {
     global.fetch = vi.fn().mockRejectedValue(new Error("Network error")) as unknown as typeof fetch;
 
     const { GET: freshGET } = await import("../route");
     const response = await freshGET();
     const body = (await response.json()) as any;
 
-    // Should assume available on fetch failure (optimistic)
+    // Surface the outage rather than silently green-lighting
     const cerebrasGpt = body.models.find((m: { id: string }) => m.id === "cerebras-gpt");
-    expect(cerebrasGpt.available).toBe(true);
+    expect(cerebrasGpt.available).toBe(false);
+    expect(cerebrasGpt.reason).toBe("Provider unavailable");
+
+    const cerebrasLlama = body.models.find((m: { id: string }) => m.id === "cerebras-llama");
+    expect(cerebrasLlama.available).toBe(false);
+    expect(cerebrasLlama.reason).toBe("Provider unavailable");
+  });
+
+  it("marks Cerebras models unavailable when API returns a non-OK response", async () => {
+    global.fetch = vi.fn().mockResolvedValue({
+      ok: false,
+      status: 503,
+      json: () => Promise.resolve({}),
+    }) as unknown as typeof fetch;
+
+    const { GET: freshGET } = await import("../route");
+    const response = await freshGET();
+    const body = (await response.json()) as any;
+
+    const cerebrasGpt = body.models.find((m: { id: string }) => m.id === "cerebras-gpt");
+    expect(cerebrasGpt.available).toBe(false);
+    expect(cerebrasGpt.reason).toBe("Provider unavailable");
+
+    const cerebrasLlama = body.models.find((m: { id: string }) => m.id === "cerebras-llama");
+    expect(cerebrasLlama.available).toBe(false);
+    expect(cerebrasLlama.reason).toBe("Provider unavailable");
   });
 
   it("includes label and cost for all models", async () => {
