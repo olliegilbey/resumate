@@ -9,6 +9,10 @@
 // EVENT NAME CONSTANTS
 // ============================================================================
 
+/**
+ * Canonical PostHog event names. Import and reference via
+ * `ANALYTICS_EVENTS.RESUME_PREPARED` — never hardcode event strings.
+ */
 export const ANALYTICS_EVENTS = {
   // Explorer (behavioral, not download)
   TAG_FILTER_CHANGED: "tag_filter_changed",
@@ -37,17 +41,23 @@ export const ANALYTICS_EVENTS = {
   RESUME_FAILED: "resume_failed",
 } as const;
 
+/** Union of every value in `ANALYTICS_EVENTS` — used for type-safe event names. */
 export type AnalyticsEvent = (typeof ANALYTICS_EVENTS)[keyof typeof ANALYTICS_EVENTS];
 
 // ============================================================================
 // CORE TYPES
 // ============================================================================
 
+/** Artefact being downloaded — distinguishes PDF generation paths from vCard. */
 export type DownloadType = "resume_ai" | "resume_heuristic" | "vcard";
+
+/** Which bullet-selection pipeline produced the resume. */
 export type GenerationMethod = "ai" | "heuristic";
+
+/** Model identifier for AI-generated resumes (mirrors `lib/ai/providers/types.ts`). */
 export type AIProvider = "cerebras-gpt" | "cerebras-llama" | "claude-sonnet" | "claude-haiku";
 
-// Error stages - unified across client/server
+/** Pipeline stage at which an error was raised — unified across client and server. */
 export type ErrorStage =
   | "turnstile"
   | "bullet_selection"
@@ -56,22 +66,26 @@ export type ErrorStage =
   | "pdf_generation"
   | "network";
 
-// Error categories for classification
+/** Coarse classification bucket used to group errors in dashboards. */
 export type ErrorCategory = "turnstile" | "wasm" | "pdf" | "ai" | "network" | "validation";
 
-// Cancel stages - where user can abort
+/** Stage where a user can abort the download flow. */
 export type CancelStage = "turnstile" | "verified" | "compiling" | "ai_analyzing";
 
-// Salary period for AI extraction
+/** Salary cadence extracted by the AI from job descriptions. */
 export type SalaryPeriod = "annual" | "monthly" | "hourly" | "daily" | "weekly";
 
 // ============================================================================
 // ENVIRONMENT CONTEXT
 // ============================================================================
 
+/** Build environment for the running process (`NODE_ENV`). */
 export type EnvType = "development" | "production" | "test";
+
+/** Deployment surface (`VERCEL_ENV` normalized; `local` when unset). */
 export type SourceType = "local" | "preview" | "production";
 
+/** Shared env/source/is_server context attached to every analytics event. */
 export interface EnvironmentContext {
   env: EnvType;
   source: SourceType;

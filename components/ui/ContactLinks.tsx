@@ -19,6 +19,24 @@ interface ContactLinksProps {
   variant?: "compact" | "full";
 }
 
+/**
+ * Render LinkedIn, GitHub, and location links for the personal profile.
+ *
+ * Pass the handles only (not full URLs); the component builds canonical links
+ * (`linkedin.com/in/<handle>`, `github.com/<handle>`). Location is display-only.
+ *
+ * @param props.linkedin - LinkedIn handle (username after `/in/`)
+ * @param props.github - GitHub handle
+ * @param props.location - Free-form display string (e.g. "Berlin, Germany")
+ * @param props.className - Extra classes merged onto the root element
+ * @param props.variant - `"compact"` (default, horizontal) or `"full"`
+ *   (Linktree-style vertical card layout)
+ *
+ * @example
+ * ```tsx
+ * <ContactLinks linkedin="jdoe" github="jdoe" location="Berlin" variant="full" />
+ * ```
+ */
 export function ContactLinks({
   linkedin,
   github,

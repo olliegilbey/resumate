@@ -283,7 +283,16 @@ export async function POST(request: NextRequest) {
 }
 
 /**
- * Trigger n8n webhook (async, non-blocking)
+ * Fire-and-forget notification to the configured n8n webhook.
+ *
+ * Sends a signed POST to `N8N_WEBHOOK_URL` (Bearer `N8N_WEBHOOK_SECRET`) so
+ * downstream automations can notify the resume owner on download/failure events.
+ * When either env var is missing the call is skipped silently — analytics must
+ * never block the request path. Non-2xx responses throw so callers can log
+ * failures without aborting the main handler.
+ *
+ * @param payload - Event payload forwarded verbatim to n8n (JSON-serializable)
+ * @returns Resolves when the POST completes; rejects on HTTP or network error
  */
 async function triggerN8nWebhook(payload: Record<string, unknown>): Promise<void> {
   const webhookUrl = process.env.N8N_WEBHOOK_URL;

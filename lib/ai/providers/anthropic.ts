@@ -19,6 +19,23 @@ import { AISelectionError, type ParseError } from "../errors";
 
 type AnthropicProviderKey = "claude-sonnet" | "claude-haiku";
 
+/**
+ * Anthropic-backed `AIProviderInterface` using `@anthropic-ai/sdk` to talk to
+ * Claude Sonnet / Haiku. Used as paid fallback when Cerebras providers are
+ * unavailable or rate-limited.
+ *
+ * The SDK client is lazily initialized (`getClient`) so instantiating the
+ * provider without `ANTHROPIC_API_KEY` does not throw; `isAvailable()` is the
+ * safe pre-flight check.
+ *
+ * @example
+ * ```ts
+ * const provider = createAnthropicProvider("claude-haiku")
+ * if (provider.isAvailable()) {
+ *   const result = await provider.select({ jobDescription, compendium, maxBullets: 24 })
+ * }
+ * ```
+ */
 export class AnthropicProvider implements AIProviderInterface {
   readonly name: AIProvider;
   readonly config: ModelConfig;

@@ -6,6 +6,13 @@
  * 2. Simplified errors - for user UI (friendly, actionable messages)
  */
 
+/**
+ * Stable error code for AI output parsing failures. Each code has a
+ * user-facing message in `formatSimplifiedError` and an AI-facing message
+ * produced by `formatRustStyleError`; some trigger provider fallback
+ * (`E011_PROVIDER_DOWN`) and some trigger same-provider retry
+ * (see `AISelectionError.isOutputFormatError`).
+ */
 export type ParseErrorCode =
   | "E000_PROVIDER_ERROR"
   | "E001_NO_JSON_FOUND"

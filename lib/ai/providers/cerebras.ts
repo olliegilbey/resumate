@@ -44,6 +44,22 @@ interface CerebrasErrorResponse {
   };
 }
 
+/**
+ * Cerebras-backed `AIProviderInterface`. Talks to the OpenAI-compatible
+ * `api.cerebras.ai` chat-completions endpoint for Qwen 3 235B
+ * (`cerebras-gpt`) and Llama 3.1 8B (`cerebras-llama`).
+ *
+ * Both models are on Cerebras's free tier and serve as the default path
+ * before falling back to paid Anthropic models.
+ *
+ * @example
+ * ```ts
+ * const provider = createCerebrasProvider("cerebras-gpt")
+ * if (provider.isAvailable()) {
+ *   const result = await provider.select({ jobDescription, compendium, maxBullets: 24 })
+ * }
+ * ```
+ */
 export class CerebrasProvider implements AIProviderInterface {
   readonly name: AIProvider;
   readonly config: ModelConfig;

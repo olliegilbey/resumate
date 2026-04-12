@@ -26,6 +26,15 @@ import type { SelectionConfig } from "../output-parser";
 // Sets AI role, scoring guidelines, and output format requirements.
 // ============================================================================
 
+/**
+ * System prompt sent to every provider as `{ role: "system", content }`.
+ * Defines the AI's role, the 0.0–1.0 scoring rubric, and the JSON output shape
+ * the parser expects (`bullets[]`, `reasoning`, `job_title`, `salary`).
+ *
+ * Edit this string to change scoring behavior across all providers at once.
+ * Its SHA-256 prefix is logged via `getSystemPromptHash` for analytics so prompt
+ * versions can be correlated with success rates.
+ */
 export const SYSTEM_PROMPT = `# Resume Bullet Scoring Expert
 
 You are an expert resume curator. Your task is to SCORE bullet points from a candidate's experience based on relevance to a job description.

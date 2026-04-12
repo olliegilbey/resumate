@@ -7,10 +7,15 @@
 
 import type { ResumeData } from "@/lib/types/generated-resume";
 
-// Provider identifiers
+/**
+ * Model identifier used by routes and UI to pick a provider.
+ * Mirrors the keys of `AI_MODELS`.
+ */
 export type AIProvider = "cerebras-gpt" | "cerebras-llama" | "claude-sonnet" | "claude-haiku";
 
-// Provider backend type
+/**
+ * Backend vendor that serves the model. `AIProvider` values map onto one of these.
+ */
 export type ProviderBackend = "anthropic" | "cerebras";
 
 // Model configuration
@@ -93,7 +98,11 @@ export interface SalaryInfo {
   period: "annual" | "monthly" | "hourly" | "daily" | "weekly";
 }
 
-// Selection request sent to AI provider
+/**
+ * Inputs to `AIProviderInterface.select` — the job description, the compendium
+ * of bullets to score against, count targets, and optional retry feedback
+ * appended to the user prompt on subsequent attempts.
+ */
 export interface SelectionRequest {
   jobDescription: string;
   compendium: ResumeData;
@@ -104,13 +113,20 @@ export interface SelectionRequest {
   retryContext?: string; // Error feedback from previous attempt
 }
 
-// Bullet with AI-assigned score
+/**
+ * A single AI-scored bullet: the compendium bullet `id` plus its assigned
+ * relevance `score` in 0.0–1.0 (higher is more relevant).
+ */
 export interface ScoredBulletSelection {
   id: string;
   score: number; // 0.0-1.0, higher = more relevant
 }
 
-// Selection result from AI provider
+/**
+ * Full response from `AIProviderInterface.select`: scored bullets plus parsed
+ * metadata (reasoning, job title, salary) and bookkeeping (provider used,
+ * prompt text, tokens, retry count) for analytics.
+ */
 export interface SelectionResult {
   bullets: ScoredBulletSelection[];
   reasoning: string;
@@ -122,7 +138,13 @@ export interface SelectionResult {
   attemptCount: number; // 1 = success first try, >1 = needed retries
 }
 
-// AI Provider interface
+/**
+ * Contract implemented by every AI provider (`CerebrasProvider`, `AnthropicProvider`).
+ *
+ * Providers scoring bullets against a job description, returning a validated
+ * `SelectionResult`. `isAvailable()` gates the provider based on API key presence
+ * without requiring a network call.
+ */
 export interface AIProviderInterface {
   readonly name: AIProvider;
   readonly config: ModelConfig;
@@ -138,7 +160,10 @@ export interface AIProviderInterface {
   isAvailable(): boolean;
 }
 
-// Selection options
+/**
+ * Runtime knobs for the provider orchestrator in `lib/ai/providers/index.ts`:
+ * how many retries before failing over, and the per-call timeout ceiling.
+ */
 export interface SelectionOptions {
   maxRetries?: number;
   timeoutMs?: number;
@@ -147,7 +172,10 @@ export interface SelectionOptions {
 // Note: DEFAULT_SELECTION_CONFIG is in lib/selection.ts (source of truth)
 // Do not add a duplicate here - it was removed to prevent divergence
 
-// Default selection options
+/**
+ * Defaults applied when `selectBulletsWithAI` is called without overrides:
+ * 3 retries max, 30-second timeout per provider attempt.
+ */
 export const DEFAULT_SELECTION_OPTIONS: Required<SelectionOptions> = {
   maxRetries: 3,
   timeoutMs: 30000,

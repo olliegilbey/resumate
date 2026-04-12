@@ -1,10 +1,29 @@
 import { type ClassValue, clsx } from "clsx";
 import { twMerge } from "tailwind-merge";
 
+/**
+ * Merge Tailwind CSS class strings, resolving conflicts intelligently.
+ *
+ * Combines `clsx` (conditional class joining) with `tailwind-merge`
+ * (last-wins for conflicting Tailwind utilities like `p-2 p-4`).
+ *
+ * @param inputs - Class values (strings, arrays, objects, falsy values)
+ * @returns Merged, deduplicated className string
+ *
+ * @example
+ * ```ts
+ * cn("px-2 py-1", isActive && "bg-blue-500", "px-4")
+ * // → "py-1 bg-blue-500 px-4"  (px-2 replaced by px-4)
+ * ```
+ */
 export function cn(...inputs: ClassValue[]) {
   return twMerge(clsx(inputs));
 }
 
+/**
+ * A segment produced by `parseMarkdownLinks` — either a plain text run
+ * or a validated link with URL. `key` provides a stable React list key.
+ */
 export interface TextPart {
   type: "text" | "link";
   content: string;

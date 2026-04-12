@@ -77,7 +77,7 @@ export const DEFAULT_SELECTION_CONFIG: SelectionConfig = {
 };
 
 /**
- * Select top bullets applying diversity constraints
+ * Select top bullets applying diversity constraints.
  *
  * Algorithm:
  * 1. Build full bullet objects from resume data + scores
@@ -85,9 +85,21 @@ export const DEFAULT_SELECTION_CONFIG: SelectionConfig = {
  * 3. Select bullets while respecting per-company and per-position limits
  * 4. Remove companies with fewer than minPerCompany bullets
  *
- * @param resumeData - Full resume data
- * @param scores - Bullet ID to score map
- * @param config - Selection configuration
+ * @param resumeData - Full resume data (compendium)
+ * @param scores - Map of bullet ID → score (0-1). Bullets missing from the map are skipped.
+ * @param config - Selection configuration (defaults to `DEFAULT_SELECTION_CONFIG`)
+ * @returns Selected bullets ordered by score (descending) with diversity constraints applied
+ *
+ * @example
+ * ```ts
+ * const scores = new Map([["b-1", 0.95], ["b-2", 0.70]])
+ * const selected = selectBulletsWithConstraints(resumeData, scores, {
+ *   maxBullets: 24,
+ *   maxPerCompany: 6,
+ *   maxPerPosition: 4,
+ *   minPerCompany: 2,
+ * })
+ * ```
  */
 export function selectBulletsWithConstraints(
   resumeData: ResumeData,
@@ -211,11 +223,25 @@ export function applyDiversityConstraints<T extends ScoredBullet>(
 }
 
 /**
- * Reorder selected bullets to maintain chronological company order
- * while keeping bullets within each company sorted by score
+ * Reorder selected bullets to match the company order defined in `resumeData.experience`
+ * (most-recent first by convention), while keeping bullets within each company sorted by
+ * score descending.
  *
- * @param selected - Bullets selected by applyDiversityConstraints (score-ordered)
- * @param resumeData - Resume data with company order
+ * Companies not present in `resumeData.experience` are placed last. Within a company,
+ * bullet order is preserved by score (the function re-sorts defensively even if the input
+ * is already score-ordered).
+ *
+ * @param selected - Bullets chosen by `applyDiversityConstraints` or
+ *   `selectBulletsWithConstraints`, score-ordered
+ * @param resumeData - Resume data whose `experience` array defines the canonical company order
+ * @returns Same bullets, reordered by company chronology then by score within each company
+ *
+ * @example
+ * ```ts
+ * const selected = selectBulletsWithConstraints(resumeData, scoreMap, config)
+ * const ordered = reorderByCompanyChronology(selected, resumeData)
+ * // → bullets grouped by company in resume-order, each group sorted by score DESC
+ * ```
  */
 export function reorderByCompanyChronology(
   selected: SelectedBullet[],

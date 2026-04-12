@@ -12,6 +12,12 @@ import type { SalaryInfo } from "./providers/types";
 // Re-export SalaryInfo for backward compatibility
 export type { SalaryInfo } from "./providers/types";
 
+/**
+ * Configuration passed to `parseAIOutput` to drive count validation.
+ *
+ * `maxPerCompany` / `maxPerPosition` are informational only — diversity is
+ * enforced server-side in `lib/selection.ts`, not in the parser.
+ */
 export interface SelectionConfig {
   maxBullets: number; // Target bullets for final selection (used by route)
   minBullets?: number; // Minimum bullets AI must return (default: maxBullets + AI_BULLET_BUFFER)
@@ -19,11 +25,18 @@ export interface SelectionConfig {
   maxPerPosition?: number; // For server-side diversity (not validated in parser)
 }
 
+/**
+ * A bullet with a provider-assigned relevance score in the range 0.0–1.0.
+ */
 export interface ScoredBulletId {
   id: string;
   score: number;
 }
 
+/**
+ * Shape returned by `parseAIOutput` on success — validated bullets plus
+ * extracted metadata (reasoning, job title, optional salary).
+ */
 export interface ParsedAIResponse {
   bullets: ScoredBulletId[];
   reasoning: string;
@@ -31,13 +44,20 @@ export interface ParsedAIResponse {
   salary: SalaryInfo | null;
 }
 
+/**
+ * Discriminated result of `parseAIOutput` — either `{ success: true, data }`
+ * or `{ success: false, error }` with a structured `ParseError`.
+ */
 export interface ParseResult {
   success: boolean;
   data?: ParsedAIResponse;
   error?: ParseError;
 }
 
-// Map bullet IDs to their company/position for diversity validation
+/**
+ * Mapping of bullet ID → its owning company / position. Built via
+ * `buildBulletHierarchy` and used by route handlers for diversity analytics.
+ */
 export interface BulletHierarchy {
   [bulletId: string]: {
     companyId: string;

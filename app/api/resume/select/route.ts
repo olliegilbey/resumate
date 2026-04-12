@@ -204,7 +204,12 @@ export async function POST(request: NextRequest) {
 }
 
 /**
- * Load resume data from build cache
+ * Load the compendium from the bundled `data/resume-data.json` (populated at
+ * build time from `RESUME_DATA_GIST_URL`).
+ *
+ * @returns The parsed `ResumeData`, or `null` if the module import fails
+ *   (missing file or invalid JSON — the error is logged but not rethrown so
+ *   the route can return a 500 with a user-friendly message).
  */
 async function loadResumeData(): Promise<ResumeData | null> {
   try {
@@ -217,8 +222,15 @@ async function loadResumeData(): Promise<ResumeData | null> {
 }
 
 /**
- * TypeScript implementation of bullet selection algorithm
- * This will be replaced with WASM in Phase 5.4+
+ * Heuristic bullet selection — scores every bullet (and position description)
+ * against a role profile, sorts descending, then applies diversity constraints.
+ *
+ * This is the TypeScript counterpart to the (future) Rust/WASM implementation.
+ *
+ * @param resumeData - Full compendium
+ * @param roleProfile - Role profile providing `tagWeights` and `scoringWeights`
+ * @param config - Diversity constraints (see `SelectionConfig`)
+ * @returns Selected, diversity-constrained bullets sorted by score descending
  */
 function selectBullets(
   resumeData: ResumeData,
@@ -291,7 +303,15 @@ function selectBullets(
 }
 
 /**
- * Score a single bullet
+ * Score a single bullet against a role profile.
+ *
+ * Formula: `(tagRelevance * weight + priority/10 * weight) * companyMult * positionMult`.
+ *
+ * @param bullet - Bullet (or synthesized position description) to score
+ * @param position - Owning position, used for `calculatePositionMultiplier`
+ * @param company - Owning company, used for `calculateCompanyMultiplier`
+ * @param roleProfile - Role profile defining tag weights and scoring weights
+ * @returns Composite relevance score (non-normalized; higher is better)
  */
 function scoreBullet(
   bullet: Bullet | { id: string; description: string; tags: string[]; priority: number },
@@ -318,7 +338,13 @@ function scoreBullet(
 }
 
 /**
- * Calculate tag relevance
+ * Average tag weight across a bullet's tags. Tags not present in `tagWeights`
+ * are ignored (not counted as zero) so a bullet with one highly-weighted tag
+ * isn't diluted by unrelated tags.
+ *
+ * @param bulletTags - Tags attached to a bullet (or position)
+ * @param tagWeights - Role-profile tag → weight map
+ * @returns Mean weight of matched tags, or 0 if none match
  */
 function calculateTagRelevance(bulletTags: string[], tagWeights: Record<string, number>): number {
   if (!bulletTags || bulletTags.length === 0 || !tagWeights) {
@@ -344,7 +370,12 @@ function calculateTagRelevance(bulletTags: string[], tagWeights: Record<string, 
 }
 
 /**
- * Calculate company multiplier
+ * Company-level score multiplier. Maps `company.priority` (1–10) linearly to
+ * the range 0.8–1.2; returns 1.0 when priority is unset so bullets from
+ * unranked companies are neither boosted nor penalized.
+ *
+ * @param company - Company whose `priority` drives the multiplier
+ * @returns Multiplier in [0.8, 1.2], or 1.0 when `priority` is falsy
  */
 function calculateCompanyMultiplier(company: Company): number {
   if (company.priority) {
@@ -355,7 +386,13 @@ function calculateCompanyMultiplier(company: Company): number {
 }
 
 /**
- * Calculate position multiplier
+ * Position-level score multiplier combining priority (0.8–1.2) and tag-relevance
+ * (0.9–1.1) — so a position's bullets are nudged up or down by how well the
+ * role itself matches the target profile.
+ *
+ * @param position - Position whose `priority` and `tags` drive the multiplier
+ * @param tagWeights - Role-profile tag weights used for the tag component
+ * @returns Combined multiplier (product of priority and tag multipliers)
  */
 function calculatePositionMultiplier(
   position: Position,

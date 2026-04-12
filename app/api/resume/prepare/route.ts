@@ -101,8 +101,10 @@ export async function POST(request: NextRequest) {
 }
 
 /**
- * Load resume data from build cache
- * Data is loaded during build via prebuild script
+ * Load the compendium from the bundled `data/resume-data.json` (populated at
+ * build time by the prebuild script pulling from `RESUME_DATA_GIST_URL`).
+ *
+ * @returns The parsed resume data module, or `null` if the import fails
  */
 async function loadResumeData() {
   try {
@@ -116,8 +118,13 @@ async function loadResumeData() {
 }
 
 /**
- * Generate a one-time token for resume generation
- * Format: timestamp-random
+ * Generate a single-use opaque token bound to the current prepare request.
+ *
+ * Format: `<base36 timestamp>-<base36 random>`. This is for replay-protection
+ * within a session, not a cryptographic secret — Turnstile and rate limits do
+ * the actual access control.
+ *
+ * @returns Token string like `"lxz7t8v-3k2f9a1b0c4"`
  */
 function generateToken(): string {
   const timestamp = Date.now().toString(36);

@@ -22,6 +22,13 @@ interface TurnstileResponse {
 // TODO: For production with multiple instances, use Redis or similar distributed store
 const usedTokens = new Set<string>();
 
+/**
+ * Verify a Cloudflare Turnstile token against the siteverify endpoint.
+ *
+ * @param token - Turnstile token from the client widget
+ * @returns `true` if Cloudflare confirms the token, `false` on any error
+ *   (missing secret, network failure, or invalid token — logged but not thrown)
+ */
 async function verifyTurnstileToken(token: string): Promise<boolean> {
   const secretKey = process.env.TURNSTILE_SECRET_KEY;
 
@@ -51,7 +58,9 @@ async function verifyTurnstileToken(token: string): Promise<boolean> {
 }
 
 /**
- * Load resume data from build cache
+ * Load the compendium from the bundled `data/resume-data.json`.
+ *
+ * @returns The parsed `ResumeData`, or `null` if the import fails (logged, not rethrown)
  */
 async function loadResumeData(): Promise<ResumeData | null> {
   try {
@@ -64,7 +73,14 @@ async function loadResumeData(): Promise<ResumeData | null> {
 }
 
 /**
- * Shared function to generate and return vCard after token verification
+ * Validate a Turnstile token, build a vCard from env-sourced contact data, and
+ * return it as a downloadable `text/vcard` response. Shared by the GET and POST
+ * handlers so both entrypoints enforce identical replay-protection and logging.
+ *
+ * @param token - Turnstile token; enforced as single-use via `usedTokens`
+ * @param request - Original request, used to resolve the client IP for GeoIP
+ * @returns 403 if the token is reused or verification fails; 500 if env vars
+ *   are missing; otherwise 200 with vCard payload and `Content-Disposition`
  */
 async function generateContactCardResponse(
   token: string,
@@ -178,7 +194,17 @@ async function generateContactCardResponse(
   });
 }
 
-// GET route - for direct navigation downloads (works in all browsers including Arc)
+/**
+ * GET `/api/contact-card?token=<turnstile>` — direct-navigation download.
+ *
+ * Used for browsers (like Arc) that block programmatic `fetch` + blob downloads.
+ * The Turnstile token comes via query string; everything else (replay check,
+ * verification, vCard build, analytics) is delegated to
+ * `generateContactCardResponse`.
+ *
+ * @param request - Incoming request; the `token` search param is required
+ * @returns 400 when the token is missing, otherwise the shared response
+ */
 export async function GET(request: NextRequest) {
   try {
     const { searchParams } = new URL(request.url);
@@ -195,7 +221,17 @@ export async function GET(request: NextRequest) {
   }
 }
 
-// POST route - for form submissions (deprecated in favor of GET, but kept for backwards compatibility)
+/**
+ * POST `/api/contact-card` — form-submission fallback for older flows.
+ *
+ * Deprecated in favor of `GET` but retained for backwards compatibility. Accepts
+ * the Turnstile token in a JSON body (`{ token }`) or form-encoded body; the
+ * rest of the pipeline matches `GET`.
+ *
+ * @param request - Incoming request with `application/json` or
+ *   `application/x-www-form-urlencoded` body containing `token`
+ * @returns 400 when the token is missing, otherwise the shared response
+ */
 export async function POST(request: NextRequest) {
   try {
     // Get Turnstile token from request (handle both JSON and form data)

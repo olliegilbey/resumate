@@ -287,7 +287,9 @@ export async function POST(request: NextRequest) {
 }
 
 /**
- * Load resume data from build cache
+ * Load the compendium from the bundled `data/resume-data.json`.
+ *
+ * @returns The parsed `ResumeData`, or `null` if the import fails (logged, not rethrown)
  */
 async function loadResumeData(): Promise<ResumeData | null> {
   try {

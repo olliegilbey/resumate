@@ -42,6 +42,7 @@ export interface DownloadBase extends AnalyticsBase {
 // EXPLORER EVENTS (Not download-related)
 // ============================================================================
 
+/** Fired when the explorer's active tag filter changes (client-only). */
 export interface TagFilterChangedProperties extends AnalyticsBase {
   is_server: false;
   tags: string[];
@@ -49,6 +50,7 @@ export interface TagFilterChangedProperties extends AnalyticsBase {
   result_count: number;
 }
 
+/** Fired when the user runs a free-text search in the explorer (client-only). */
 export interface SearchPerformedProperties extends AnalyticsBase {
   is_server: false;
   query: string;
@@ -59,24 +61,28 @@ export interface SearchPerformedProperties extends AnalyticsBase {
 // CONTACT CARD EVENTS
 // ============================================================================
 
+/** User clicked the vCard download CTA (pre-Turnstile). */
 export interface ContactCardInitiatedProperties extends DownloadBase {
   is_server: false;
   download_type: "vcard";
   timestamp: number;
 }
 
+/** Turnstile solved successfully for a vCard download. */
 export interface ContactCardVerifiedProperties extends DownloadBase {
   is_server: false;
   download_type: "vcard";
   turnstile_duration_ms: number;
 }
 
+/** vCard file successfully received by the browser. */
 export interface ContactCardDownloadedProperties extends DownloadBase {
   is_server: false;
   download_type: "vcard";
   total_duration_ms: number;
 }
 
+/** A vCard download failed; payload carries structured error diagnostics. */
 export interface ContactCardErrorProperties extends DownloadBase {
   is_server: false;
   download_type: "vcard";
@@ -89,6 +95,7 @@ export interface ContactCardErrorProperties extends DownloadBase {
   is_retryable: boolean;
 }
 
+/** User aborted the vCard flow mid-way (e.g. closed the Turnstile dialog). */
 export interface ContactCardCancelledProperties extends DownloadBase {
   is_server: false;
   download_type: "vcard";
@@ -96,6 +103,11 @@ export interface ContactCardCancelledProperties extends DownloadBase {
   duration_ms: number;
 }
 
+/**
+ * Server-side counterpart to `ContactCardDownloadedProperties` — fired from
+ * `/api/contact-card` right before the vCard is streamed. Carries GeoIP-ready
+ * fields and file metadata the client never sees.
+ */
 export interface ContactCardServedProperties extends DownloadBase {
   is_server: true;
   download_type: "vcard";
@@ -140,17 +152,22 @@ interface AIModeFields {
   salary_currency?: string | null; // ISO 4217
 }
 
-// Resume initiated - discriminated union
+/**
+ * Discriminated union fired when the user clicks the resume download CTA.
+ * Branch on `generation_method` ("heuristic" | "ai") for mode-specific fields.
+ */
 export type ResumeInitiatedProperties =
   | (Omit<ResumeClientBase, "download_type" | "generation_method"> & HeuristicModeFields)
   | (Omit<ResumeClientBase, "download_type" | "generation_method"> & AIModeFields);
 
+/** Turnstile solved for a resume download. */
 export interface ResumeVerifiedProperties extends ResumeClientBase {
   role_profile_id?: string; // heuristic
   ai_provider?: AIProvider; // ai
   turnstile_duration_ms: number;
 }
 
+/** Client WASM pipeline finished building the PDF; payload describes timing + size. */
 export interface ResumeCompiledProperties extends ResumeClientBase {
   role_profile_id?: string; // heuristic
   ai_provider?: AIProvider; // ai
@@ -163,6 +180,7 @@ export interface ResumeCompiledProperties extends ResumeClientBase {
   retry_count?: number; // ai only
 }
 
+/** PDF was handed to the browser for download (client-side). */
 export interface ResumeDownloadedProperties extends ResumeClientBase {
   role_profile_id?: string;
   role_profile_name?: string;
@@ -172,6 +190,7 @@ export interface ResumeDownloadedProperties extends ResumeClientBase {
   total_duration_ms: number;
 }
 
+/** Client-side resume generation failed with a structured error. */
 export interface ResumeErrorProperties extends ResumeClientBase {
   role_profile_id?: string;
   ai_provider?: AIProvider;
@@ -184,6 +203,7 @@ export interface ResumeErrorProperties extends ResumeClientBase {
   is_retryable: boolean;
 }
 
+/** User aborted the resume download at a specific `stage`. */
 export interface ResumeCancelledProperties extends ResumeClientBase {
   role_profile_id?: string;
   ai_provider?: AIProvider;
@@ -244,10 +264,15 @@ interface ResumePreparedAI extends ResumePreparedCommon {
   reasoning?: string;
 }
 
+/**
+ * Discriminated union fired from `/api/resume/select` or `/api/resume/ai-select`
+ * once bullets are scored + selected server-side. Branch on `generation_method`.
+ */
 export type ResumePreparedProperties =
   | (Omit<ResumeServerBase, "download_type" | "generation_method"> & ResumePreparedHeuristic)
   | (Omit<ResumeServerBase, "download_type" | "generation_method"> & ResumePreparedAI);
 
+/** Server-observed resume compile success (from `/api/resume/log`, `resume_generated`). */
 export interface ResumeGeneratedProperties extends ResumeServerBase {
   session_id: string;
   role_profile_id?: string;
@@ -262,6 +287,11 @@ export interface ResumeGeneratedProperties extends ResumeServerBase {
   wasm_cached: boolean;
 }
 
+/**
+ * Authoritative server-side download confirmation forwarded to n8n. Carries the
+ * full bullet payload so downstream automation can notify the resume owner when
+ * a recruiter downloads the PDF.
+ */
 export interface ResumeDownloadNotifiedProperties extends ResumeServerBase {
   session_id: string;
   email?: string;
@@ -286,6 +316,7 @@ export interface ResumeDownloadNotifiedProperties extends ResumeServerBase {
   reasoning?: string;
 }
 
+/** Server-observed resume failure, logged from `/api/resume/log` (`resume_failed`). */
 export interface ResumeFailedProperties extends ResumeServerBase {
   session_id: string;
   error_code: DownloadErrorCode;

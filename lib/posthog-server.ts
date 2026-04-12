@@ -67,6 +67,10 @@ export interface ResumeHeuristicPreparedProperties {
   client_ip?: string;
 }
 
+/**
+ * Union of the AI and heuristic variants captured by `resume_prepared`.
+ * Branch on `generation_method` to access mode-specific fields.
+ */
 export type ResumePreparedProperties =
   | ResumeAIPreparedProperties
   | ResumeHeuristicPreparedProperties;
