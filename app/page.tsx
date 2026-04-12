@@ -34,7 +34,7 @@ export default function HomePage() {
 
   // When Turnstile succeeds, store token
   const handleTurnstileSuccess = (token: string) => {
-    console.log("Turnstile verified, token ready");
+    console.warn("Turnstile verified, token ready");
     const now = Date.now();
     verifiedTimeRef.current = now;
 
@@ -178,7 +178,7 @@ export default function HomePage() {
   // Auto-download when token is verified (with slight delay for UX)
   useEffect(() => {
     if (verifiedToken && !downloadInitiated) {
-      console.log("Auto-triggering download...");
+      console.warn("Auto-triggering download...");
 
       const timer = setTimeout(async () => {
         // Mark as initiated WHEN download actually triggers (not before)

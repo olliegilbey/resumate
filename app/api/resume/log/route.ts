@@ -245,7 +245,7 @@ async function triggerN8nWebhook(payload: Record<string, unknown>): Promise<void
   const webhookAuth = process.env.N8N_WEBHOOK_SECRET;
 
   if (!webhookUrl || !webhookAuth) {
-    console.log("[n8n] Webhook not configured, skipping notification");
+    console.warn("[n8n] Webhook not configured, skipping notification");
     return;
   }
 
@@ -263,7 +263,7 @@ async function triggerN8nWebhook(payload: Record<string, unknown>): Promise<void
       throw new Error(`Webhook failed: ${response.status} ${response.statusText}`);
     }
 
-    console.log(`[n8n] Webhook triggered successfully: ${payload.event}`);
+    console.warn(`[n8n] Webhook triggered successfully: ${payload.event}`);
   } catch (error) {
     console.error("[n8n] Webhook error:", error);
     throw error;

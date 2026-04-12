@@ -1,23 +1,20 @@
-import { BulletPoint, Tag } from "@/types/resume"
-import { Badge } from "@/components/ui/Badge"
-import { cn, parseMarkdownLinks } from "@/lib/utils"
-import { Star } from "lucide-react"
+import { BulletPoint, Tag } from "@/types/resume";
+import { Badge } from "@/components/ui/Badge";
+import { cn, parseMarkdownLinks } from "@/lib/utils";
+import { Star } from "lucide-react";
 
 interface BulletCardProps {
-  bullet: BulletPoint
-  allTags: string[]
-  onTagClick?: (tag: Tag) => void
-  className?: string
+  bullet: BulletPoint;
+  allTags: string[];
+  onTagClick?: (tag: Tag) => void;
+  className?: string;
 }
 
 export function BulletCard({ bullet, allTags, onTagClick, className }: BulletCardProps) {
-  const priorityStars = Math.min(Math.max(Math.round(bullet.priority / 2), 1), 5)
+  const priorityStars = Math.min(Math.max(Math.round(bullet.priority / 2), 1), 5);
 
   return (
-    <div className={cn(
-      "glass glass-hover rounded-xl p-4",
-      className
-    )}>
+    <div className={cn("glass glass-hover rounded-xl p-4", className)}>
       <div className="flex gap-4">
         {/* Priority stars and tags on the left */}
         <div className="flex flex-col gap-2 min-w-[140px]">
@@ -32,13 +29,15 @@ export function BulletCard({ bullet, allTags, onTagClick, className }: BulletCar
           </div>
 
           {/* Tags below stars - clickable if handler provided */}
-          {bullet.tags.map(tag => (
+          {bullet.tags.map((tag) => (
             <Badge
               key={tag}
               tag={tag}
               allTags={allTags}
               onClick={onTagClick ? () => onTagClick(tag) : undefined}
-              className={onTagClick ? "cursor-pointer hover:opacity-80 transition-opacity" : undefined}
+              className={
+                onTagClick ? "cursor-pointer hover:opacity-80 transition-opacity" : undefined
+              }
             />
           ))}
         </div>
@@ -48,7 +47,7 @@ export function BulletCard({ bullet, allTags, onTagClick, className }: BulletCar
           <div className="mb-3">
             <p className="text-base leading-7 text-slate-700 dark:text-slate-200">
               {parseMarkdownLinks(bullet.description).map((part) => {
-                if (part.type === 'link' && part.url) {
+                if (part.type === "link" && part.url) {
                   return (
                     <a
                       key={part.key}
@@ -59,22 +58,20 @@ export function BulletCard({ bullet, allTags, onTagClick, className }: BulletCar
                     >
                       {part.content}
                     </a>
-                  )
+                  );
                 }
-                return <span key={part.key}>{part.content}</span>
+                return <span key={part.key}>{part.content}</span>;
               })}
             </p>
           </div>
 
           {bullet.summary && (
             <div className="mt-3 pt-3 border-t border-slate-200 dark:border-slate-700">
-              <p className="text-sm text-slate-500 dark:text-slate-400 italic">
-                {bullet.summary}
-              </p>
+              <p className="text-sm text-slate-500 dark:text-slate-400 italic">{bullet.summary}</p>
             </div>
           )}
         </div>
       </div>
     </div>
-  )
+  );
 }

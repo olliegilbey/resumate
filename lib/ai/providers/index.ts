@@ -98,11 +98,11 @@ export async function selectBulletsWithAI(
   let retryRequest = { ...request };
 
   for (let attempt = 1; attempt <= maxRetries; attempt++) {
-    console.log(`[AI] Attempt ${attempt}/${maxRetries} with ${providerName}`);
+    console.warn(`[AI] Attempt ${attempt}/${maxRetries} with ${providerName}`);
 
     try {
       const result = await provider.select(retryRequest);
-      console.log(`[AI] Success with ${providerName} after ${attempt} attempt(s)`);
+      console.warn(`[AI] Success with ${providerName} after ${attempt} attempt(s)`);
       return {
         ...result,
         attemptCount: attempt,
@@ -146,7 +146,7 @@ export async function selectBulletsWithAI(
       // Output format error → retry with error context
       if (isFormatError && attempt < maxRetries) {
         const errorContext = formatRustStyleError(error.errors[0]);
-        console.log(`[AI] Output format error, retrying with context`);
+        console.warn(`[AI] Output format error, retrying with context`);
         retryRequest = {
           ...request,
           retryContext: errorContext,

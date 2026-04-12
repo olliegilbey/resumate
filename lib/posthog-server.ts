@@ -79,7 +79,7 @@ export function getPostHogClient(): PostHog | null {
   const enableInDev = process.env.POSTHOG_ENABLE_DEV === "true";
 
   if (isDev && !enableInDev) {
-    console.log("[PostHog] Disabled in development (set POSTHOG_ENABLE_DEV=true to enable)");
+    console.warn("[PostHog] Disabled in development (set POSTHOG_ENABLE_DEV=true to enable)");
     return null;
   }
 
@@ -105,7 +105,7 @@ export function getPostHogClient(): PostHog | null {
       flushInterval: 0,
     });
 
-    console.log("[PostHog] Server client initialized");
+    console.warn("[PostHog] Server client initialized");
     return posthogInstance;
   } catch (error) {
     console.error("[PostHog] Failed to initialize:", error);
@@ -145,7 +145,7 @@ export async function captureEvent(
       // $ip must be top-level for PostHog GeoIP lookup (not inside properties)
       ...(ip && { $ip: ip }),
     });
-    console.log(`[PostHog] Event captured: ${event} for ${distinctId}${ip ? ` from ${ip}` : ""}`);
+    console.warn(`[PostHog] Event captured: ${event} for ${distinctId}${ip ? ` from ${ip}` : ""}`);
   } catch (error) {
     console.error("[PostHog] Failed to capture event:", event, error);
   }
@@ -173,9 +173,9 @@ export async function flushEvents(): Promise<void> {
   if (!posthogInstance) return;
 
   try {
-    console.log("[PostHog] Shutting down...");
+    console.warn("[PostHog] Shutting down...");
     await posthogInstance.shutdown();
-    console.log("[PostHog] Shutdown complete");
+    console.warn("[PostHog] Shutdown complete");
   } catch (error) {
     // Best-effort: log but don't throw - analytics shouldn't break core functionality
     console.error("[PostHog] Failed to shutdown:", error);

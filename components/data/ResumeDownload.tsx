@@ -1,287 +1,307 @@
-'use client'
+"use client";
 
-import { useState, useRef, useEffect, useCallback, useMemo } from 'react'
-import { Button } from '@/components/ui/Button'
-import { GlassPanel } from '@/components/ui/GlassPanel'
-import { Download, Loader2, X, AlertCircle } from 'lucide-react'
-import type { ResumeData, RoleProfile } from '@/types/resume'
-import { Turnstile, type TurnstileInstance } from '@marsidev/react-turnstile'
-import { useTheme } from '@/contexts/ThemeContext'
-import { getTotalBullets, getTotalPositions } from '@/lib/resume-metrics'
-import { usePostHogResume } from '@/lib/posthog-client'
-import { AIProgressIndicator, type AIProgressStage } from '@/components/ui/AIProgressIndicator'
-import { AI_MODELS, FALLBACK_ORDER, type AIProvider, type ModelAvailability } from '@/lib/ai/providers/types'
+/* eslint-disable max-lines -- TODO(guardrails): split into download flow, form, and telemetry subcomponents so this file drops under 500 lines, then remove this disable. */
+import { useState, useRef, useEffect, useCallback, useMemo } from "react";
+import { Button } from "@/components/ui/Button";
+import { GlassPanel } from "@/components/ui/GlassPanel";
+import { Download, Loader2, X, AlertCircle } from "lucide-react";
+import type { ResumeData, RoleProfile } from "@/types/resume";
+import { Turnstile, type TurnstileInstance } from "@marsidev/react-turnstile";
+import { useTheme } from "@/contexts/ThemeContext";
+import { getTotalBullets, getTotalPositions } from "@/lib/resume-metrics";
+import { usePostHogResume } from "@/lib/posthog-client";
+import { AIProgressIndicator, type AIProgressStage } from "@/components/ui/AIProgressIndicator";
+import {
+  AI_MODELS,
+  FALLBACK_ORDER,
+  type AIProvider,
+  type ModelAvailability,
+} from "@/lib/ai/providers/types";
 
 // Extend Window interface for WASM functions
 declare global {
   interface Window {
-    __wasmReady?: boolean
-    __generatePdf?: (payload: string, devMode: boolean) => Uint8Array
-    __generatePdfTypst?: (payload: string, devMode: boolean) => Uint8Array
-    __validatePayloadJson?: (json: string) => void
+    __wasmReady?: boolean;
+    __generatePdf?: (payload: string, devMode: boolean) => Uint8Array;
+    __generatePdfTypst?: (payload: string, devMode: boolean) => Uint8Array;
+    __validatePayloadJson?: (json: string) => void;
   }
 }
 
 interface ResumeDownloadProps {
-  resumeData: ResumeData
+  resumeData: ResumeData;
 }
 
-type DownloadStatus = 'idle' | 'verifying' | 'loading_wasm' | 'generating' | 'error'
+type DownloadStatus = "idle" | "verifying" | "loading_wasm" | "generating" | "error";
 
 // Minimum job description length for AI selection
-const MIN_JOB_DESCRIPTION_LENGTH = 50
+const MIN_JOB_DESCRIPTION_LENGTH = 50;
 
 export function ResumeDownload({ resumeData }: ResumeDownloadProps) {
-  const [selectedRoleId, setSelectedRoleId] = useState<string>('')
-  const [jobDescription, setJobDescription] = useState<string>('')
-  const [aiProvider, setAiProvider] = useState<AIProvider>(FALLBACK_ORDER[0])
-  const [modelAvailability, setModelAvailability] = useState<Map<AIProvider, ModelAvailability>>(new Map())
-  const [email, setEmail] = useState<string>('')
-  const [linkedin, setLinkedin] = useState<string>('')
-  const [status, setStatus] = useState<DownloadStatus>('idle')
-  const [aiStage, setAiStage] = useState<AIProgressStage>('idle')
-  const [aiRetryCount, setAiRetryCount] = useState(0)
-  const [errorMessage, setErrorMessage] = useState<string | null>(null)
-  const [showTurnstile, setShowTurnstile] = useState(false)
-  const [verifiedToken, setVerifiedToken] = useState<string | null>(null)
-  const [downloadInitiated, setDownloadInitiated] = useState(false)
-  const turnstileRef = useRef<TurnstileInstance>(null)
-  const flowStartRef = useRef<number>(0) // Track timing from flow initiation
-  const { theme } = useTheme()
-  const analytics = usePostHogResume()
+  const [selectedRoleId, setSelectedRoleId] = useState<string>("");
+  const [jobDescription, setJobDescription] = useState<string>("");
+  const [aiProvider, setAiProvider] = useState<AIProvider>(FALLBACK_ORDER[0]);
+  const [modelAvailability, setModelAvailability] = useState<Map<AIProvider, ModelAvailability>>(
+    new Map(),
+  );
+  const [email, setEmail] = useState<string>("");
+  const [linkedin, setLinkedin] = useState<string>("");
+  const [status, setStatus] = useState<DownloadStatus>("idle");
+  const [aiStage, setAiStage] = useState<AIProgressStage>("idle");
+  const [aiRetryCount, setAiRetryCount] = useState(0);
+  const [errorMessage, setErrorMessage] = useState<string | null>(null);
+  const [showTurnstile, setShowTurnstile] = useState(false);
+  const [verifiedToken, setVerifiedToken] = useState<string | null>(null);
+  const [downloadInitiated, setDownloadInitiated] = useState(false);
+  const turnstileRef = useRef<TurnstileInstance>(null);
+  const flowStartRef = useRef<number>(0); // Track timing from flow initiation
+  const { theme } = useTheme();
+  const analytics = usePostHogResume();
 
-  const roleProfiles = useMemo(() => resumeData.roleProfiles || [], [resumeData.roleProfiles])
+  const roleProfiles = useMemo(() => resumeData.roleProfiles || [], [resumeData.roleProfiles]);
   const totalExperiences = useMemo(() => {
-    return getTotalBullets(resumeData.experience) + getTotalPositions(resumeData.experience)
-  }, [resumeData.experience])
-  const siteKey = process.env.NEXT_PUBLIC_TURNSTILE_SITE_KEY
+    return getTotalBullets(resumeData.experience) + getTotalPositions(resumeData.experience);
+  }, [resumeData.experience]);
+  const siteKey = process.env.NEXT_PUBLIC_TURNSTILE_SITE_KEY;
 
   // Fetch available models on mount
   useEffect(() => {
-    fetch('/api/models')
+    fetch("/api/models")
       .then((res) => {
-        if (!res.ok) throw new Error('Failed to fetch models')
-        return res.json() as Promise<{ models: ModelAvailability[] }>
+        if (!res.ok) throw new Error("Failed to fetch models");
+        return res.json() as Promise<{ models: ModelAvailability[] }>;
       })
       .then(({ models }) => {
-        const map = new Map<AIProvider, ModelAvailability>()
-        for (const m of models) map.set(m.id, m)
-        setModelAvailability(map)
+        const map = new Map<AIProvider, ModelAvailability>();
+        for (const m of models) map.set(m.id, m);
+        setModelAvailability(map);
       })
       .catch(() => {
         // Silently fail — dropdown falls back to static list
-      })
-  }, [])
+      });
+  }, []);
 
   // If current selection is unavailable, switch to first available
   useEffect(() => {
-    const current = modelAvailability.get(aiProvider)
+    const current = modelAvailability.get(aiProvider);
     if (current && !current.available) {
-      const firstAvailable = [...modelAvailability.values()].find((m) => m.available)
-      if (firstAvailable) setAiProvider(firstAvailable.id)
+      const firstAvailable = [...modelAvailability.values()].find((m) => m.available);
+      if (firstAvailable) setAiProvider(firstAvailable.id);
     }
-  }, [modelAvailability, aiProvider])
+  }, [modelAvailability, aiProvider]);
 
   // Mutual exclusivity: job description disables dropdown and vice versa
-  const isJobDescriptionMode = jobDescription.trim().length > 0
-  const isDropdownMode = selectedRoleId.length > 0
+  const isJobDescriptionMode = jobDescription.trim().length > 0;
+  const isDropdownMode = selectedRoleId.length > 0;
 
   const handleDownloadClick = () => {
     if (!selectedRoleId && !jobDescription.trim()) {
-      setErrorMessage('Please select a role or enter a job description')
-      return
+      setErrorMessage("Please select a role or enter a job description");
+      return;
     }
 
     // Reset AI state
-    setAiStage('idle')
-    setAiRetryCount(0)
-    setErrorMessage(null)
-    setShowTurnstile(true)
-    setStatus('idle')
-    flowStartRef.current = Date.now()
+    setAiStage("idle");
+    setAiRetryCount(0);
+    setErrorMessage(null);
+    setShowTurnstile(true);
+    setStatus("idle");
+    flowStartRef.current = Date.now();
 
     if (isJobDescriptionMode) {
       // AI mode - validate job description length
       if (jobDescription.trim().length < MIN_JOB_DESCRIPTION_LENGTH) {
-        setErrorMessage(`Job description too short (minimum ${MIN_JOB_DESCRIPTION_LENGTH} characters)`)
-        setShowTurnstile(false)
-        return
+        setErrorMessage(
+          `Job description too short (minimum ${MIN_JOB_DESCRIPTION_LENGTH} characters)`,
+        );
+        setShowTurnstile(false);
+        return;
       }
 
       // Track: AI download initiated
       analytics.initiated({
-        generation_method: 'ai',
-        download_type: 'resume_ai',
+        generation_method: "ai",
+        download_type: "resume_ai",
         ai_provider: aiProvider,
         job_description_length: jobDescription.trim().length,
-      })
+      });
     } else {
       // Heuristic mode
-      const roleProfile = roleProfiles.find((r) => r.id === selectedRoleId)
+      const roleProfile = roleProfiles.find((r) => r.id === selectedRoleId);
 
       // Track: Download button clicked (GeoIP captured here)
       analytics.initiated({
-        generation_method: 'heuristic',
-        download_type: 'resume_heuristic',
+        generation_method: "heuristic",
+        download_type: "resume_heuristic",
         role_profile_id: selectedRoleId,
-        role_profile_name: roleProfile?.name || 'Unknown',
-      })
+        role_profile_name: roleProfile?.name || "Unknown",
+      });
     }
-  }
+  };
 
   // When Turnstile succeeds, store token (don't start download yet)
-  const handleTurnstileSuccess = useCallback((token: string) => {
-    console.log('Turnstile verified, token ready')
-    setVerifiedToken(token)
-    setStatus('idle')
-    setErrorMessage(null)
+  const handleTurnstileSuccess = useCallback(
+    (token: string) => {
+      console.warn("Turnstile verified, token ready");
+      setVerifiedToken(token);
+      setStatus("idle");
+      setErrorMessage(null);
 
-    // Set AI stage to verifying complete (will transition to analyzing in useEffect)
-    if (jobDescription.trim().length >= MIN_JOB_DESCRIPTION_LENGTH) {
-      setAiStage('verifying')
-    }
+      // Set AI stage to verifying complete (will transition to analyzing in useEffect)
+      if (jobDescription.trim().length >= MIN_JOB_DESCRIPTION_LENGTH) {
+        setAiStage("verifying");
+      }
 
-    // Track: Turnstile verification complete
-    analytics.verified({
-      generation_method: isJobDescriptionMode ? 'ai' : 'heuristic',
-      download_type: isJobDescriptionMode ? 'resume_ai' : 'resume_heuristic',
-      role_profile_id: isJobDescriptionMode ? undefined : selectedRoleId,
-      ai_provider: isJobDescriptionMode ? aiProvider : undefined,
-      turnstile_duration_ms: Date.now() - flowStartRef.current,
-    })
-  }, [analytics, selectedRoleId, jobDescription, isJobDescriptionMode, aiProvider])
+      // Track: Turnstile verification complete
+      analytics.verified({
+        generation_method: isJobDescriptionMode ? "ai" : "heuristic",
+        download_type: isJobDescriptionMode ? "resume_ai" : "resume_heuristic",
+        role_profile_id: isJobDescriptionMode ? undefined : selectedRoleId,
+        ai_provider: isJobDescriptionMode ? aiProvider : undefined,
+        turnstile_duration_ms: Date.now() - flowStartRef.current,
+      });
+    },
+    [analytics, selectedRoleId, jobDescription, isJobDescriptionMode, aiProvider],
+  );
 
   const handleTurnstileError = useCallback(() => {
-    setErrorMessage('Verification failed. Please try again.')
-    setStatus('error')
+    setErrorMessage("Verification failed. Please try again.");
+    setStatus("error");
 
     // Track: Turnstile verification failed
     analytics.error({
-      generation_method: isJobDescriptionMode ? 'ai' : 'heuristic',
-      download_type: isJobDescriptionMode ? 'resume_ai' : 'resume_heuristic',
+      generation_method: isJobDescriptionMode ? "ai" : "heuristic",
+      download_type: isJobDescriptionMode ? "resume_ai" : "resume_heuristic",
       role_profile_id: isJobDescriptionMode ? undefined : selectedRoleId,
       ai_provider: isJobDescriptionMode ? aiProvider : undefined,
-      error_code: 'TN_002',
-      error_category: 'turnstile',
-      error_stage: 'turnstile',
-      error_message: 'Turnstile verification failed',
+      error_code: "TN_002",
+      error_category: "turnstile",
+      error_stage: "turnstile",
+      error_message: "Turnstile verification failed",
       is_retryable: true,
       duration_ms: Date.now() - flowStartRef.current,
-    })
-  }, [analytics, selectedRoleId, isJobDescriptionMode, aiProvider])
+    });
+  }, [analytics, selectedRoleId, isJobDescriptionMode, aiProvider]);
 
   const handleTurnstileExpire = useCallback(() => {
-    setErrorMessage('Verification expired. Please refresh and try again.')
-    setStatus('error')
-    setVerifiedToken(null)
+    setErrorMessage("Verification expired. Please refresh and try again.");
+    setStatus("error");
+    setVerifiedToken(null);
 
     // Track: Turnstile expired
     analytics.error({
-      generation_method: isJobDescriptionMode ? 'ai' : 'heuristic',
-      download_type: isJobDescriptionMode ? 'resume_ai' : 'resume_heuristic',
+      generation_method: isJobDescriptionMode ? "ai" : "heuristic",
+      download_type: isJobDescriptionMode ? "resume_ai" : "resume_heuristic",
       role_profile_id: isJobDescriptionMode ? undefined : selectedRoleId,
       ai_provider: isJobDescriptionMode ? aiProvider : undefined,
-      error_code: 'TN_001',
-      error_category: 'turnstile',
-      error_stage: 'turnstile',
-      error_message: 'Turnstile verification expired',
+      error_code: "TN_001",
+      error_category: "turnstile",
+      error_stage: "turnstile",
+      error_message: "Turnstile verification expired",
       is_retryable: true,
       duration_ms: Date.now() - flowStartRef.current,
-    })
-  }, [analytics, selectedRoleId, isJobDescriptionMode, aiProvider])
+    });
+  }, [analytics, selectedRoleId, isJobDescriptionMode, aiProvider]);
 
   const handleCloseModal = useCallback(() => {
-    if (status === 'verifying') return // Don't close while verifying
+    if (status === "verifying") return; // Don't close while verifying
 
     // Track: User cancelled (if flow was in progress)
-    if (flowStartRef.current > 0 && status !== 'error') {
+    if (flowStartRef.current > 0 && status !== "error") {
       // Derive stage from aiStage when in AI mode, otherwise from status
-      let stage: 'turnstile' | 'verified' | 'compiling' | 'ai_analyzing'
-      if (isJobDescriptionMode && aiStage !== 'idle') {
+      let stage: "turnstile" | "verified" | "compiling" | "ai_analyzing";
+      if (isJobDescriptionMode && aiStage !== "idle") {
         // AI mode: map aiStage to analytics stage
-        if (['analyzing', 'selecting', 'validating', 'retrying'].includes(aiStage)) {
-          stage = 'ai_analyzing'
-        } else if (aiStage === 'compiling') {
-          stage = 'compiling'
-        } else if (aiStage === 'verifying') {
-          stage = 'turnstile'
+        if (["analyzing", "selecting", "validating", "retrying"].includes(aiStage)) {
+          stage = "ai_analyzing";
+        } else if (aiStage === "compiling") {
+          stage = "compiling";
+        } else if (aiStage === "verifying") {
+          stage = "turnstile";
         } else {
           // complete, error, or other - use verified as fallback
-          stage = 'verified'
+          stage = "verified";
         }
       } else {
         // Heuristic mode: derive from status
         stage = verifiedToken
-          ? (status === 'loading_wasm' || status === 'generating' ? 'compiling' : 'verified')
-          : 'turnstile'
+          ? status === "loading_wasm" || status === "generating"
+            ? "compiling"
+            : "verified"
+          : "turnstile";
       }
       analytics.cancelled({
-        generation_method: isJobDescriptionMode ? 'ai' : 'heuristic',
-        download_type: isJobDescriptionMode ? 'resume_ai' : 'resume_heuristic',
+        generation_method: isJobDescriptionMode ? "ai" : "heuristic",
+        download_type: isJobDescriptionMode ? "resume_ai" : "resume_heuristic",
         role_profile_id: isJobDescriptionMode ? undefined : selectedRoleId,
         ai_provider: isJobDescriptionMode ? aiProvider : undefined,
         stage,
         duration_ms: Date.now() - flowStartRef.current,
-      })
+      });
     }
 
-    setShowTurnstile(false)
-    setVerifiedToken(null)
-    setEmail('')
-    setLinkedin('')
-    setErrorMessage(null)
-    setDownloadInitiated(false)
-    setStatus('idle')
-    setAiStage('idle')
-    setAiRetryCount(0)
-    flowStartRef.current = 0
-    turnstileRef.current?.reset()
-  }, [status, verifiedToken, analytics, selectedRoleId, isJobDescriptionMode, aiProvider, aiStage])
+    setShowTurnstile(false);
+    setVerifiedToken(null);
+    setEmail("");
+    setLinkedin("");
+    setErrorMessage(null);
+    setDownloadInitiated(false);
+    setStatus("idle");
+    setAiStage("idle");
+    setAiRetryCount(0);
+    flowStartRef.current = 0;
+    turnstileRef.current?.reset();
+  }, [status, verifiedToken, analytics, selectedRoleId, isJobDescriptionMode, aiProvider, aiStage]);
 
   // Auto-download when token is verified (like vCard pattern)
   useEffect(() => {
-    if (verifiedToken && !downloadInitiated && status !== 'error') {
-      console.log('Auto-triggering PDF download...')
+    if (verifiedToken && !downloadInitiated && status !== "error") {
+      console.warn("Auto-triggering PDF download...");
 
       // Capture current mode at time of verification
-      const isAIMode = jobDescription.trim().length >= MIN_JOB_DESCRIPTION_LENGTH
-      const currentProvider = aiProvider
-      const currentJobDescription = jobDescription.trim()
+      const isAIMode = jobDescription.trim().length >= MIN_JOB_DESCRIPTION_LENGTH;
+      const currentProvider = aiProvider;
+      const currentJobDescription = jobDescription.trim();
 
       const timer = setTimeout(async () => {
-        setDownloadInitiated(true)
+        setDownloadInitiated(true);
 
         // Track timing for analytics
-        const startTime = Date.now()
-        let wasmLoadStart = 0
-        let wasmLoadEnd = 0
-        let generationStart = 0
-        let generationEnd = 0
-        let errorStage: 'bullet_selection' | 'ai_selection' | 'wasm_load' | 'pdf_generation' = isAIMode ? 'ai_selection' : 'bullet_selection'
+        const startTime = Date.now();
+        let wasmLoadStart = 0;
+        let wasmLoadEnd = 0;
+        let generationStart = 0;
+        let generationEnd = 0;
+        let errorStage: "bullet_selection" | "ai_selection" | "wasm_load" | "pdf_generation" =
+          isAIMode ? "ai_selection" : "bullet_selection";
 
         try {
           // Step 1: Get curated bullets from server (AI or heuristic)
-          const sessionId = sessionStorage.getItem('resumate_session') || crypto.randomUUID()
-          sessionStorage.setItem('resumate_session', sessionId)
+          const sessionId = sessionStorage.getItem("resumate_session") || crypto.randomUUID();
+          sessionStorage.setItem("resumate_session", sessionId);
 
           let selectData: {
-            selected: Array<{ bullet: { id: string; description: string }; companyId: string; positionId: string }>
-            reasoning?: string
-            jobTitle?: string | null
-            salary?: { min?: number; max?: number; currency: string; period: string } | null
-            metadata?: { provider: string; tokensUsed?: number; duration?: number }
-          }
+            selected: Array<{
+              bullet: { id: string; description: string };
+              companyId: string;
+              positionId: string;
+            }>;
+            reasoning?: string;
+            jobTitle?: string | null;
+            salary?: { min?: number; max?: number; currency: string; period: string } | null;
+            metadata?: { provider: string; tokensUsed?: number; duration?: number };
+          };
 
           if (isAIMode) {
             // AI Mode: Call AI selection endpoint
-            setStatus('loading_wasm')
-            setAiStage('analyzing')
-            console.log(`🤖 AI Selection with ${currentProvider}...`)
+            setStatus("loading_wasm");
+            setAiStage("analyzing");
+            console.warn(`🤖 AI Selection with ${currentProvider}...`);
 
-            setAiStage('selecting')
-            const aiResponse = await fetch('/api/resume/ai-select', {
-              method: 'POST',
-              headers: { 'Content-Type': 'application/json' },
+            setAiStage("selecting");
+            const aiResponse = await fetch("/api/resume/ai-select", {
+              method: "POST",
+              headers: { "Content-Type": "application/json" },
               body: JSON.stringify({
                 jobDescription: currentJobDescription,
                 provider: currentProvider,
@@ -290,29 +310,29 @@ export function ResumeDownload({ resumeData }: ResumeDownloadProps) {
                 linkedin: linkedin || undefined,
                 sessionId,
               }),
-            })
+            });
 
-            setAiStage('validating')
+            setAiStage("validating");
 
             if (!aiResponse.ok) {
-              const error = await aiResponse.json()
+              const error = await aiResponse.json();
               // Check if it was a retry situation
               if (error.retriesAttempted && error.retriesAttempted > 0) {
-                setAiRetryCount(error.retriesAttempted)
-                setAiStage('retrying')
+                setAiRetryCount(error.retriesAttempted);
+                setAiStage("retrying");
               }
-              throw new Error(error.userMessage || error.message || 'AI selection failed')
+              throw new Error(error.userMessage || error.message || "AI selection failed");
             }
 
-            selectData = await aiResponse.json()
-            console.log(`✅ AI selected ${selectData.selected.length} bullets`)
+            selectData = await aiResponse.json();
+            console.warn(`✅ AI selected ${selectData.selected.length} bullets`);
           } else {
             // Heuristic Mode: Call existing selection endpoint
-            setStatus('loading_wasm')
+            setStatus("loading_wasm");
 
-            const selectResponse = await fetch('/api/resume/select', {
-              method: 'POST',
-              headers: { 'Content-Type': 'application/json' },
+            const selectResponse = await fetch("/api/resume/select", {
+              method: "POST",
+              headers: { "Content-Type": "application/json" },
               body: JSON.stringify({
                 roleProfileId: selectedRoleId,
                 turnstileToken: verifiedToken,
@@ -320,31 +340,31 @@ export function ResumeDownload({ resumeData }: ResumeDownloadProps) {
                 linkedin: linkedin || undefined,
                 sessionId,
               }),
-            })
+            });
 
             if (!selectResponse.ok) {
-              const error = await selectResponse.json()
-              throw new Error(error.message || 'Failed to select bullets')
+              const error = await selectResponse.json();
+              throw new Error(error.message || "Failed to select bullets");
             }
 
-            selectData = await selectResponse.json()
+            selectData = await selectResponse.json();
           }
 
           // Step 2: Load WASM module dynamically from public folder
-          errorStage = 'wasm_load'
-          wasmLoadStart = Date.now()
-          const wasmCached = Boolean(window.__wasmReady)
-          setStatus('generating')
-          if (isAIMode) setAiStage('compiling')
+          errorStage = "wasm_load";
+          wasmLoadStart = Date.now();
+          const wasmCached = Boolean(window.__wasmReady);
+          setStatus("generating");
+          if (isAIMode) setAiStage("compiling");
 
           // Check if WASM is already loaded
           if (!window.__wasmReady) {
-            console.log('🔧 Loading WASM module...')
+            console.warn("🔧 Loading WASM module...");
 
             // Create script element to load WASM bindings
-            const script = document.createElement('script')
-            script.type = 'module'
-            script.setAttribute('data-wasm-loader', 'true')
+            const script = document.createElement("script");
+            script.type = "module";
+            script.setAttribute("data-wasm-loader", "true");
             script.textContent = `
               import init, { generate_pdf_typst, init_panic_hook, validate_payload_json } from '/wasm/resume_wasm.js';
               await init('/wasm/resume_wasm_bg.wasm');
@@ -352,50 +372,50 @@ export function ResumeDownload({ resumeData }: ResumeDownloadProps) {
               // Enable better panic messages in WASM
               init_panic_hook();
 
-              console.log('✅ WASM loaded and cached');
+              console.warn('✅ WASM loaded and cached');
 
               window.__wasmReady = true;
               window.__generatePdfTypst = generate_pdf_typst;
               window.__validatePayloadJson = validate_payload_json;
-            `
-            document.head.appendChild(script)
+            `;
+            document.head.appendChild(script);
           } else {
-            console.log('✅ WASM already loaded from cache')
+            console.warn("✅ WASM already loaded from cache");
           }
 
           // Wait for WASM to initialize (with 10s timeout)
           await new Promise((resolve, reject) => {
             const timeout = setTimeout(() => {
-              clearInterval(checkReady)
-              reject(new Error('WASM module failed to load — please refresh and try again'))
-            }, 10000)
+              clearInterval(checkReady);
+              reject(new Error("WASM module failed to load — please refresh and try again"));
+            }, 10000);
             const checkReady = setInterval(() => {
               if (window.__wasmReady) {
-                clearInterval(checkReady)
-                clearTimeout(timeout)
-                resolve(null)
+                clearInterval(checkReady);
+                clearTimeout(timeout);
+                resolve(null);
               }
-            }, 100)
-          })
+            }, 100);
+          });
 
-          wasmLoadEnd = Date.now()
-          errorStage = 'pdf_generation'
-          generationStart = Date.now()
+          wasmLoadEnd = Date.now();
+          errorStage = "pdf_generation";
+          generationStart = Date.now();
 
           // Step 3: Prepare generation payload
           // For AI mode, create synthetic role profile; for heuristic, use selected profile
           const roleProfile = isAIMode
             ? {
-                id: 'ai-curated',
-                name: selectData.jobTitle || 'AI-Curated Resume',
-                description: 'AI-selected based on job description',
+                id: "ai-curated",
+                name: selectData.jobTitle || "AI-Curated Resume",
+                description: "AI-selected based on job description",
                 tagWeights: {},
                 scoringWeights: { tagRelevance: 0.5, priority: 0.5 },
               }
-            : roleProfiles.find((r) => r.id === selectedRoleId)
+            : roleProfiles.find((r) => r.id === selectedRoleId);
 
           if (!roleProfile) {
-            throw new Error('Role profile not found')
+            throw new Error("Role profile not found");
           }
 
           const payload = {
@@ -406,49 +426,54 @@ export function ResumeDownload({ resumeData }: ResumeDownloadProps) {
             skills: resumeData.skills,
             summary: resumeData.summary,
             metadata: null,
-          }
+          };
 
           // Step 4: Generate PDF with WASM (using Typst)
           if (!window.__generatePdfTypst) {
-            throw new Error('Typst WASM module not initialized')
+            throw new Error("Typst WASM module not initialized");
           }
 
           // Dev mode based on build environment, not hostname
-          const isDevMode = process.env.NODE_ENV === 'development'
+          const isDevMode = process.env.NODE_ENV === "development";
 
           // Pre-validate payload for better error messages
-          const payloadJson = JSON.stringify(payload)
-          console.log('🔍 Validating payload...', { bulletCount: payload.selectedBullets?.length })
+          const payloadJson = JSON.stringify(payload);
+          console.warn("🔍 Validating payload...", {
+            bulletCount: payload.selectedBullets?.length,
+          });
 
           if (window.__validatePayloadJson) {
             try {
-              const validatePayloadJson = window.__validatePayloadJson as (json: string) => void
-              validatePayloadJson(payloadJson)
-              console.log('✅ Payload validation passed')
+              const validatePayloadJson = window.__validatePayloadJson as (json: string) => void;
+              validatePayloadJson(payloadJson);
+              console.warn("✅ Payload validation passed");
             } catch (validationError) {
-              console.error('❌ Payload validation failed:', validationError)
-              throw new Error(`Invalid payload: ${validationError}`)
+              console.error("❌ Payload validation failed:", validationError);
+              throw new Error(`Invalid payload: ${validationError}`);
             }
           }
 
-          console.log('🎨 Generating PDF with Typst...')
-          const generatePdfTypst = window.__generatePdfTypst as (payload: string, devMode: boolean) => Uint8Array
-          const pdfBytes = generatePdfTypst(payloadJson, isDevMode)
-          generationEnd = Date.now()
-          console.log('✅ PDF generated successfully with Typst')
+          console.warn("🎨 Generating PDF with Typst...");
+          const generatePdfTypst = window.__generatePdfTypst as (
+            payload: string,
+            devMode: boolean,
+          ) => Uint8Array;
+          const pdfBytes = generatePdfTypst(payloadJson, isDevMode);
+          generationEnd = Date.now();
+          console.warn("✅ PDF generated successfully with Typst");
 
           // Calculate durations
-          const wasmLoadDuration = wasmLoadEnd - wasmLoadStart
-          const generationDuration = generationEnd - generationStart
-          const totalDuration = Date.now() - startTime
+          const wasmLoadDuration = wasmLoadEnd - wasmLoadStart;
+          const generationDuration = generationEnd - generationStart;
+          const totalDuration = Date.now() - startTime;
 
           // Update AI stage to complete
-          if (isAIMode) setAiStage('complete')
+          if (isAIMode) setAiStage("complete");
 
           // Track: WASM compilation complete (client-side for accurate timing)
           analytics.compiled({
-            generation_method: isAIMode ? 'ai' : 'heuristic',
-            download_type: isAIMode ? 'resume_ai' : 'resume_heuristic',
+            generation_method: isAIMode ? "ai" : "heuristic",
+            download_type: isAIMode ? "resume_ai" : "resume_heuristic",
             role_profile_id: isAIMode ? undefined : selectedRoleId,
             ai_provider: isAIMode ? currentProvider : undefined,
             bullet_count: selectData.selected.length,
@@ -457,16 +482,16 @@ export function ResumeDownload({ resumeData }: ResumeDownloadProps) {
             generation_ms: generationDuration,
             pdf_size_bytes: pdfBytes.length,
             ai_response_ms: isAIMode ? selectData.metadata?.duration : undefined,
-          })
+          });
 
           // Log generation success event
-          await fetch('/api/resume/log', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
+          await fetch("/api/resume/log", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
             body: JSON.stringify({
-              event: 'resume_generated',
+              event: "resume_generated",
               sessionId,
-              roleProfileId: isAIMode ? 'ai-curated' : selectedRoleId,
+              roleProfileId: isAIMode ? "ai-curated" : selectedRoleId,
               roleProfileName: roleProfile.name,
               bulletCount: selectData.selected.length,
               pdfSize: pdfBytes.length,
@@ -475,49 +500,51 @@ export function ResumeDownload({ resumeData }: ResumeDownloadProps) {
               totalDuration,
               wasmCached,
               ...(isAIMode && {
-                generation_method: 'ai',
+                generation_method: "ai",
                 ai_provider: currentProvider,
                 job_title: selectData.jobTitle,
                 reasoning: selectData.reasoning,
               }),
             }),
-          }).catch(err => console.error('Failed to log generation:', err))
+          }).catch((err) => console.error("Failed to log generation:", err));
 
           // Step 5: Download the PDF
-          const blob = new Blob([pdfBytes.slice()], { type: 'application/pdf' })
-          const url = URL.createObjectURL(blob)
-          const link = document.createElement('a')
-          link.href = url
+          const blob = new Blob([pdfBytes.slice()], { type: "application/pdf" });
+          const url = URL.createObjectURL(blob);
+          const link = document.createElement("a");
+          link.href = url;
 
           // Generate filename: {fullName}-{roleName}-{timestamp}.pdf
-          const fullName = ((resumeData.personal.fullName as string | undefined) || 'resume').replace(/\s+/g, '-')
-          const roleName = roleProfile.name.toLowerCase().replace(/\s+/g, '-').slice(0, 30) // Truncate for AI titles
-          const timestamp = new Date().toISOString().replace(/[:.]/g, '-').slice(0, 19)
-          link.download = `${fullName}-${roleName}-${timestamp}.pdf`
+          const fullName = (
+            (resumeData.personal.fullName as string | undefined) || "resume"
+          ).replace(/\s+/g, "-");
+          const roleName = roleProfile.name.toLowerCase().replace(/\s+/g, "-").slice(0, 30); // Truncate for AI titles
+          const timestamp = new Date().toISOString().replace(/[:.]/g, "-").slice(0, 19);
+          link.download = `${fullName}-${roleName}-${timestamp}.pdf`;
 
-          link.click()
-          URL.revokeObjectURL(url)
+          link.click();
+          URL.revokeObjectURL(url);
 
           // Track: Download triggered
           analytics.downloaded({
-            generation_method: isAIMode ? 'ai' : 'heuristic',
-            download_type: isAIMode ? 'resume_ai' : 'resume_heuristic',
+            generation_method: isAIMode ? "ai" : "heuristic",
+            download_type: isAIMode ? "resume_ai" : "resume_heuristic",
             role_profile_id: isAIMode ? undefined : selectedRoleId,
             role_profile_name: isAIMode ? undefined : roleProfile.name,
             ai_provider: isAIMode ? currentProvider : undefined,
             job_title: isAIMode ? selectData.jobTitle : undefined,
             bullet_count: selectData.selected.length,
             total_duration_ms: Date.now() - flowStartRef.current,
-          })
+          });
 
           // Log download event to server (triggers n8n notification)
-          await fetch('/api/resume/log', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
+          await fetch("/api/resume/log", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
             body: JSON.stringify({
-              event: 'resume_download_notified',
+              event: "resume_download_notified",
               sessionId,
-              roleProfileId: isAIMode ? 'ai-curated' : selectedRoleId,
+              roleProfileId: isAIMode ? "ai-curated" : selectedRoleId,
               roleProfileName: roleProfile.name,
               email: email || undefined,
               linkedin: linkedin || undefined,
@@ -526,7 +553,7 @@ export function ResumeDownload({ resumeData }: ResumeDownloadProps) {
               pdfSize: pdfBytes.length,
               filename: link.download,
               ...(isAIMode && {
-                generation_method: 'ai',
+                generation_method: "ai",
                 ai_provider: currentProvider,
                 job_description: currentJobDescription,
                 job_title: selectData.jobTitle,
@@ -534,46 +561,54 @@ export function ResumeDownload({ resumeData }: ResumeDownloadProps) {
                 reasoning: selectData.reasoning,
               }),
             }),
-          }).catch(err => console.error('Failed to log download:', err))
+          }).catch((err) => console.error("Failed to log download:", err));
 
           // Wait briefly then close modal
-          await new Promise(resolve => setTimeout(resolve, 500))
+          await new Promise((resolve) => setTimeout(resolve, 500));
 
           // Close modal after download starts
           setTimeout(() => {
-            setShowTurnstile(false)
-            setVerifiedToken(null)
-            setEmail('')
-            setLinkedin('')
-            setErrorMessage(null)
-            setDownloadInitiated(false)
-            setStatus('idle')
-            setAiStage('idle')
-            setAiRetryCount(0)
-            flowStartRef.current = 0
-          }, 1500)
+            setShowTurnstile(false);
+            setVerifiedToken(null);
+            setEmail("");
+            setLinkedin("");
+            setErrorMessage(null);
+            setDownloadInitiated(false);
+            setStatus("idle");
+            setAiStage("idle");
+            setAiRetryCount(0);
+            flowStartRef.current = 0;
+          }, 1500);
         } catch (error) {
-          console.error('Download error:', error)
-          const errorMsg = error instanceof Error ? error.message : 'Download failed'
-          setErrorMessage(errorMsg)
-          setStatus('error')
-          if (isAIMode) setAiStage('error')
-          setDownloadInitiated(false)
+          console.error("Download error:", error);
+          const errorMsg = error instanceof Error ? error.message : "Download failed";
+          setErrorMessage(errorMsg);
+          setStatus("error");
+          if (isAIMode) setAiStage("error");
+          setDownloadInitiated(false);
 
           // Track: Error in download flow
           // Map error stage to error code and category
-          const errorCode = errorStage === 'ai_selection' ? 'AI_001'
-            : errorStage === 'bullet_selection' ? 'AI_001'
-            : errorStage === 'wasm_load' ? 'WM_001'
-            : errorStage === 'pdf_generation' ? 'PDF_001'
-            : 'PDF_001'
-          const errorCategory = errorStage === 'ai_selection' || errorStage === 'bullet_selection' ? 'ai'
-            : errorStage === 'wasm_load' ? 'wasm'
-            : 'pdf'
-          const isRetryable = errorStage !== 'pdf_generation'
+          const errorCode =
+            errorStage === "ai_selection"
+              ? "AI_001"
+              : errorStage === "bullet_selection"
+                ? "AI_001"
+                : errorStage === "wasm_load"
+                  ? "WM_001"
+                  : errorStage === "pdf_generation"
+                    ? "PDF_001"
+                    : "PDF_001";
+          const errorCategory =
+            errorStage === "ai_selection" || errorStage === "bullet_selection"
+              ? "ai"
+              : errorStage === "wasm_load"
+                ? "wasm"
+                : "pdf";
+          const isRetryable = errorStage !== "pdf_generation";
           analytics.error({
-            generation_method: isAIMode ? 'ai' : 'heuristic',
-            download_type: isAIMode ? 'resume_ai' : 'resume_heuristic',
+            generation_method: isAIMode ? "ai" : "heuristic",
+            download_type: isAIMode ? "resume_ai" : "resume_heuristic",
             role_profile_id: isAIMode ? undefined : selectedRoleId,
             ai_provider: isAIMode ? currentProvider : undefined,
             error_code: errorCode,
@@ -582,57 +617,74 @@ export function ResumeDownload({ resumeData }: ResumeDownloadProps) {
             error_message: errorMsg,
             is_retryable: isRetryable,
             duration_ms: Date.now() - flowStartRef.current,
-          })
+          });
 
           // Log failure event
-          const sessionId = sessionStorage.getItem('resumate_session')
+          const sessionId = sessionStorage.getItem("resumate_session");
           if (sessionId) {
-            await fetch('/api/resume/log', {
-              method: 'POST',
-              headers: { 'Content-Type': 'application/json' },
+            await fetch("/api/resume/log", {
+              method: "POST",
+              headers: { "Content-Type": "application/json" },
               body: JSON.stringify({
-                event: 'resume_failed',
+                event: "resume_failed",
                 sessionId,
-                roleProfileId: isAIMode ? 'ai-curated' : selectedRoleId,
-                roleProfileName: isAIMode ? 'AI-Curated' : (roleProfiles.find(r => r.id === selectedRoleId)?.name || 'Unknown'),
+                roleProfileId: isAIMode ? "ai-curated" : selectedRoleId,
+                roleProfileName: isAIMode
+                  ? "AI-Curated"
+                  : roleProfiles.find((r) => r.id === selectedRoleId)?.name || "Unknown",
                 email: email || undefined,
                 linkedin: linkedin || undefined,
                 errorMessage: errorMsg,
                 errorStage,
-                errorStack: process.env.NODE_ENV === 'development' && error instanceof Error ? error.stack : undefined,
-                ...(isAIMode && { generation_method: 'ai', ai_provider: currentProvider }),
+                errorStack:
+                  process.env.NODE_ENV === "development" && error instanceof Error
+                    ? error.stack
+                    : undefined,
+                ...(isAIMode && { generation_method: "ai", ai_provider: currentProvider }),
               }),
-            }).catch(err => console.error('Failed to log error:', err))
+            }).catch((err) => console.error("Failed to log error:", err));
           }
 
           // Reset token on error - server already consumed it, user must re-verify
-          setVerifiedToken(null)
-          turnstileRef.current?.reset()
+          setVerifiedToken(null);
+          turnstileRef.current?.reset();
         }
-      }, 300) // Short delay like vCard
+      }, 300); // Short delay like vCard
 
       return () => {
-        clearTimeout(timer)
-      }
+        clearTimeout(timer);
+      };
     }
-  }, [verifiedToken, downloadInitiated, status, selectedRoleId, roleProfiles, resumeData, email, linkedin, analytics, jobDescription, aiProvider])
+  }, [
+    verifiedToken,
+    downloadInitiated,
+    status,
+    selectedRoleId,
+    roleProfiles,
+    resumeData,
+    email,
+    linkedin,
+    analytics,
+    jobDescription,
+    aiProvider,
+  ]);
 
   const getStatusMessage = () => {
     switch (status) {
-      case 'verifying':
-        return 'Verifying...'
-      case 'loading_wasm':
-        return 'Loading Typst compiler...'
-      case 'generating':
-        return 'Compiling with Typst...'
-      case 'error':
-        return errorMessage || 'Error occurred'
+      case "verifying":
+        return "Verifying...";
+      case "loading_wasm":
+        return "Loading Typst compiler...";
+      case "generating":
+        return "Compiling with Typst...";
+      case "error":
+        return errorMessage || "Error occurred";
       default:
-        return 'Download PDF'
+        return "Download PDF";
     }
-  }
+  };
 
-  const isLoading = ['verifying', 'loading_wasm', 'generating'].includes(status)
+  const isLoading = ["verifying", "loading_wasm", "generating"].includes(status);
 
   return (
     <div className="space-y-5">
@@ -676,24 +728,30 @@ export function ResumeDownload({ resumeData }: ResumeDownloadProps) {
               AI-Powered
             </span>
           </div>
-          <div className={`h-full flex flex-col rounded-lg p-4 ${
-            isJobDescriptionMode
-              ? 'bg-white dark:bg-slate-800 border-2 border-purple-200 dark:border-purple-800'
-              : 'bg-slate-50 dark:bg-slate-800/50 border-2 border-dashed border-slate-300 dark:border-slate-600'
-          }`}>
-            <label htmlFor="job-description" className="block font-medium text-slate-700 dark:text-slate-300 mb-2">
+          <div
+            className={`h-full flex flex-col rounded-lg p-4 ${
+              isJobDescriptionMode
+                ? "bg-white dark:bg-slate-800 border-2 border-purple-200 dark:border-purple-800"
+                : "bg-slate-50 dark:bg-slate-800/50 border-2 border-dashed border-slate-300 dark:border-slate-600"
+            }`}
+          >
+            <label
+              htmlFor="job-description"
+              className="block font-medium text-slate-700 dark:text-slate-300 mb-2"
+            >
               AI-Powered Selection
             </label>
             <p className="text-sm text-slate-600 dark:text-slate-400 mb-3">
-              Paste your job description and AI intelligently selects the most relevant achievements from {totalExperiences}+ experiences
+              Paste your job description and AI intelligently selects the most relevant achievements
+              from {totalExperiences}+ experiences
             </p>
             <textarea
               id="job-description"
               value={jobDescription}
               onChange={(e) => {
-                setJobDescription(e.target.value)
-                if (e.target.value.trim()) setSelectedRoleId('')
-                setErrorMessage(null)
+                setJobDescription(e.target.value);
+                if (e.target.value.trim()) setSelectedRoleId("");
+                setErrorMessage(null);
               }}
               placeholder="Paste job description here (minimum 50 characters)..."
               disabled={isLoading || isDropdownMode}
@@ -711,26 +769,30 @@ export function ResumeDownload({ resumeData }: ResumeDownloadProps) {
                   disabled={isLoading}
                   className="w-full px-3 py-2 text-sm bg-white dark:bg-slate-700 border border-slate-300 dark:border-slate-600 rounded text-slate-900 dark:text-slate-100 focus:ring-2 focus:ring-purple-500 focus:border-transparent disabled:opacity-50 appearance-none bg-[length:1.5rem] bg-[position:right_0.75rem_center] bg-no-repeat"
                   style={{
-                    backgroundImage: `url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 20 20'%3e%3cpath stroke='%236b7280' stroke-linecap='round' stroke-linejoin='round' stroke-width='1.5' d='M6 8l4 4 4-4'/%3e%3c/svg%3e")`
+                    backgroundImage: `url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 20 20'%3e%3cpath stroke='%236b7280' stroke-linecap='round' stroke-linejoin='round' stroke-width='1.5' d='M6 8l4 4 4-4'/%3e%3c/svg%3e")`,
                   }}
                 >
                   {[...FALLBACK_ORDER]
                     .sort((a, b) => {
-                      const aAvail = modelAvailability.size === 0 || modelAvailability.get(a)?.available !== false
-                      const bAvail = modelAvailability.size === 0 || modelAvailability.get(b)?.available !== false
-                      if (aAvail !== bAvail) return aAvail ? -1 : 1
-                      return AI_MODELS[a].label.localeCompare(AI_MODELS[b].label)
+                      const aAvail =
+                        modelAvailability.size === 0 ||
+                        modelAvailability.get(a)?.available !== false;
+                      const bAvail =
+                        modelAvailability.size === 0 ||
+                        modelAvailability.get(b)?.available !== false;
+                      if (aAvail !== bAvail) return aAvail ? -1 : 1;
+                      return AI_MODELS[a].label.localeCompare(AI_MODELS[b].label);
                     })
                     .map((provider) => {
-                      const availability = modelAvailability.get(provider)
-                      const unavailable = availability && !availability.available
+                      const availability = modelAvailability.get(provider);
+                      const unavailable = availability && !availability.available;
                       return (
                         <option key={provider} value={provider} disabled={!!unavailable}>
                           {AI_MODELS[provider].label}
-                          {AI_MODELS[provider].cost === 'free' ? ' ⚡' : ' ✨'}
-                          {unavailable && availability.reason ? ` (${availability.reason})` : ''}
+                          {AI_MODELS[provider].cost === "free" ? " ⚡" : " ✨"}
+                          {unavailable && availability.reason ? ` (${availability.reason})` : ""}
                         </option>
-                      )
+                      );
                     })}
                 </select>
               </div>
@@ -746,11 +808,15 @@ export function ResumeDownload({ resumeData }: ResumeDownloadProps) {
             </span>
           </div>
           <div className="h-full flex flex-col bg-white dark:bg-slate-800 border-2 border-blue-200 dark:border-blue-800 rounded-lg p-4">
-            <label htmlFor="role-select" className="block font-medium text-slate-700 dark:text-slate-300 mb-2">
+            <label
+              htmlFor="role-select"
+              className="block font-medium text-slate-700 dark:text-slate-300 mb-2"
+            >
               Role Profiles
             </label>
             <p className="text-sm text-slate-600 dark:text-slate-400 mb-3 flex-grow">
-              Choose a role and Resumate&apos;s heuristic scoring algorithm instantly curates the most relevant achievements from my {totalExperiences}+ experiences
+              Choose a role and Resumate&apos;s heuristic scoring algorithm instantly curates the
+              most relevant achievements from my {totalExperiences}+ experiences
             </p>
             <select
               id="role-select"
@@ -758,15 +824,19 @@ export function ResumeDownload({ resumeData }: ResumeDownloadProps) {
               autoComplete="off"
               value={selectedRoleId}
               onChange={(e) => {
-                setSelectedRoleId(e.target.value)
-                if (e.target.value) setJobDescription('')
-                setErrorMessage(null)
+                setSelectedRoleId(e.target.value);
+                if (e.target.value) setJobDescription("");
+                setErrorMessage(null);
               }}
               disabled={isLoading || isJobDescriptionMode}
-              title={isJobDescriptionMode ? 'Clear job description to use role profiles' : 'Select a role profile'}
+              title={
+                isJobDescriptionMode
+                  ? "Clear job description to use role profiles"
+                  : "Select a role profile"
+              }
               className="w-full px-3 py-2.5 bg-white dark:bg-slate-700 border border-slate-300 dark:border-slate-600 rounded-lg text-slate-900 dark:text-slate-100 focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-colors disabled:opacity-50 disabled:cursor-not-allowed appearance-none bg-[length:1.5rem] bg-[position:right_0.75rem_center] bg-no-repeat"
               style={{
-                backgroundImage: `url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 20 20'%3e%3cpath stroke='%236b7280' stroke-linecap='round' stroke-linejoin='round' stroke-width='1.5' d='M6 8l4 4 4-4'/%3e%3c/svg%3e")`
+                backgroundImage: `url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 20 20'%3e%3cpath stroke='%236b7280' stroke-linecap='round' stroke-linejoin='round' stroke-width='1.5' d='M6 8l4 4 4-4'/%3e%3c/svg%3e")`,
               }}
             >
               <option value="">Choose a role...</option>
@@ -803,9 +873,7 @@ export function ResumeDownload({ resumeData }: ResumeDownloadProps) {
       {/* Error Message */}
       {errorMessage && !showTurnstile && (
         <div className="p-3 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-lg">
-          <p className="text-sm text-red-600 dark:text-red-400 text-center">
-            {errorMessage}
-          </p>
+          <p className="text-sm text-red-600 dark:text-red-400 text-center">{errorMessage}</p>
         </div>
       )}
 
@@ -824,7 +892,7 @@ export function ResumeDownload({ resumeData }: ResumeDownloadProps) {
             {/* Close button */}
             <button
               onClick={handleCloseModal}
-              disabled={status === 'verifying'}
+              disabled={status === "verifying"}
               className="absolute top-4 right-4 text-slate-400 hover:text-slate-600 transition-colors disabled:opacity-50 cursor-pointer"
               aria-label="Close modal"
             >
@@ -844,18 +912,18 @@ export function ResumeDownload({ resumeData }: ResumeDownloadProps) {
             )}
 
             {/* Error Message */}
-            {errorMessage && status === 'error' && (
+            {errorMessage && status === "error" && (
               <div className="mb-4 p-4 bg-red-50 border border-red-200 rounded-lg flex items-start space-x-3">
                 <AlertCircle className="h-5 w-5 text-red-600 flex-shrink-0 mt-0.5" />
                 <div className="flex-1">
                   <p className="text-sm text-red-800">{errorMessage}</p>
                   <button
                     onClick={() => {
-                      setErrorMessage(null)
-                      setStatus('idle')
+                      setErrorMessage(null);
+                      setStatus("idle");
                       // Reset for fresh Turnstile verification
-                      setVerifiedToken(null)
-                      turnstileRef.current?.reset()
+                      setVerifiedToken(null);
+                      turnstileRef.current?.reset();
                     }}
                     className="text-sm text-red-600 hover:text-red-800 font-medium mt-1"
                   >
@@ -865,8 +933,8 @@ export function ResumeDownload({ resumeData }: ResumeDownloadProps) {
               </div>
             )}
 
-            {verifiedToken || status === 'loading_wasm' || status === 'generating' ? (
-              isJobDescriptionMode && aiStage !== 'idle' ? (
+            {verifiedToken || status === "loading_wasm" || status === "generating" ? (
+              isJobDescriptionMode && aiStage !== "idle" ? (
                 // AI Mode: Show progress indicator
                 <div className="py-4">
                   <AIProgressIndicator
@@ -874,7 +942,7 @@ export function ResumeDownload({ resumeData }: ResumeDownloadProps) {
                     provider={aiProvider}
                     retryCount={aiRetryCount}
                     maxRetries={3}
-                    error={aiStage === 'error' ? errorMessage || undefined : undefined}
+                    error={aiStage === "error" ? errorMessage || undefined : undefined}
                     className="border-slate-200 dark:border-slate-700"
                   />
                 </div>
@@ -883,19 +951,33 @@ export function ResumeDownload({ resumeData }: ResumeDownloadProps) {
                 <div className="flex flex-col items-center justify-center py-8">
                   <div className="text-center mb-6">
                     <div className="w-16 h-16 bg-green-100 dark:bg-green-900/30 rounded-full flex items-center justify-center mx-auto mb-4">
-                      {status === 'loading_wasm' || status === 'generating' ? (
+                      {status === "loading_wasm" || status === "generating" ? (
                         <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-green-600"></div>
                       ) : (
-                        <svg className="w-8 h-8 text-green-600 dark:text-green-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                        <svg
+                          className="w-8 h-8 text-green-600 dark:text-green-400"
+                          fill="none"
+                          viewBox="0 0 24 24"
+                          stroke="currentColor"
+                        >
+                          <path
+                            strokeLinecap="round"
+                            strokeLinejoin="round"
+                            strokeWidth={2}
+                            d="M5 13l4 4L19 7"
+                          />
                         </svg>
                       )}
                     </div>
                     <p className="text-lg font-medium text-slate-900 dark:text-slate-100 mb-2">
-                      {status === 'loading_wasm' || status === 'generating' ? getStatusMessage() : 'Verification Complete!'}
+                      {status === "loading_wasm" || status === "generating"
+                        ? getStatusMessage()
+                        : "Verification Complete!"}
                     </p>
                     <p className="text-sm text-slate-600 dark:text-slate-300 mb-4">
-                      {status === 'loading_wasm' || status === 'generating' ? 'Please wait...' : 'Starting your download...'}
+                      {status === "loading_wasm" || status === "generating"
+                        ? "Please wait..."
+                        : "Starting your download..."}
                     </p>
                   </div>
                 </div>
@@ -915,7 +997,7 @@ export function ResumeDownload({ resumeData }: ResumeDownloadProps) {
                     onExpire={handleTurnstileExpire}
                     options={{
                       theme: theme,
-                      size: 'normal',
+                      size: "normal",
                     }}
                   />
                 </div>
@@ -924,7 +1006,7 @@ export function ResumeDownload({ resumeData }: ResumeDownloadProps) {
 
             <button
               onClick={handleCloseModal}
-              disabled={status === 'verifying'}
+              disabled={status === "verifying"}
               className="mt-4 w-full px-4 py-2 text-sm text-slate-600 hover:text-slate-900 dark:text-slate-400 dark:hover:text-slate-100 transition-colors disabled:opacity-50 cursor-pointer"
             >
               Cancel
@@ -933,5 +1015,5 @@ export function ResumeDownload({ resumeData }: ResumeDownloadProps) {
         </div>
       )}
     </div>
-  )
+  );
 }

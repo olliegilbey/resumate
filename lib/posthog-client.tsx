@@ -331,7 +331,7 @@ export function PostHogProvider({ children }: { children: React.ReactNode }) {
   useEffect(() => {
     // Guard: Skip init if key is missing (local/dev envs)
     if (!posthogKey) {
-      console.log("[PostHog] Key missing, analytics disabled");
+      console.warn("[PostHog] Key missing, analytics disabled");
       return;
     }
 

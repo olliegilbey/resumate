@@ -89,7 +89,7 @@ export class CerebrasProvider implements AIProviderInterface {
     });
 
     try {
-      console.log(`[Cerebras] Calling ${this.config.model}...`);
+      console.warn(`[Cerebras] Calling ${this.config.model}...`);
       const response = await fetch(CEREBRAS_API_URL, {
         method: "POST",
         headers: {
@@ -108,7 +108,7 @@ export class CerebrasProvider implements AIProviderInterface {
         signal: AbortSignal.timeout(30000), // 30s timeout for AI inference
       });
 
-      console.log(`[Cerebras] Response status: ${response.status}`);
+      console.warn(`[Cerebras] Response status: ${response.status}`);
 
       if (!response.ok) {
         const errorBody = (await response.json().catch(() => ({}))) as CerebrasErrorResponse;
@@ -145,7 +145,7 @@ export class CerebrasProvider implements AIProviderInterface {
       const rawText = data.choices[0].message.content;
 
       // Debug: log raw response
-      console.log("[Cerebras] Raw response (first 500 chars):", rawText.slice(0, 500));
+      console.warn("[Cerebras] Raw response (first 500 chars):", rawText.slice(0, 500));
 
       // Parse and validate response
       const validIds = extractAllBulletIds(request.compendium.experience);
@@ -159,13 +159,13 @@ export class CerebrasProvider implements AIProviderInterface {
       });
 
       if (!parseResult.success) {
-        console.log(
+        console.warn(
           "[Cerebras] Parse error:",
           parseResult.error!.code,
           "-",
           parseResult.error!.message,
         );
-        console.log("[Cerebras] Help:", parseResult.error!.help?.slice(0, 300));
+        console.warn("[Cerebras] Help:", parseResult.error!.help?.slice(0, 300));
         throw new AISelectionError(parseResult.error!.message, [parseResult.error!], this.name, 0);
       }
 

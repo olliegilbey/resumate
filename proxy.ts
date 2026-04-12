@@ -90,7 +90,7 @@ export function proxy(request: NextRequest) {
 
   // 1. Bot detection
   if (isBot(userAgent)) {
-    console.log(`Potential bot detected: ${userAgent} from ${ipAddress}`);
+    console.warn(`Potential bot detected: ${userAgent} from ${ipAddress}`);
 
     // Return a 403 for obvious bots (but allow crawling of static content)
     if (
@@ -111,7 +111,7 @@ export function proxy(request: NextRequest) {
   const isDevEnv = process.env.NODE_ENV === "development";
   const maxRequests = isDevEnv ? 1000 : /googlebot/i.test(userAgent) ? 100 : 30;
   if (!checkRateLimit(ipAddress, maxRequests, 60000)) {
-    console.log(`Rate limit exceeded for ${ipAddress}`);
+    console.warn(`Rate limit exceeded for ${ipAddress}`);
     return new NextResponse("Too Many Requests", {
       status: 429,
       headers: {
