@@ -19,17 +19,17 @@ If a rule here conflicts with something else, this file wins.
 
 ## Daily Commands
 
-| Intent                   | Command                           |
-| ------------------------ | --------------------------------- |
-| Dev server               | `just dev`                        |
-| Unit tests               | `just test`                       |
-| Full check (fmt+TS+Rust) | `just check`                      |
-| CI-equivalent locally    | `just ci`                         |
-| Regenerate types         | `just types-sync`                 |
-| Pull resume data         | `just data-pull`                  |
-| Push resume data         | `just data-push`                  |
+| Intent                   | Command                                 |
+| ------------------------ | --------------------------------------- |
+| Dev server               | `just dev`                              |
+| Unit tests               | `just test`                             |
+| Full check (fmt+TS+Rust) | `just check`                            |
+| CI-equivalent locally    | `just ci`                               |
+| Regenerate types         | `just types-sync`                       |
+| Pull resume data         | `just data-pull`                        |
+| Push resume data         | `just data-push`                        |
 | Dead code scan           | `bun run deadcode` (or `just deadcode`) |
-| Format everything        | `bun run format`                  |
+| Format everything        | `bun run format`                        |
 
 ---
 
@@ -119,7 +119,7 @@ Subjects are lowercase, imperative, no trailing period. Keep the subject under
 `.husky/pre-commit` runs, in order:
 
 1. **Secret scanning** — gitleaks + ripsecrets + trufflehog
-1.5. **Auto-format staged** — lint-staged (prettier --write + eslint --fix)
+   1.5. **Auto-format staged** — lint-staged (prettier --write + eslint --fix)
 2. **Lint + typecheck** — eslint, tsc, cargo fmt --check, clippy -D warnings
 3. **WASM freshness** — rebuild if `crates/resume-wasm`, `crates/resume-typst`, `crates/resume-core`, `crates/shared-types`, `typst/templates`, or `typst/fonts` changed
 4. **Bundle size** — enforce WASM binary limits from `justfile`

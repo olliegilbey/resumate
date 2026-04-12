@@ -52,7 +52,7 @@ describe("GET /api/models", () => {
     // Re-import to get fresh cache
     const { GET: freshGET } = await import("../route");
     const response = await freshGET();
-    const body = await response.json();
+    const body = (await response.json()) as any;
 
     expect(body.models).toBeDefined();
     expect(Array.isArray(body.models)).toBe(true);
@@ -86,7 +86,7 @@ describe("GET /api/models", () => {
 
     const { GET: freshGET } = await import("../route");
     const response = await freshGET();
-    const body = await response.json();
+    const body = (await response.json()) as any;
 
     const claudeSonnet = body.models.find((m: { id: string }) => m.id === "claude-sonnet");
     expect(claudeSonnet.available).toBe(true);
@@ -111,7 +111,7 @@ describe("GET /api/models", () => {
 
     const { GET: freshGET } = await import("../route");
     const response = await freshGET();
-    const body = await response.json();
+    const body = (await response.json()) as any;
 
     const cerebrasGpt = body.models.find((m: { id: string }) => m.id === "cerebras-gpt");
     expect(cerebrasGpt.available).toBe(false);
@@ -126,7 +126,7 @@ describe("GET /api/models", () => {
 
     const { GET: freshGET } = await import("../route");
     const response = await freshGET();
-    const body = await response.json();
+    const body = (await response.json()) as any;
 
     const cerebrasGpt = body.models.find((m: { id: string }) => m.id === "cerebras-gpt");
     expect(cerebrasGpt.available).toBe(false);
@@ -138,7 +138,7 @@ describe("GET /api/models", () => {
 
     const { GET: freshGET } = await import("../route");
     const response = await freshGET();
-    const body = await response.json();
+    const body = (await response.json()) as any;
 
     // Should assume available on fetch failure (optimistic)
     const cerebrasGpt = body.models.find((m: { id: string }) => m.id === "cerebras-gpt");
@@ -153,7 +153,7 @@ describe("GET /api/models", () => {
 
     const { GET: freshGET } = await import("../route");
     const response = await freshGET();
-    const body = await response.json();
+    const body = (await response.json()) as any;
 
     for (const model of body.models) {
       expect(model.label).toBeDefined();

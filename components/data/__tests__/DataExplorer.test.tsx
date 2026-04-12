@@ -225,7 +225,7 @@ describe("DataExplorer Analytics", () => {
       const checkboxes = within(filterSection).getAllByRole("checkbox");
 
       // Click first checkbox using fireEvent (synchronous)
-      fireEvent.click(checkboxes[0]);
+      fireEvent.click(checkboxes[0]!);
 
       // Should NOT fire immediately
       expect(mockTrackEvent).not.toHaveBeenCalled();
@@ -250,7 +250,7 @@ describe("DataExplorer Analytics", () => {
       const checkboxes = within(filterSection).getAllByRole("checkbox");
 
       // Click first checkbox
-      fireEvent.click(checkboxes[0]);
+      fireEvent.click(checkboxes[0]!);
 
       // Wait 500ms (not enough)
       act(() => {
@@ -258,7 +258,7 @@ describe("DataExplorer Analytics", () => {
       });
 
       // Click second checkbox
-      fireEvent.click(checkboxes[1]);
+      fireEvent.click(checkboxes[1]!);
 
       // Should still not have fired
       expect(mockTrackEvent).not.toHaveBeenCalled();
@@ -284,7 +284,7 @@ describe("DataExplorer Analytics", () => {
       const checkboxes = within(filterSection).getAllByRole("checkbox");
 
       // Select first tag
-      fireEvent.click(checkboxes[0]);
+      fireEvent.click(checkboxes[0]!);
 
       // Wait for debounce
       act(() => {
@@ -295,7 +295,7 @@ describe("DataExplorer Analytics", () => {
       mockTrackEvent.mockClear();
 
       // Deselect the tag
-      fireEvent.click(checkboxes[0]);
+      fireEvent.click(checkboxes[0]!);
 
       // Wait for debounce
       act(() => {

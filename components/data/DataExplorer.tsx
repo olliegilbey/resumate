@@ -39,7 +39,7 @@ export function DataExplorer({ data, className }: DataExplorerProps) {
     }
     // Extract year from dateEnd (format: YYYY-MM or YYYY)
     const match = dateEnd.match(/(\d{4})/);
-    return match ? parseInt(match[1]) : 2000;
+    return match?.[1] ? parseInt(match[1]) : 2000;
   };
 
   // Filter companies directly on the JSON structure

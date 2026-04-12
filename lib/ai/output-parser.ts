@@ -52,7 +52,7 @@ export interface BulletHierarchy {
 export function extractJSON(raw: string): string | null {
   // Try to find JSON in markdown code block first
   const codeBlockMatch = raw.match(/```(?:json)?\s*(\{[\s\S]*?\})\s*```/);
-  if (codeBlockMatch) {
+  if (codeBlockMatch?.[1]) {
     return codeBlockMatch[1];
   }
 
@@ -206,7 +206,7 @@ Got: ${raw.slice(0, 200)}${raw.length > 200 ? "..." : ""}`,
   // Step 2: Parse JSON
   let parsed: Record<string, unknown>;
   try {
-    parsed = JSON.parse(jsonStr);
+    parsed = JSON.parse(jsonStr) as Record<string, unknown>;
   } catch (e) {
     const errorMessage = e instanceof Error ? e.message : "Unknown parse error";
     return {

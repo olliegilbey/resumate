@@ -109,7 +109,7 @@ export function getClientIP(request: Request): string {
   // Standard forwarded-for (take first IP)
   const xForwardedFor = headers.get("x-forwarded-for");
   if (xForwardedFor) {
-    return xForwardedFor.split(",")[0].trim();
+    return xForwardedFor.split(",")[0]!.trim();
   }
 
   return "unknown";

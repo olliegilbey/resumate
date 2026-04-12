@@ -167,5 +167,7 @@ export function getTagColorClass(tag: string, allTags: string[]): string {
     19: "bg-tag-19 text-tag-19",
   };
 
-  return classMap[colorIndex];
+  return (
+    classMap[colorIndex] ?? "bg-slate-100 text-slate-800 dark:bg-slate-800 dark:text-slate-100"
+  );
 }

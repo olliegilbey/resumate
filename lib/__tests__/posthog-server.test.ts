@@ -153,7 +153,7 @@ describe("posthog-server", () => {
 
       await freshCapture("user-123", "test_event", { foo: "bar" }, "203.0.113.42");
 
-      const captureCall = mockCapture.mock.calls[0][0];
+      const captureCall = mockCapture.mock.calls[0]![0];
 
       // $ip MUST be at top level
       expect(captureCall.$ip).toBe("203.0.113.42");
@@ -167,7 +167,7 @@ describe("posthog-server", () => {
 
       await freshCapture("user-123", "test_event", { foo: "bar" });
 
-      const captureCall = mockCapture.mock.calls[0][0];
+      const captureCall = mockCapture.mock.calls[0]![0];
 
       expect(captureCall.$ip).toBeUndefined();
       expect(captureCall.properties.$ip).toBeUndefined();
@@ -178,7 +178,7 @@ describe("posthog-server", () => {
 
       await freshCapture("user-123", "test_event", { foo: "bar" }, "");
 
-      const captureCall = mockCapture.mock.calls[0][0];
+      const captureCall = mockCapture.mock.calls[0]![0];
 
       expect(captureCall.$ip).toBeUndefined();
     });

@@ -20,8 +20,14 @@ async function generateTypes() {
   const inputIndex = args.indexOf("--input");
   const outputIndex = args.indexOf("--output");
 
-  const inputPath = inputIndex !== -1 ? args[inputIndex + 1] : "types/generated/schema.json";
-  const outputPath = outputIndex !== -1 ? args[outputIndex + 1] : "lib/types/generated-resume.ts";
+  const inputPath =
+    inputIndex !== -1
+      ? (args[inputIndex + 1] ?? "types/generated/schema.json")
+      : "types/generated/schema.json";
+  const outputPath =
+    outputIndex !== -1
+      ? (args[outputIndex + 1] ?? "lib/types/generated-resume.ts")
+      : "lib/types/generated-resume.ts";
 
   const absoluteInputPath = path.join(process.cwd(), inputPath);
   const absoluteOutputPath = path.join(process.cwd(), outputPath);

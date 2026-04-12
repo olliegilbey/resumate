@@ -34,7 +34,7 @@ async function testBulletSelection(roleProfileId: string) {
       }),
     });
 
-    const data = await response.json();
+    const data = (await response.json()) as any;
 
     if (!response.ok) {
       console.error(`❌ API Error (${response.status}):`, data.error);

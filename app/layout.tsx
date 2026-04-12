@@ -18,7 +18,7 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: `${resumeData.personal.name} - ${resumeData.tagline || "Professional Portfolio"}`,
+  title: `${resumeData.personal.name} - ${resumeData.personal.tagline || "Professional Portfolio"}`,
   description:
     resumeData.summary || `${resumeData.personal.name}'s professional portfolio and resume.`,
 };

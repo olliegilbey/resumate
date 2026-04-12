@@ -41,13 +41,14 @@ export function parseMarkdownLinks(text: string): TextPart[] {
       });
     }
 
-    const url = match[2];
+    const linkText = match[1] ?? "";
+    const url = match[2] ?? "";
 
     // Validate URL protocol - if invalid, render as plain text instead of link
     if (isValidProtocol(url)) {
       parts.push({
         type: "link",
-        content: match[1],
+        content: linkText,
         url: url,
         key: keyCounter++,
       });
@@ -55,7 +56,7 @@ export function parseMarkdownLinks(text: string): TextPart[] {
       // Invalid protocol - render as plain text to prevent XSS
       parts.push({
         type: "text",
-        content: match[1],
+        content: linkText,
         key: keyCounter++,
       });
     }

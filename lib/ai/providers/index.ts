@@ -69,7 +69,7 @@ export function getAvailableProviders(): AIProvider[] {
  */
 export async function selectBulletsWithAI(
   request: SelectionRequest,
-  providerName: AIProvider = FALLBACK_ORDER[0],
+  providerName: AIProvider = FALLBACK_ORDER[0]!,
   options: SelectionOptions = {},
 ): Promise<SelectionResult> {
   const { maxRetries } = {
@@ -145,7 +145,7 @@ export async function selectBulletsWithAI(
 
       // Output format error → retry with error context
       if (isFormatError && attempt < maxRetries) {
-        const errorContext = formatRustStyleError(error.errors[0]);
+        const errorContext = formatRustStyleError(error.errors[0]!);
         console.warn(`[AI] Output format error, retrying with context`);
         retryRequest = {
           ...request,

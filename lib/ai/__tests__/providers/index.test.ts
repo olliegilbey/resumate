@@ -173,7 +173,7 @@ describe("selectBulletsWithAI", () => {
       expect(mockSelect).toHaveBeenCalledTimes(2);
 
       // Second call should include retry context
-      const secondCall = mockSelect.mock.calls[1][0];
+      const secondCall = mockSelect.mock.calls[1]![0]!;
       expect(secondCall.retryContext).toContain("E004_WRONG_BULLET_COUNT");
     });
 
@@ -277,8 +277,8 @@ describe("selectBulletsWithAI", () => {
       } catch (e) {
         const err = e as AISelectionError;
         expect(err.errors).toHaveLength(2);
-        expect(err.errors[0].code).toBe("E004_WRONG_BULLET_COUNT");
-        expect(err.errors[1].code).toBe("E005_INVALID_BULLET_ID");
+        expect(err.errors[0]!.code).toBe("E004_WRONG_BULLET_COUNT");
+        expect(err.errors[1]!.code).toBe("E005_INVALID_BULLET_ID");
       }
     });
   });

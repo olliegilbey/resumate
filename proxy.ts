@@ -82,8 +82,8 @@ export function proxy(request: NextRequest) {
   // Priority: x-vercel-forwarded-for (Vercel-set) > x-real-ip
   // NEVER trust x-forwarded-for directly as clients can spoof it
   const trustedIp =
-    request.headers.get("x-vercel-forwarded-for")?.split(",")[0].trim() ??
-    request.headers.get("x-real-ip")?.split(",")[0].trim();
+    request.headers.get("x-vercel-forwarded-for")?.split(",")[0]?.trim() ??
+    request.headers.get("x-real-ip")?.split(",")[0]?.trim();
 
   // In dev without proxy headers, use fallback (in production, Vercel always sets headers)
   const ipAddress = trustedIp || "dev-local";

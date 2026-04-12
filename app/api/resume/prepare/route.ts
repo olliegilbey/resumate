@@ -39,7 +39,7 @@ export async function POST(request: NextRequest) {
     }
 
     // Parse request body
-    const body = await request.json();
+    const body = (await request.json()) as { turnstileToken?: string };
     const { turnstileToken } = body;
 
     if (!turnstileToken) {
@@ -67,7 +67,7 @@ export async function POST(request: NextRequest) {
       },
     );
 
-    const turnstileData = await turnstileResponse.json();
+    const turnstileData = (await turnstileResponse.json()) as { success?: boolean };
 
     if (!turnstileData.success) {
       return NextResponse.json({ error: "Turnstile verification failed" }, { status: 403 });

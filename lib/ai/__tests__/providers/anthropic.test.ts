@@ -132,7 +132,7 @@ describe("AnthropicProvider", () => {
       } catch (e) {
         expect(e).toBeInstanceOf(AISelectionError);
         const err = e as AISelectionError;
-        expect(err.errors[0].code).toBe("E011_PROVIDER_DOWN");
+        expect(err.errors[0]!.code).toBe("E011_PROVIDER_DOWN");
       }
     });
 
@@ -270,7 +270,7 @@ describe("AnthropicProvider", () => {
         });
       } catch (e) {
         const err = e as AISelectionError;
-        expect(err.errors[0].code).toBe("E005_INVALID_BULLET_ID");
+        expect(err.errors[0]!.code).toBe("E005_INVALID_BULLET_ID");
       }
     });
 
@@ -306,7 +306,7 @@ describe("AnthropicProvider", () => {
         });
       } catch (e) {
         const err = e as AISelectionError;
-        expect(err.errors[0].code).toBe("E004_WRONG_BULLET_COUNT");
+        expect(err.errors[0]!.code).toBe("E004_WRONG_BULLET_COUNT");
       }
     });
 
@@ -336,7 +336,7 @@ describe("AnthropicProvider", () => {
       } catch (e) {
         const err = e as AISelectionError;
         // Check via error code, not isProviderDown() (mock doesn't inherit properly)
-        expect(err.errors[0].code).toBe("E011_PROVIDER_DOWN");
+        expect(err.errors[0]!.code).toBe("E011_PROVIDER_DOWN");
       }
     });
 
@@ -364,7 +364,7 @@ describe("AnthropicProvider", () => {
         });
       } catch (e) {
         const err = e as AISelectionError;
-        expect(err.errors[0].code).toBe("E011_PROVIDER_DOWN");
+        expect(err.errors[0]!.code).toBe("E011_PROVIDER_DOWN");
       }
     });
 
@@ -401,7 +401,7 @@ describe("AnthropicProvider", () => {
         retryContext: "error[E004_WRONG_BULLET_COUNT]: Expected 2, got 1",
       });
 
-      const callArgs = mockCreate.mock.calls[0][0];
+      const callArgs = mockCreate.mock.calls[0]![0] as any;
       expect(callArgs.messages[0].content).toContain("PREVIOUS RESPONSE HAD ERRORS");
       expect(callArgs.messages[0].content).toContain("E004_WRONG_BULLET_COUNT");
     });

@@ -11,17 +11,40 @@
  * - Run: npm run schemas:emit && npm run types:gen
  */
 
-import type { Bullet as GeneratedBullet } from "../lib/types/generated-resume";
+import type {
+  Bullet as GeneratedBullet,
+  PersonalInfo as GeneratedPersonalInfo,
+  ResumeData as GeneratedResumeData,
+} from "../lib/types/generated-resume";
 
 export type {
-  ResumeData,
   Company,
   Education,
-  PersonalInfo,
   Position,
   RoleProfile,
   ScoringWeights,
 } from "../lib/types/generated-resume";
+
+/**
+ * Optional fields present in the real gist data that haven't yet been folded
+ * into the Rust schema. Kept in a separate interface so the canonical
+ * generated type stays untouched; update Rust + regenerate if any of these
+ * graduate to required fields.
+ */
+export interface PersonalInfoExtensions {
+  calendar?: string;
+  fullName?: string;
+}
+
+export interface ResumeDataExtensions {
+  interests?: string[];
+}
+
+export interface PersonalInfo extends GeneratedPersonalInfo, PersonalInfoExtensions {}
+
+export interface ResumeData extends GeneratedResumeData, ResumeDataExtensions {
+  personal: PersonalInfo;
+}
 
 // Backwards compatibility aliases
 export type Bullet = GeneratedBullet;

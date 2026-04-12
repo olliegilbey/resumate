@@ -150,7 +150,7 @@ describe("/api/resume/select - Scoring Algorithm (Unit Tests)", () => {
 
     for (const tag of bulletTags) {
       if (tag in tagWeights) {
-        totalWeight += tagWeights[tag];
+        totalWeight += tagWeights[tag]!;
         matchedTags++;
       }
     }
@@ -328,17 +328,17 @@ describe("/api/resume/select - Test Data Validation", () => {
     expect(mockResumeData.roleProfiles).toBeInstanceOf(Array);
 
     // Check first company
-    const company = mockResumeData.experience[0];
+    const company = mockResumeData.experience[0]!;
     expect(company.id).toBe("company1");
     expect(company.children).toBeInstanceOf(Array);
 
     // Check first position
-    const position = company.children[0];
+    const position = company.children[0]!;
     expect(position.id).toBe("pos1");
     expect(position.children).toBeInstanceOf(Array);
 
     // Check first bullet
-    const bullet = position.children[0];
+    const bullet = position.children[0]!;
     expect(bullet.id).toBe("bullet1");
     expect(bullet.description).toBeDefined();
     expect(bullet.tags).toBeInstanceOf(Array);
@@ -360,7 +360,7 @@ describe("/api/resume/select - Test Data Validation", () => {
   });
 
   it("scoring weights are normalized", () => {
-    const profile = mockResumeData.roleProfiles[0];
+    const profile = mockResumeData.roleProfiles[0]!;
     const weights = profile.scoringWeights;
 
     expect(weights.tagRelevance).toBeGreaterThanOrEqual(0);
@@ -403,13 +403,13 @@ describe("/api/resume/select - Scoring Behavior", () => {
 
     let totalWeight1 = 0;
     for (const tag of bullet1Tags) {
-      if (tag in tagWeights) totalWeight1 += tagWeights[tag];
+      if (tag in tagWeights) totalWeight1 += tagWeights[tag]!;
     }
     const tagScore1 = totalWeight1 / bullet1Tags.length;
 
     let totalWeight2 = 0;
     for (const tag of bullet2Tags) {
-      if (tag in tagWeights) totalWeight2 += tagWeights[tag];
+      if (tag in tagWeights) totalWeight2 += tagWeights[tag]!;
     }
     const tagScore2 = totalWeight2 / bullet2Tags.length;
 
@@ -435,7 +435,7 @@ describe("/api/resume/select - Scoring Behavior", () => {
     let matched = 0;
     for (const tag of bulletTags) {
       if (tag in tagWeights) {
-        totalWeight += tagWeights[tag];
+        totalWeight += tagWeights[tag]!;
         matched++;
       }
     }
@@ -490,7 +490,7 @@ describe("/api/resume/select - Security (Integration Tests)", () => {
     });
 
     const response = await POST(request);
-    const data = await response.json();
+    const data = (await response.json()) as any;
 
     expect(response.status).toBe(200);
     expect(data.success).toBe(true);
@@ -505,7 +505,7 @@ describe("/api/resume/select - Security (Integration Tests)", () => {
     });
 
     const response = await POST(request);
-    const data = await response.json();
+    const data = (await response.json()) as any;
 
     expect(response.status).toBe(403);
     expect(data.error).toBe("Turnstile verification failed");
@@ -532,7 +532,7 @@ describe("/api/resume/select - Security (Integration Tests)", () => {
     });
 
     const response2 = await POST(request2);
-    const data2 = await response2.json();
+    const data2 = (await response2.json()) as any;
 
     expect(response2.status).toBe(403);
     expect(data2.error).toBe("Token already used");
@@ -547,7 +547,7 @@ describe("/api/resume/select - Security (Integration Tests)", () => {
     });
 
     const response = await POST(request);
-    const data = await response.json();
+    const data = (await response.json()) as any;
 
     expect(response.status).toBe(400);
     expect(data.error).toContain("Missing required fields");
@@ -562,7 +562,7 @@ describe("/api/resume/select - Security (Integration Tests)", () => {
     });
 
     const response = await POST(request);
-    const data = await response.json();
+    const data = (await response.json()) as any;
 
     expect(response.status).toBe(404);
     expect(data.error).toContain("Role profile not found");
@@ -577,7 +577,7 @@ describe("/api/resume/select - Security (Integration Tests)", () => {
     });
 
     const response = await POST(request);
-    const data = await response.json();
+    const data = (await response.json()) as any;
 
     expect(response.status).toBe(500);
     expect(data.error).toBe("Server configuration error");

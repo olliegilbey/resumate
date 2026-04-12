@@ -148,7 +148,7 @@ describe("/api/resume/ai-select", () => {
       });
 
       const response = await POST(request);
-      const data = await response.json();
+      const data = (await response.json()) as any;
 
       expect(response.status).toBe(400);
       expect(data.error).toContain("Missing required fields");
@@ -162,7 +162,7 @@ describe("/api/resume/ai-select", () => {
       });
 
       const response = await POST(request);
-      const data = await response.json();
+      const data = (await response.json()) as any;
 
       expect(response.status).toBe(400);
       expect(data.error).toContain("Missing required fields");
@@ -177,7 +177,7 @@ describe("/api/resume/ai-select", () => {
       });
 
       const response = await POST(request);
-      const data = await response.json();
+      const data = (await response.json()) as any;
 
       expect(response.status).toBe(400);
       expect(data.error).toContain("Job description too short");
@@ -194,7 +194,7 @@ describe("/api/resume/ai-select", () => {
       });
 
       const response = await POST(request);
-      const data = await response.json();
+      const data = (await response.json()) as any;
 
       expect(response.status).toBe(400);
       expect(data.error).toContain("Invalid provider");
@@ -244,7 +244,7 @@ describe("/api/resume/ai-select", () => {
       });
 
       const response = await POST(request);
-      const data = await response.json();
+      const data = (await response.json()) as any;
 
       expect(response.status).toBe(403);
       expect(data.error).toBe("Turnstile verification failed");
@@ -276,7 +276,7 @@ describe("/api/resume/ai-select", () => {
         turnstileToken: token,
       });
       const response2 = await POST(request2);
-      const data2 = await response2.json();
+      const data2 = (await response2.json()) as any;
 
       expect(response2.status).toBe(403);
       expect(data2.error).toBe("Token already used");
@@ -291,7 +291,7 @@ describe("/api/resume/ai-select", () => {
       });
 
       const response = await POST(request);
-      const data = await response.json();
+      const data = (await response.json()) as any;
 
       expect(response.status).toBe(500);
       expect(data.error).toBe("Server configuration error");
@@ -335,7 +335,7 @@ describe("/api/resume/ai-select", () => {
         ip,
       );
       const response = await POST(request);
-      const data = await response.json();
+      const data = (await response.json()) as any;
 
       expect(response.status).toBe(429);
       expect(data.error).toBe("Rate limit exceeded");
@@ -388,7 +388,7 @@ describe("/api/resume/ai-select", () => {
       });
 
       const response = await POST(request);
-      const data = await response.json();
+      const data = (await response.json()) as any;
 
       expect(response.status).toBe(200);
       expect(data.success).toBe(true);
@@ -462,7 +462,7 @@ describe("/api/resume/ai-select", () => {
       });
 
       const response = await POST(request);
-      const data = await response.json();
+      const data = (await response.json()) as any;
 
       // Only maxBullets passed to AI; diversity constraints applied server-side
       expect(mockSelectBulletsWithAI).toHaveBeenCalledWith(
@@ -496,7 +496,7 @@ describe("/api/resume/ai-select", () => {
       });
 
       const response = await POST(request);
-      const data = await response.json();
+      const data = (await response.json()) as any;
 
       expect(data.config).toEqual({
         maxBullets: 24,
@@ -527,7 +527,7 @@ describe("/api/resume/ai-select", () => {
       });
 
       const response = await POST(request);
-      const data = await response.json();
+      const data = (await response.json()) as any;
 
       expect(response.status).toBe(500);
       expect(data.error).toBe("AI selection failed");
@@ -546,7 +546,7 @@ describe("/api/resume/ai-select", () => {
       });
 
       const response = await POST(request);
-      const data = await response.json();
+      const data = (await response.json()) as any;
 
       expect(response.status).toBe(500);
       expect(data.error).toBe("Internal server error");
@@ -573,7 +573,7 @@ describe("/api/resume/ai-select", () => {
       });
 
       const response = await POST(request);
-      const data = await response.json();
+      const data = (await response.json()) as any;
 
       expect(data).toHaveProperty("success", true);
       expect(data).toHaveProperty("selected");
@@ -614,7 +614,7 @@ describe("/api/resume/ai-select", () => {
       });
 
       const response = await POST(request);
-      const data = await response.json();
+      const data = (await response.json()) as any;
 
       // Bullets sorted by score within company chronological order
       // company1 (newer) bullets first: bullet-2 (0.95), bullet-1 (0.7)
@@ -644,7 +644,7 @@ describe("/api/resume/ai-select", () => {
       });
 
       const response = await POST(request);
-      const data = await response.json();
+      const data = (await response.json()) as any;
 
       // Should only include existing bullets, sorted by score
       expect(data.selected).toHaveLength(2);

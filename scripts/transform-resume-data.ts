@@ -129,9 +129,11 @@ function parseDateRange(dateRange: string): { dateStart: string; dateEnd?: strin
     const match = datePart.match(/^(\w+)\s+(\d{4})$/);
     if (match) {
       const [, month, year] = match;
-      const monthNum = monthMap[month];
-      if (monthNum) {
-        return `${year}-${monthNum}`;
+      if (month) {
+        const monthNum = monthMap[month];
+        if (monthNum) {
+          return `${year}-${monthNum}`;
+        }
       }
     }
 
@@ -144,8 +146,8 @@ function parseDateRange(dateRange: string): { dateStart: string; dateEnd?: strin
     return datePart; // Return as-is if we can't parse
   };
 
-  const dateStart = parseDate(parts[0]) || parts[0];
-  const dateEnd = parts.length > 1 ? parseDate(parts[1]) : undefined;
+  const dateStart = parseDate(parts[0] ?? "") || parts[0] || "";
+  const dateEnd = parts.length > 1 ? parseDate(parts[1] ?? "") : undefined;
 
   return { dateStart, dateEnd };
 }
@@ -216,7 +218,7 @@ function transformCompany(company: OldCompany): NewCompany {
 async function transformResumeData() {
   console.log("📝 Reading resume-data.json...");
   const rawData = fs.readFileSync(DATA_PATH, "utf-8");
-  const data = JSON.parse(rawData);
+  const data = JSON.parse(rawData) as any;
 
   console.log("🔄 Transforming data structure...\n");
 

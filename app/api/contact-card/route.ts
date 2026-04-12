@@ -42,7 +42,7 @@ async function verifyTurnstileToken(token: string): Promise<boolean> {
       }),
     });
 
-    const data: TurnstileResponse = await response.json();
+    const data = (await response.json()) as TurnstileResponse;
     return data.success;
   } catch (error) {
     console.error("Turnstile verification error:", error);
@@ -203,8 +203,8 @@ export async function POST(request: NextRequest) {
     let token: string | null = null;
 
     if (contentType.includes("application/json")) {
-      const body = await request.json();
-      token = body.token;
+      const body = (await request.json()) as { token?: string };
+      token = body.token ?? null;
     } else if (contentType.includes("application/x-www-form-urlencoded")) {
       const formData = await request.formData();
       token = formData.get("token") as string | null;

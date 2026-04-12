@@ -68,7 +68,7 @@ describe("/api/resume/log", () => {
     });
 
     const response = await POST(request);
-    const data = await response.json();
+    const data = (await response.json()) as any;
 
     expect(response.status).toBe(200);
     expect(data.success).toBe(true);
@@ -111,7 +111,7 @@ describe("/api/resume/log", () => {
     });
 
     const response = await POST(request);
-    const data = await response.json();
+    const data = (await response.json()) as any;
 
     expect(response.status).toBe(200);
     expect(data.success).toBe(true);
@@ -149,7 +149,7 @@ describe("/api/resume/log", () => {
     });
 
     const response = await POST(request);
-    const data = await response.json();
+    const data = (await response.json()) as any;
 
     expect(response.status).toBe(200);
     expect(data.success).toBe(true);
@@ -192,7 +192,7 @@ describe("/api/resume/log", () => {
     });
 
     const response = await POST(request);
-    const data = await response.json();
+    const data = (await response.json()) as any;
 
     expect(response.status).toBe(200);
     expect(data.success).toBe(true);
@@ -235,7 +235,7 @@ describe("/api/resume/log", () => {
     });
 
     const response = await POST(request);
-    const data = await response.json();
+    const data = (await response.json()) as any;
 
     expect(response.status).toBe(200);
     expect(data.success).toBe(true);
@@ -274,7 +274,7 @@ describe("/api/resume/log", () => {
     });
 
     const response = await POST(request);
-    const data = await response.json();
+    const data = (await response.json()) as any;
 
     expect(response.status).toBe(200);
     expect(data.success).toBe(true);
@@ -301,7 +301,7 @@ describe("/api/resume/log", () => {
     });
 
     const response = await POST(request);
-    const data = await response.json();
+    const data = (await response.json()) as any;
 
     expect(response.status).toBe(400);
     expect(data.error).toContain("Missing required fields");
@@ -325,7 +325,7 @@ describe("/api/resume/log", () => {
     });
 
     const response = await POST(request);
-    const data = await response.json();
+    const data = (await response.json()) as any;
 
     expect(response.status).toBe(200);
     expect(data.success).toBe(true);
@@ -345,7 +345,7 @@ describe("/api/resume/log", () => {
     });
 
     const response = await POST(request);
-    const data = await response.json();
+    const data = (await response.json()) as any;
 
     expect(response.status).toBe(400);
     expect(data.error).toContain("Invalid event type");
@@ -361,7 +361,7 @@ describe("/api/resume/log", () => {
     });
 
     const response = await POST(request);
-    const data = await response.json();
+    const data = (await response.json()) as any;
 
     expect(response.status).toBe(400);
     expect(data.error).toContain("Invalid session_id format");
@@ -388,7 +388,7 @@ describe("/api/resume/log", () => {
     });
 
     const response = await POST(request);
-    const data = await response.json();
+    const data = (await response.json()) as any;
 
     expect(response.status).toBe(429);
     expect(data.error).toContain("Rate limit exceeded");

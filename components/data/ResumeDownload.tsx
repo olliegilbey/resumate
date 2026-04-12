@@ -40,7 +40,7 @@ const MIN_JOB_DESCRIPTION_LENGTH = 50;
 export function ResumeDownload({ resumeData }: ResumeDownloadProps) {
   const [selectedRoleId, setSelectedRoleId] = useState<string>("");
   const [jobDescription, setJobDescription] = useState<string>("");
-  const [aiProvider, setAiProvider] = useState<AIProvider>(FALLBACK_ORDER[0]);
+  const [aiProvider, setAiProvider] = useState<AIProvider>(FALLBACK_ORDER[0]!);
   const [modelAvailability, setModelAvailability] = useState<Map<AIProvider, ModelAvailability>>(
     new Map(),
   );
@@ -315,7 +315,11 @@ export function ResumeDownload({ resumeData }: ResumeDownloadProps) {
             setAiStage("validating");
 
             if (!aiResponse.ok) {
-              const error = await aiResponse.json();
+              const error = (await aiResponse.json()) as {
+                retriesAttempted?: number;
+                userMessage?: string;
+                message?: string;
+              };
               // Check if it was a retry situation
               if (error.retriesAttempted && error.retriesAttempted > 0) {
                 setAiRetryCount(error.retriesAttempted);
@@ -324,7 +328,7 @@ export function ResumeDownload({ resumeData }: ResumeDownloadProps) {
               throw new Error(error.userMessage || error.message || "AI selection failed");
             }
 
-            selectData = await aiResponse.json();
+            selectData = (await aiResponse.json()) as typeof selectData;
             console.warn(`✅ AI selected ${selectData.selected.length} bullets`);
           } else {
             // Heuristic Mode: Call existing selection endpoint
@@ -343,11 +347,11 @@ export function ResumeDownload({ resumeData }: ResumeDownloadProps) {
             });
 
             if (!selectResponse.ok) {
-              const error = await selectResponse.json();
+              const error = (await selectResponse.json()) as { message?: string };
               throw new Error(error.message || "Failed to select bullets");
             }
 
-            selectData = await selectResponse.json();
+            selectData = (await selectResponse.json()) as typeof selectData;
           }
 
           // Step 2: Load WASM module dynamically from public folder

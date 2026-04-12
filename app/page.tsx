@@ -6,7 +6,10 @@ import { GlassPanel } from "@/components/ui/GlassPanel";
 import { ContactLinks } from "@/components/ui/ContactLinks";
 import Link from "next/link";
 import { ArrowRight, Briefcase, Download, AlertCircle, X, Calendar } from "lucide-react";
-import resumeData from "@/data/resume-data.json";
+import rawResumeData from "@/data/resume-data.json";
+import type { ResumeData } from "@/types/resume";
+
+const resumeData = rawResumeData as unknown as ResumeData;
 import { Turnstile, type TurnstileInstance } from "@marsidev/react-turnstile";
 import { useTheme } from "@/contexts/ThemeContext";
 import { useTrackEvent } from "@/lib/posthog-client";

@@ -47,7 +47,7 @@ describe("extractAllTags", () => {
 describe("getTagColorClass", () => {
   it("should return consistent color classes for tags", () => {
     const allTags = extractAllTags(mockResumeData);
-    const firstTag = allTags[0];
+    const firstTag = allTags[0]!;
     const colorClass = getTagColorClass(firstTag, allTags);
 
     expect(colorClass).toMatch(/^bg-tag-\d+ text-tag-\d+$/);
@@ -102,7 +102,7 @@ describe("getSortedTagsWithMetrics", () => {
 
     // Verify descending order by weight
     for (let i = 0; i < metrics.length - 1; i++) {
-      expect(metrics[i].weight).toBeGreaterThanOrEqual(metrics[i + 1].weight);
+      expect(metrics[i]!.weight).toBeGreaterThanOrEqual(metrics[i + 1]!.weight);
     }
   });
 
@@ -111,10 +111,10 @@ describe("getSortedTagsWithMetrics", () => {
       ...mockResumeData,
       experience: [
         {
-          ...mockResumeData.experience[0],
+          ...mockResumeData.experience[0]!,
           children: [
             {
-              ...mockResumeData.experience[0].children[0],
+              ...mockResumeData.experience[0]!.children[0]!,
               children: [
                 {
                   id: "test",
@@ -129,7 +129,7 @@ describe("getSortedTagsWithMetrics", () => {
       ],
     };
 
-    const metrics = getSortedTagsWithMetrics(dataWithMissingPriority);
+    const metrics = getSortedTagsWithMetrics(dataWithMissingPriority as typeof mockResumeData);
     const testMetric = metrics.find((m) => m.tag === "test-tag");
 
     expect(testMetric).toBeDefined();

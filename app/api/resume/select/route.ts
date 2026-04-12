@@ -30,10 +30,19 @@ const usedTokens = new Set<string>();
  *
  * Rate limit: 10 requests per hour per IP
  */
+type SelectRequestBody = {
+  roleProfileId?: string;
+  turnstileToken?: string;
+  config?: { maxBullets?: number; maxPerCompany?: number; maxPerPosition?: number };
+  email?: string;
+  linkedin?: string;
+  sessionId?: string;
+};
+
 export async function POST(request: NextRequest) {
   try {
     // Parse request body
-    const body = await request.json();
+    const body = (await request.json()) as SelectRequestBody;
     const { roleProfileId, turnstileToken, config, email, linkedin, sessionId } = body;
 
     if (!roleProfileId || !turnstileToken) {
@@ -95,7 +104,7 @@ export async function POST(request: NextRequest) {
       },
     );
 
-    const turnstileData = await turnstileResponse.json();
+    const turnstileData = (await turnstileResponse.json()) as { success?: boolean };
 
     if (!turnstileData.success) {
       return NextResponse.json({ error: "Turnstile verification failed" }, { status: 403 });
@@ -320,8 +329,9 @@ function calculateTagRelevance(bulletTags: string[], tagWeights: Record<string, 
   let matchedTags = 0;
 
   for (const tag of bulletTags) {
-    if (tag in tagWeights) {
-      totalWeight += tagWeights[tag];
+    const weight = tagWeights[tag];
+    if (weight !== undefined) {
+      totalWeight += weight;
       matchedTags++;
     }
   }

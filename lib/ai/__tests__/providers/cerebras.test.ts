@@ -116,7 +116,7 @@ describe("CerebrasProvider", () => {
       } catch (e) {
         expect(e).toBeInstanceOf(AISelectionError);
         const err = e as AISelectionError;
-        expect(err.errors[0].code).toBe("E011_PROVIDER_DOWN");
+        expect(err.errors[0]!.code).toBe("E011_PROVIDER_DOWN");
       }
     });
 
@@ -163,7 +163,7 @@ describe("CerebrasProvider", () => {
         }),
       );
 
-      const body = JSON.parse(mockFetch.mock.calls[0][1].body);
+      const body = JSON.parse((mockFetch.mock.calls[0] as any)[1].body) as any;
       expect(body.model).toBe("qwen-3-235b-a22b-instruct-2507");
       expect(body.messages).toHaveLength(2);
       expect(body.messages[0].role).toBe("system");
@@ -253,7 +253,7 @@ describe("CerebrasProvider", () => {
         expect.fail("Should have thrown");
       } catch (e) {
         const err = e as AISelectionError;
-        expect(err.errors[0].code).toBe("E005_INVALID_BULLET_ID");
+        expect(err.errors[0]!.code).toBe("E005_INVALID_BULLET_ID");
       }
     });
 
@@ -288,7 +288,7 @@ describe("CerebrasProvider", () => {
         expect.fail("Should have thrown");
       } catch (e) {
         const err = e as AISelectionError;
-        expect(err.errors[0].code).toBe("E004_WRONG_BULLET_COUNT");
+        expect(err.errors[0]!.code).toBe("E004_WRONG_BULLET_COUNT");
       }
     });
 
@@ -313,7 +313,7 @@ describe("CerebrasProvider", () => {
         expect.fail("Should have thrown");
       } catch (e) {
         const err = e as AISelectionError;
-        expect(err.errors[0].code).toBe("E011_PROVIDER_DOWN");
+        expect(err.errors[0]!.code).toBe("E011_PROVIDER_DOWN");
       }
     });
 
@@ -338,7 +338,7 @@ describe("CerebrasProvider", () => {
         expect.fail("Should have thrown");
       } catch (e) {
         const err = e as AISelectionError;
-        expect(err.errors[0].code).toBe("E011_PROVIDER_DOWN");
+        expect(err.errors[0]!.code).toBe("E011_PROVIDER_DOWN");
       }
     });
 
@@ -363,7 +363,7 @@ describe("CerebrasProvider", () => {
         expect.fail("Should have thrown");
       } catch (e) {
         const err = e as AISelectionError;
-        expect(err.errors[0].code).toBe("E011_PROVIDER_DOWN");
+        expect(err.errors[0]!.code).toBe("E011_PROVIDER_DOWN");
       }
     });
 
@@ -382,7 +382,7 @@ describe("CerebrasProvider", () => {
         expect.fail("Should have thrown");
       } catch (e) {
         const err = e as AISelectionError;
-        expect(err.errors[0].code).toBe("E011_PROVIDER_DOWN");
+        expect(err.errors[0]!.code).toBe("E011_PROVIDER_DOWN");
         expect(err.message).toContain("fetch failed");
       }
     });
@@ -407,7 +407,7 @@ describe("CerebrasProvider", () => {
         expect.fail("Should have thrown");
       } catch (e) {
         const err = e as AISelectionError;
-        expect(err.errors[0].code).toBe("E001_NO_JSON_FOUND");
+        expect(err.errors[0]!.code).toBe("E001_NO_JSON_FOUND");
       }
     });
 
@@ -442,7 +442,7 @@ describe("CerebrasProvider", () => {
         retryContext: "error[E004_WRONG_BULLET_COUNT]: Expected 2, got 1",
       });
 
-      const body = JSON.parse(mockFetch.mock.calls[0][1].body);
+      const body = JSON.parse((mockFetch.mock.calls[0] as any)[1].body) as any;
       expect(body.messages[1].content).toContain("PREVIOUS RESPONSE HAD ERRORS");
       expect(body.messages[1].content).toContain("E004_WRONG_BULLET_COUNT");
     });
@@ -477,7 +477,7 @@ describe("CerebrasProvider", () => {
         minBullets: 2,
       });
 
-      const body = JSON.parse(mockFetch.mock.calls[0][1].body);
+      const body = JSON.parse((mockFetch.mock.calls[0] as any)[1].body) as any;
       expect(body.model).toBe("llama3.1-8b");
     });
   });

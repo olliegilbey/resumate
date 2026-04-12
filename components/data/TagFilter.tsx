@@ -32,7 +32,7 @@ export function TagFilter({
   );
 
   // Filter to only tags that have bullets (with counts), preserving sorted order
-  const displayTags = allTags.filter((tag) => tagCounts[tag] > 0);
+  const displayTags = allTags.filter((tag) => (tagCounts[tag] ?? 0) > 0);
 
   return (
     <div className={cn("space-y-4", className)}>

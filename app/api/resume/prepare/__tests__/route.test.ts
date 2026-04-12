@@ -52,7 +52,7 @@ describe("/api/resume/prepare", () => {
       });
 
       const response = await POST(request);
-      const data = await response.json();
+      const data = (await response.json()) as any;
 
       expect(response.status).toBe(200);
       expect(data.success).toBe(true);
@@ -86,7 +86,7 @@ describe("/api/resume/prepare", () => {
       });
 
       const response = await POST(request);
-      const data = await response.json();
+      const data = (await response.json()) as any;
 
       // Verify resume data structure
       expect(data.data).toHaveProperty("personal");
@@ -126,7 +126,7 @@ describe("/api/resume/prepare", () => {
         turnstileToken: "valid-token",
       });
       const response = await POST(request);
-      const data = await response.json();
+      const data = (await response.json()) as any;
 
       expect(response.status).toBe(429);
       expect(data.error).toBe("Rate limit exceeded");
@@ -196,7 +196,7 @@ describe("/api/resume/prepare", () => {
       const request = createMockRequest({});
 
       const response = await POST(request);
-      const data = await response.json();
+      const data = (await response.json()) as any;
 
       expect(response.status).toBe(400);
       expect(data.error).toBe("Missing Turnstile token");
@@ -210,7 +210,7 @@ describe("/api/resume/prepare", () => {
       });
 
       const response = await POST(request);
-      const data = await response.json();
+      const data = (await response.json()) as any;
 
       expect(response.status).toBe(403);
       expect(data.error).toBe("Turnstile verification failed");
@@ -236,8 +236,8 @@ describe("/api/resume/prepare", () => {
       );
 
       // Check body contains secret and response
-      const callArgs = mockFetch.mock.calls[0];
-      const body = JSON.parse(callArgs[1].body);
+      const callArgs = mockFetch.mock.calls[0]!;
+      const body = JSON.parse((callArgs[1] as any).body) as any;
       expect(body.secret).toBe("test-turnstile-secret-key");
       expect(body.response).toBe("test-token");
     });
@@ -250,7 +250,7 @@ describe("/api/resume/prepare", () => {
       });
 
       const response = await POST(request);
-      const data = await response.json();
+      const data = (await response.json()) as any;
 
       expect(response.status).toBe(500);
       expect(data.error).toBe("Server configuration error");
@@ -264,7 +264,7 @@ describe("/api/resume/prepare", () => {
       });
 
       const response = await POST(request);
-      const data = await response.json();
+      const data = (await response.json()) as any;
 
       expect(response.status).toBe(500);
       expect(data.error).toBe("Internal server error");
@@ -289,7 +289,7 @@ describe("/api/resume/prepare", () => {
       });
 
       const response = await POST(request);
-      const data = await response.json();
+      const data = (await response.json()) as any;
 
       expect(data).toMatchObject({
         success: true,
@@ -309,7 +309,7 @@ describe("/api/resume/prepare", () => {
           turnstileToken: "valid-token",
         });
         const response = await POST(request);
-        const data = await response.json();
+        const data = (await response.json()) as any;
         tokens.add(data.token);
       }
 
@@ -343,7 +343,7 @@ describe("/api/resume/prepare", () => {
       });
 
       const response = await POST(request);
-      const data = await response.json();
+      const data = (await response.json()) as any;
 
       expect(response.status).toBe(500);
       expect(data.error).toBe("Internal server error");

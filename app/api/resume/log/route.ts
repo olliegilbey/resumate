@@ -24,9 +24,54 @@ const ALLOWED_EVENTS = [
 ];
 const UUID_REGEX = /^[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
 
+// Shape of the POST body. All optional — validation happens below.
+type LogRequestBody = Partial<{
+  event: string;
+  session_id: string;
+  generation_method: GenerationMethod;
+  download_type: DownloadType;
+  email: string;
+  linkedin: string;
+  role_profile_id: string;
+  role_profile_name: string;
+  ai_provider: string;
+  job_title: string;
+  extracted_salary_min: number;
+  extracted_salary_max: number;
+  salary_currency: string;
+  reasoning: string;
+  bullet_count: number;
+  bullets: unknown;
+  pdf_size: number;
+  filename: string;
+  wasm_load_ms: number;
+  generation_ms: number;
+  total_duration_ms: number;
+  wasm_cached: boolean;
+  error_code: DownloadErrorCode;
+  error_category: ErrorCategory;
+  error_stage: ErrorStage;
+  error_message: string;
+  error_detail: unknown;
+  error_stack: string;
+  is_retryable: boolean;
+  sessionId: string;
+  roleProfileId: string;
+  roleProfileName: string;
+  bulletCount: number;
+  pdfSize: number;
+  wasmLoadDuration: number;
+  generationDuration: number;
+  totalDuration: number;
+  wasmCached: boolean;
+  errorMessage: string;
+  errorStage: ErrorStage;
+  errorStack: string;
+}>;
+
 export async function POST(request: NextRequest) {
   try {
-    const body = await request.json();
+    const body = (await request.json()) as LogRequestBody;
     const {
       event,
       // Core fields (snake_case)

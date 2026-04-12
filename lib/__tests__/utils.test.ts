@@ -219,7 +219,7 @@ describe("utils", () => {
 
       // Should render as plain text since it's malformed
       expect(parts).toHaveLength(1);
-      expect(parts[0].type).toBe("text");
+      expect(parts[0]!.type).toBe("text");
     });
 
     it("handles brackets without parentheses", () => {

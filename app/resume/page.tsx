@@ -3,8 +3,10 @@ import { GlassPanel } from "@/components/ui/GlassPanel";
 import { ResumeDownload } from "@/components/data/ResumeDownload";
 import Link from "next/link";
 import { Download, Eye, Sparkles, Briefcase, Users, Calendar } from "lucide-react";
-import resumeData from "@/data/resume-data.json";
+import rawResumeData from "@/data/resume-data.json";
 import type { ResumeData } from "@/types/resume";
+
+const resumeData = rawResumeData as unknown as ResumeData;
 import { getTotalBullets, getTotalPositions } from "@/lib/resume-metrics";
 
 export default function ResumePage() {

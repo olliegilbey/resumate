@@ -44,7 +44,20 @@ export async function POST(request: NextRequest) {
 
   try {
     // Parse request body
-    const body = await request.json();
+    const body = (await request.json()) as {
+      jobDescription?: string;
+      turnstileToken?: string;
+      provider?: string;
+      config?: {
+        maxBullets?: number;
+        maxPerCompany?: number;
+        maxPerPosition?: number;
+        minPerCompany?: number;
+      };
+      email?: string;
+      linkedin?: string;
+      sessionId?: string;
+    };
     const {
       jobDescription,
       turnstileToken,
@@ -81,7 +94,7 @@ export async function POST(request: NextRequest) {
       "claude-sonnet",
       "claude-haiku",
     ];
-    if (!validProviders.includes(provider)) {
+    if (!provider || !validProviders.includes(provider as AIProvider)) {
       return NextResponse.json(
         { error: `Invalid provider. Must be one of: ${validProviders.join(", ")}` },
         { status: 400 },
@@ -133,7 +146,7 @@ export async function POST(request: NextRequest) {
       },
     );
 
-    const turnstileData = await turnstileResponse.json();
+    const turnstileData = (await turnstileResponse.json()) as { success?: boolean };
     if (!turnstileData.success) {
       return NextResponse.json({ error: "Turnstile verification failed" }, { status: 403 });
     }
