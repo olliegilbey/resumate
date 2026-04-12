@@ -5,12 +5,26 @@ import prettier from "eslint-config-prettier";
 
 const eslintConfig = defineConfig([
   ...nextVitals,
-  // Immutable-first patterns: warn during MVP, don't block velocity.
-  // NOTE: functional/immutable-data requires typed linting (parserOptions.project)
-  // which is a bigger follow-up. Enable only the untyped rule for now.
+  // Immutability enforcement: apply globally with tuned options.
+  // - projectService: true enables typed linting (required for immutable-data).
+  // - ignoreNonConstDeclarations: `let` is already caught by no-let; don't double-flag.
+  // - ignoreClasses: class field assignments are idiomatic OOP, not drift.
+  // - ignoreMapsAndSets: Map/Set have no immutable API; flagging .set/.add is noise.
+  // Severity is `warn` today; promote to `error` once docs/IMMUTABILITY_GAPS.md is worked down.
   {
     plugins: { functional },
+    languageOptions: {
+      parserOptions: { projectService: true },
+    },
     rules: {
+      "functional/immutable-data": [
+        "warn",
+        {
+          ignoreNonConstDeclarations: true,
+          ignoreClasses: true,
+          ignoreMapsAndSets: true,
+        },
+      ],
       "functional/no-let": "warn",
     },
   },
@@ -50,7 +64,7 @@ const eslintConfig = defineConfig([
     files: ["scripts/**/*.{ts,tsx,js,mjs,cjs}"],
     rules: { "no-console": "off" },
   },
-  // Disable ESLint rules that conflict with Prettier. Must be last.
+  // Disable ESLint rules that conflict with Prettier. Must be last of the rule blocks.
   prettier,
   globalIgnores([
     "node_modules/**",

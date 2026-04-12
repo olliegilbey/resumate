@@ -298,6 +298,17 @@ check-rust:
     @echo "✓ Checking formatting..."
     cargo fmt --all -- --check
 
+# Run agent feedback loop: types → lint → tests (use after changes)
+agent-check:
+    @echo "🤖 Running agent checks..."
+    @echo "  → Type checking..."
+    @bun typecheck
+    @echo "  → Linting..."
+    @bun lint
+    @echo "  → Running tests..."
+    @bun run test
+    @echo "✅ Agent checks passed"
+
 # Format all code (Rust + TypeScript)
 fmt:
     @echo "🎨 Formatting Rust code..."
