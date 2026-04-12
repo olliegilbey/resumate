@@ -188,6 +188,7 @@ import type { ResumeData, BulletPoint, Company, RoleProfile } from "@/types/resu
 - `CONTACT_PHONE` - Phone number (international format)
 - `TURNSTILE_SECRET_KEY` - Cloudflare secret
 - `RESUME_DATA_GIST_URL` - Gist raw URL
+- `ENABLE_TURNSTILE_DEV_BYPASS` - **Local dev only.** Set to `true` **only** when `NODE_ENV=development`; `lib/turnstile.ts` requires both conditions before skipping Cloudflare verification. **DO NOT set in production or on Vercel preview deploys** — a coarse `NODE_ENV !== "production"` check would otherwise silently disable the captcha there.
 
 **IMPORTANT:** Never expose server-side env vars to client bundle!
 
@@ -231,7 +232,8 @@ just test-ts-watch  # Watch mode
 
 **Rate Limiting:** `lib/rate-limit.ts` - In-memory, IP-based, per-route
 **Proxy:** `proxy.ts` - Bot detection, security headers, rate limiting (Next.js 16 pattern)
-**Turnstile:** Auto-skipped in dev, required in prod for /api/contact-card and /api/resume/\*
+**Turnstile verification:** `lib/turnstile.ts` - Shared `verifyTurnstileToken()` used by `/api/contact-card` and `/api/resume/*`. Dev bypass requires **both** `NODE_ENV=development` AND `ENABLE_TURNSTILE_DEV_BYPASS=true` (deliberately not triggered by `NODE_ENV !== "production"` alone, which would also fire on preview deploys).
+**Token replay:** `lib/token-replay.ts` - `TokenReplayGuard` with 5-minute TTL (matching Turnstile validity) and atomic `beginVerification` → `markVerified` / `cancelVerification` to close the mark-then-verify race. Used by `contact-card`, `resume/select`, and `resume/ai-select`.
 
 ---
 

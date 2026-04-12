@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { checkRateLimit, getClientIP } from "@/lib/rate-limit";
+import { verifyTurnstileToken } from "@/lib/turnstile";
 
 /**
  * POST /api/resume/prepare
@@ -46,30 +47,10 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: "Missing Turnstile token" }, { status: 400 });
     }
 
-    // Verify Turnstile token
-    const turnstileSecret = process.env.TURNSTILE_SECRET_KEY;
-    if (!turnstileSecret) {
-      console.error("TURNSTILE_SECRET_KEY not configured");
-      return NextResponse.json({ error: "Server configuration error" }, { status: 500 });
-    }
-
-    const turnstileResponse = await fetch(
-      "https://challenges.cloudflare.com/turnstile/v0/siteverify",
-      {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          secret: turnstileSecret,
-          response: turnstileToken,
-        }),
-      },
-    );
-
-    const turnstileData = (await turnstileResponse.json()) as { success?: boolean };
-
-    if (!turnstileData.success) {
+    // Verify Turnstile token via the shared helper (handles secret loading,
+    // timeout, and the dual-flag dev bypass).
+    const isValid = await verifyTurnstileToken(turnstileToken);
+    if (!isValid) {
       return NextResponse.json({ error: "Turnstile verification failed" }, { status: 403 });
     }
 

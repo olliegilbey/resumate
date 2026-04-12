@@ -8,11 +8,11 @@ import {
   type ScoredBullet,
   type SelectionConfig,
 } from "@/lib/selection";
+import { verifyTurnstileToken } from "@/lib/turnstile";
+import { TokenReplayGuard } from "@/lib/token-replay";
 
-// In-memory store for used tokens (prevents replay attacks within function instance lifetime)
-// Note: In serverless, each function instance is stateless and short-lived
-// TODO: For production with multiple instances, use Redis or similar distributed store
-const usedTokens = new Set<string>();
+// Module-scoped replay guard with TTL sweeping (matches Turnstile validity).
+const replayGuard = new TokenReplayGuard();
 
 /**
  * POST /api/resume/select
@@ -77,41 +77,23 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // Check token replay (one-time use enforcement)
-    if (usedTokens.has(turnstileToken)) {
+    // Atomically reserve the token BEFORE verifying. Prevents the
+    // mark-then-verify race where two concurrent requests could both pass
+    // while the async Cloudflare verify was in flight (#16).
+    if (!replayGuard.beginVerification(turnstileToken)) {
       console.warn("Duplicate Turnstile token blocked");
       return NextResponse.json({ error: "Token already used" }, { status: 403 });
     }
 
-    // Verify Turnstile token
-    const turnstileSecret = process.env.TURNSTILE_SECRET_KEY;
-    if (!turnstileSecret) {
-      console.error("TURNSTILE_SECRET_KEY not configured");
-      return NextResponse.json({ error: "Server configuration error" }, { status: 500 });
-    }
-
-    const turnstileResponse = await fetch(
-      "https://challenges.cloudflare.com/turnstile/v0/siteverify",
-      {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          secret: turnstileSecret,
-          response: turnstileToken,
-        }),
-      },
-    );
-
-    const turnstileData = (await turnstileResponse.json()) as { success?: boolean };
-
-    if (!turnstileData.success) {
+    const isValid = await verifyTurnstileToken(turnstileToken);
+    if (!isValid) {
+      // Release reservation so a transient error doesn't burn the user's token.
+      replayGuard.cancelVerification(turnstileToken);
       return NextResponse.json({ error: "Turnstile verification failed" }, { status: 403 });
     }
 
-    // Mark token as used (replay prevention)
-    usedTokens.add(turnstileToken);
+    // Promote pending → used; late duplicates will be blocked.
+    replayGuard.markVerified(turnstileToken);
 
     // Load resume data
     const resumeData = await loadResumeData();

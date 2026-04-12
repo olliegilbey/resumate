@@ -22,12 +22,14 @@ import {
   DEFAULT_SELECTION_CONFIG,
   type SelectedBullet,
 } from "@/lib/selection";
+import { verifyTurnstileToken } from "@/lib/turnstile";
+import { TokenReplayGuard } from "@/lib/token-replay";
 
-// WARNING: In-memory token replay prevention is lost on serverless cold starts.
-// For production at scale, consider storing used tokens in Redis/KV with TTL
-// matching Turnstile token validity (~5 min). Current implementation provides
-// protection within a single function instance only.
-const usedTokens = new Set<string>();
+// WARNING: Module-scoped replay prevention is lost on serverless cold starts;
+// for a distributed deployment at scale, back this with Redis/KV using the
+// same TTL (~5 min, matching Turnstile token validity). The in-memory
+// TokenReplayGuard provides protection within a single warm function instance.
+const replayGuard = new TokenReplayGuard();
 
 // Rate limit config: 5 requests per hour (stricter for AI)
 const AI_RATE_LIMIT = {
@@ -119,37 +121,24 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // Token replay check (mark used immediately to prevent TOCTOU race)
-    if (usedTokens.has(turnstileToken)) {
+    // Atomically reserve the token BEFORE verifying (prevents TOCTOU race).
+    // Replaces the previous "mark immediately" pattern, which permanently
+    // burned tokens on any transient verify failure.
+    if (!replayGuard.beginVerification(turnstileToken)) {
       console.warn("[AI Select] Duplicate Turnstile token blocked");
       return NextResponse.json({ error: "Token already used" }, { status: 403 });
     }
-    usedTokens.add(turnstileToken);
 
-    // Turnstile verification
-    const turnstileSecret = process.env.TURNSTILE_SECRET_KEY;
-    if (!turnstileSecret) {
-      console.error("[AI Select] TURNSTILE_SECRET_KEY not configured");
-      return NextResponse.json({ error: "Server configuration error" }, { status: 500 });
-    }
-
-    const turnstileResponse = await fetch(
-      "https://challenges.cloudflare.com/turnstile/v0/siteverify",
-      {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          secret: turnstileSecret,
-          response: turnstileToken,
-        }),
-        signal: AbortSignal.timeout(5000), // 5s timeout
-      },
-    );
-
-    const turnstileData = (await turnstileResponse.json()) as { success?: boolean };
-    if (!turnstileData.success) {
+    const isValid = await verifyTurnstileToken(turnstileToken);
+    if (!isValid) {
+      // Roll back the reservation so legitimate users can retry after a
+      // transient Cloudflare error.
+      replayGuard.cancelVerification(turnstileToken);
       return NextResponse.json({ error: "Turnstile verification failed" }, { status: 403 });
     }
+
+    // Promote pending → used; late duplicate requests will now be blocked.
+    replayGuard.markVerified(turnstileToken);
 
     // Load resume data
     const resumeData = await loadResumeData();

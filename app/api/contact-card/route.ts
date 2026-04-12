@@ -4,6 +4,8 @@ import type { ResumeData } from "@/types/resume";
 import { captureEvent, flushEvents } from "@/lib/posthog-server";
 import { ANALYTICS_EVENTS } from "@/lib/analytics/events";
 import { getClientIP } from "@/lib/rate-limit";
+import { verifyTurnstileToken } from "@/lib/turnstile";
+import { TokenReplayGuard } from "@/lib/token-replay";
 
 /**
  * Server-side vCard generation with Turnstile protection
@@ -11,44 +13,9 @@ import { getClientIP } from "@/lib/rate-limit";
  * Sensitive data stored in environment variables (.env.local)
  */
 
-interface TurnstileResponse {
-  success: boolean;
-  "error-codes"?: string[];
-}
-
-// In-memory store for used tokens (prevents replay attacks within function instance lifetime)
-// Note: In serverless, each function instance is stateless and short-lived
-// The Set is garbage collected when the instance terminates, so no cleanup interval needed
-// TODO: For production with multiple instances, use Redis or similar distributed store
-const usedTokens = new Set<string>();
-
-async function verifyTurnstileToken(token: string): Promise<boolean> {
-  const secretKey = process.env.TURNSTILE_SECRET_KEY;
-
-  if (!secretKey) {
-    console.error("TURNSTILE_SECRET_KEY not configured");
-    return false;
-  }
-
-  try {
-    const response = await fetch("https://challenges.cloudflare.com/turnstile/v0/siteverify", {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify({
-        secret: secretKey,
-        response: token,
-      }),
-    });
-
-    const data = (await response.json()) as TurnstileResponse;
-    return data.success;
-  } catch (error) {
-    console.error("Turnstile verification error:", error);
-    return false;
-  }
-}
+// Module-scoped replay guard (in-memory, TTL-swept — matches Turnstile validity).
+// Shared by GET and POST handlers since both route through generateContactCardResponse.
+const replayGuard = new TokenReplayGuard();
 
 /**
  * Load resume data from build cache
@@ -70,21 +37,26 @@ async function generateContactCardResponse(
   token: string,
   request: NextRequest,
 ): Promise<NextResponse> {
-  // Check if token was already used (replay attack prevention)
-  if (usedTokens.has(token)) {
+  // Atomically reserve the token BEFORE calling Cloudflare. Prevents the
+  // mark-then-verify race where two concurrent requests with the same token
+  // could both slip through while the async verify was in flight.
+  if (!replayGuard.beginVerification(token)) {
     console.warn("Duplicate Turnstile token blocked");
     return new NextResponse("Token already used", { status: 403 });
   }
 
-  // Verify Turnstile token with Cloudflare
+  // Verify Turnstile token with Cloudflare.
   const isValid = await verifyTurnstileToken(token);
 
   if (!isValid) {
+    // Release the reservation so transient Cloudflare errors don't permanently
+    // burn the user's token — they can retry with the same token.
+    replayGuard.cancelVerification(token);
     return new NextResponse("Verification failed", { status: 403 });
   }
 
-  // Mark token as used (one-time use only)
-  usedTokens.add(token);
+  // Promote pending → used. Late duplicate requests will see `used` and 403.
+  replayGuard.markVerified(token);
 
   // Load resume data
   const resumeData = await loadResumeData();
