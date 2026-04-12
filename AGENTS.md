@@ -114,6 +114,31 @@ Subjects are lowercase, imperative, no trailing period. Keep the subject under
 
 ---
 
+## Immutability
+
+- Prefer `const` over `let`. `functional/no-let` warns on `let`.
+- Prefer spread over in-place mutation: `{...obj, key: v}`, `[...arr, x]`.
+- `functional/immutable-data` runs with typed linting, globally, with these
+  tuning options (not strictness relaxations):
+  - `ignoreNonConstDeclarations`: `let` is caught by `no-let`, not double-flagged.
+  - `ignoreClasses`: class field assignment is idiomatic OOP.
+  - `ignoreMapsAndSets`: `Map`/`Set` have no immutable API.
+- Severity today: `warn` (209 warnings, tracked in `docs/IMMUTABILITY_GAPS.md`).
+  Will promote to `error` once the hotspots drop (criteria in that doc).
+- WASM boundary payloads are already immutable by design.
+- `just agent-check` runs typecheck → lint → test as a post-change gate.
+
+## TSDoc coverage
+
+- Every exported function/type/constant needs a one-line TSDoc.
+- Exported functions additionally get `@param`, `@returns`, and `@example`
+  where practical.
+- Coverage is tracked in `docs/TSDOC_GAPS.md`. When you touch a file listed
+  there, document the symbols as part of your change — don't leave it for
+  later.
+
+---
+
 ## The 7-Phase Pre-Commit Pipeline
 
 `.husky/pre-commit` runs, in order:
@@ -150,6 +175,8 @@ New ignores require a one-line rationale added here.
 - `docs/TESTING_STRATEGY.md` — TDD approach, coverage targets
 - `docs/METRICS.md` — auto-generated test/coverage counts
 - `docs/CODEBASE_REVIEW.md` — known issues, P0/P1 backlog
+- `docs/IMMUTABILITY_GAPS.md` — ratchet tracker for `functional/*` warnings
+- `docs/TSDOC_GAPS.md` — ratchet tracker for undocumented exports
 - `.claude/CLAUDE.md` — mental models and data flow
 - `app/CLAUDE.md` — Next.js patterns
 - `scripts/CLAUDE.md` — tooling reference

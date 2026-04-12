@@ -1,57 +1,73 @@
 # Immutability Gaps
 
-Files with mutation patterns flagged by `eslint-plugin-functional`.
-Listed in priority order (core logic first, utilities last).
+Files with mutation patterns flagged by `eslint-plugin-functional`, applied
+globally with typed linting and tuned options (see `eslint.config.mjs`).
 
-**Current lint warnings: 106 (84 immutable-data, 22 no-let)**
+Listed in priority order (highest-count first).
 
-Enforced by `functional/immutable-data` and `functional/no-let` as warnings.
-Scoped to `lib/`, `app/api/`, and root `.ts` files (excluding tests, components, scripts).
+**Current lint warnings: 209 (150 immutable-data, 58 no-let, 1 other)**
+**Severity: `warn`. Will promote to `error` once hotspots are worked down.**
 
-## Pattern: Array Mutation (.push, .sort on const arrays)
+Tuning options in effect:
 
-These are the highest-count warnings. Most are `.push()` on locally-created arrays
-within a single function scope — acceptable but could use spread or functional builders.
+- `ignoreNonConstDeclarations: true` — mutations on `let`/`var` are caught by
+  `no-let`; don't double-flag.
+- `ignoreClasses: true` — class field assignment is idiomatic OOP, not drift.
+- `ignoreMapsAndSets: true` — `Map`/`Set` have no immutable API.
 
-- [ ] `lib/vcard.ts` — 17 warnings. Builds vCard string via `lines.push()`. Could use template literal or array spread.
-- [ ] `lib/selection.ts` — 9 warnings. `.push()` and `.sort()` on freshly-created arrays in `selectBulletsWithConstraints`, `applyDiversityConstraints`, `reorderByCompanyChronology`. Local arrays, not shared state.
-- [ ] `lib/analytics/errors.ts` — 9 warnings. Object construction with property assignment in error builder functions.
-- [ ] `lib/ai/prompts/prompt.ts` — 7 warnings. Array building for prompt sections.
-- [ ] `lib/ai/errors.ts` — 6 warnings. Array building in error formatting functions.
-- [ ] `lib/ai/output-parser.ts` — 3 warnings. `.push()` on result arrays during JSON parsing.
-- [ ] `lib/tags.ts` — 1 warning. Single mutation in tag metrics aggregation.
-- [ ] `lib/rate-limit.ts` — 1 warning. Map entry update in rate limiter.
+## Top hotspots — fix these first
 
-## Pattern: Object Property Assignment (building response objects)
+| Warnings | File                                            | Notes                                              |
+| -------: | ----------------------------------------------- | -------------------------------------------------- |
+|       18 | `app/api/resume/log/route.ts`                   | Analytics payload built via property assignment    |
+|       17 | `lib/vcard.ts`                                  | Builds vCard via `lines.push()` — template literal |
+|       17 | `app/page.tsx`                                  | Landing page state/DOM interactions                |
+|       14 | `components/data/ResumeDownload.tsx`            | Also file-disabled for `max-lines`                 |
+|       11 | `app/api/resume/select/__tests__/route.test.ts` | Test mutation — lower priority                     |
+|       10 | `lib/__tests__/rate-limit.test.ts`              | Test mutation — lower priority                     |
+|        9 | `lib/selection.ts`                              | `.push()`/`.sort()` on fresh arrays in selection   |
+|        9 | `lib/analytics/errors.ts`                       | Error object construction                          |
+|        8 | `scripts/transform-resume-data.ts`              | Data transformation script                         |
+|        8 | `app/api/resume/select/route.ts`                | Scoring loop accumulation                          |
+|        7 | `lib/utils.ts`                                  | Regex parsing loop state                           |
+|        7 | `lib/ai/prompts/prompt.ts`                      | Array building for prompt sections                 |
+|        6 | `lib/ai/output-parser.ts`                       | `.push()` on parse results                         |
+|        6 | `lib/ai/errors.ts`                              | Array building in error formatting                 |
 
-- [ ] `app/api/resume/log/route.ts` — 18 warnings. Builds analytics payload via property assignment. Highest-count file.
-- [ ] `app/api/resume/select/route.ts` — 5 warnings. Accumulation in scoring loop.
-- [ ] `app/api/debug/posthog/route.ts` — 4 warnings. PostHog event construction.
-- [ ] `app/api/resume/ai-select/route.ts` — 3 warnings. Response object building.
-- [ ] `app/api/contact-card/route.ts` — 3 warnings. vCard data construction.
-- [ ] `lib/posthog-server.ts` — 1 warning.
+## Patterns to watch
 
-## Pattern: Let Declarations (could be const)
+### Array mutation (`.push`, `.sort` on `const` arrays)
 
-- [ ] `lib/utils.ts:98,100` — `let lastIndex`, `let match` in regex parsing loop. Legitimate loop state.
-- [ ] `lib/ai/output-parser.ts:180,219,318` — `let` for parsing state variables.
-- [ ] `app/api/resume/select/route.ts:341,342,381` — `let` for loop accumulators.
-- [ ] `lib/ai/providers/index.ts` — 2 `let` declarations for provider selection logic.
-- [ ] `app/api/resume/ai-select/route.ts` — `let` for retry logic.
-- [ ] `app/api/contact-card/route.ts` — 1 `let`.
-- [ ] `proxy.ts` — 1 `let`.
+Most common pattern. Usually `.push()` on a locally-created array inside a
+single function scope — low risk, but noisy enough to prefer spread or
+functional builders (`reduce`, `flatMap`).
 
-## Out of Scope (excluded from lint)
+### Object property assignment (response building)
 
-These files are excluded from functional lint rules but listed for awareness:
+Heaviest in `app/api/resume/log/route.ts` and `lib/analytics/errors.ts`.
+Build the object up-front as one literal, or fold with `reduce`.
 
-- **Test files** (`**/__tests__/**`, `**/*.test.*`) — ~80 additional warnings from mock setup, test assertions, state tracking. Mutation in tests is idiomatic.
-- **React components** (`components/**`, `app/page.tsx`, `app/layout.tsx`) — ~40 additional warnings from state management, refs, event handlers. React patterns are inherently stateful.
-- **Scripts** (`scripts/**`) — ~15 additional warnings from data transformation utilities.
+### `let` declarations
 
-## Notes
+58 warnings for legitimate loop accumulators, regex parsing state, provider
+selection state. Often convertible to `const` + functional transforms, but
+not always worth it.
 
-- React component state mutations (useState setters, refs) are fine — don't refactor these.
-- WASM boundary code is already immutable by design (serialised payloads).
-- Local array `.push()` in a single function scope is low-risk. Prioritise shared-state mutations.
-- The `ignoreNonConstDeclarations`, `ignoreClasses`, and `ignoreMapsAndSets` options are enabled to reduce noise from idiomatic patterns.
+## Promotion criteria
+
+Promote `functional/immutable-data` from `warn` → `error` when:
+
+- Top 5 hotspots are under 3 warnings each, **and**
+- Total count is below 50, **and**
+- Remaining warnings have been triaged (this document updated with per-file
+  justifications for any legitimate "allow" cases).
+
+`functional/no-let` promotion gated separately on the same 50-total bar.
+
+## Out of scope (handled by config)
+
+- WASM boundary code is immutable by design (serialised payloads).
+- `Map`/`Set` mutation is ignored — no immutable alternative.
+- Class field assignment is ignored — OOP is the intent.
+- `let` mutations are counted once via `no-let`, not double-flagged by
+  `immutable-data`.
