@@ -1,5 +1,7 @@
 # Resumate
 
+See [AGENTS.md](../AGENTS.md) for durable agent rules (hooks, commit format, file-length caps, knip exceptions).
+
 Dynamic resume website for inbound career leads: experience explorer + intelligent resume curation and compilation to PDF download via WASM client-side.
 Data flow: compendium of experience -> bullets scored -> bullets selected with diversity -> PDF compiled client-side.
 
