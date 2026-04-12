@@ -1,9 +1,10 @@
 # TSDoc Coverage Gaps
 
-Files that need TSDoc added to exported functions/types, per CLAUDE.md conventions.
+Files that need TSDoc added to exported functions/types, per AGENTS.md conventions.
 Every exported symbol gets a one-line description.
 Exported functions/methods get: `@param`, `@returns`, and `@example` where practical.
 Exported types/constants/interfaces get a short description (no `@param`/`@returns`); add `@example` when practical.
+This tracker also includes selected non-exported route helpers where documentation improves API maintainability.
 
 **Current coverage: ~65% (60/93 exported symbols documented, 3 @example blocks)**
 

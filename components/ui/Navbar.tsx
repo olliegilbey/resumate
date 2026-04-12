@@ -5,10 +5,7 @@ import { usePathname } from "next/navigation";
 import { cn } from "@/lib/utils";
 import { Home, Briefcase, Eye } from "lucide-react";
 import { ThemeToggle } from "./ThemeToggle";
-import type { ResumeData } from "@/types/resume";
-import rawResumeData from "@/data/resume-data.json";
-
-const resumeData = rawResumeData as unknown as ResumeData;
+import resumeData from "@/data/resume-data.json";
 
 export function Navbar() {
   const pathname = usePathname();

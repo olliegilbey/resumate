@@ -1,8 +1,5 @@
 import { MetadataRoute } from "next";
-import type { ResumeData } from "@/types/resume";
-import rawResumeData from "@/data/resume-data.json";
-
-const resumeData = rawResumeData as unknown as ResumeData;
+import resumeData from "@/data/resume-data.json";
 
 /**
  * Dynamic robots.txt generation

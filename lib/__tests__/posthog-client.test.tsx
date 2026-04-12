@@ -246,7 +246,7 @@ describe("usePostHogResume", () => {
     result.current.initiated({
       generation_method: "heuristic",
       download_type: "resume_heuristic",
-      role_profile_id: "developer-relations",
+      role_profile_id: "developer-relations-lead",
       role_profile_name: "Developer Relations Lead",
     });
 
@@ -255,7 +255,7 @@ describe("usePostHogResume", () => {
       expect.objectContaining({
         generation_method: "heuristic",
         download_type: "resume_heuristic",
-        role_profile_id: "developer-relations",
+        role_profile_id: "developer-relations-lead",
         role_profile_name: "Developer Relations Lead",
       }),
     );
@@ -267,7 +267,7 @@ describe("usePostHogResume", () => {
     result.current.verified({
       generation_method: "heuristic",
       download_type: "resume_heuristic",
-      role_profile_id: "developer-relations",
+      role_profile_id: "developer-relations-lead",
       turnstile_duration_ms: 2500,
     });
 
@@ -276,7 +276,7 @@ describe("usePostHogResume", () => {
       expect.objectContaining({
         generation_method: "heuristic",
         download_type: "resume_heuristic",
-        role_profile_id: "developer-relations",
+        role_profile_id: "developer-relations-lead",
         turnstile_duration_ms: 2500,
       }),
     );
@@ -288,7 +288,7 @@ describe("usePostHogResume", () => {
     result.current.compiled({
       generation_method: "heuristic",
       download_type: "resume_heuristic",
-      role_profile_id: "developer-relations",
+      role_profile_id: "developer-relations-lead",
       bullet_count: 18,
       wasm_load_ms: 450,
       wasm_cached: false,
@@ -301,7 +301,7 @@ describe("usePostHogResume", () => {
       expect.objectContaining({
         generation_method: "heuristic",
         download_type: "resume_heuristic",
-        role_profile_id: "developer-relations",
+        role_profile_id: "developer-relations-lead",
         bullet_count: 18,
         wasm_load_ms: 450,
         wasm_cached: false,
@@ -317,7 +317,7 @@ describe("usePostHogResume", () => {
     result.current.compiled({
       generation_method: "heuristic",
       download_type: "resume_heuristic",
-      role_profile_id: "developer-relations",
+      role_profile_id: "developer-relations-lead",
       bullet_count: 18,
       wasm_load_ms: 5, // Much faster when cached
       wasm_cached: true,
@@ -342,7 +342,7 @@ describe("usePostHogResume", () => {
     result.current.downloaded({
       generation_method: "heuristic",
       download_type: "resume_heuristic",
-      role_profile_id: "developer-relations",
+      role_profile_id: "developer-relations-lead",
       role_profile_name: "Developer Relations Lead",
       bullet_count: 18,
       total_duration_ms: 3200,
@@ -353,7 +353,7 @@ describe("usePostHogResume", () => {
       expect.objectContaining({
         generation_method: "heuristic",
         download_type: "resume_heuristic",
-        role_profile_id: "developer-relations",
+        role_profile_id: "developer-relations-lead",
         role_profile_name: "Developer Relations Lead",
         bullet_count: 18,
         total_duration_ms: 3200,
@@ -367,7 +367,7 @@ describe("usePostHogResume", () => {
     result.current.error({
       generation_method: "heuristic",
       download_type: "resume_heuristic",
-      role_profile_id: "developer-relations",
+      role_profile_id: "developer-relations-lead",
       error_code: "AI_001",
       error_category: "ai",
       error_stage: "ai_selection",
@@ -396,7 +396,7 @@ describe("usePostHogResume", () => {
     result.current.error({
       generation_method: "heuristic",
       download_type: "resume_heuristic",
-      role_profile_id: "developer-relations",
+      role_profile_id: "developer-relations-lead",
       error_code: "WM_001",
       error_category: "wasm",
       error_stage: "wasm_load",
@@ -422,7 +422,7 @@ describe("usePostHogResume", () => {
     result.current.error({
       generation_method: "heuristic",
       download_type: "resume_heuristic",
-      role_profile_id: "developer-relations",
+      role_profile_id: "developer-relations-lead",
       error_code: "PDF_001",
       error_category: "pdf",
       error_stage: "pdf_generation",
@@ -447,7 +447,7 @@ describe("usePostHogResume", () => {
     result.current.cancelled({
       generation_method: "heuristic",
       download_type: "resume_heuristic",
-      role_profile_id: "developer-relations",
+      role_profile_id: "developer-relations-lead",
       stage: "turnstile",
       duration_ms: 3000,
     });
@@ -469,7 +469,7 @@ describe("usePostHogResume", () => {
     result.current.cancelled({
       generation_method: "heuristic",
       download_type: "resume_heuristic",
-      role_profile_id: "developer-relations",
+      role_profile_id: "developer-relations-lead",
       stage: "compiling",
       duration_ms: 1500,
     });

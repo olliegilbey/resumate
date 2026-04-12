@@ -268,7 +268,7 @@ describe("posthog-server", () => {
         "session-abc",
         "resume_downloaded",
         {
-          roleProfileId: "developer-relations",
+          roleProfileId: "developer-relations-lead",
           bulletCount: 24,
         },
         "198.51.100.1",
@@ -281,7 +281,7 @@ describe("posthog-server", () => {
         distinctId: "session-abc",
         event: "resume_downloaded",
         properties: {
-          roleProfileId: "developer-relations",
+          roleProfileId: "developer-relations-lead",
           bulletCount: 24,
           env: "production",
           is_server: true,
