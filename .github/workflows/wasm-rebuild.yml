@@ -1,0 +1,46 @@
+name: WASM Authoritative Rebuild
+
+# Backstop for the fast hash-check in ci.yml:wasm. This workflow does a full
+# wasm-pack build from sources and diffs the output against the committed
+# binaries. Catches any case where .wasm-build-hash was updated without an
+# actual rebuild, or where the build has become non-deterministic.
+#
+# Runs weekly (Mondays 06:00 UTC) plus on-demand via workflow_dispatch.
+# Failures are investigative signals — they do not block PRs.
+
+on:
+  schedule:
+    - cron: "0 6 * * 1"
+  workflow_dispatch:
+
+concurrency:
+  group: wasm-rebuild-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  rebuild:
+    name: Rebuild + drift check
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v5
+      - uses: dtolnay/rust-toolchain@stable
+        with:
+          targets: wasm32-unknown-unknown
+      - uses: Swatinem/rust-cache@v2
+        with:
+          workspaces: crates
+      - name: Install wasm-pack
+        run: cargo install wasm-pack --locked
+      - name: Build WASM from sources
+        # Invokes just wasm: downloads Typst fonts if missing, then
+        # wasm-pack build crates/resume-wasm --target web --release.
+        run: just wasm
+      - name: Assert no drift vs. committed binaries
+        run: |
+          if ! git diff --exit-code public/wasm/ .wasm-build-hash; then
+            echo "::error::Authoritative rebuild differs from committed WASM."
+            echo "Someone may have updated .wasm-build-hash without rebuilding,"
+            echo "or the build has become non-deterministic. Investigate."
+            exit 1
+          fi
+          echo "✅ Committed WASM matches authoritative rebuild"

@@ -41,6 +41,20 @@ jobs:
       - run: cargo clippy --all-targets -- -D warnings
       - run: cargo test --all
 
+  wasm:
+    name: WASM
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v5
+      - name: Verify WASM binaries are fresh
+        # Hash-only check — no Rust toolchain, no wasm-pack, runs in seconds.
+        # Fails if committed public/wasm/ is stale vs current sources.
+        # The weekly wasm-rebuild.yml workflow provides the authoritative backstop.
+        run: bash scripts/check-wasm.sh --verify
+      - name: Enforce WASM bundle size budget
+        # Defaults to 17 MB raw / 6.5 MB gzipped (matches justfile:14-16).
+        run: bash scripts/check-bundle-size.sh
+
   commitlint:
     name: Commitlint
     if: github.event_name == 'pull_request'
