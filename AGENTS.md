@@ -194,6 +194,8 @@ live in this file.
 
 ### Dependencies
 
+- `@commitlint/cli` — invoked by `.husky/commit-msg` via `bun x commitlint`;
+  knip can't trace dynamic shell invocations from git hooks
 - `@eslint/eslintrc` — transitively used by the `next/core-web-vitals` flat
   config bridge; knip can't see through it
 - `playwright` — reserved for upcoming E2E work, kept installed intentionally

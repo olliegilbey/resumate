@@ -17,7 +17,7 @@
     "types/resume.ts",
     "types/wasm.d.ts"
   ],
-  "ignoreDependencies": ["@eslint/eslintrc", "playwright", "postcss"],
+  "ignoreDependencies": ["@commitlint/cli", "@eslint/eslintrc", "playwright", "postcss"],
   "ignoreExportsUsedInFile": true,
   "ignoreBinaries": []
 }
