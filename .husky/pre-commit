@@ -9,6 +9,14 @@
 #
 # Skip only in emergency: git commit --no-verify
 
+# Husky's _/h wrapper invokes hooks with `sh -e` (dash on Linux), which
+# ignores the bash shebang and chokes on bash-only syntax below (arrays,
+# [[ ]], etc.). Re-exec under bash so the hook runs identically on
+# macOS (/bin/sh is bash-compatible) and Linux/CI sandboxes (dash).
+if [ -z "${BASH_VERSION:-}" ]; then
+  exec bash "$0" "$@"
+fi
+
 set -e  # Exit on first error
 
 # Colors
