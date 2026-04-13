@@ -6,8 +6,9 @@
  */
 
 import { createParseError, type ParseError } from "./errors";
-import { AI_BULLET_BUFFER } from "./prompts/prompt";
+import { AI_BULLET_BUFFER } from "./prompts/user-prompt";
 import type { SalaryInfo } from "./providers/types";
+import { validateSalary } from "./output-parser-salary";
 
 // Re-export SalaryInfo for backward compatibility
 export type { SalaryInfo } from "./providers/types";
@@ -77,100 +78,7 @@ export function extractJSON(raw: string): string | null {
   return null;
 }
 
-/**
- * ISO 4217 currency codes (common subset)
- */
-const ISO_4217_CURRENCIES = new Set([
-  "USD",
-  "EUR",
-  "GBP",
-  "JPY",
-  "CNY",
-  "CAD",
-  "AUD",
-  "CHF",
-  "HKD",
-  "SGD",
-  "SEK",
-  "NOK",
-  "DKK",
-  "NZD",
-  "MXN",
-  "BRL",
-  "INR",
-  "KRW",
-  "PLN",
-  "CZK",
-  "ILS",
-  "THB",
-  "PHP",
-  "MYR",
-  "IDR",
-  "ZAR",
-  "AED",
-  "SAR",
-  "TRY",
-  "RUB",
-]);
-
-/**
- * Validate salary structure with ISO 4217 currency validation
- */
-function validateSalary(
-  salary: unknown,
-): { valid: true; data: SalaryInfo } | { valid: false; error: string } {
-  if (salary === null || salary === undefined) {
-    return { valid: true, data: null as unknown as SalaryInfo };
-  }
-
-  if (typeof salary !== "object") {
-    return { valid: false, error: "salary must be an object or null" };
-  }
-
-  const s = salary as Record<string, unknown>;
-
-  // Validate currency is non-empty string
-  if (typeof s.currency !== "string" || s.currency.length === 0) {
-    return { valid: false, error: "salary.currency must be a non-empty string" };
-  }
-
-  // Normalize and validate ISO 4217 currency code
-  const currencyUpper = s.currency.toUpperCase();
-  if (!ISO_4217_CURRENCIES.has(currencyUpper)) {
-    return {
-      valid: false,
-      error: `salary.currency must be ISO 4217 (USD, GBP, EUR, etc.). Got: ${s.currency}`,
-    };
-  }
-
-  // Validate period
-  const validPeriods = ["annual", "monthly", "hourly", "daily", "weekly"];
-  if (!validPeriods.includes(s.period as string)) {
-    return {
-      valid: false,
-      error: `salary.period must be one of: ${validPeriods.join(", ")}`,
-    };
-  }
-
-  // Validate min/max (optional but must be numbers if present)
-  if (s.min !== undefined && typeof s.min !== "number") {
-    return { valid: false, error: "salary.min must be a number" };
-  }
-  if (s.max !== undefined && typeof s.max !== "number") {
-    return { valid: false, error: "salary.max must be a number" };
-  }
-
-  return {
-    valid: true,
-    data: {
-      min: s.min as number | undefined,
-      max: s.max as number | undefined,
-      currency: currencyUpper, // Normalized to uppercase
-      period: s.period as SalaryInfo["period"],
-    },
-  };
-}
-
+// Salary + ISO 4217 validation moved to ./output-parser-salary.ts
 // Note: Diversity validation removed - now handled server-side in route.ts
 // This allows AI to score freely, with server applying final constraints
 
@@ -369,53 +277,4 @@ Got: ${typeof parsed.reasoning === "string" ? "(empty string)" : typeof parsed.r
   };
 }
 
-/**
- * Build hierarchy map from compendium for diversity validation
- */
-export function buildBulletHierarchy(
-  experience: Array<{
-    id: string;
-    children: Array<{
-      id: string;
-      children: Array<{ id: string }>;
-    }>;
-  }>,
-): BulletHierarchy {
-  const hierarchy: BulletHierarchy = {};
-
-  for (const company of experience) {
-    for (const position of company.children) {
-      for (const bullet of position.children) {
-        hierarchy[bullet.id] = {
-          companyId: company.id,
-          positionId: position.id,
-        };
-      }
-    }
-  }
-
-  return hierarchy;
-}
-
-/**
- * Extract all bullet IDs from compendium
- */
-export function extractAllBulletIds(
-  experience: Array<{
-    children: Array<{
-      children: Array<{ id: string }>;
-    }>;
-  }>,
-): Set<string> {
-  const ids = new Set<string>();
-
-  for (const company of experience) {
-    for (const position of company.children) {
-      for (const bullet of position.children) {
-        ids.add(bullet.id);
-      }
-    }
-  }
-
-  return ids;
-}
+// Hierarchy helpers moved to ./output-parser-hierarchy.ts

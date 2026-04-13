@@ -2,11 +2,10 @@ import { describe, it, expect } from "vitest";
 import {
   parseAIOutput,
   extractJSON,
-  buildBulletHierarchy,
-  extractAllBulletIds,
   type BulletHierarchy,
   type SelectionConfig,
 } from "../output-parser";
+import { buildBulletHierarchy, extractAllBulletIds } from "../output-parser-hierarchy";
 import { formatRustStyleError, formatSimplifiedError, AISelectionError } from "../errors";
 
 // Test fixtures

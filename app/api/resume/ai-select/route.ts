@@ -9,19 +9,14 @@
 
 import { NextRequest, NextResponse } from "next/server";
 import { checkRateLimit, getClientIP } from "@/lib/rate-limit";
-import { selectBulletsWithAI, FALLBACK_ORDER } from "@/lib/ai/providers";
-import { formatPromptForAnalytics } from "@/lib/ai/prompts/prompt";
+import { FALLBACK_ORDER } from "@/lib/ai/providers";
+import { formatPromptForAnalytics } from "@/lib/ai/prompts/analytics";
 import type { AIProvider } from "@/lib/ai/providers/types";
 import { AISelectionError } from "@/lib/ai/errors";
 import { captureEvent, flushEvents } from "@/lib/posthog-server";
 import { ANALYTICS_EVENTS } from "@/lib/analytics/events";
-import type { ResumeData } from "@/types/resume";
-import {
-  selectBulletsWithConstraints,
-  reorderByCompanyChronology,
-  DEFAULT_SELECTION_CONFIG,
-  type SelectedBullet,
-} from "@/lib/selection";
+import { DEFAULT_SELECTION_CONFIG } from "@/lib/selection";
+import { loadResumeData, runAISelectionPipeline } from "./flow";
 
 // WARNING: In-memory token replay prevention is lost on serverless cold starts.
 // For production at scale, consider storing used tokens in Redis/KV with TTL
@@ -165,30 +160,13 @@ export async function POST(request: NextRequest) {
       minPerCompany: config?.minPerCompany ?? DEFAULT_SELECTION_CONFIG.minPerCompany,
     };
 
-    // Call AI provider with retry + fallback
-    // AI scores many bullets, server applies diversity constraints
-    const startTime = Date.now();
-    const result = await selectBulletsWithAI(
-      {
-        jobDescription,
-        compendium: resumeData,
-        maxBullets: selectionConfig.maxBullets, // Passed to AI for context
-      },
-      provider as AIProvider,
-    );
-    const aiDuration = Date.now() - startTime;
-
-    // Build score map from AI response
-    const scoreMap = new Map<string, number>();
-    for (const b of result.bullets) {
-      scoreMap.set(b.id, b.score);
-    }
-
-    // Apply diversity constraints server-side (ported from Rust)
-    const selectedRaw = selectBulletsWithConstraints(resumeData, scoreMap, selectionConfig);
-
-    // Reorder to maintain company chronology (companies in resume order, bullets by score)
-    const selected = reorderByCompanyChronology(selectedRaw, resumeData);
+    // Call AI provider, apply diversity constraints, and reorder by chronology
+    const { selected, aiResult, aiDuration } = await runAISelectionPipeline({
+      jobDescription,
+      resumeData,
+      provider: provider as AIProvider,
+      selectionConfig,
+    });
 
     // Build analytics data (snake_case per spec)
     const bullets_by_company: Record<string, number> = {};
@@ -204,7 +182,10 @@ export async function POST(request: NextRequest) {
     }
 
     // Format prompt for analytics (replaces system prompt + JD with placeholders)
-    const aiPromptForAnalytics = await formatPromptForAnalytics(result.promptUsed, jobDescription);
+    const aiPromptForAnalytics = await formatPromptForAnalytics(
+      aiResult.promptUsed,
+      jobDescription,
+    );
 
     // Track resume_prepared event (unified for AI and heuristic)
     // NOTE: PII (email, linkedin, client_ip, job_description) is intentionally captured.
@@ -219,14 +200,14 @@ export async function POST(request: NextRequest) {
         linkedin,
         generation_method: "ai",
         download_type: "resume_ai",
-        ai_provider: result.provider,
+        ai_provider: aiResult.provider,
         job_description: jobDescription, // Full JD for n8n automation
         job_description_length: jobDescription.length,
-        job_title: result.jobTitle,
-        extracted_salary_min: result.salary?.min,
-        extracted_salary_max: result.salary?.max,
-        salary_currency: result.salary?.currency,
-        salary_period: result.salary?.period,
+        job_title: aiResult.jobTitle,
+        extracted_salary_min: aiResult.salary?.min,
+        extracted_salary_max: aiResult.salary?.max,
+        salary_currency: aiResult.salary?.currency,
+        salary_period: aiResult.salary?.period,
         bullet_ids,
         bullet_count: selected.length,
         bullets_by_company,
@@ -237,10 +218,10 @@ export async function POST(request: NextRequest) {
           max_per_position: selectionConfig.maxPerPosition,
         },
         ai_response_ms: aiDuration,
-        tokens_used: result.tokensUsed,
-        reasoning: result.reasoning,
+        tokens_used: aiResult.tokensUsed,
+        reasoning: aiResult.reasoning,
         ai_prompt: aiPromptForAnalytics, // Full prompt with system hash placeholder
-        ai_attempt_count: result.attemptCount, // 1 = success first try, >1 = retries
+        ai_attempt_count: aiResult.attemptCount, // 1 = success first try, >1 = retries
         client_ip: clientIP,
       },
       clientIP,
@@ -253,12 +234,12 @@ export async function POST(request: NextRequest) {
         success: true,
         selected,
         count: selected.length,
-        reasoning: result.reasoning,
-        jobTitle: result.jobTitle,
-        salary: result.salary,
+        reasoning: aiResult.reasoning,
+        jobTitle: aiResult.jobTitle,
+        salary: aiResult.salary,
         metadata: {
-          provider: result.provider,
-          tokensUsed: result.tokensUsed,
+          provider: aiResult.provider,
+          tokensUsed: aiResult.tokensUsed,
           duration: aiDuration,
         },
         config: selectionConfig,
@@ -285,19 +266,3 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ error: "Internal server error" }, { status: 500, headers });
   }
 }
-
-/**
- * Load resume data from build cache
- */
-async function loadResumeData(): Promise<ResumeData | null> {
-  try {
-    const data = await import("@/data/resume-data.json");
-    return (data.default || data) as unknown as ResumeData;
-  } catch (error) {
-    console.error("[AI Select] Failed to load resume data:", error);
-    return null;
-  }
-}
-
-// Selection logic in lib/selection.ts
-// Uses selectBulletsWithConstraints + reorderByCompanyChronology

@@ -13,8 +13,10 @@ import type {
   SelectionResult,
 } from "./types";
 import { AI_MODELS } from "./types";
-import { buildUserPrompt, loadSystemPrompt } from "../prompts/prompt";
-import { parseAIOutput, buildBulletHierarchy, extractAllBulletIds } from "../output-parser";
+import { buildUserPrompt } from "../prompts/user-prompt";
+import { loadSystemPrompt } from "../prompts/system-prompt";
+import { parseAIOutput } from "../output-parser";
+import { buildBulletHierarchy, extractAllBulletIds } from "../output-parser-hierarchy";
 import { AISelectionError, type ParseError } from "../errors";
 
 type AnthropicProviderKey = "claude-sonnet" | "claude-haiku";
