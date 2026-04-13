@@ -32,9 +32,9 @@ const eslintConfig = defineConfig([
   {
     rules: {
       "no-console": ["error", { allow: ["warn", "error"] }],
-      // TODO(guardrails): tighten to 250 once ResumeDownload.tsx and the large
-      // route handlers are split into focused modules.
-      "max-lines": ["error", { max: 500, skipBlankLines: true, skipComments: true }],
+      // Keep modules focused — one responsibility, < 250 effective lines.
+      // Tests are exempt (see override below).
+      "max-lines": ["error", { max: 250, skipBlankLines: true, skipComments: true }],
     },
   },
   // Test files: allow any length; ban committed .only.

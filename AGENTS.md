@@ -85,10 +85,8 @@ Subjects are lowercase, imperative, no trailing period. Keep the subject under
 
 ### 6. File length
 
-- **Max 500 lines per file** (tests exempt). TODO: tighten to 250.
-- Only known violator: `components/data/ResumeDownload.tsx` (file-level
-  `/* eslint-disable max-lines */` with a TODO to split into subcomponents).
-- Enforced by ESLint `max-lines`.
+- **Max 250 effective lines per file** (blank lines + comments skipped, tests exempt).
+- Enforced by ESLint `max-lines`. No `eslint-disable max-lines` in source — split instead.
 
 ### 7. No `console.log`
 
