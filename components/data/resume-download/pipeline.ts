@@ -50,11 +50,12 @@ export async function fetchAIBullets(params: {
       retriesAttempted?: number;
       userMessage?: string;
       message?: string;
+      error?: string;
     };
     if (error.retriesAttempted && error.retriesAttempted > 0) {
       params.onRetryAttempt(error.retriesAttempted);
     }
-    throw new Error(error.userMessage || error.message || "AI selection failed");
+    throw new Error(error.userMessage || error.message || error.error || "AI selection failed");
   }
   return (await response.json()) as SelectApiResponse;
 }
@@ -185,8 +186,13 @@ export function triggerPdfDownload(
   const safeRoleName = roleName.toLowerCase().replace(/\s+/g, "-").slice(0, 30);
   const timestamp = new Date().toISOString().replace(/[:.]/g, "-").slice(0, 19);
   link.download = `${safeFullName}-${safeRoleName}-${timestamp}.pdf`;
+  document.body.appendChild(link);
   link.click();
-  URL.revokeObjectURL(url);
+  link.remove();
+  // Defer revocation to the next event-loop tick so the browser has a chance
+  // to start reading the Blob before the URL is invalidated. Immediate revoke
+  // races the async download and can fail (notably in Firefox with larger files).
+  setTimeout(() => URL.revokeObjectURL(url), 0);
   return link.download;
 }
 
