@@ -87,8 +87,8 @@ export async function fetchHeuristicBullets(params: {
     }),
   });
   if (!response.ok) {
-    const error = (await response.json()) as { message?: string };
-    throw new Error(error.message || "Failed to select bullets");
+    const error = (await response.json()) as { error?: string; message?: string };
+    throw new Error(error.error || error.message || "Failed to select bullets");
   }
   return (await response.json()) as SelectApiResponse;
 }
