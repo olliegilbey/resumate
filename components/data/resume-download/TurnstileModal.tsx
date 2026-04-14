@@ -67,6 +67,13 @@ export function TurnstileModal(props: TurnstileModalProps) {
 
   const isCompiling = status === "loading_wasm" || status === "generating";
   const showProgressBody = verifiedToken || isCompiling;
+  // When the pipeline has errored, show the error panel alone and do NOT
+  // render the Turnstile widget. A fresh widget mount auto-executes the
+  // challenge, which calls onSuccess → re-enters useDownloadExecution → loops
+  // on persistent server failures (e.g. unavailable AI model) and burns
+  // through the per-IP rate limit. The user clicks "Try again" to explicitly
+  // re-mount the widget (handleRetry flips status back to "idle").
+  const isErrored = status === "error";
 
   return (
     <div
@@ -88,7 +95,7 @@ export function TurnstileModal(props: TurnstileModalProps) {
           <X className="h-5 w-5" />
         </button>
 
-        {!verifiedToken && (
+        {!verifiedToken && !isErrored && (
           <div className="text-center mb-6">
             <h3 className="text-2xl font-semibold text-slate-900 dark:text-slate-100 mb-2">
               Verify You&apos;re Human
@@ -114,7 +121,7 @@ export function TurnstileModal(props: TurnstileModalProps) {
           </div>
         )}
 
-        {showProgressBody ? (
+        {isErrored ? null : showProgressBody ? (
           isJobDescriptionMode && aiStage !== "idle" ? (
             <div className="py-4">
               <AIProgressIndicator
