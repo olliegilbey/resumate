@@ -12,7 +12,6 @@
  */
 
 import { useEffect, useRef, type RefObject } from "react";
-import type { TurnstileInstance } from "@marsidev/react-turnstile";
 
 import type { ResumeData, RoleProfile } from "@/types/resume";
 import type { AIProvider } from "@/lib/ai/providers/types";
@@ -38,7 +37,6 @@ interface UseDownloadExecutionParams {
   linkedin: string;
   analytics: Analytics;
   flowStartRef: RefObject<number>;
-  turnstileRef: RefObject<TurnstileInstance | null>;
   setDownloadInitiated: (value: boolean) => void;
   setStatus: (value: DownloadStatus) => void;
   setAiStage: (value: AIProgressStage) => void;
@@ -89,7 +87,6 @@ export function useDownloadExecution(params: UseDownloadExecutionParams) {
     linkedin,
     analytics,
     flowStartRef,
-    turnstileRef,
     setDownloadInitiated,
     setStatus,
     setAiStage,
@@ -192,8 +189,14 @@ export function useDownloadExecution(params: UseDownloadExecutionParams) {
           });
         }
 
+        // Do NOT auto-reset the Turnstile widget here. With invisible/auto
+        // challenges, reset() typically re-fires onSuccess synchronously,
+        // which would re-enter this effect with a fresh token and loop on a
+        // persistent server-side failure (e.g. unavailable AI model),
+        // burning through the per-IP rate limit. The user-facing "Try again"
+        // button in TurnstileModal already calls handleRetry, which performs
+        // an explicit reset + state clear.
         setVerifiedToken(null);
-        turnstileRef.current?.reset();
       }
     }, 300);
 
@@ -213,7 +216,6 @@ export function useDownloadExecution(params: UseDownloadExecutionParams) {
     jobDescription,
     aiProvider,
     flowStartRef,
-    turnstileRef,
     setAiRetryCount,
     setAiStage,
     setDownloadInitiated,

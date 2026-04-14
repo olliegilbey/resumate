@@ -141,7 +141,6 @@ export function ResumeDownload({ resumeData }: ResumeDownloadProps) {
     linkedin,
     analytics,
     flowStartRef,
-    turnstileRef,
     setDownloadInitiated,
     setStatus,
     setAiStage,
