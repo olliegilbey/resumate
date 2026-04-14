@@ -318,8 +318,10 @@ agent-check:
 check-line-caps:
     #!/usr/bin/env bash
     set -e
-    HITS=$(git ls-files '*.ts' '*.tsx' ':!:**/__tests__/**' ':!:**/*.test.ts' ':!:**/*.test.tsx' \
-      | xargs grep -l "eslint-disable.*max-lines" 2>/dev/null || true)
+    HITS=$(git ls-files -z '*.ts' '*.tsx' '*.js' '*.jsx' \
+      ':!:**/__tests__/**' \
+      ':!:**/*.test.ts' ':!:**/*.test.tsx' ':!:**/*.test.js' ':!:**/*.test.jsx' \
+      | xargs -0 grep -lE "eslint-disable.*max-lines" 2>/dev/null || true)
     if [ -n "$HITS" ]; then
       echo "❌ Found eslint-disable max-lines in source files — split the module instead:"
       echo "$HITS"

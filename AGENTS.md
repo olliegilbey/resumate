@@ -181,12 +181,21 @@ live in this file.
   in per-test setup across multiple suites
 - `lib/analytics/types.ts` — shared analytics type definitions re-exported
   from sibling files
-- `lib/analytics/errors.ts` — public error helpers kept for downstream
-  consumers even when currently unused internally
+- `lib/analytics/types-base.ts` — base analytics types consumed via
+  type-only re-exports from `lib/analytics/types.ts`; knip treats the
+  indirection as unused
+- `lib/analytics/event-properties-client.ts` — client-side event-property
+  interfaces composed into `EventPropertiesMap` in `lib/analytics/types.ts`;
+  consumed via typed re-export only
+- `lib/analytics/event-properties-server.ts` — server-side event-property
+  interfaces for API routes, same re-export pattern as the client file
 - `lib/analytics/events.ts` — PostHog event type catalogue exported for
   analytics authoring
 - `lib/posthog-client.tsx` — `usePostHogContactCard` is intentionally
   exported for future call sites
+- `lib/posthog-hooks.tsx` — domain hooks (`usePostHogResume`,
+  `usePostHogContactCard`) kept as the public analytics surface; knip can't
+  trace all runtime entry points
 - `lib/vcard.ts` — `generateAndDownloadVCard` is a public helper; knip can't
   trace the lazy import path from `components/data`
 

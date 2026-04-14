@@ -115,8 +115,24 @@ function resolveRoleProfile(ctx: PipelineContext, selectData: SelectApiResponse)
 /**
  * Run the complete post-verification download pipeline.
  *
- * On success: triggers the PDF download and schedules `closeModal()` after a
- * short delay. On failure: rethrows so the caller can surface error analytics.
+ * Orchestrates: bullet selection → WASM load → PDF generation → download →
+ * analytics + server logging → modal close. Callers pass in their analytics
+ * hook, state setters, and an `errorStageRef` so the taxonomy stage is
+ * stamped at each step before awaits.
+ *
+ * @param ctx - Pipeline context: state, setters, analytics callbacks, session
+ *   identifiers, and the error-stage ref.
+ * @returns Promise that resolves after the PDF download has been triggered.
+ *   Rejects with the underlying error on any stage failure so the caller can
+ *   surface error analytics.
+ * @example
+ * ```ts
+ * try {
+ *   await runDownloadPipeline(ctx);
+ * } catch (err) {
+ *   // ctx.errorStageRef.current now names the failed stage
+ * }
+ * ```
  */
 export async function runDownloadPipeline(ctx: PipelineContext): Promise<void> {
   const startTime = Date.now();

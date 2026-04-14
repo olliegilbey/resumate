@@ -94,6 +94,14 @@ export interface NormalizedLogBody {
  * Collapse snake_case + legacy camelCase fields into a single normalized body.
  *
  * Snake_case wins when both are present.
+ *
+ * @param body - Raw JSON decoded from the `/api/resume/log` request.
+ * @returns A canonical `NormalizedLogBody` with one key per logical field.
+ * @example
+ * ```ts
+ * normalizeRequestBody({ sessionId: "abc", wasmLoadDuration: 42 });
+ * // → { session_id: "abc", wasm_load_ms: 42, ... }
+ * ```
  */
 export function normalizeRequestBody(body: LogRequestBody): NormalizedLogBody {
   return {

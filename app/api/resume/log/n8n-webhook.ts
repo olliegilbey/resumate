@@ -14,6 +14,13 @@
  * (dev/local). Rethrows on non-2xx so callers can attach error logging.
  *
  * @param payload - Arbitrary JSON body; include an `event` key for n8n routing.
+ * @returns Promise that resolves after the webhook returns 2xx, or immediately
+ *   when the webhook isn't configured. Rejects (rethrows the underlying error)
+ *   on non-2xx responses and network failures.
+ * @example
+ * ```ts
+ * await triggerN8nWebhook({ event: "resume_download_notified", email: hash });
+ * ```
  */
 export async function triggerN8nWebhook(payload: Record<string, unknown>): Promise<void> {
   const webhookUrl = process.env.N8N_WEBHOOK_URL;

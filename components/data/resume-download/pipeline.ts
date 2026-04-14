@@ -17,6 +17,12 @@ import type { SelectApiResponse } from "./types";
  *
  * Reads `retriesAttempted` from error bodies so the caller can show a
  * "retrying" state before throwing.
+ *
+ * @param params - Request parameters (job description, provider, Turnstile
+ *   token, optional contact info, session id) plus an `onRetryAttempt`
+ *   callback invoked when the server reports server-side retries.
+ * @returns The decoded `SelectApiResponse`.
+ * @throws Error with the server's `userMessage`/`message` on non-2xx.
  */
 export async function fetchAIBullets(params: {
   jobDescription: string;
@@ -55,6 +61,11 @@ export async function fetchAIBullets(params: {
 
 /**
  * Call the heuristic selection endpoint.
+ *
+ * @param params - Role profile id, Turnstile token, optional contact info,
+ *   session id.
+ * @returns The decoded `SelectApiResponse`.
+ * @throws Error with the server's `message` on non-2xx.
  */
 export async function fetchHeuristicBullets(params: {
   roleProfileId: string;
@@ -85,7 +96,10 @@ export async function fetchHeuristicBullets(params: {
  * Inject the Typst WASM loader script (idempotent) and wait up to 10s for
  * `window.__wasmReady`.
  *
- * Resolves once WASM is ready; rejects with a user-facing error on timeout.
+ * @returns Promise that resolves once WASM is ready on `window`.
+ * @throws Error with a user-facing message on 10s timeout. Side-effects:
+ *   appends a `<script type="module" data-wasm-loader>` tag to `document.head`
+ *   if the module hasn't loaded yet.
  */
 export async function ensureWasmLoaded(): Promise<void> {
   if (!window.__wasmReady) {
@@ -125,6 +139,9 @@ export async function ensureWasmLoaded(): Promise<void> {
 /**
  * Validate + compile the resume payload to a PDF byte array via WASM.
  *
+ * @param payload - `GenerationPayload` produced by the selection pipeline.
+ * @param isDevMode - Passes through to the Typst compiler's debug flag.
+ * @returns The compiled PDF bytes as a `Uint8Array`.
  * @throws If validation fails or the Typst compiler is not initialised.
  */
 export function generatePdfBytes(payload: unknown, isDevMode: boolean): Uint8Array {
@@ -149,6 +166,11 @@ export function generatePdfBytes(payload: unknown, isDevMode: boolean): Uint8Arr
 /**
  * Trigger a browser download for a PDF byte array and return the generated
  * filename so callers can log it.
+ *
+ * @param pdfBytes - PDF byte array from `generatePdfBytes`.
+ * @param fullName - User's full name (used in the filename, spaces → `-`).
+ * @param roleName - Role profile name (sluggified to 30 chars).
+ * @returns The generated `.pdf` filename triggered for download.
  */
 export function triggerPdfDownload(
   pdfBytes: Uint8Array,
@@ -170,7 +192,10 @@ export function triggerPdfDownload(
 
 /**
  * Fire-and-forget POST to `/api/resume/log` for generation/download/failure
- * events.
+ * events. Errors are logged to console; the promise is intentionally not
+ * awaited so the UI stays responsive.
+ *
+ * @param body - JSON body; must include an `event` key naming the log entry.
  */
 export function postLogEvent(body: Record<string, unknown>): void {
   fetch("/api/resume/log", {
