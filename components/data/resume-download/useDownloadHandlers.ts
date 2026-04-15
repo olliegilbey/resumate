@@ -70,6 +70,25 @@ function deriveCancelStage(
 /**
  * Build the `{handleTurnstileSuccess, handleTurnstileError, handleTurnstileExpire,
  * handleCloseModal, handleRetry}` bundle wired up to analytics + state setters.
+ *
+ * @param params - {@link UseDownloadHandlersParams} bundle of analytics, UI
+ *   state, and setters the hook closes over. All fields are required; the hook
+ *   does not own any state itself.
+ * @returns An object with five memoised callbacks:
+ *   - `handleTurnstileSuccess(token)` — accept a verified Turnstile token,
+ *     clear errors, and fire the `verified` analytics event.
+ *   - `handleTurnstileError()` — mark the flow errored and report `TN_002`.
+ *   - `handleTurnstileExpire()` — mark the flow errored, clear the token, and
+ *     report `TN_001`.
+ *   - `handleCloseModal()` — reset every per-attempt state field and fire the
+ *     `cancelled` analytics event when the user dismisses the modal.
+ *   - `handleRetry()` — flip status back to `"idle"` so the Turnstile widget
+ *     can re-mount and the pipeline can run again.
+ * @example
+ * ```tsx
+ * const handlers = useDownloadHandlers({ analytics, status, ...setters });
+ * <TurnstileModal onSuccess={handlers.handleTurnstileSuccess} onRetry={handlers.handleRetry} />
+ * ```
  */
 export function useDownloadHandlers(params: UseDownloadHandlersParams) {
   const {
