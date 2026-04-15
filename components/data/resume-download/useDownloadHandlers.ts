@@ -96,6 +96,18 @@ export function useDownloadHandlers(params: UseDownloadHandlersParams) {
 
   const handleTurnstileSuccess = useCallback(
     (token: string) => {
+      // Defense-in-depth: never resurrect a failed flow from a Turnstile
+      // callback. The modal hides the widget while `status === "error"`, so
+      // this branch should not be reachable in normal use — but a token
+      // expiry auto-refresh race (or a future regression in the modal gate)
+      // could fire `onSuccess` post-error. Blocking here keeps the useEffect
+      // guard in useDownloadExecution (`status === "error"`) from being
+      // silently bypassed. User must click "Try again" (handleRetry flips
+      // status to "idle") to proceed.
+      if (status === "error") {
+        console.warn("Ignoring Turnstile success: flow is in error state");
+        return;
+      }
       console.warn("Turnstile verified, token ready");
       setVerifiedToken(token);
       setStatus("idle");
@@ -114,6 +126,7 @@ export function useDownloadHandlers(params: UseDownloadHandlersParams) {
       });
     },
     [
+      status,
       analytics,
       selectedRoleId,
       jobDescription,
