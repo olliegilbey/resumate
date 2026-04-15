@@ -13,6 +13,36 @@ import type { AIProvider } from "@/lib/ai/providers/types";
 import type { SelectApiResponse } from "./types";
 
 /**
+ * Shape of the error payload both selection endpoints return. All four
+ * fields are optional so callers can fall back when any are missing.
+ */
+interface SelectionErrorBody {
+  retriesAttempted?: number;
+  userMessage?: string;
+  message?: string;
+  error?: string;
+}
+
+/**
+ * Safely read a non-OK response body as JSON, falling back to plain text
+ * or `response.statusText`. Protects callers from the `response.json()`
+ * throw when upstream (e.g. Vercel edge errors) returns HTML or empty.
+ *
+ * @param response - The non-OK `Response` to drain.
+ * @returns A normalized {@link SelectionErrorBody} — `message` holds the
+ *   text fallback when the body isn't JSON.
+ */
+async function readErrorBody(response: Response): Promise<SelectionErrorBody> {
+  const contentType = response.headers?.get?.("content-type") ?? "";
+  if (!contentType || contentType.includes("application/json")) {
+    const parsed = await response.json?.().catch(() => null);
+    if (parsed && typeof parsed === "object") return parsed as SelectionErrorBody;
+  }
+  const text = (await response.text?.().catch(() => "")) ?? "";
+  return { message: text || response.statusText };
+}
+
+/**
  * Call the AI selection endpoint.
  *
  * Reads `retriesAttempted` from error bodies so the caller can show a
@@ -46,12 +76,7 @@ export async function fetchAIBullets(params: {
     }),
   });
   if (!response.ok) {
-    const error = (await response.json()) as {
-      retriesAttempted?: number;
-      userMessage?: string;
-      message?: string;
-      error?: string;
-    };
+    const error = await readErrorBody(response);
     if (error.retriesAttempted && error.retriesAttempted > 0) {
       params.onRetryAttempt(error.retriesAttempted);
     }
@@ -87,15 +112,26 @@ export async function fetchHeuristicBullets(params: {
     }),
   });
   if (!response.ok) {
-    const error = (await response.json()) as { error?: string; message?: string };
+    const error = await readErrorBody(response);
     throw new Error(error.error || error.message || "Failed to select bullets");
   }
   return (await response.json()) as SelectApiResponse;
 }
 
 /**
- * Inject the Typst WASM loader script (idempotent) and wait up to 10s for
- * `window.__wasmReady`.
+ * Shared promise so concurrent callers of {@link ensureWasmLoaded} observe
+ * a single loader-script injection + readiness poll. Without this, two
+ * simultaneous download attempts could each append a `<script>` tag and
+ * race the `window.__wasmReady` flip.
+ *
+ * Cleared back to `null` when the promise resolves so post-error retries
+ * can re-enter the loader.
+ */
+let wasmLoadPromise: Promise<void> | null = null;
+
+/**
+ * Inject the Typst WASM loader script (idempotent, concurrency-safe) and
+ * wait up to 10s for `window.__wasmReady`.
  *
  * @returns Promise that resolves once WASM is ready on `window`.
  * @throws Error with a user-facing message on 10s timeout. Side-effects:
@@ -103,12 +139,22 @@ export async function fetchHeuristicBullets(params: {
  *   if the module hasn't loaded yet.
  */
 export async function ensureWasmLoaded(): Promise<void> {
-  if (!window.__wasmReady) {
-    console.warn("🔧 Loading WASM module...");
-    const script = document.createElement("script");
-    script.type = "module";
-    script.setAttribute("data-wasm-loader", "true");
-    script.textContent = `
+  if (window.__wasmReady) {
+    console.warn("✅ WASM already loaded from cache");
+    return;
+  }
+  if (wasmLoadPromise) {
+    await wasmLoadPromise;
+    return;
+  }
+  wasmLoadPromise = new Promise<void>((resolve, reject) => {
+    const alreadyInjected = document.querySelector('script[data-wasm-loader="true"]');
+    if (!alreadyInjected) {
+      console.warn("🔧 Loading WASM module...");
+      const script = document.createElement("script");
+      script.type = "module";
+      script.setAttribute("data-wasm-loader", "true");
+      script.textContent = `
       import init, { generate_pdf_typst, init_panic_hook, validate_payload_json } from '/wasm/resume_wasm.js';
       await init('/wasm/resume_wasm_bg.wasm');
       init_panic_hook();
@@ -117,12 +163,8 @@ export async function ensureWasmLoaded(): Promise<void> {
       window.__generatePdfTypst = generate_pdf_typst;
       window.__validatePayloadJson = validate_payload_json;
     `;
-    document.head.appendChild(script);
-  } else {
-    console.warn("✅ WASM already loaded from cache");
-  }
-
-  await new Promise<void>((resolve, reject) => {
+      document.head.appendChild(script);
+    }
     const timeout = setTimeout(() => {
       clearInterval(checkReady);
       reject(new Error("WASM module failed to load — please refresh and try again"));
@@ -134,7 +176,13 @@ export async function ensureWasmLoaded(): Promise<void> {
         resolve();
       }
     }, 100);
+  }).finally(() => {
+    // Allow re-entry on the next attempt if this one rejected before
+    // __wasmReady flipped. On success the early-return at the top of the
+    // function short-circuits without touching the promise.
+    wasmLoadPromise = null;
   });
+  await wasmLoadPromise;
 }
 
 /**

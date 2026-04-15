@@ -218,11 +218,17 @@ export function useDownloadHandlers(params: UseDownloadHandlersParams) {
   ]);
 
   const handleRetry = useCallback(() => {
+    // Clear every per-attempt UI state so the next run starts from a clean
+    // slate. Without resetting aiStage/aiRetryCount the progress indicator
+    // would carry stale "retrying" / "error" labels into the fresh attempt,
+    // and the retry counter would lie about its budget.
     setErrorMessage(null);
     setStatus("idle");
     setVerifiedToken(null);
+    setAiStage("idle");
+    setAiRetryCount(0);
     turnstileRef.current?.reset();
-  }, [setErrorMessage, setStatus, setVerifiedToken, turnstileRef]);
+  }, [setErrorMessage, setStatus, setVerifiedToken, setAiStage, setAiRetryCount, turnstileRef]);
 
   return {
     handleTurnstileSuccess,
