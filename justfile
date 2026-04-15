@@ -305,9 +305,29 @@ agent-check:
     @bun typecheck
     @echo "  → Linting..."
     @bun lint
+    @echo "  → Checking line-cap escape hatches..."
+    @just check-line-caps
     @echo "  → Running tests..."
     @bun run test --run
     @echo "✅ Agent checks passed"
+
+# Forbid the `/* eslint-disable max-lines */` escape hatch in source.
+# ESLint enforces the 250-line cap, but can't forbid its own disable comment —
+# this check closes that loophole. Tests are exempt via ESLint config, so they
+# don't need (and shouldn't use) the disable either.
+check-line-caps:
+    #!/usr/bin/env bash
+    set -e
+    HITS=$(git ls-files -z '*.ts' '*.tsx' '*.js' '*.jsx' \
+      ':!:**/__tests__/**' \
+      ':!:**/*.test.ts' ':!:**/*.test.tsx' ':!:**/*.test.js' ':!:**/*.test.jsx' \
+      | xargs -0 grep -lE "eslint-disable.*max-lines" 2>/dev/null || true)
+    if [ -n "$HITS" ]; then
+      echo "❌ Found eslint-disable max-lines in source files — split the module instead:"
+      echo "$HITS"
+      exit 1
+    fi
+    echo "✓ No eslint-disable max-lines escape hatches"
 
 # Format all code (Rust + TypeScript)
 fmt:

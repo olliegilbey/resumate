@@ -1,30 +1,32 @@
 "use client";
 
-import { useState, useRef, useEffect, useCallback } from "react";
+import { Calendar, Download } from "lucide-react";
+
 import { Button } from "@/components/ui/Button";
-import { GlassPanel } from "@/components/ui/GlassPanel";
 import { ContactLinks } from "@/components/ui/ContactLinks";
-import Link from "next/link";
-import { ArrowRight, Briefcase, Download, AlertCircle, X, Calendar } from "lucide-react";
 import resumeData from "@/data/resume-data.json";
-import { Turnstile, type TurnstileInstance } from "@marsidev/react-turnstile";
 import { useTheme } from "@/contexts/ThemeContext";
-import { useTrackEvent } from "@/lib/posthog-client";
+import { AboutSection } from "./_sections/AboutSection";
+import { ContactCardTurnstileModal } from "./_sections/ContactCardTurnstileModal";
+import { RecruiterCTA } from "./_sections/RecruiterCTA";
+import { useContactCardFlow } from "./_sections/useContactCardFlow";
 
 export default function HomePage() {
   const { theme } = useTheme();
-  const [showTurnstileModal, setShowTurnstileModal] = useState(false);
-  const [isVerifying, setIsVerifying] = useState(false);
-  const [verifiedToken, setVerifiedToken] = useState<string | null>(null);
-  const [errorMessage, setErrorMessage] = useState<string | null>(null);
-  const [downloadInitiated, setDownloadInitiated] = useState(false);
-  const turnstileRef = useRef<TurnstileInstance>(null);
-  const autoDownloadTimerRef = useRef<NodeJS.Timeout | null>(null);
-
-  // Analytics tracking
-  const trackEvent = useTrackEvent();
-  const flowStartTimeRef = useRef<number | null>(null);
-  const verifiedTimeRef = useRef<number | null>(null);
+  const {
+    showTurnstileModal,
+    isVerifying,
+    verifiedToken,
+    errorMessage,
+    turnstileRef,
+    openModal,
+    handleTurnstileSuccess,
+    handleTurnstileError,
+    handleTurnstileExpire,
+    handleManualDownloadClick,
+    handleCloseModal,
+    handleRetry,
+  } = useContactCardFlow();
 
   // Validate Turnstile site key
   const siteKey = process.env.NEXT_PUBLIC_TURNSTILE_SITE_KEY;
@@ -32,208 +34,6 @@ export default function HomePage() {
     console.error("NEXT_PUBLIC_TURNSTILE_SITE_KEY is not configured");
   }
 
-  // When Turnstile succeeds, store token
-  const handleTurnstileSuccess = (token: string) => {
-    console.warn("Turnstile verified, token ready");
-    const now = Date.now();
-    verifiedTimeRef.current = now;
-
-    // Track verification with turnstile duration
-    if (flowStartTimeRef.current) {
-      trackEvent("contact_card_verified", {
-        download_type: "vcard",
-        turnstile_duration_ms: now - flowStartTimeRef.current,
-      });
-    }
-
-    setVerifiedToken(token);
-    setIsVerifying(false);
-    setErrorMessage(null);
-  };
-
-  const handleOpenModal = () => {
-    const now = Date.now();
-    flowStartTimeRef.current = now;
-    verifiedTimeRef.current = null;
-
-    trackEvent("contact_card_initiated", {
-      download_type: "vcard",
-      timestamp: now,
-    });
-
-    setShowTurnstileModal(true);
-    setVerifiedToken(null);
-    setErrorMessage(null);
-    setDownloadInitiated(false);
-  };
-
-  // Manual download button click handler
-  const handleManualDownloadClick = (e: React.MouseEvent<HTMLAnchorElement>) => {
-    e.preventDefault();
-
-    // Cancel auto-download timer if it's pending
-    if (autoDownloadTimerRef.current) {
-      clearTimeout(autoDownloadTimerRef.current);
-      autoDownloadTimerRef.current = null;
-    }
-
-    // If download already initiated, don't trigger again
-    if (downloadInitiated) {
-      return;
-    }
-
-    // Mark as initiated and allow the download
-    setDownloadInitiated(true);
-
-    // Trigger download immediately
-    if (verifiedToken) {
-      // Track download with timing (client-side: funnel completion + duration)
-      // Server separately tracks contact_card_served (delivery confirmation + geoIP)
-      if (flowStartTimeRef.current) {
-        trackEvent("contact_card_downloaded", {
-          download_type: "vcard",
-          total_duration_ms: Date.now() - flowStartTimeRef.current,
-        });
-      }
-
-      const link = document.createElement("a");
-      link.href = `/api/contact-card?token=${encodeURIComponent(verifiedToken)}`;
-      link.style.display = "none";
-      document.body.appendChild(link);
-      link.click();
-      document.body.removeChild(link);
-    }
-
-    // Close modal after download starts
-    setTimeout(() => {
-      flowStartTimeRef.current = null;
-      verifiedTimeRef.current = null;
-      setShowTurnstileModal(false);
-      setVerifiedToken(null);
-      setErrorMessage(null);
-      setDownloadInitiated(false);
-    }, 1000);
-  };
-
-  const handleCloseModal = useCallback(() => {
-    if (isVerifying) return; // Don't close while verifying
-
-    // Clear auto-download timer if pending
-    if (autoDownloadTimerRef.current) {
-      clearTimeout(autoDownloadTimerRef.current);
-      autoDownloadTimerRef.current = null;
-    }
-
-    // Track cancellation if download wasn't completed
-    if (flowStartTimeRef.current) {
-      trackEvent("contact_card_cancelled", {
-        download_type: "vcard",
-        stage: verifiedTimeRef.current ? "verified" : "turnstile",
-        duration_ms: Date.now() - flowStartTimeRef.current,
-      });
-      flowStartTimeRef.current = null;
-      verifiedTimeRef.current = null;
-    }
-
-    setShowTurnstileModal(false);
-    setVerifiedToken(null);
-    setErrorMessage(null);
-    setDownloadInitiated(false);
-    turnstileRef.current?.reset();
-  }, [isVerifying, trackEvent]);
-
-  const handleTurnstileError = useCallback(() => {
-    if (flowStartTimeRef.current) {
-      trackEvent("contact_card_error", {
-        download_type: "vcard",
-        error_code: "TN_001",
-        error_category: "turnstile",
-        error_stage: "turnstile",
-        error_message: "Turnstile verification failed",
-        is_retryable: true,
-        duration_ms: Date.now() - flowStartTimeRef.current,
-      });
-    }
-    setErrorMessage("Verification failed. Please try again.");
-    setIsVerifying(false);
-  }, [trackEvent]);
-
-  const handleTurnstileExpire = useCallback(() => {
-    if (flowStartTimeRef.current) {
-      trackEvent("contact_card_error", {
-        download_type: "vcard",
-        error_code: "TN_002",
-        error_category: "turnstile",
-        error_stage: "turnstile",
-        error_message: "Turnstile verification expired",
-        is_retryable: true,
-        duration_ms: Date.now() - flowStartTimeRef.current,
-      });
-    }
-    setErrorMessage("Verification expired. Please refresh and try again.");
-    setIsVerifying(false);
-    setVerifiedToken(null);
-  }, [trackEvent]);
-
-  // Auto-download when token is verified (with slight delay for UX)
-  useEffect(() => {
-    if (verifiedToken && !downloadInitiated) {
-      console.warn("Auto-triggering download...");
-
-      const timer = setTimeout(async () => {
-        // Mark as initiated WHEN download actually triggers (not before)
-        setDownloadInitiated(true);
-
-        // Track download with timing (client-side: funnel completion + duration)
-        // Server separately tracks contact_card_served (delivery confirmation + geoIP)
-        if (flowStartTimeRef.current) {
-          trackEvent("contact_card_downloaded", {
-            download_type: "vcard",
-            total_duration_ms: Date.now() - flowStartTimeRef.current,
-          });
-        }
-
-        // Create a temporary anchor element and trigger download
-        const link = document.createElement("a");
-        link.href = `/api/contact-card?token=${encodeURIComponent(verifiedToken)}`;
-        link.style.display = "none";
-        document.body.appendChild(link);
-        link.click();
-        document.body.removeChild(link);
-
-        // Wait briefly to show "Download Starting..." state
-        await new Promise((resolve) => setTimeout(resolve, 500));
-
-        // Close modal after download starts
-        setTimeout(() => {
-          flowStartTimeRef.current = null;
-          verifiedTimeRef.current = null;
-          setShowTurnstileModal(false);
-          setVerifiedToken(null);
-          setErrorMessage(null);
-          setDownloadInitiated(false);
-        }, 1500);
-      }, 300); // Short delay to show success state - feels snappier
-
-      autoDownloadTimerRef.current = timer;
-      return () => {
-        clearTimeout(timer);
-        autoDownloadTimerRef.current = null;
-      };
-    }
-  }, [verifiedToken, downloadInitiated, trackEvent]);
-
-  // Handle ESC key to close modal
-  useEffect(() => {
-    const handleEscape = (e: KeyboardEvent) => {
-      if (e.key === "Escape" && showTurnstileModal && !isVerifying) {
-        handleCloseModal();
-      }
-    };
-
-    window.addEventListener("keydown", handleEscape);
-    return () => window.removeEventListener("keydown", handleEscape);
-  }, [showTurnstileModal, isVerifying, handleCloseModal]);
   return (
     <main className="min-h-screen">
       {/* Hero Section */}
@@ -257,7 +57,7 @@ export default function HomePage() {
             {/* Action Buttons */}
             <div className="mt-8 flex flex-col sm:flex-row items-center justify-center gap-4">
               <Button
-                onClick={handleOpenModal}
+                onClick={openModal}
                 disabled={isVerifying}
                 size="lg"
                 variant="gradient"
@@ -281,174 +81,33 @@ export default function HomePage() {
               )}
             </div>
 
-            {/* Turnstile Modal */}
             {showTurnstileModal && (
-              <div
-                className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm"
-                onClick={handleCloseModal}
-              >
-                <GlassPanel
-                  padding="lg"
-                  radius="2xl"
-                  className="max-w-md w-full mx-4 shadow-2xl relative"
-                  onClick={(e) => e.stopPropagation()}
-                >
-                  {/* Close button */}
-                  <button
-                    onClick={handleCloseModal}
-                    disabled={isVerifying}
-                    className="absolute top-4 right-4 text-slate-400 hover:text-slate-600 transition-colors disabled:opacity-50 cursor-pointer"
-                    aria-label="Close modal"
-                  >
-                    <X className="h-5 w-5" />
-                  </button>
-
-                  {/* Only show header during Turnstile verification */}
-                  {!verifiedToken && (
-                    <div className="text-center mb-6">
-                      <h3 className="text-2xl font-semibold text-slate-900 dark:text-slate-100 mb-2">
-                        Verify You&apos;re Human
-                      </h3>
-                      <p className="text-slate-600 dark:text-slate-300">
-                        Complete the verification below to download my contact card.
-                      </p>
-                    </div>
-                  )}
-
-                  {/* Error Message */}
-                  {errorMessage && (
-                    <div className="mb-4 p-4 bg-red-50 border border-red-200 rounded-lg flex items-start space-x-3">
-                      <AlertCircle className="h-5 w-5 text-red-600 flex-shrink-0 mt-0.5" />
-                      <div className="flex-1">
-                        <p className="text-sm text-red-800">{errorMessage}</p>
-                        <button
-                          onClick={() => {
-                            setErrorMessage(null);
-                            turnstileRef.current?.reset();
-                          }}
-                          className="text-sm text-red-600 hover:text-red-800 font-medium mt-1"
-                        >
-                          Try again
-                        </button>
-                      </div>
-                    </div>
-                  )}
-
-                  {isVerifying ? (
-                    <div className="flex flex-col items-center justify-center py-8">
-                      <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mb-4"></div>
-                      <p className="text-slate-600 dark:text-slate-300">Verifying...</p>
-                    </div>
-                  ) : verifiedToken ? (
-                    <div className="flex flex-col items-center justify-center py-8">
-                      <div className="text-center mb-6">
-                        <div className="w-16 h-16 bg-green-100 dark:bg-green-900/30 rounded-full flex items-center justify-center mx-auto mb-4">
-                          <svg
-                            className="w-8 h-8 text-green-600 dark:text-green-400"
-                            fill="none"
-                            viewBox="0 0 24 24"
-                            stroke="currentColor"
-                          >
-                            <path
-                              strokeLinecap="round"
-                              strokeLinejoin="round"
-                              strokeWidth={2}
-                              d="M5 13l4 4L19 7"
-                            />
-                          </svg>
-                        </div>
-                        <p className="text-lg font-medium text-slate-900 dark:text-slate-100 mb-2">
-                          Verification Complete!
-                        </p>
-                        <p className="text-sm text-slate-600 dark:text-slate-300 mb-4">
-                          Your download will start automatically in a moment.
-                        </p>
-                      </div>
-                      {/* Always show fallback button in case auto-download fails */}
-                      <a
-                        href={`/api/contact-card?token=${encodeURIComponent(verifiedToken)}`}
-                        onClick={handleManualDownloadClick}
-                        className="inline-flex items-center justify-center w-full px-6 py-3 text-base font-medium text-slate-700 dark:text-slate-200 bg-slate-100/60 dark:bg-slate-700/60 hover:bg-slate-200/80 dark:hover:bg-slate-600/80 rounded-lg transition-all duration-200 backdrop-blur-sm"
-                      >
-                        <Download className="mr-2 h-4 w-4" />
-                        Download didn&apos;t start? Click here
-                      </a>
-                    </div>
-                  ) : (
-                    <div className="flex flex-col items-center p-3 relative">
-                      {/* Solid background matching Turnstile theme */}
-                      <div className="absolute inset-0 rounded-lg bg-slate-100 dark:bg-[#262626]" />
-
-                      {/* Turnstile widget on top */}
-                      <div className="relative z-10">
-                        <Turnstile
-                          ref={turnstileRef}
-                          siteKey={siteKey || ""}
-                          onSuccess={handleTurnstileSuccess}
-                          onError={handleTurnstileError}
-                          onExpire={handleTurnstileExpire}
-                          options={{
-                            theme: theme,
-                            size: "normal",
-                          }}
-                        />
-                      </div>
-                    </div>
-                  )}
-
-                  <button
-                    onClick={handleCloseModal}
-                    disabled={isVerifying}
-                    className="mt-4 w-full px-4 py-2 text-sm text-slate-600 hover:text-slate-900 dark:text-slate-400 dark:hover:text-slate-100 transition-colors disabled:opacity-50 cursor-pointer"
-                  >
-                    Cancel
-                  </button>
-                </GlassPanel>
-              </div>
+              <ContactCardTurnstileModal
+                isVerifying={isVerifying}
+                verifiedToken={verifiedToken}
+                errorMessage={errorMessage}
+                siteKey={siteKey || ""}
+                theme={theme}
+                turnstileRef={turnstileRef}
+                onClose={handleCloseModal}
+                onSuccess={handleTurnstileSuccess}
+                onError={handleTurnstileError}
+                onExpire={handleTurnstileExpire}
+                onManualDownload={handleManualDownloadClick}
+                onRetry={handleRetry}
+              />
             )}
           </div>
         </div>
       </div>
 
-      {/* About Section */}
-      <div className="max-w-3xl mx-auto px-4 md:px-8 py-12">
-        <GlassPanel padding="xl" radius="2xl">
-          <h2 className="text-2xl font-semibold text-slate-900 dark:text-slate-100 mb-4">
-            About Me
-          </h2>
-          <div className="prose prose-slate max-w-none">
-            <p className="text-lg text-slate-700 dark:text-slate-200 leading-relaxed mb-4">
-              {resumeData?.summary ||
-                `Professional with expertise in various domains. Based in ${resumeData?.personal?.location || "various locations"}.`}
-            </p>
-            {resumeData?.interests && resumeData.interests.length > 0 && (
-              <p className="text-lg text-slate-700 dark:text-slate-200 leading-relaxed">
-                When not working, you&apos;ll find me exploring: {resumeData.interests.join(", ")}.
-              </p>
-            )}
-          </div>
-        </GlassPanel>
-      </div>
+      <AboutSection
+        summary={resumeData?.summary}
+        interests={resumeData?.interests}
+        location={resumeData?.personal?.location}
+      />
 
-      {/* Recruiter CTA */}
-      <div className="max-w-3xl mx-auto px-4 md:px-8 pb-16">
-        <GlassPanel padding="xl" radius="2xl" align="center">
-          <Briefcase className="h-12 w-12 text-blue-600 dark:text-blue-400 mx-auto mb-4" />
-          <h2 className="text-2xl font-semibold text-slate-900 dark:text-slate-100 mb-3">
-            Looking to Hire?
-          </h2>
-          <p className="text-slate-600 dark:text-slate-300 mb-6 max-w-lg mx-auto">
-            View my full professional experience, download my resume, or explore my work history
-            interactively.
-          </p>
-          <Link href="/resume">
-            <Button size="lg" variant="gradient">
-              View Professional Profile
-              <ArrowRight className="ml-2 h-4 w-4" />
-            </Button>
-          </Link>
-        </GlassPanel>
-      </div>
+      <RecruiterCTA />
     </main>
   );
 }

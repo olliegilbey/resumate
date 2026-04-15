@@ -9,6 +9,14 @@
 #
 # Skip only in emergency: git commit --no-verify
 
+# Husky's _/h wrapper invokes hooks with `sh -e` (dash on Linux), which
+# ignores the bash shebang and chokes on bash-only syntax below (arrays,
+# [[ ]], etc.). Re-exec under bash so the hook runs identically on
+# macOS (/bin/sh is bash-compatible) and Linux/CI sandboxes (dash).
+if [ -z "${BASH_VERSION:-}" ]; then
+  exec bash "$0" "$@"
+fi
+
 set -e  # Exit on first error
 
 # Colors
@@ -147,6 +155,17 @@ if ! bun --bun x knip 2>&1; then
   exit 1
 fi
 printf "${GREEN}  ✓${NC} Knip clean"
+
+# 2.6 Line-cap escape-hatch guard.
+# ESLint enforces the 250-line cap, but can't forbid its own disable comment.
+# This grep closes the loophole so agents can't silently bypass the guardrail.
+printf "${YELLOW}  → Line-cap escape-hatch check${NC}\n"
+if ! just check-line-caps >/dev/null 2>&1; then
+  printf "${RED}❌ Found eslint-disable max-lines in source — split the module instead${NC}\n"
+  just check-line-caps
+  exit 1
+fi
+printf "${GREEN}  ✓${NC} No line-cap disables"
 
 printf "${GREEN}✅ Phase 2 complete: Lint & typecheck passed${NC}\n"
 echo ""

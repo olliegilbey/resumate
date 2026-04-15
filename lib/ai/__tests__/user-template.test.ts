@@ -1,5 +1,6 @@
 import { describe, it, expect } from "vitest";
-import { buildUserPrompt, estimateTokenCount, checkCompendiumSize } from "../prompts/prompt";
+import { buildUserPrompt } from "../prompts/user-prompt";
+import { estimateTokenCount, checkCompendiumSize } from "../prompts/token-estimation";
 import type { ResumeData } from "@/lib/types/generated-resume";
 
 // Minimal valid compendium for testing
