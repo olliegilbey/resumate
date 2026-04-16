@@ -140,6 +140,9 @@ export async function runDownloadPipeline(ctx: PipelineContext): Promise<void> {
   const sessionId = sessionStorage.getItem("resumate_session") || crypto.randomUUID();
   sessionStorage.setItem("resumate_session", sessionId);
 
+  // Stamp the selection stage before the await so the catch block in the
+  // caller always sees the right stage, even if the caller forgets to pre-stamp.
+  ctx.errorStageRef.current = ctx.isAIMode ? "ai_selection" : "bullet_selection";
   const selectData = await fetchSelection(ctx, sessionId);
 
   ctx.errorStageRef.current = "wasm_load";

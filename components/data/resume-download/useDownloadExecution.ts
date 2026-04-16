@@ -179,6 +179,11 @@ export function useDownloadExecution(params: UseDownloadExecutionParams) {
               : roleProfiles.find((r) => r.id === selectedRoleId)?.name || "Unknown",
             email: email || undefined,
             linkedin: linkedin || undefined,
+            // Taxonomy fields in snake_case — normalizeRequestBody has no
+            // camelCase aliases for these three; must match LogRequestBody exactly.
+            error_code: taxonomy.code,
+            error_category: taxonomy.category,
+            is_retryable: taxonomy.retryable,
             errorMessage: errorMsg,
             errorStage,
             errorStack:
