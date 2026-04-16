@@ -24,8 +24,9 @@ import { loadResumeData, runAISelectionPipeline } from "./flow";
  * can spike past 30s during heavy traffic; the default Hobby-plan limit of
  * 10s would truncate the request, causing Cloudflare to surface a 520.
  *
- * 60s is the Vercel Hobby plan ceiling. The inner provider call still has its
- * own 30s `AbortSignal.timeout`, so this is a safety margin, not a target.
+ * 60s is the Vercel Hobby plan ceiling. Inner provider calls have their own
+ * `AbortSignal.timeout` (Cerebras: 50s, Anthropic: 30s), so this is a safety
+ * margin, not a target.
  *
  * @see https://vercel.com/docs/functions/runtimes#max-duration
  */

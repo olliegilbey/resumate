@@ -394,6 +394,31 @@ describe("CerebrasProvider", () => {
       }
     });
 
+    it("handles AbortError as provider busy (pins current unified handling)", async () => {
+      // Pins the `error.name === "AbortError"` branch in the catch block.
+      // Today the provider treats both TimeoutError and AbortError as "busy"
+      // because no client-side cancellation path exists. If cancellation is
+      // ever wired up, this test should be split into a dedicated
+      // cancellation assertion instead of removed silently.
+      const abortError = new DOMException("The operation was aborted.", "AbortError");
+      mockFetch.mockRejectedValueOnce(abortError);
+
+      const provider = new CerebrasProvider();
+
+      try {
+        await provider.select({
+          jobDescription: "Test",
+          compendium: mockCompendium,
+          maxBullets: 2,
+          minBullets: 2,
+        });
+        expect.fail("Should have thrown");
+      } catch (e) {
+        const err = e as AISelectionError;
+        expect(err.errors[0]!.code).toBe("E012_PROVIDER_BUSY");
+      }
+    });
+
     it("handles network error as provider down", async () => {
       mockFetch.mockRejectedValueOnce(new Error("fetch failed"));
 

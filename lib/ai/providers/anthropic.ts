@@ -187,14 +187,14 @@ export class AnthropicProvider implements AIProviderInterface {
    * orchestrator still short-circuits on either code — the distinction is
    * purely user-facing (see {@link formatSimplifiedError}).
    *
-   * - 401/403: auth issues → provider down (misconfigured)
+   * - 401/403/404: auth/missing-model → provider down (retire stale slugs)
    * - 500/502/503/504: server issues → provider down
    * - 429: rate limited → provider busy
    * - anything else: generic provider error
    */
   private classifyErrorStatus(status: number): ParseError["code"] {
     if (status === 429) return "E012_PROVIDER_BUSY";
-    const downStatuses = [401, 403, 500, 502, 503, 504];
+    const downStatuses = [401, 403, 404, 500, 502, 503, 504];
     if (downStatuses.includes(status)) return "E011_PROVIDER_DOWN";
     return "E000_PROVIDER_ERROR";
   }

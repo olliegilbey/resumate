@@ -22,6 +22,11 @@ describe("fetchAIBullets — error body sanitization", () => {
   });
 
   it("collapses an HTML 520 error page into a short friendly message", async () => {
+    // Single invocation assertion. Previously used two separate calls, but
+    // `mockResolvedValueOnce` is consumed by the first, so the second hit an
+    // unmocked fetch returning `undefined` — the sanitization assertions
+    // passed trivially on a downstream TypeError rather than exercising the
+    // actual HTML-sanitization path.
     const htmlBody = `<!DOCTYPE html><html><head><title>520</title></head><body>${"x".repeat(5000)}</body></html>`;
     (global.fetch as ReturnType<typeof vi.fn>).mockResolvedValueOnce({
       ok: false,
@@ -34,31 +39,25 @@ describe("fetchAIBullets — error body sanitization", () => {
       text: async () => htmlBody,
     });
 
-    await expect(
-      fetchAIBullets({
-        jobDescription: "jd",
-        provider: "cerebras-gpt",
-        turnstileToken: "tok",
-        sessionId: "sid",
-        onRetryAttempt: vi.fn(),
-      }),
-    ).rejects.toThrow(/HTTP 520/);
+    const thrown = await fetchAIBullets({
+      jobDescription: "jd",
+      provider: "cerebras-gpt",
+      turnstileToken: "tok",
+      sessionId: "sid",
+      onRetryAttempt: vi.fn(),
+    }).then(
+      () => {
+        throw new Error("expected rejection");
+      },
+      (e: unknown) => e as Error,
+    );
 
-    // And critically: the thrown message must NOT contain raw HTML markup.
-    try {
-      await fetchAIBullets({
-        jobDescription: "jd",
-        provider: "cerebras-gpt",
-        turnstileToken: "tok",
-        sessionId: "sid",
-        onRetryAttempt: vi.fn(),
-      });
-    } catch (e) {
-      const msg = (e as Error).message;
-      expect(msg).not.toContain("<!DOCTYPE");
-      expect(msg).not.toContain("<html");
-      expect(msg.length).toBeLessThan(300);
-    }
+    const msg = thrown.message;
+    expect(msg).toMatch(/HTTP 520/);
+    // Critically: the thrown message must NOT contain raw HTML markup.
+    expect(msg).not.toContain("<!DOCTYPE");
+    expect(msg).not.toContain("<html");
+    expect(msg.length).toBeLessThan(300);
   });
 
   it("passes through structured JSON error bodies unchanged", async () => {
