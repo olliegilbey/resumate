@@ -47,6 +47,7 @@ const baseProps = {
   aiRetryCount: 0,
   isJobDescriptionMode: false,
   statusMessage: "Download PDF",
+  turnstileKey: 0,
   onClose: vi.fn(),
   onSuccess: vi.fn(),
   onError: vi.fn(),
