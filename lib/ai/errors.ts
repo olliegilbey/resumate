@@ -18,7 +18,8 @@ export type ParseErrorCode =
   | "E008_MISSING_REASONING"
   | "E009_INVALID_SCORE"
   | "E010_INVALID_SALARY"
-  | "E011_PROVIDER_DOWN";
+  | "E011_PROVIDER_DOWN"
+  | "E012_PROVIDER_BUSY";
 
 export interface ParseError {
   code: ParseErrorCode;
@@ -87,6 +88,8 @@ export function formatSimplifiedError(error: ParseError): string {
     E009_INVALID_SCORE: "The AI provided invalid relevance scores. Retrying...",
     E010_INVALID_SALARY: "The AI salary extraction was malformed. Continuing without salary...",
     E011_PROVIDER_DOWN: "This AI model is currently unavailable. Please try a different model.",
+    E012_PROVIDER_BUSY:
+      "This AI model is busy right now. Please try a different model or try again shortly.",
   };
 
   return simplified[error.code] || "An unexpected error occurred. Please try again.";
@@ -126,10 +129,17 @@ export class AISelectionError extends Error {
   }
 
   /**
-   * Check if this is a provider-down error (should trigger fallback)
+   * Check if this is a non-retryable provider error (provider-down or busy).
+   *
+   * Both cases short-circuit the same way in the orchestrator: stop retrying
+   * this provider and surface a user-facing message so the user can pick a
+   * different model. The *message* differs (down vs. busy) via
+   * {@link formatSimplifiedError}.
    */
   isProviderDown(): boolean {
-    return this.errors.some((e) => e.code === "E011_PROVIDER_DOWN");
+    return this.errors.some(
+      (e) => e.code === "E011_PROVIDER_DOWN" || e.code === "E012_PROVIDER_BUSY",
+    );
   }
 
   /**

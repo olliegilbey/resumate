@@ -18,6 +18,19 @@ import { ANALYTICS_EVENTS } from "@/lib/analytics/events";
 import { DEFAULT_SELECTION_CONFIG } from "@/lib/selection";
 import { loadResumeData, runAISelectionPipeline } from "./flow";
 
+/**
+ * Extend the Vercel serverless function timeout so the AI call has room to
+ * finish. Cerebras free-tier queue times for popular models (e.g. Qwen 235B)
+ * can spike past 30s during heavy traffic; the default Hobby-plan limit of
+ * 10s would truncate the request, causing Cloudflare to surface a 520.
+ *
+ * 60s is the Vercel Hobby plan ceiling. The inner provider call still has its
+ * own 30s `AbortSignal.timeout`, so this is a safety margin, not a target.
+ *
+ * @see https://vercel.com/docs/functions/runtimes#max-duration
+ */
+export const maxDuration = 60;
+
 // WARNING: In-memory token replay prevention is lost on serverless cold starts.
 // For production at scale, consider storing used tokens in Redis/KV with TTL
 // matching Turnstile token validity (~5 min). Current implementation provides

@@ -24,13 +24,35 @@ interface SelectionErrorBody {
 }
 
 /**
- * Safely read a non-OK response body as JSON, falling back to plain text
- * or `response.statusText`. Protects callers from the `response.json()`
- * throw when upstream (e.g. Vercel edge errors) returns HTML or empty.
+ * Maximum length (chars) of a non-JSON error body surfaced to the UI. Non-JSON
+ * upstream errors (Vercel/Cloudflare 5xx pages) can be full HTML documents;
+ * rendering those raw paints a wall of markup into the modal.
+ */
+const MAX_ERROR_MESSAGE_LEN = 300;
+
+/**
+ * Heuristic check for an HTML error page (Vercel/Cloudflare 5xx) so we can
+ * replace it with a short generic message instead of dumping markup. Matches
+ * a leading doctype, `<html>`, or `<!--` comment after trimming whitespace.
+ */
+function looksLikeHtml(text: string): boolean {
+  const head = text.trimStart().slice(0, 20).toLowerCase();
+  return head.startsWith("<!doctype") || head.startsWith("<html") || head.startsWith("<!--");
+}
+
+/**
+ * Safely read a non-OK response body as JSON, falling back to a short text
+ * snippet or `response.statusText`. Protects callers from the
+ * `response.json()` throw when upstream (e.g. Vercel/Cloudflare 5xx edge
+ * errors) returns HTML or empty.
+ *
+ * HTML bodies and oversize payloads are collapsed into a single-line
+ * "Server error (HTTP 520)" style message so the error panel never renders a
+ * full HTML document. JSON payloads from the app pass through unchanged.
  *
  * @param response - The non-OK `Response` to drain.
  * @returns A normalized {@link SelectionErrorBody} — `message` holds the
- *   text fallback when the body isn't JSON.
+ *   sanitized text fallback when the body isn't JSON.
  */
 async function readErrorBody(response: Response): Promise<SelectionErrorBody> {
   const contentType = response.headers?.get?.("content-type") ?? "";
@@ -39,7 +61,23 @@ async function readErrorBody(response: Response): Promise<SelectionErrorBody> {
     if (parsed && typeof parsed === "object") return parsed as SelectionErrorBody;
   }
   const text = (await response.text?.().catch(() => "")) ?? "";
-  return { message: text || response.statusText };
+  if (!text) {
+    return { message: response.statusText || `Server error (HTTP ${response.status})` };
+  }
+  // Collapse HTML error pages (Cloudflare 520, Vercel 500 etc.) into a short
+  // generic message — the raw markup carries no useful info for the user and
+  // would otherwise be rendered verbatim in the error panel.
+  if (contentType.includes("text/html") || looksLikeHtml(text)) {
+    return {
+      message:
+        `Server error (HTTP ${response.status}) — the request likely timed out. ` +
+        `Please try a different model or try again shortly.`,
+    };
+  }
+  // Plain text: cap length so a chatty upstream can't paint a wall of text.
+  const trimmed =
+    text.length > MAX_ERROR_MESSAGE_LEN ? `${text.slice(0, MAX_ERROR_MESSAGE_LEN)}…` : text;
+  return { message: trimmed };
 }
 
 /**

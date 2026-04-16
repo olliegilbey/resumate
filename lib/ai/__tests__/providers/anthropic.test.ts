@@ -310,7 +310,7 @@ describe("AnthropicProvider", () => {
       }
     });
 
-    it("handles rate limit error as provider down", async () => {
+    it("handles rate limit error as provider busy (not down)", async () => {
       const Anthropic = (await import("@anthropic-ai/sdk")).default;
 
       // Create mock error that mimics Anthropic.APIError
@@ -336,7 +336,7 @@ describe("AnthropicProvider", () => {
       } catch (e) {
         const err = e as AISelectionError;
         // Check via error code, not isProviderDown() (mock doesn't inherit properly)
-        expect(err.errors[0]!.code).toBe("E011_PROVIDER_DOWN");
+        expect(err.errors[0]!.code).toBe("E012_PROVIDER_BUSY");
       }
     });
 
