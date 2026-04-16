@@ -261,6 +261,35 @@ describe("runDownloadPipeline", () => {
       await expect(runDownloadPipeline(ctx)).rejects.toThrow("pdf boom");
       expect(errorStageRef.current).toBe("pdf_generation");
     });
+
+    // Seed with wrong value; pass condition is the pipeline overwriting it.
+    it("stamps bullet_selection on the ref before fetchHeuristicBullets", async () => {
+      const errorStageRef = { current: "ai_selection" as const };
+      mockFetchHeuristicBullets.mockImplementationOnce(() => {
+        expect(errorStageRef.current).toBe("bullet_selection");
+        throw new Error("selection boom");
+      });
+
+      const ctx = makeCtx({ isAIMode: false, errorStageRef });
+      await expect(runDownloadPipeline(ctx)).rejects.toThrow("selection boom");
+      expect(errorStageRef.current).toBe("bullet_selection");
+    });
+
+    it("stamps ai_selection on the ref before fetchAIBullets", async () => {
+      const errorStageRef = { current: "bullet_selection" as const };
+      mockFetchAIBullets.mockImplementationOnce(() => {
+        expect(errorStageRef.current).toBe("ai_selection");
+        throw new Error("ai boom");
+      });
+
+      const ctx = makeCtx({
+        isAIMode: true,
+        jobDescription: "long enough JD here",
+        errorStageRef,
+      });
+      await expect(runDownloadPipeline(ctx)).rejects.toThrow("ai boom");
+      expect(errorStageRef.current).toBe("ai_selection");
+    });
   });
 
   describe("modal close", () => {
