@@ -140,7 +140,7 @@ export class AnthropicProvider implements AIProviderInterface {
       // Handle Anthropic API errors (duck-type check for testability)
       if (this.isAnthropicAPIError(error)) {
         const parseError: ParseError = {
-          code: this.isProviderDownError(error) ? "E011_PROVIDER_DOWN" : "E000_PROVIDER_ERROR",
+          code: this.classifyErrorStatus(error.status),
           message: error.message,
           help: `Status: ${error.status}, Type: ${error.name}`,
         };
@@ -180,14 +180,23 @@ export class AnthropicProvider implements AIProviderInterface {
   }
 
   /**
-   * Check if error indicates provider is down (should trigger fallback)
+   * Classify an HTTP error status from the Anthropic API.
+   *
+   * 429 is surfaced as {@link "E012_PROVIDER_BUSY"} so users get a
+   * "try again shortly" message rather than "currently unavailable". The
+   * orchestrator still short-circuits on either code — the distinction is
+   * purely user-facing (see {@link formatSimplifiedError}).
+   *
+   * - 401/403/404: auth/missing-model → provider down (retire stale slugs)
+   * - 500/502/503/504: server issues → provider down
+   * - 429: rate limited → provider busy
+   * - anything else: generic provider error
    */
-  private isProviderDownError(error: { status: number }): boolean {
-    // 5xx errors = server issues = provider down
-    // 429 = rate limited = provider down (for this request)
-    // 401/403 = auth issues = provider down (misconfigured)
-    const downStatuses = [401, 403, 429, 500, 502, 503, 504];
-    return downStatuses.includes(error.status);
+  private classifyErrorStatus(status: number): ParseError["code"] {
+    if (status === 429) return "E012_PROVIDER_BUSY";
+    const downStatuses = [401, 403, 404, 500, 502, 503, 504];
+    if (downStatuses.includes(status)) return "E011_PROVIDER_DOWN";
+    return "E000_PROVIDER_ERROR";
   }
 }
 

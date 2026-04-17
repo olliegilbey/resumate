@@ -107,7 +107,11 @@ export class CerebrasProvider implements AIProviderInterface {
           max_tokens: this.config.maxOutputTokens,
           temperature: 0.3,
         }),
-        signal: AbortSignal.timeout(30000), // 30s timeout for AI inference
+        // 50s timeout — Cerebras free-tier queue times for popular models
+        // (e.g. Qwen 235B) can spike past 30s during heavy traffic. Must
+        // stay below the route's `maxDuration` (60s on Hobby) so Vercel
+        // doesn't kill the function before the fetch resolves.
+        signal: AbortSignal.timeout(50000),
       });
 
       console.warn(`[Cerebras] Response status: ${response.status}`);
@@ -117,9 +121,7 @@ export class CerebrasProvider implements AIProviderInterface {
         const errorMessage = errorBody.error?.message ?? `HTTP ${response.status}`;
 
         const parseError: ParseError = {
-          code: this.isProviderDownStatus(response.status)
-            ? "E011_PROVIDER_DOWN"
-            : "E000_PROVIDER_ERROR",
+          code: this.classifyErrorStatus(response.status),
           message: errorMessage,
           help: `Status: ${response.status}, Type: ${errorBody.error?.type ?? "unknown"}`,
         };
@@ -187,14 +189,24 @@ export class CerebrasProvider implements AIProviderInterface {
         throw error;
       }
 
-      // Network or other fetch errors
+      // Distinguish "request took too long" (likely queued behind traffic) from
+      // "couldn't reach the provider at all". Both short-circuit the same way
+      // in the orchestrator, but the user-facing message differs — a timeout
+      // on a known-queueing model should say "busy", not "unavailable".
+      const isTimeout =
+        error instanceof DOMException
+          ? error.name === "TimeoutError" || error.name === "AbortError"
+          : false;
+
       throw new AISelectionError(
         `Cerebras request failed: ${error instanceof Error ? error.message : String(error)}`,
         [
           {
-            code: "E011_PROVIDER_DOWN",
+            code: isTimeout ? "E012_PROVIDER_BUSY" : "E011_PROVIDER_DOWN",
             message: String(error),
-            help: "Network error or Cerebras API unavailable",
+            help: isTimeout
+              ? "Request exceeded provider timeout — Cerebras queue likely backlogged."
+              : "Network error or Cerebras API unavailable",
           },
         ],
         this.name,
@@ -204,12 +216,24 @@ export class CerebrasProvider implements AIProviderInterface {
   }
 
   /**
-   * Check if HTTP status indicates provider is down
+   * Classify an HTTP error status from the Cerebras API.
+   *
+   * Cerebras free tier returns 429 `queue_exceeded` under transient heavy
+   * traffic (e.g. popular models like Qwen 235B). That is *busy*, not *down* —
+   * the model is healthy but queueing. Surface it as {@link "E012_PROVIDER_BUSY"}
+   * so the user gets a "try a different model or try again shortly" message
+   * rather than "currently unavailable".
+   *
+   * - 401/403/404: auth or model removed → provider down
+   * - 500/502/503/504: server issues → provider down
+   * - 429: queueing / rate limited → provider busy (separate taxonomy)
+   * - anything else: generic provider error (non-retryable format issue)
    */
-  private isProviderDownStatus(status: number): boolean {
-    // 5xx = server issues, 429 = rate limited, 401/403 = auth issues, 404 = model removed
-    const downStatuses = [401, 403, 404, 429, 500, 502, 503, 504];
-    return downStatuses.includes(status);
+  private classifyErrorStatus(status: number): ParseError["code"] {
+    if (status === 429) return "E012_PROVIDER_BUSY";
+    const downStatuses = [401, 403, 404, 500, 502, 503, 504];
+    if (downStatuses.includes(status)) return "E011_PROVIDER_DOWN";
+    return "E000_PROVIDER_ERROR";
   }
 }
 

@@ -41,6 +41,13 @@ interface UseDownloadHandlersParams {
   setEmail: (value: string) => void;
   setLinkedin: (value: string) => void;
   setDownloadInitiated: (value: boolean) => void;
+  /**
+   * Force the Turnstile widget to remount with a fresh Cloudflare challenge.
+   * Calling this from `handleRetry` guarantees the next attempt sees a NEW
+   * token — `reset()` alone can return the same cached solved-challenge
+   * token, which the server's in-memory replay Set rejects on retry.
+   */
+  bumpTurnstileKey: () => void;
 }
 
 /**
@@ -111,6 +118,7 @@ export function useDownloadHandlers(params: UseDownloadHandlersParams) {
     setEmail,
     setLinkedin,
     setDownloadInitiated,
+    bumpTurnstileKey,
   } = params;
 
   const handleTurnstileSuccess = useCallback(
@@ -246,8 +254,20 @@ export function useDownloadHandlers(params: UseDownloadHandlersParams) {
     setVerifiedToken(null);
     setAiStage("idle");
     setAiRetryCount(0);
+    // Force a fresh Turnstile widget. `reset()` alone can hand back the same
+    // cached solved-challenge token, which the server's in-memory replay Set
+    // rejects as "Token already used" on the retry attempt.
+    bumpTurnstileKey();
     turnstileRef.current?.reset();
-  }, [setErrorMessage, setStatus, setVerifiedToken, setAiStage, setAiRetryCount, turnstileRef]);
+  }, [
+    setErrorMessage,
+    setStatus,
+    setVerifiedToken,
+    setAiStage,
+    setAiRetryCount,
+    bumpTurnstileKey,
+    turnstileRef,
+  ]);
 
   return {
     handleTurnstileSuccess,

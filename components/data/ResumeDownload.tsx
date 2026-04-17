@@ -46,6 +46,12 @@ export function ResumeDownload({ resumeData }: ResumeDownloadProps) {
   const [showTurnstile, setShowTurnstile] = useState(false);
   const [verifiedToken, setVerifiedToken] = useState<string | null>(null);
   const [downloadInitiated, setDownloadInitiated] = useState(false);
+  // Monotonically bumped to force the Turnstile widget to remount with a
+  // fresh Cloudflare challenge. Cloudflare (and the @marsidev wrapper) can
+  // otherwise hand back the same cached solved-challenge token across
+  // close/reopen or retry, which the server's replay Set rejects as "Token
+  // already used" on the second attempt (e.g. Qwen fails → switch to Llama).
+  const [turnstileKey, setTurnstileKey] = useState(0);
   const turnstileRef = useRef<TurnstileInstance>(null);
   const flowStartRef = useRef<number>(0);
   const { theme } = useTheme();
@@ -71,6 +77,11 @@ export function ResumeDownload({ resumeData }: ResumeDownloadProps) {
     setAiStage("idle");
     setAiRetryCount(0);
     setErrorMessage(null);
+    // Force a fresh Turnstile widget on every download click. Without this,
+    // a close/reopen (e.g. after a "busy" AI failure, user switches model
+    // and clicks Download again) can re-use the previous token and hit the
+    // server's replay guard.
+    setTurnstileKey((k) => k + 1);
     setShowTurnstile(true);
     setStatus("idle");
     flowStartRef.current = Date.now();
@@ -126,6 +137,7 @@ export function ResumeDownload({ resumeData }: ResumeDownloadProps) {
     setEmail,
     setLinkedin,
     setDownloadInitiated,
+    bumpTurnstileKey: () => setTurnstileKey((k) => k + 1),
   });
 
   useDownloadExecution({
@@ -229,6 +241,7 @@ export function ResumeDownload({ resumeData }: ResumeDownloadProps) {
           isJobDescriptionMode={isJobDescriptionMode}
           statusMessage={statusMessage}
           turnstileRef={turnstileRef}
+          turnstileKey={turnstileKey}
           onClose={handleCloseModal}
           onSuccess={handleTurnstileSuccess}
           onError={handleTurnstileError}

@@ -31,6 +31,15 @@ interface TurnstileModalProps {
   isJobDescriptionMode: boolean;
   statusMessage: string;
   turnstileRef: RefObject<TurnstileInstance | null>;
+  /**
+   * Monotonically increasing counter forwarded to the inner `<Turnstile>` as
+   * its React `key`. Bumping the value unmounts the current widget and mounts
+   * a fresh one, which is the only reliable way to force Cloudflare to issue
+   * a NEW challenge token. `reset()` on the widget ref can return the same
+   * cached solved-challenge token, which the server's in-memory replay Set
+   * rejects as "Token already used" on the next attempt.
+   */
+  turnstileKey: number;
   onClose: () => void;
   onSuccess: (token: string) => void;
   onError: () => void;
@@ -58,6 +67,7 @@ export function TurnstileModal(props: TurnstileModalProps) {
     isJobDescriptionMode,
     statusMessage,
     turnstileRef,
+    turnstileKey,
     onClose,
     onSuccess,
     onError,
@@ -169,6 +179,7 @@ export function TurnstileModal(props: TurnstileModalProps) {
             <div className="absolute inset-0 rounded-lg bg-slate-100 dark:bg-[#262626]" />
             <div className="relative z-10">
               <Turnstile
+                key={turnstileKey}
                 ref={turnstileRef}
                 siteKey={siteKey}
                 onSuccess={onSuccess}

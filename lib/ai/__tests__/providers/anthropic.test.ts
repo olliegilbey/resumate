@@ -310,7 +310,7 @@ describe("AnthropicProvider", () => {
       }
     });
 
-    it("handles rate limit error as provider down", async () => {
+    it("handles rate limit error as provider busy (not down)", async () => {
       const Anthropic = (await import("@anthropic-ai/sdk")).default;
 
       // Create mock error that mimics Anthropic.APIError
@@ -336,6 +336,36 @@ describe("AnthropicProvider", () => {
       } catch (e) {
         const err = e as AISelectionError;
         // Check via error code, not isProviderDown() (mock doesn't inherit properly)
+        expect(err.errors[0]!.code).toBe("E012_PROVIDER_BUSY");
+      }
+    });
+
+    it("handles 404 (model not found) as provider down", async () => {
+      // Parity with Cerebras: a deprecated/removed model slug must fail fast
+      // to the next provider rather than surfacing as a generic error.
+      const Anthropic = (await import("@anthropic-ai/sdk")).default;
+
+      const notFoundError = new Error("Model not found");
+      Object.assign(notFoundError, { status: 404, name: "APIError" });
+
+      const mockCreate = vi.fn().mockRejectedValue(notFoundError);
+
+      (Anthropic as unknown as ReturnType<typeof vi.fn>).mockImplementation(() => ({
+        messages: { create: mockCreate },
+      }));
+
+      const provider = new AnthropicProvider("claude-sonnet");
+
+      try {
+        await provider.select({
+          jobDescription: "Test",
+          compendium: mockCompendium,
+          maxBullets: 2,
+          minBullets: 2,
+        });
+        expect.fail("Should have thrown");
+      } catch (e) {
+        const err = e as AISelectionError;
         expect(err.errors[0]!.code).toBe("E011_PROVIDER_DOWN");
       }
     });
