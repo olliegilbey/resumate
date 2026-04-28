@@ -308,103 +308,159 @@
   color: var(--tag-19-fg);
 }
 
+/* Kanagawa accent tokens.
+   Three named hues from the palette, each with a soft (background) and
+   strong (text/icon) value tuned for both modes. Use these instead of raw
+   Tailwind blue/green/red/etc. so accents stay coherent.
+     - aqua  → waveAqua2 #7AA89F (default for icons/cards)
+     - pink  → sakuraPink #D27E99
+     - lblue → crystalBlue #7E9CD8 (lavender-blue, distinct from steel accent)
+   The steel-blue accent (`oklch(0.54 0.14 240)`) remains the system's only
+   *interaction* accent — used for focus rings, selected borders, etc. */
+:root {
+  --accent-aqua: oklch(0.66 0.05 175);
+  --accent-aqua-soft: oklch(0.92 0.04 175 / 0.6);
+  --accent-pink: oklch(0.66 0.1 0);
+  --accent-pink-soft: oklch(0.92 0.05 0 / 0.6);
+  --accent-lblue: oklch(0.66 0.09 265);
+  --accent-lblue-soft: oklch(0.92 0.05 265 / 0.6);
+  --accent-steel: oklch(0.54 0.14 240);
+  --accent-steel-soft: oklch(0.93 0.035 240 / 0.65);
+}
+
+:root.dark {
+  --accent-aqua: oklch(0.78 0.06 175);
+  --accent-aqua-soft: oklch(0.34 0.06 175 / 0.45);
+  --accent-pink: oklch(0.78 0.1 0);
+  --accent-pink-soft: oklch(0.34 0.08 0 / 0.45);
+  --accent-lblue: oklch(0.78 0.09 265);
+  --accent-lblue-soft: oklch(0.34 0.09 265 / 0.45);
+  --accent-steel: oklch(0.78 0.12 240);
+  --accent-steel-soft: oklch(0.3 0.07 240 / 0.55);
+}
+
+.text-aqua {
+  color: var(--accent-aqua);
+}
+.bg-aqua-soft {
+  background-color: var(--accent-aqua-soft);
+}
+.text-pink {
+  color: var(--accent-pink);
+}
+.bg-pink-soft {
+  background-color: var(--accent-pink-soft);
+}
+.text-lblue {
+  color: var(--accent-lblue);
+}
+.bg-lblue-soft {
+  background-color: var(--accent-lblue-soft);
+}
+.text-steel {
+  color: var(--accent-steel);
+}
+.bg-steel-soft {
+  background-color: var(--accent-steel-soft);
+}
+
+/* Body background — three Kanagawa-tinted blobs over a 24px line grid.
+   Replaces the previous seven-radial rainbow mesh.
+   Hues: sakuraPink (rose), waveAqua2 (aqua-green), crystalBlue (lavender-blue). */
 body {
   color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
-  background-color: #f0f4ff;
+  font-family: var(--font-geist-sans), Arial, Helvetica, sans-serif;
+  background-color: #e9ecf1;
   background-image:
-    radial-gradient(700px circle at 27% 37%, oklch(0.88 0.09 240 / 0.7), transparent),
-    radial-gradient(600px circle at 97% 21%, oklch(0.86 0.1 200 / 0.6), transparent),
-    radial-gradient(650px circle at 52% 99%, oklch(0.87 0.09 280 / 0.65), transparent),
-    radial-gradient(550px circle at 10% 29%, oklch(0.89 0.08 260 / 0.55), transparent),
-    radial-gradient(600px circle at 97% 96%, oklch(0.88 0.09 220 / 0.6), transparent),
-    radial-gradient(650px circle at 33% 50%, oklch(0.87 0.09 180 / 0.6), transparent),
-    radial-gradient(700px circle at 79% 53%, oklch(0.86 0.1 300 / 0.65), transparent);
+    radial-gradient(620px circle at 92% 14%, oklch(0.78 0.09 0 / 0.5), transparent 60%),
+    radial-gradient(580px circle at 6% 96%, oklch(0.82 0.05 175 / 0.5), transparent 60%),
+    radial-gradient(520px circle at 78% 88%, oklch(0.8 0.07 265 / 0.5), transparent 60%);
   background-attachment: fixed;
   background-size: 100% 100%;
   transition: background-color 0.3s ease;
 }
 
 :root.dark body {
-  background-color: #0f1419;
+  background-color: #16161d;
   background-image:
-    radial-gradient(700px circle at 27% 37%, oklch(0.25 0.12 240 / 0.8), transparent),
-    radial-gradient(600px circle at 97% 21%, oklch(0.22 0.13 200 / 0.7), transparent),
-    radial-gradient(650px circle at 52% 99%, oklch(0.24 0.12 280 / 0.75), transparent),
-    radial-gradient(550px circle at 10% 29%, oklch(0.23 0.11 260 / 0.65), transparent),
-    radial-gradient(600px circle at 97% 96%, oklch(0.25 0.12 220 / 0.7), transparent),
-    radial-gradient(650px circle at 33% 50%, oklch(0.24 0.12 180 / 0.7), transparent),
-    radial-gradient(700px circle at 79% 53%, oklch(0.23 0.13 300 / 0.75), transparent);
+    radial-gradient(620px circle at 92% 14%, oklch(0.55 0.1 0 / 0.45), transparent 60%),
+    radial-gradient(580px circle at 6% 96%, oklch(0.58 0.06 175 / 0.45), transparent 60%),
+    radial-gradient(520px circle at 78% 88%, oklch(0.58 0.1 265 / 0.45), transparent 60%);
 }
 
-/* Liquid Glass Utility Classes */
+/* Refined liquid-glass — CSS-only.
+   Layered specular highlight, edge inner shadow, calibrated saturation boost.
+   Used by GlassPanel and any chrome surface. No SVG cost. */
 .glass {
   position: relative;
-  background: linear-gradient(135deg, oklch(0.97 0.01 240 / 0.65), oklch(0.96 0.02 240 / 0.7));
-  backdrop-filter: blur(16px) saturate(180%);
-  -webkit-backdrop-filter: blur(16px) saturate(180%);
-  border: 1px solid oklch(0.85 0.01 240 / 0.3);
+  background: linear-gradient(135deg, oklch(1 0 0 / 0.55), oklch(0.97 0.004 240 / 0.4));
+  backdrop-filter: blur(20px) saturate(180%);
+  -webkit-backdrop-filter: blur(20px) saturate(180%);
   box-shadow:
-    0 8px 32px oklch(0.7 0.05 240 / 0.12),
-    inset 0 1px 0 oklch(1 0 0 / 0.6);
+    inset 0 1px 0 0 oklch(1 0 0 / 0.8),
+    inset 0 0 0 1px oklch(1 0 0 / 0.28),
+    inset 0 -1px 0 0 oklch(0.4 0.02 240 / 0.08),
+    0 18px 40px -14px oklch(0.3 0.04 240 / 0.18),
+    0 2px 4px oklch(0.3 0.04 240 / 0.06);
   isolation: isolate;
   will-change: backdrop-filter;
 }
 
 :root.dark .glass {
-  background: linear-gradient(135deg, oklch(0.32 0.03 240 / 0.4), oklch(0.28 0.04 240 / 0.5));
-  border: 1px solid oklch(0.4 0.05 240 / 0.35);
+  background: linear-gradient(135deg, oklch(0.3 0.012 240 / 0.45), oklch(0.2 0.01 240 / 0.55));
   box-shadow:
-    0 8px 32px oklch(0 0 0 / 0.3),
-    inset 0 1px 0 oklch(1 0 0 / 0.15);
+    inset 0 1px 0 0 oklch(1 0 0 / 0.18),
+    inset 0 0 0 1px oklch(1 0 0 / 0.05),
+    inset 0 -1px 0 0 oklch(0 0 0 / 0.25),
+    0 14px 40px -10px oklch(0 0 0 / 0.45),
+    0 2px 6px oklch(0 0 0 / 0.2);
 }
 
-/* Lighter glass for navbar/secondary elements */
+/* Lighter variant for navbar — softer wash so the backdrop bleeds through. */
 .glass-light {
-  background: rgba(248, 248, 248, 0.7);
-  border: 1px solid rgba(255, 255, 255, 0.18);
+  position: relative;
+  background: oklch(1 0 0 / 0.45);
+  backdrop-filter: blur(14px) saturate(160%);
+  -webkit-backdrop-filter: blur(14px) saturate(160%);
   box-shadow:
-    0 4px 16px rgba(100, 116, 139, 0.05),
-    inset 0 1px 0 rgba(255, 255, 255, 0.5);
-}
-
-/* Apply backdrop-filter to pseudo-element for Chrome compatibility */
-.glass-light::before {
-  content: "";
-  position: absolute;
-  inset: 0;
-  -webkit-backdrop-filter: blur(7px) saturate(150%);
-  backdrop-filter: blur(7px) saturate(150%);
-  z-index: -1;
-  pointer-events: none;
+    0 1px 0 oklch(0.92 0.004 250 / 0.5),
+    inset 0 1px 0 oklch(1 0 0 / 0.5);
+  border-bottom: 1px solid oklch(0.92 0.004 250 / 0.6);
+  isolation: isolate;
 }
 
 :root.dark .glass-light {
-  background: rgba(30, 41, 59, 0.7);
-  border: 1px solid rgba(71, 85, 105, 0.35);
+  background: oklch(0.16 0.01 250 / 0.55);
   box-shadow:
-    0 4px 16px rgba(0, 0, 0, 0.25),
-    inset 0 1px 0 rgba(255, 255, 255, 0.12);
+    0 1px 0 oklch(0 0 0 / 0.3),
+    inset 0 1px 0 oklch(1 0 0 / 0.06);
+  border-bottom: 1px solid oklch(0.3 0.012 250 / 0.4);
 }
 
-/* Hover effect for interactive glass elements */
+/* Hover for interactive glass cards — gentle lift, deeper drop. */
 .glass-hover {
-  transition: all 0.2s ease;
+  transition:
+    transform 0.2s ease,
+    box-shadow 0.25s ease;
 }
 
 .glass-hover:hover {
-  backdrop-filter: blur(20px) saturate(200%);
-  -webkit-backdrop-filter: blur(20px) saturate(200%);
   transform: translateY(-2px);
   box-shadow:
-    0 12px 48px oklch(0.7 0.05 240 / 0.12),
-    inset 0 1px 0 oklch(1 0 0 / 0.6);
+    inset 0 1px 0 0 oklch(1 0 0 / 0.85),
+    inset 0 0 0 1px oklch(1 0 0 / 0.32),
+    inset 0 -1px 0 0 oklch(0.4 0.02 240 / 0.1),
+    0 22px 48px -14px oklch(0.3 0.04 240 / 0.22),
+    0 2px 4px oklch(0.3 0.04 240 / 0.08);
 }
 
 :root.dark .glass-hover:hover {
   box-shadow:
-    0 12px 48px oklch(0 0 0 / 0.4),
-    inset 0 1px 0 oklch(1 0 0 / 0.15);
+    inset 0 1px 0 0 oklch(1 0 0 / 0.22),
+    inset 0 0 0 1px oklch(1 0 0 / 0.06),
+    inset 0 -1px 0 0 oklch(0 0 0 / 0.28),
+    0 18px 48px -10px oklch(0 0 0 / 0.55),
+    0 2px 6px oklch(0 0 0 / 0.25);
 }
 
 /* Glass Badge - subtle glassmorphism for small elements like tags */
@@ -441,8 +497,8 @@ input[type="checkbox"] {
 }
 
 input[type="checkbox"]:checked {
-  background-color: oklch(0.55 0.2 240);
-  border-color: oklch(0.55 0.2 240);
+  background-color: var(--accent-aqua);
+  border-color: var(--accent-aqua);
 }
 
 input[type="checkbox"]:checked::after {
@@ -463,6 +519,6 @@ input[type="checkbox"]:checked::after {
 }
 
 :root.dark input[type="checkbox"]:checked {
-  background-color: oklch(0.5 0.18 240);
-  border-color: oklch(0.5 0.18 240);
+  background-color: var(--accent-aqua);
+  border-color: var(--accent-aqua);
 }

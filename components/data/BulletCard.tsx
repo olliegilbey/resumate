@@ -14,7 +14,7 @@ export function BulletCard({ bullet, allTags, onTagClick, className }: BulletCar
   const priorityStars = Math.min(Math.max(Math.round(bullet.priority / 2), 1), 5);
 
   return (
-    <div className={cn("glass glass-hover rounded-xl p-4", className)}>
+    <div className={cn("glass glass-hover rounded-[28px] p-4", className)}>
       <div className="flex gap-4">
         {/* Priority stars and tags on the left */}
         <div className="flex flex-col gap-2 min-w-[140px]">
@@ -54,7 +54,7 @@ export function BulletCard({ bullet, allTags, onTagClick, className }: BulletCar
                       href={part.url}
                       target="_blank"
                       rel="noopener noreferrer"
-                      className="text-blue-600 hover:text-blue-800 underline"
+                      className="text-aqua underline hover:opacity-80"
                     >
                       {part.content}
                     </a>

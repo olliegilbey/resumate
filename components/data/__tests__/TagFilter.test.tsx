@@ -112,7 +112,10 @@ describe("TagFilter", () => {
       <TagFilter selectedTags={[]} onTagToggle={vi.fn()} bullets={mockBullets} allTags={allTags} />,
     );
 
-    const clearButton = screen.getByText("Clear All");
+    // Query the <button> element by role rather than via the inner text
+    // node — design system v2's Button wraps children in an inner <span>,
+    // so getByText would land on the span and miss the button's classes.
+    const clearButton = screen.getByRole("button", { name: /clear all/i });
     expect(clearButton).toHaveClass("opacity-0");
     expect(clearButton).toHaveClass("pointer-events-none");
   });
@@ -127,7 +130,7 @@ describe("TagFilter", () => {
       />,
     );
 
-    const clearButton = screen.getByText("Clear All");
+    const clearButton = screen.getByRole("button", { name: /clear all/i });
     expect(clearButton).not.toHaveClass("opacity-0");
   });
 
@@ -144,7 +147,7 @@ describe("TagFilter", () => {
       />,
     );
 
-    const clearButton = screen.getByText("Clear All");
+    const clearButton = screen.getByRole("button", { name: /clear all/i });
     await user.click(clearButton);
 
     expect(onTagToggle).toHaveBeenCalledTimes(2);
