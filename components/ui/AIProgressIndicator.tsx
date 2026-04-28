@@ -85,7 +85,7 @@ function StepIcon({
     case "complete":
       return <Check className="h-4 w-4 text-green-500 dark:text-green-400" />;
     case "active":
-      return <Loader2 className="h-4 w-4 text-blue-500 dark:text-blue-400 animate-spin" />;
+      return <Loader2 className="h-4 w-4 text-steel animate-spin" />;
     default:
       return <ChevronRight className="h-4 w-4 text-slate-300 dark:text-slate-600" />;
   }
@@ -106,7 +106,7 @@ export function AIProgressIndicator({
   const isComplete = stage === "complete";
 
   return (
-    <div className={cn("rounded-lg border overflow-hidden", className)}>
+    <div className={cn("rounded-2xl border overflow-hidden", className)}>
       {/* Header - Provider info */}
       <div className="bg-slate-100 dark:bg-slate-800 px-4 py-2 border-b border-slate-200 dark:border-slate-700">
         <div className="flex items-center justify-between">
@@ -118,10 +118,8 @@ export function AIProgressIndicator({
           </div>
           <span
             className={cn(
-              "text-xs font-medium px-2 py-0.5 rounded",
-              modelConfig.cost === "free"
-                ? "bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400"
-                : "bg-purple-100 text-purple-700 dark:bg-purple-900/30 dark:text-purple-400",
+              "text-xs font-medium px-2 py-0.5 rounded-full",
+              modelConfig.cost === "free" ? "bg-aqua-soft text-aqua" : "bg-steel-soft text-steel",
             )}
           >
             {modelConfig.cost === "free" ? "Free" : "Premium"}
@@ -152,7 +150,7 @@ export function AIProgressIndicator({
                 className={cn(
                   "flex items-center gap-3 font-mono text-sm transition-colors",
                   status === "complete" && "text-green-600 dark:text-green-400",
-                  status === "active" && !isCurrentRetrying && "text-blue-600 dark:text-blue-400",
+                  status === "active" && !isCurrentRetrying && "text-steel",
                   isCurrentRetrying && "text-amber-600 dark:text-amber-400",
                   status === "pending" && "text-slate-400 dark:text-slate-500",
                 )}

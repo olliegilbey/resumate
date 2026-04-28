@@ -11,9 +11,11 @@ const iconBadgeVariants = cva("flex items-center justify-center rounded-lg", {
     },
     variant: {
       default: "bg-slate-100 dark:bg-slate-700",
-      primary: "bg-blue-100 dark:bg-blue-900/30",
-      secondary: "bg-purple-100 dark:bg-purple-900/30",
-      success: "bg-green-100 dark:bg-green-900/30",
+      // Kanagawa aqua-green soft. Used for icon containers in cards.
+      primary: "bg-aqua-soft",
+      // Steel-blue accent (replaces previous purple — design system v2 drops purple).
+      secondary: "bg-steel-soft",
+      success: "bg-aqua-soft",
     },
   },
   defaultVariants: {

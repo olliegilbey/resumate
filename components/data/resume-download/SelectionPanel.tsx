@@ -85,7 +85,7 @@ export function SelectionPanel(props: SelectionPanelProps) {
           onChange={(e) => setEmail(e.target.value)}
           placeholder="Email (optional)"
           disabled={isLoading}
-          className="w-full px-3 py-2.5 bg-white dark:bg-slate-700 border border-slate-300 dark:border-slate-600 rounded-lg text-slate-900 dark:text-slate-100 placeholder-slate-400 focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-colors disabled:opacity-50"
+          className="w-full px-4 py-2.5 bg-aqua-soft border border-[var(--accent-aqua)]/30 rounded-full text-slate-900 dark:text-slate-100 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-[var(--accent-aqua)] focus:border-transparent transition-colors disabled:opacity-50"
         />
         <input
           type="url"
@@ -96,7 +96,7 @@ export function SelectionPanel(props: SelectionPanelProps) {
           onChange={(e) => setLinkedin(e.target.value)}
           placeholder="LinkedIn profile (optional)"
           disabled={isLoading}
-          className="w-full px-3 py-2.5 bg-white dark:bg-slate-700 border border-slate-300 dark:border-slate-600 rounded-lg text-slate-900 dark:text-slate-100 placeholder-slate-400 focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-colors disabled:opacity-50"
+          className="w-full px-4 py-2.5 bg-aqua-soft border border-[var(--accent-aqua)]/30 rounded-full text-slate-900 dark:text-slate-100 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-[var(--accent-aqua)] focus:border-transparent transition-colors disabled:opacity-50"
         />
       </div>
 
@@ -105,15 +105,15 @@ export function SelectionPanel(props: SelectionPanelProps) {
         {/* Left: Job Description (AI Mode) */}
         <div className="relative min-h-[180px]">
           <div className="absolute top-3 right-3 z-10">
-            <span className="inline-flex items-center px-2 py-1 rounded text-xs font-medium bg-purple-100 text-purple-800 dark:bg-purple-900/30 dark:text-purple-400">
+            <span className="inline-flex items-center px-2.5 py-1 rounded-full text-xs font-medium bg-aqua-soft text-aqua">
               AI-Powered
             </span>
           </div>
           <div
-            className={`h-full flex flex-col rounded-lg p-4 ${
+            className={`h-full flex flex-col bg-aqua-soft/40 rounded-[28px] p-4 ${
               isJobDescriptionMode
-                ? "bg-white dark:bg-slate-800 border-2 border-purple-200 dark:border-purple-800"
-                : "bg-slate-50 dark:bg-slate-800/50 border-2 border-dashed border-slate-300 dark:border-slate-600"
+                ? "border-2 border-[var(--accent-aqua)]/40"
+                : "border-2 border-dashed border-[var(--accent-aqua)]/25"
             }`}
           >
             <label
@@ -139,7 +139,7 @@ export function SelectionPanel(props: SelectionPanelProps) {
               rows={3}
               autoComplete="off"
               name="job-description"
-              className="w-full px-3 py-2 text-sm bg-white dark:bg-slate-700 border border-slate-300 dark:border-slate-600 rounded text-slate-900 dark:text-slate-100 placeholder-slate-400 resize-none disabled:opacity-50 disabled:cursor-not-allowed focus:ring-2 focus:ring-purple-500 focus:border-transparent"
+              className="w-full px-4 py-2.5 text-sm bg-aqua-soft border border-[var(--accent-aqua)]/30 rounded-2xl text-slate-900 dark:text-slate-100 placeholder-slate-400 resize-none disabled:opacity-50 disabled:cursor-not-allowed focus:outline-none focus:ring-2 focus:ring-[var(--accent-aqua)] focus:border-transparent"
             />
             {/* Provider dropdown - only show when JD has content */}
             {isJobDescriptionMode && (
@@ -148,7 +148,7 @@ export function SelectionPanel(props: SelectionPanelProps) {
                   value={aiProvider}
                   onChange={(e) => setAiProvider(e.target.value as AIProvider)}
                   disabled={isLoading}
-                  className="w-full px-3 py-2 text-sm bg-white dark:bg-slate-700 border border-slate-300 dark:border-slate-600 rounded text-slate-900 dark:text-slate-100 focus:ring-2 focus:ring-purple-500 focus:border-transparent disabled:opacity-50 appearance-none bg-[length:1.5rem] bg-[position:right_0.75rem_center] bg-no-repeat"
+                  className="w-full px-4 py-2 text-sm bg-aqua-soft border border-[var(--accent-aqua)]/30 rounded-full text-slate-900 dark:text-slate-100 focus:outline-none focus:ring-2 focus:ring-[var(--accent-aqua)] focus:border-transparent disabled:opacity-50 appearance-none bg-[length:1.5rem] bg-[position:right_0.75rem_center] bg-no-repeat"
                   style={SELECT_BG_STYLE}
                 >
                   {[...FALLBACK_ORDER]
@@ -182,11 +182,11 @@ export function SelectionPanel(props: SelectionPanelProps) {
         {/* Right: Role Profiles (Active) */}
         <div className="relative min-h-[180px]">
           <div className="absolute top-3 right-3 z-10">
-            <span className="inline-flex items-center px-2 py-1 rounded text-xs font-medium bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-400">
-              ✓ Available Now
+            <span className="inline-flex items-center px-2.5 py-1 rounded-full text-xs font-medium bg-aqua-soft text-aqua">
+              Rule-Based
             </span>
           </div>
-          <div className="h-full flex flex-col bg-white dark:bg-slate-800 border-2 border-blue-200 dark:border-blue-800 rounded-lg p-4">
+          <div className="h-full flex flex-col bg-aqua-soft/40 border-2 border-[var(--accent-aqua)]/40 rounded-[28px] p-4">
             <label
               htmlFor="role-select"
               className="block font-medium text-slate-700 dark:text-slate-300 mb-2"
@@ -213,7 +213,7 @@ export function SelectionPanel(props: SelectionPanelProps) {
                   ? "Clear job description to use role profiles"
                   : "Select a role profile"
               }
-              className="w-full px-3 py-2.5 bg-white dark:bg-slate-700 border border-slate-300 dark:border-slate-600 rounded-lg text-slate-900 dark:text-slate-100 focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-colors disabled:opacity-50 disabled:cursor-not-allowed appearance-none bg-[length:1.5rem] bg-[position:right_0.75rem_center] bg-no-repeat"
+              className="w-full px-4 py-2.5 bg-aqua-soft border border-[var(--accent-aqua)]/30 rounded-full text-slate-900 dark:text-slate-100 focus:outline-none focus:ring-2 focus:ring-[var(--accent-aqua)] focus:border-transparent transition-colors disabled:opacity-50 disabled:cursor-not-allowed appearance-none bg-[length:1.5rem] bg-[position:right_0.75rem_center] bg-no-repeat"
               style={SELECT_BG_STYLE}
             >
               <option value="">Choose a role...</option>
