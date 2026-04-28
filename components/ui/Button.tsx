@@ -45,7 +45,8 @@ const buttonVariants = cva(
     "transition-[transform,box-shadow] duration-200 ease-out",
     "active:translate-y-px",
     "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-2",
-    "focus-visible:ring-[oklch(0.54_0.14_240)] focus-visible:ring-offset-transparent",
+    // Token-based so dark mode picks up the --accent-steel override from globals.css.
+    "focus-visible:ring-[var(--accent-steel)] focus-visible:ring-offset-transparent",
     "disabled:opacity-50 disabled:pointer-events-none cursor-pointer",
     // Outer ambient drop. Kept low so it doesn't fight the inner specular.
     "shadow-[0_5px_12px_-6px_oklch(0.30_0.04_240/0.14),0_1px_1px_oklch(0.30_0.04_240/0.08)]",
@@ -81,22 +82,33 @@ function tintForVariant(variant: ButtonProps["variant"]): "neutral" | "accent" {
   return variant === "secondary" || variant === "outline" ? "accent" : "neutral";
 }
 
+/** Props accepted by {@link Button} — standard button attrs plus CVA variants. */
 export interface ButtonProps
   extends ButtonHTMLAttributes<HTMLButtonElement>, VariantProps<typeof buttonVariants> {}
 
 /**
  * Renders a tinted glass pill button.
  *
+ * @param className - Extra Tailwind classes merged via `cn()`.
+ * @param variant - `primary` (clear glass, default) | `secondary` | `outline` | `gradient`.
+ * @param size - `sm` | `md` (default) | `lg`.
+ * @param type - HTML button type. Defaults to `"button"` so an unspecified
+ *   `<Button>` inside a form does not accidentally submit it.
+ * @param children - Button content (icons, label text).
+ * @param props - Any other `HTMLButtonElement` attributes (e.g., `onClick`, `disabled`).
+ * @returns Forward-ref'd `<button>` rendered as a layered glass pill.
+ *
  * @example
  * <Button variant="primary" size="lg">Get contact card</Button>
  * <Button variant="secondary">Sign in</Button>
  */
 const Button = forwardRef<HTMLButtonElement, ButtonProps>(
-  ({ className, variant, size, children, ...props }, ref) => {
+  ({ className, variant, size, type = "button", children, ...props }, ref) => {
     const tint = tintForVariant(variant);
     return (
       <button
         ref={ref}
+        type={type}
         className={cn(buttonVariants({ variant, size }), tintFgClasses[tint], className)}
         {...props}
       >
@@ -136,4 +148,4 @@ const Button = forwardRef<HTMLButtonElement, ButtonProps>(
 );
 Button.displayName = "Button";
 
-export { Button, buttonVariants };
+export { Button };

@@ -375,9 +375,18 @@ body {
     radial-gradient(620px circle at 92% 14%, oklch(0.78 0.09 0 / 0.5), transparent 60%),
     radial-gradient(580px circle at 6% 96%, oklch(0.82 0.05 175 / 0.5), transparent 60%),
     radial-gradient(520px circle at 78% 88%, oklch(0.8 0.07 265 / 0.5), transparent 60%);
-  background-attachment: fixed;
+  /* Default to scroll. iOS Safari has long-standing repaint/jitter issues with
+     `background-attachment: fixed`; the @media gate below opts desktop-class
+     pointer devices into the fixed parallax effect. */
+  background-attachment: scroll;
   background-size: 100% 100%;
   transition: background-color 0.3s ease;
+}
+
+@media (hover: hover) and (pointer: fine) {
+  body {
+    background-attachment: fixed;
+  }
 }
 
 :root.dark body {

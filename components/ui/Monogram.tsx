@@ -21,6 +21,11 @@ interface MonogramProps {
 /**
  * Renders a glassy, gradient-tinted circular badge with initials.
  *
+ * @param initials - 1-2 character label rendered inside the orb.
+ * @param size - Pixel diameter (width = height). Defaults to 32 (navbar size).
+ * @param className - Extra Tailwind classes merged via `cn()`.
+ * @returns A `<div>` containing the layered glass orb with centered initials.
+ *
  * @example
  * <Monogram initials="OG" />
  * <Monogram initials="JD" size={48} />
