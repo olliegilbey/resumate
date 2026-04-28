@@ -106,7 +106,8 @@ export function Navbar() {
                   aria-label={link.label}
                   className={cn(
                     "inline-flex items-center gap-1.5 h-8 px-3 rounded-full",
-                    "text-[13px] font-medium tracking-tight outline-none focus:outline-none",
+                    "text-[13px] font-medium tracking-tight outline-none",
+                    "focus-visible:ring-2 focus-visible:ring-[oklch(0.54_0.14_240)] focus-visible:ring-offset-2 focus-visible:ring-offset-transparent",
                     "text-slate-600 hover:text-slate-900 dark:text-slate-400 dark:hover:text-slate-100",
                     "transition-colors duration-200",
                   )}

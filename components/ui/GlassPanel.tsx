@@ -13,6 +13,7 @@ import { cva, type VariantProps } from "class-variance-authority";
 import { cn } from "@/lib/utils";
 import { HTMLAttributes, forwardRef } from "react";
 
+/** CVA recipe for the glass surface — padding ladder, alignment, corner radii. */
 const glassPanelVariants = cva("glass", {
   variants: {
     padding: {
@@ -41,9 +42,25 @@ const glassPanelVariants = cva("glass", {
   },
 });
 
+/** Props accepted by {@link GlassPanel} — standard div attrs plus CVA variants. */
 export interface GlassPanelProps
   extends HTMLAttributes<HTMLDivElement>, VariantProps<typeof glassPanelVariants> {}
 
+/**
+ * Renders a refined liquid-glass surface div.
+ *
+ * @param className - Extra Tailwind classes merged via `cn()`.
+ * @param padding - Padding ladder: `none` | `sm` | `md` (default) | `lg` | `xl`.
+ * @param align - Text alignment: `start` (default) | `center`.
+ * @param radius - Corner radius: `lg` | `2xl` | `3xl` (default — matches lg pill button).
+ * @param props - Any other `HTMLDivElement` attributes (e.g., `id`, `onClick`, children).
+ * @returns Forward-ref'd `<div>` styled as a glass panel.
+ *
+ * @example
+ * <GlassPanel padding="lg" radius="3xl">
+ *   <h2>Card heading</h2>
+ * </GlassPanel>
+ */
 const GlassPanel = forwardRef<HTMLDivElement, GlassPanelProps>(
   ({ className, padding, align, radius, ...props }, ref) => {
     return (

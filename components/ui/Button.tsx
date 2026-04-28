@@ -62,10 +62,12 @@ const buttonVariants = cva(
         outline: "",
         gradient: "",
       },
+      // Gap is applied to the inner content span (see render below) since the
+      // outer button's flex children are absolutely-positioned glass layers.
       size: {
-        sm: "h-[34px] px-[18px] text-[13px] gap-1.5",
-        md: "h-11 px-[22px] text-sm gap-2",
-        lg: "h-[54px] px-7 text-[15px] gap-2",
+        sm: "h-[34px] px-[18px] text-[13px]",
+        md: "h-11 px-[22px] text-sm",
+        lg: "h-[54px] px-7 text-[15px]",
       },
     },
     defaultVariants: {

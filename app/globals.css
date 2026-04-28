@@ -463,6 +463,15 @@ body {
     0 2px 6px oklch(0 0 0 / 0.25);
 }
 
+@media (prefers-reduced-motion: reduce) {
+  .glass-hover {
+    transition: none;
+  }
+  .glass-hover:hover {
+    transform: none;
+  }
+}
+
 /* Glass Badge - subtle glassmorphism for small elements like tags */
 .glass-badge {
   backdrop-filter: blur(12px) saturate(150%);

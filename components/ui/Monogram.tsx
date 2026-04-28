@@ -35,7 +35,7 @@ export function Monogram({ initials, size = 32, className }: MonogramProps) {
         "text-[oklch(0.20_0.010_250)] dark:text-[oklch(0.97_0.005_250)]",
         className,
       )}
-      style={{ width: size, height: size, fontSize: Math.round(size * 0.34) }}
+      style={{ width: size, height: size }}
     >
       {/* Layer 1 — backdrop blur (matches buttons + cards). */}
       <span

@@ -3,6 +3,7 @@
 import { Calendar, Download } from "lucide-react";
 
 import { Button } from "@/components/ui/Button";
+import { cn } from "@/lib/utils";
 import resumeData from "@/data/resume-data.json";
 import { useTheme } from "@/contexts/ThemeContext";
 import { AboutSection } from "./_sections/AboutSection";
@@ -129,11 +130,11 @@ export default function HomePage() {
           <div className="grid grid-cols-1 md:grid-cols-[minmax(0,1fr)_auto] md:gap-12 md:items-end">
             {/* Name — large, light-weight, tight tracking, two-line stack. */}
             <h1
-              className={[
+              className={cn(
                 "m-0 font-light text-slate-900 dark:text-slate-100",
                 "leading-[0.92] tracking-[-0.045em]",
                 "text-[72px] md:text-[clamp(72px,11vw,116px)]",
-              ].join(" ")}
+              )}
             >
               {lastName ? (
                 <>
