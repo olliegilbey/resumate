@@ -27,7 +27,7 @@ export function SearchBar({
         onChange={(e) => onChange(e.target.value)}
         onBlur={onBlur}
         placeholder={placeholder}
-        className="w-full rounded-2xl glass pl-10 pr-10 py-3 text-sm text-slate-900 dark:text-slate-100 placeholder:text-slate-500 dark:placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-[var(--accent-steel)]/40"
+        className="w-full rounded-full glass pl-10 pr-10 py-3 text-sm text-slate-900 dark:text-slate-100 placeholder:text-slate-500 dark:placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-[var(--accent-steel)]/40"
       />
       {value && (
         <button
