@@ -58,7 +58,7 @@ export function TagFilter({
               type="checkbox"
               checked={selectedTags.includes(tag)}
               onChange={() => onTagToggle(tag)}
-              className="rounded border-slate-300 text-blue-600 focus:ring-blue-500 focus:ring-offset-0 dark:bg-slate-700 dark:border-slate-600 dark:checked:bg-blue-500 dark:checked:border-blue-500"
+              className="rounded border-slate-300 text-[var(--accent-aqua)] focus:ring-[var(--accent-aqua)] focus:ring-offset-0 dark:bg-slate-700 dark:border-slate-600 dark:checked:bg-[var(--accent-aqua)] dark:checked:border-[var(--accent-aqua)]"
             />
             <div className="flex items-center space-x-2 min-w-0 flex-1">
               <Badge tag={tag} allTags={allTags} className="group-hover:opacity-80" />
