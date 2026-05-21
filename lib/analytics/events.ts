@@ -45,13 +45,12 @@ export type AnalyticsEvent = (typeof ANALYTICS_EVENTS)[keyof typeof ANALYTICS_EV
 
 export type DownloadType = "resume_ai" | "resume_heuristic" | "vcard";
 export type GenerationMethod = "ai" | "heuristic";
-export type AIProvider =
-  | "cerebras-gpt-oss"
-  | "cerebras-zai"
-  | "cerebras-qwen"
-  | "cerebras-llama"
-  | "claude-sonnet"
-  | "claude-haiku";
+
+// AIProvider is owned by the AI providers module. Re-exported here (type-only,
+// so there is no runtime JS dependency) to give analytics code a single import
+// surface without duplicating the union — a duplicate drifts whenever models
+// are added or removed.
+export type { AIProvider } from "@/lib/ai/providers/types";
 
 // Error stages - unified across client/server
 export type ErrorStage =

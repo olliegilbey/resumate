@@ -105,10 +105,19 @@ export const AI_MODELS: Record<AIProvider, ModelConfig> = {
 } as const;
 
 /**
- * Provider fallback order
+ * Provider priority order.
  *
- * Used when a provider is DOWN (not for output format errors).
- * Prioritizes free providers, then paid.
+ * `FALLBACK_ORDER[0]` is the default provider, and the list is the canonical
+ * set of every configured provider (used for request validation and for
+ * ordering the model dropdown in the UI).
+ *
+ * Ordering generally prefers free providers over paid — with one deliberate
+ * exception: `cerebras-qwen` and `cerebras-llama` sit *below* the paid
+ * `claude-haiku`. Cerebras has signalled both for free-tier deprecation, so
+ * we don't want a soon-to-vanish model ranked above a stable paid fallback.
+ *
+ * Intended order: cerebras-gpt-oss, cerebras-zai, claude-haiku, cerebras-qwen,
+ * cerebras-llama, claude-sonnet. Don't reorder without honouring that caveat.
  */
 export const FALLBACK_ORDER: AIProvider[] = [
   "cerebras-gpt-oss", // Default - fast & free

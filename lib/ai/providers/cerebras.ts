@@ -21,7 +21,10 @@ import { AISelectionError, type ParseError } from "../errors";
 
 const CEREBRAS_API_URL = "https://api.cerebras.ai/v1/chat/completions";
 
-type CerebrasProviderKey = "cerebras-gpt-oss" | "cerebras-zai" | "cerebras-qwen" | "cerebras-llama";
+// The subset of AIProvider slugs backed by Cerebras. Derived from AIProvider
+// via a template-literal Extract so any new "cerebras-*" slug is included
+// automatically — no separate list to drift out of sync with the registry.
+type CerebrasProviderKey = Extract<AIProvider, `cerebras-${string}`>;
 
 interface CerebrasResponse {
   choices: Array<{
