@@ -38,7 +38,7 @@ Captured when user clicks "Download PDF" button.
   role_profile_id?: string
   role_profile_name?: string
   // AI mode
-  ai_provider?: 'cerebras-gpt' | 'cerebras-llama' | 'claude-sonnet' | 'claude-haiku'
+  ai_provider?: 'cerebras-gpt-oss' | 'cerebras-zai' | 'cerebras-qwen' | 'cerebras-llama' | 'claude-sonnet' | 'claude-haiku'
   job_title?: string
 }
 ```
@@ -309,7 +309,7 @@ When using AI mode (job description analysis):
 
 **Providers:**
 
-- `cerebras-gpt` / `cerebras-llama`: Fast inference
+- `cerebras-gpt-oss` / `cerebras-zai` / `cerebras-qwen` / `cerebras-llama`: Fast Cerebras free-tier inference
 - `claude-sonnet` / `claude-haiku`: Anthropic models
 
 ---

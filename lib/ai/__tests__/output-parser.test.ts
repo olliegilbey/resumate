@@ -528,7 +528,7 @@ describe("AISelectionError.isOutputFormatError", () => {
     const error = new AISelectionError(
       "Invalid score",
       [{ code: "E009_INVALID_SCORE", message: "test", help: "test" }],
-      "cerebras-gpt",
+      "cerebras-qwen",
       1,
     );
     expect(error.isOutputFormatError()).toBe(true);

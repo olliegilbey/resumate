@@ -63,9 +63,19 @@ describe("getProvider", () => {
     expect(AnthropicProvider).toHaveBeenCalledWith("claude-haiku");
   });
 
-  it("returns CerebrasProvider for cerebras-gpt", () => {
-    getProvider("cerebras-gpt");
-    expect(CerebrasProvider).toHaveBeenCalledWith("cerebras-gpt");
+  it("returns CerebrasProvider for cerebras-gpt-oss", () => {
+    getProvider("cerebras-gpt-oss");
+    expect(CerebrasProvider).toHaveBeenCalledWith("cerebras-gpt-oss");
+  });
+
+  it("returns CerebrasProvider for cerebras-zai", () => {
+    getProvider("cerebras-zai");
+    expect(CerebrasProvider).toHaveBeenCalledWith("cerebras-zai");
+  });
+
+  it("returns CerebrasProvider for cerebras-qwen", () => {
+    getProvider("cerebras-qwen");
+    expect(CerebrasProvider).toHaveBeenCalledWith("cerebras-qwen");
   });
 
   it("returns CerebrasProvider for cerebras-llama", () => {
@@ -74,7 +84,7 @@ describe("getProvider", () => {
   });
 
   it("throws for unknown provider", () => {
-    expect(() => getProvider("unknown" as "cerebras-gpt")).toThrow("Unknown provider");
+    expect(() => getProvider("unknown" as "cerebras-qwen")).toThrow("Unknown provider");
   });
 });
 
@@ -84,14 +94,14 @@ describe("getFirstAvailableProvider", () => {
   });
 
   it("returns first available provider in fallback order", () => {
-    // cerebras-gpt is first in FALLBACK_ORDER
+    // cerebras-gpt-oss is first in FALLBACK_ORDER
     const mockIsAvailable = vi.fn().mockReturnValue(true);
     (CerebrasProvider as unknown as ReturnType<typeof vi.fn>).mockImplementation(() => ({
       isAvailable: mockIsAvailable,
     }));
 
     const result = getFirstAvailableProvider();
-    expect(result).toBe("cerebras-gpt");
+    expect(result).toBe("cerebras-gpt-oss");
   });
 
   it("returns null if no providers available", () => {
@@ -117,7 +127,7 @@ describe("selectBulletsWithAI", () => {
     reasoning: "Test",
     jobTitle: null,
     salary: null,
-    provider: "cerebras-gpt",
+    provider: "cerebras-qwen",
     promptUsed: "test prompt",
     attemptCount: 1,
   };
@@ -132,12 +142,12 @@ describe("selectBulletsWithAI", () => {
       (CerebrasProvider as unknown as ReturnType<typeof vi.fn>).mockImplementation(() => ({
         isAvailable: () => true,
         select: mockSelect,
-        name: "cerebras-gpt",
+        name: "cerebras-qwen",
       }));
 
       const result = await selectBulletsWithAI(
         { jobDescription: "Test", compendium: mockCompendium, maxBullets: 2 },
-        "cerebras-gpt",
+        "cerebras-qwen",
       );
 
       expect(result).toEqual(validResult);
@@ -150,7 +160,7 @@ describe("selectBulletsWithAI", () => {
       const formatError = new AISelectionError(
         "Wrong count",
         [{ code: "E004_WRONG_BULLET_COUNT", message: "Expected 2", help: "Fix count" }],
-        "cerebras-gpt",
+        "cerebras-qwen",
       );
 
       const mockSelect = vi
@@ -161,12 +171,12 @@ describe("selectBulletsWithAI", () => {
       (CerebrasProvider as unknown as ReturnType<typeof vi.fn>).mockImplementation(() => ({
         isAvailable: () => true,
         select: mockSelect,
-        name: "cerebras-gpt",
+        name: "cerebras-qwen",
       }));
 
       const result = await selectBulletsWithAI(
         { jobDescription: "Test", compendium: mockCompendium, maxBullets: 2 },
-        "cerebras-gpt",
+        "cerebras-qwen",
       );
 
       expect(result).toEqual({ ...validResult, attemptCount: 2 });
@@ -181,7 +191,7 @@ describe("selectBulletsWithAI", () => {
       const formatError = new AISelectionError(
         "Wrong count",
         [{ code: "E004_WRONG_BULLET_COUNT", message: "Expected 2", help: "Fix" }],
-        "cerebras-gpt",
+        "cerebras-qwen",
       );
 
       const mockSelect = vi.fn().mockRejectedValue(formatError);
@@ -189,13 +199,13 @@ describe("selectBulletsWithAI", () => {
       (CerebrasProvider as unknown as ReturnType<typeof vi.fn>).mockImplementation(() => ({
         isAvailable: () => true,
         select: mockSelect,
-        name: "cerebras-gpt",
+        name: "cerebras-qwen",
       }));
 
       await expect(
         selectBulletsWithAI(
           { jobDescription: "Test", compendium: mockCompendium, maxBullets: 2 },
-          "cerebras-gpt",
+          "cerebras-qwen",
           { maxRetries: 2 },
         ),
       ).rejects.toThrow(AISelectionError);
@@ -209,7 +219,7 @@ describe("selectBulletsWithAI", () => {
       const downError = new AISelectionError(
         "Rate limited",
         [{ code: "E011_PROVIDER_DOWN", message: "Down", help: "Wait" }],
-        "cerebras-gpt",
+        "cerebras-qwen",
       );
 
       const mockSelect = vi.fn().mockRejectedValue(downError);
@@ -217,13 +227,13 @@ describe("selectBulletsWithAI", () => {
       (CerebrasProvider as unknown as ReturnType<typeof vi.fn>).mockImplementation(() => ({
         isAvailable: () => true,
         select: mockSelect,
-        name: "cerebras-gpt",
+        name: "cerebras-qwen",
       }));
 
       await expect(
         selectBulletsWithAI(
           { jobDescription: "Test", compendium: mockCompendium, maxBullets: 2 },
-          "cerebras-gpt",
+          "cerebras-qwen",
         ),
       ).rejects.toThrow("unavailable");
 
@@ -234,13 +244,13 @@ describe("selectBulletsWithAI", () => {
     it("throws when provider is not configured", async () => {
       (CerebrasProvider as unknown as ReturnType<typeof vi.fn>).mockImplementation(() => ({
         isAvailable: () => false,
-        name: "cerebras-gpt",
+        name: "cerebras-qwen",
       }));
 
       await expect(
         selectBulletsWithAI(
           { jobDescription: "Test", compendium: mockCompendium, maxBullets: 2 },
-          "cerebras-gpt",
+          "cerebras-qwen",
         ),
       ).rejects.toThrow("not configured");
     });
@@ -251,12 +261,12 @@ describe("selectBulletsWithAI", () => {
       const error1 = new AISelectionError(
         "Error 1",
         [{ code: "E004_WRONG_BULLET_COUNT", message: "Count", help: "" }],
-        "cerebras-gpt",
+        "cerebras-qwen",
       );
       const error2 = new AISelectionError(
         "Error 2",
         [{ code: "E005_INVALID_BULLET_ID", message: "ID", help: "" }],
-        "cerebras-gpt",
+        "cerebras-qwen",
       );
 
       const mockSelect = vi.fn().mockRejectedValueOnce(error1).mockRejectedValueOnce(error2);
@@ -264,13 +274,13 @@ describe("selectBulletsWithAI", () => {
       (CerebrasProvider as unknown as ReturnType<typeof vi.fn>).mockImplementation(() => ({
         isAvailable: () => true,
         select: mockSelect,
-        name: "cerebras-gpt",
+        name: "cerebras-qwen",
       }));
 
       try {
         await selectBulletsWithAI(
           { jobDescription: "Test", compendium: mockCompendium, maxBullets: 2 },
-          "cerebras-gpt",
+          "cerebras-qwen",
           { maxRetries: 2 },
         );
         expect.fail("Should have thrown");

@@ -61,10 +61,27 @@ describe("CerebrasProvider", () => {
   });
 
   describe("constructor", () => {
-    it("creates gpt provider with correct config", () => {
-      const provider = new CerebrasProvider("cerebras-gpt");
+    it("creates gpt-oss provider with correct config", () => {
+      const provider = new CerebrasProvider("cerebras-gpt-oss");
 
-      expect(provider.name).toBe("cerebras-gpt");
+      expect(provider.name).toBe("cerebras-gpt-oss");
+      expect(provider.config.model).toBe("gpt-oss-120b");
+      expect(provider.config.provider).toBe("cerebras");
+      expect(provider.config.cost).toBe("free");
+    });
+
+    it("creates zai provider with correct config", () => {
+      const provider = new CerebrasProvider("cerebras-zai");
+
+      expect(provider.name).toBe("cerebras-zai");
+      expect(provider.config.model).toBe("zai-glm-4.7");
+      expect(provider.config.cost).toBe("free");
+    });
+
+    it("creates qwen provider with correct config", () => {
+      const provider = new CerebrasProvider("cerebras-qwen");
+
+      expect(provider.name).toBe("cerebras-qwen");
       expect(provider.config.model).toBe("qwen-3-235b-a22b-instruct-2507");
       expect(provider.config.provider).toBe("cerebras");
       expect(provider.config.cost).toBe("free");
@@ -77,10 +94,11 @@ describe("CerebrasProvider", () => {
       expect(provider.config.model).toBe("llama3.1-8b");
     });
 
-    it("defaults to qwen-3-235b-a22b-instruct-2507", () => {
+    it("defaults to gpt-oss-120b", () => {
       const provider = new CerebrasProvider();
 
-      expect(provider.name).toBe("cerebras-gpt");
+      expect(provider.name).toBe("cerebras-gpt-oss");
+      expect(provider.config.model).toBe("gpt-oss-120b");
     });
   });
 
@@ -143,7 +161,7 @@ describe("CerebrasProvider", () => {
         }),
       });
 
-      const provider = new CerebrasProvider("cerebras-gpt");
+      const provider = new CerebrasProvider("cerebras-qwen");
       await provider.select({
         jobDescription: "We need an engineer",
         compendium: mockCompendium,
@@ -216,7 +234,7 @@ describe("CerebrasProvider", () => {
         period: "annual",
       });
       expect(result.tokensUsed).toBe(200);
-      expect(result.provider).toBe("cerebras-gpt");
+      expect(result.provider).toBe("cerebras-gpt-oss");
     });
 
     it("throws on invalid bullet IDs", async () => {
@@ -535,9 +553,14 @@ describe("CerebrasProvider", () => {
   });
 
   describe("createCerebrasProvider", () => {
-    it("creates gpt provider by default", () => {
+    it("creates gpt-oss provider by default", () => {
       const provider = createCerebrasProvider();
-      expect(provider.name).toBe("cerebras-gpt");
+      expect(provider.name).toBe("cerebras-gpt-oss");
+    });
+
+    it("creates zai provider when specified", () => {
+      const provider = createCerebrasProvider("cerebras-zai");
+      expect(provider.name).toBe("cerebras-zai");
     });
 
     it("creates llama provider when specified", () => {

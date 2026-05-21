@@ -28,8 +28,12 @@ export function getProvider(name: AIProvider): AIProviderInterface {
       return new AnthropicProvider("claude-sonnet");
     case "claude-haiku":
       return new AnthropicProvider("claude-haiku");
-    case "cerebras-gpt":
-      return new CerebrasProvider("cerebras-gpt");
+    case "cerebras-gpt-oss":
+      return new CerebrasProvider("cerebras-gpt-oss");
+    case "cerebras-zai":
+      return new CerebrasProvider("cerebras-zai");
+    case "cerebras-qwen":
+      return new CerebrasProvider("cerebras-qwen");
     case "cerebras-llama":
       return new CerebrasProvider("cerebras-llama");
     default:

@@ -517,7 +517,13 @@ export const ANALYTICS_EVENTS = {
 export type AnalyticsEvent = (typeof ANALYTICS_EVENTS)[keyof typeof ANALYTICS_EVENTS];
 export type DownloadType = "resume_ai" | "resume_heuristic" | "vcard";
 export type GenerationMethod = "ai" | "heuristic";
-export type AIProvider = "cerebras-gpt" | "cerebras-llama" | "claude-sonnet" | "claude-haiku";
+export type AIProvider =
+  | "cerebras-gpt-oss"
+  | "cerebras-zai"
+  | "cerebras-qwen"
+  | "cerebras-llama"
+  | "claude-sonnet"
+  | "claude-haiku";
 export type ErrorStage =
   | "turnstile"
   | "bullet_selection"

@@ -96,16 +96,12 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // Validate provider
-    const validProviders: AIProvider[] = [
-      "cerebras-gpt",
-      "cerebras-llama",
-      "claude-sonnet",
-      "claude-haiku",
-    ];
-    if (!provider || !validProviders.includes(provider as AIProvider)) {
+    // Validate provider. FALLBACK_ORDER is the canonical list of every
+    // configured provider, so checking against it stays in sync with the
+    // AI_MODELS registry automatically (no separate list to drift).
+    if (!provider || !FALLBACK_ORDER.includes(provider as AIProvider)) {
       return NextResponse.json(
-        { error: `Invalid provider. Must be one of: ${validProviders.join(", ")}` },
+        { error: `Invalid provider. Must be one of: ${FALLBACK_ORDER.join(", ")}` },
         { status: 400 },
       );
     }

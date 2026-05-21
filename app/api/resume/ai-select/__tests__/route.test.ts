@@ -21,7 +21,14 @@ import { clearRateLimitStore } from "@/lib/rate-limit";
 // Mock the AI provider module
 vi.mock("@/lib/ai/providers", () => ({
   selectBulletsWithAI: vi.fn(),
-  FALLBACK_ORDER: ["cerebras-gpt", "claude-haiku", "cerebras-llama", "claude-sonnet"],
+  FALLBACK_ORDER: [
+    "cerebras-gpt-oss",
+    "cerebras-zai",
+    "claude-haiku",
+    "cerebras-qwen",
+    "cerebras-llama",
+    "claude-sonnet",
+  ],
 }));
 
 // Mock PostHog
@@ -215,7 +222,14 @@ describe("/api/resume/ai-select", () => {
         provider: "claude-haiku",
       });
 
-      const validProviders = ["cerebras-gpt", "cerebras-llama", "claude-sonnet", "claude-haiku"];
+      const validProviders = [
+        "cerebras-gpt-oss",
+        "cerebras-zai",
+        "cerebras-qwen",
+        "cerebras-llama",
+        "claude-sonnet",
+        "claude-haiku",
+      ];
 
       for (const provider of validProviders) {
         clearRateLimitStore();
@@ -257,7 +271,7 @@ describe("/api/resume/ai-select", () => {
         reasoning: "Test",
         jobTitle: null,
         salary: null,
-        provider: "cerebras-gpt",
+        provider: "cerebras-qwen",
       });
 
       const token = getUniqueToken();
@@ -308,7 +322,7 @@ describe("/api/resume/ai-select", () => {
         reasoning: "Test",
         jobTitle: null,
         salary: null,
-        provider: "cerebras-gpt",
+        provider: "cerebras-qwen",
       });
 
       const ip = "10.0.0.1";
@@ -349,7 +363,7 @@ describe("/api/resume/ai-select", () => {
         reasoning: "Test",
         jobTitle: null,
         salary: null,
-        provider: "cerebras-gpt",
+        provider: "cerebras-qwen",
       });
 
       const request = createRequest({
@@ -379,7 +393,7 @@ describe("/api/resume/ai-select", () => {
         jobTitle: "Senior Software Engineer",
         salary: { min: 150000, max: 200000, currency: "USD", period: "annual" },
         tokensUsed: 250,
-        provider: "cerebras-gpt",
+        provider: "cerebras-qwen",
       });
 
       const request = createRequest({
@@ -411,7 +425,7 @@ describe("/api/resume/ai-select", () => {
         currency: "USD",
         period: "annual",
       });
-      expect(data.metadata.provider).toBe("cerebras-gpt");
+      expect(data.metadata.provider).toBe("cerebras-qwen");
       expect(data.metadata.tokensUsed).toBe(250);
       expect(data.metadata.duration).toBeGreaterThanOrEqual(0);
     });
@@ -423,7 +437,7 @@ describe("/api/resume/ai-select", () => {
         reasoning: "Test",
         jobTitle: null,
         salary: null,
-        provider: "cerebras-gpt",
+        provider: "cerebras-gpt-oss",
       });
 
       const request = createRequest({
@@ -437,7 +451,7 @@ describe("/api/resume/ai-select", () => {
         expect.objectContaining({
           jobDescription: validJobDescription,
         }),
-        "cerebras-gpt", // First in FALLBACK_ORDER
+        "cerebras-gpt-oss", // First in FALLBACK_ORDER
       );
     });
 
@@ -448,7 +462,7 @@ describe("/api/resume/ai-select", () => {
         reasoning: "Test",
         jobTitle: null,
         salary: null,
-        provider: "cerebras-gpt",
+        provider: "cerebras-qwen",
       });
 
       const request = createRequest({
@@ -487,7 +501,7 @@ describe("/api/resume/ai-select", () => {
         reasoning: "Test",
         jobTitle: null,
         salary: null,
-        provider: "cerebras-gpt",
+        provider: "cerebras-qwen",
       });
 
       const request = createRequest({
@@ -516,7 +530,7 @@ describe("/api/resume/ai-select", () => {
       const aiError = new AISelectionError(
         "All providers failed",
         [{ code: "E011_PROVIDER_DOWN", message: "Rate limited", help: "Try later" }],
-        "cerebras-gpt",
+        "cerebras-qwen",
         3,
       );
       mockSelectBulletsWithAI.mockRejectedValue(aiError);
@@ -532,7 +546,7 @@ describe("/api/resume/ai-select", () => {
       expect(response.status).toBe(500);
       expect(data.error).toBe("AI selection failed");
       expect(data.userMessage).toBeTruthy();
-      expect(data.provider).toBe("cerebras-gpt");
+      expect(data.provider).toBe("cerebras-qwen");
       expect(data.retriesAttempted).toBe(3);
     });
 
@@ -603,7 +617,7 @@ describe("/api/resume/ai-select", () => {
         reasoning: "Ordered by relevance",
         jobTitle: null,
         salary: null,
-        provider: "cerebras-gpt",
+        provider: "cerebras-qwen",
       });
 
       const request = createRequest({
@@ -635,7 +649,7 @@ describe("/api/resume/ai-select", () => {
         reasoning: "Test",
         jobTitle: null,
         salary: null,
-        provider: "cerebras-gpt",
+        provider: "cerebras-qwen",
       });
 
       const request = createRequest({

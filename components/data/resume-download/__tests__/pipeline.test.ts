@@ -41,7 +41,7 @@ describe("fetchAIBullets — error body sanitization", () => {
 
     const thrown = await fetchAIBullets({
       jobDescription: "jd",
-      provider: "cerebras-gpt",
+      provider: "cerebras-qwen",
       turnstileToken: "tok",
       sessionId: "sid",
       onRetryAttempt: vi.fn(),
@@ -75,7 +75,7 @@ describe("fetchAIBullets — error body sanitization", () => {
     await expect(
       fetchAIBullets({
         jobDescription: "jd",
-        provider: "cerebras-gpt",
+        provider: "cerebras-qwen",
         turnstileToken: "tok",
         sessionId: "sid",
         onRetryAttempt,
@@ -100,7 +100,7 @@ describe("fetchAIBullets — error body sanitization", () => {
     try {
       await fetchAIBullets({
         jobDescription: "jd",
-        provider: "cerebras-gpt",
+        provider: "cerebras-qwen",
         turnstileToken: "tok",
         sessionId: "sid",
         onRetryAttempt: vi.fn(),

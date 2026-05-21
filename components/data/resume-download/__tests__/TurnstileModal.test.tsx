@@ -42,7 +42,7 @@ const makeTurnstileRef = () => createRef<TurnstileInstance | null>();
 const baseProps = {
   siteKey: "test-site-key",
   theme: "light" as const,
-  aiProvider: "cerebras-gpt" as const,
+  aiProvider: "cerebras-qwen" as const,
   aiStage: "idle" as const,
   aiRetryCount: 0,
   isJobDescriptionMode: false,
