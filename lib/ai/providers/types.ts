@@ -8,7 +8,13 @@
 import type { ResumeData } from "@/lib/types/generated-resume";
 
 // Provider identifiers
-export type AIProvider = "cerebras-gpt" | "cerebras-llama" | "claude-sonnet" | "claude-haiku";
+export type AIProvider =
+  | "cerebras-gpt-oss"
+  | "cerebras-zai"
+  | "cerebras-qwen"
+  | "cerebras-llama"
+  | "claude-sonnet"
+  | "claude-haiku";
 
 // Provider backend type
 export type ProviderBackend = "anthropic" | "cerebras";
@@ -35,12 +41,38 @@ export interface ModelAvailability {
 /**
  * AI Model configurations
  *
- * cerebras-gpt is the DEFAULT - fast, quality, free
+ * cerebras-gpt-oss is the DEFAULT - fast, quality, free
+ *
+ * Each key is a stable slug; the `model` field holds the vendor's actual
+ * API model string. The slug is decoupled from the vendor string on
+ * purpose — e.g. Claude model IDs are date-stamped, and we don't want
+ * those leaking into the API contract or analytics dimensions.
+ *
+ * Note on cerebras-qwen / cerebras-llama: Cerebras has signalled both
+ * will be deprecated on the free tier; the /api/models endpoint queries
+ * the live provider catalog and marks them unavailable automatically
+ * once they disappear, so users gravitate to the gpt-oss / zai options.
  */
 export const AI_MODELS: Record<AIProvider, ModelConfig> = {
-  "cerebras-gpt": {
+  "cerebras-gpt-oss": {
     provider: "cerebras",
-    model: "qwen-3-235b-a22b-instruct-2507", // Cerebras free-tier replacement for gpt-oss-120b
+    model: "gpt-oss-120b",
+    label: "GPT OSS 120B (Fast)",
+    cost: "free",
+    contextWindow: 128000,
+    maxOutputTokens: 4096,
+  },
+  "cerebras-zai": {
+    provider: "cerebras",
+    model: "zai-glm-4.7",
+    label: "GLM 4.7 (Fast)",
+    cost: "free",
+    contextWindow: 128000,
+    maxOutputTokens: 4096,
+  },
+  "cerebras-qwen": {
+    provider: "cerebras",
+    model: "qwen-3-235b-a22b-instruct-2507", // Cerebras free-tier — pending deprecation
     label: "Qwen 3 235B (Fast)",
     cost: "free",
     contextWindow: 128000,
@@ -73,15 +105,26 @@ export const AI_MODELS: Record<AIProvider, ModelConfig> = {
 } as const;
 
 /**
- * Provider fallback order
+ * Provider priority order.
  *
- * Used when a provider is DOWN (not for output format errors).
- * Prioritizes free providers, then paid.
+ * `FALLBACK_ORDER[0]` is the default provider, and the list is the canonical
+ * set of every configured provider (used for request validation and for
+ * ordering the model dropdown in the UI).
+ *
+ * Ordering generally prefers free providers over paid — with one deliberate
+ * exception: `cerebras-qwen` and `cerebras-llama` sit *below* the paid
+ * `claude-haiku`. Cerebras has signalled both for free-tier deprecation, so
+ * we don't want a soon-to-vanish model ranked above a stable paid fallback.
+ *
+ * Intended order: cerebras-gpt-oss, cerebras-zai, claude-haiku, cerebras-qwen,
+ * cerebras-llama, claude-sonnet. Don't reorder without honouring that caveat.
  */
 export const FALLBACK_ORDER: AIProvider[] = [
-  "cerebras-gpt", // Default - fast & free
+  "cerebras-gpt-oss", // Default - fast & free
+  "cerebras-zai", // Alternative free (GLM 4.7)
   "claude-haiku", // Budget paid option
-  "cerebras-llama", // Alternative free
+  "cerebras-qwen", // Qwen 3 235B (pending deprecation by Cerebras)
+  "cerebras-llama", // Llama 3.1 8B (pending deprecation by Cerebras)
   "claude-sonnet", // Premium paid (last resort)
 ];
 

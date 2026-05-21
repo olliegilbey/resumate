@@ -1,8 +1,8 @@
 /**
- * Cerebras Provider (GPT-OSS 120B / Llama 3.3 70B)
+ * Cerebras Provider (GPT-OSS 120B / GLM 4.7 / Qwen 3 235B / Llama 3.1 8B)
  *
  * Uses OpenAI-compatible API at api.cerebras.ai
- * Both models are FREE and FAST - default choice.
+ * All models are FREE and FAST - default choice.
  */
 
 import type {
@@ -21,7 +21,10 @@ import { AISelectionError, type ParseError } from "../errors";
 
 const CEREBRAS_API_URL = "https://api.cerebras.ai/v1/chat/completions";
 
-type CerebrasProviderKey = "cerebras-gpt" | "cerebras-llama";
+// The subset of AIProvider slugs backed by Cerebras. Derived from AIProvider
+// via a template-literal Extract so any new "cerebras-*" slug is included
+// automatically — no separate list to drift out of sync with the registry.
+type CerebrasProviderKey = Extract<AIProvider, `cerebras-${string}`>;
 
 interface CerebrasResponse {
   choices: Array<{
@@ -50,7 +53,7 @@ export class CerebrasProvider implements AIProviderInterface {
   readonly name: AIProvider;
   readonly config: ModelConfig;
 
-  constructor(modelKey: CerebrasProviderKey = "cerebras-gpt") {
+  constructor(modelKey: CerebrasProviderKey = "cerebras-gpt-oss") {
     this.name = modelKey;
     this.config = AI_MODELS[modelKey];
   }
@@ -239,10 +242,10 @@ export class CerebrasProvider implements AIProviderInterface {
 
 /**
  * Create Cerebras provider for specific model
- * Defaults to Qwen 3 235B (fast + free)
+ * Defaults to GPT OSS 120B (fast + free)
  */
 export function createCerebrasProvider(
-  model: "cerebras-gpt" | "cerebras-llama" = "cerebras-gpt",
+  model: CerebrasProviderKey = "cerebras-gpt-oss",
 ): CerebrasProvider {
   return new CerebrasProvider(model);
 }

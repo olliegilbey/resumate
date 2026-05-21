@@ -12,6 +12,8 @@ import { GET } from "../route";
 const mockCerebrasModels = {
   object: "list",
   data: [
+    { id: "gpt-oss-120b", object: "model", created: 1700000000, owned_by: "Cerebras" },
+    { id: "zai-glm-4.7", object: "model", created: 1700000000, owned_by: "Cerebras" },
     {
       id: "qwen-3-235b-a22b-instruct-2507",
       object: "model",
@@ -58,9 +60,17 @@ describe("GET /api/models", () => {
     expect(Array.isArray(body.models)).toBe(true);
 
     // Cerebras models should be available
-    const cerebrasGpt = body.models.find((m: { id: string }) => m.id === "cerebras-gpt");
-    expect(cerebrasGpt).toBeDefined();
-    expect(cerebrasGpt.available).toBe(true);
+    const cerebrasGptOss = body.models.find((m: { id: string }) => m.id === "cerebras-gpt-oss");
+    expect(cerebrasGptOss).toBeDefined();
+    expect(cerebrasGptOss.available).toBe(true);
+
+    const cerebrasZai = body.models.find((m: { id: string }) => m.id === "cerebras-zai");
+    expect(cerebrasZai).toBeDefined();
+    expect(cerebrasZai.available).toBe(true);
+
+    const cerebrasQwen = body.models.find((m: { id: string }) => m.id === "cerebras-qwen");
+    expect(cerebrasQwen).toBeDefined();
+    expect(cerebrasQwen.available).toBe(true);
 
     const cerebrasLlama = body.models.find((m: { id: string }) => m.id === "cerebras-llama");
     expect(cerebrasLlama).toBeDefined();
@@ -113,9 +123,9 @@ describe("GET /api/models", () => {
     const response = await freshGET();
     const body = (await response.json()) as any;
 
-    const cerebrasGpt = body.models.find((m: { id: string }) => m.id === "cerebras-gpt");
-    expect(cerebrasGpt.available).toBe(false);
-    expect(cerebrasGpt.reason).toBe("Model not available on provider");
+    const cerebrasQwen = body.models.find((m: { id: string }) => m.id === "cerebras-qwen");
+    expect(cerebrasQwen.available).toBe(false);
+    expect(cerebrasQwen.reason).toBe("Model not available on provider");
 
     const cerebrasLlama = body.models.find((m: { id: string }) => m.id === "cerebras-llama");
     expect(cerebrasLlama.available).toBe(true);
@@ -128,9 +138,9 @@ describe("GET /api/models", () => {
     const response = await freshGET();
     const body = (await response.json()) as any;
 
-    const cerebrasGpt = body.models.find((m: { id: string }) => m.id === "cerebras-gpt");
-    expect(cerebrasGpt.available).toBe(false);
-    expect(cerebrasGpt.reason).toBe("API key not configured");
+    const cerebrasQwen = body.models.find((m: { id: string }) => m.id === "cerebras-qwen");
+    expect(cerebrasQwen.available).toBe(false);
+    expect(cerebrasQwen.reason).toBe("API key not configured");
   });
 
   it("assumes Cerebras models available when API fetch fails", async () => {
@@ -141,8 +151,8 @@ describe("GET /api/models", () => {
     const body = (await response.json()) as any;
 
     // Should assume available on fetch failure (optimistic)
-    const cerebrasGpt = body.models.find((m: { id: string }) => m.id === "cerebras-gpt");
-    expect(cerebrasGpt.available).toBe(true);
+    const cerebrasQwen = body.models.find((m: { id: string }) => m.id === "cerebras-qwen");
+    expect(cerebrasQwen.available).toBe(true);
   });
 
   it("includes label and cost for all models", async () => {
