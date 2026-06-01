@@ -8,6 +8,7 @@ import resumeData from "@/data/resume-data.json";
 import { useTheme } from "@/contexts/ThemeContext";
 import { AboutSection } from "./_sections/AboutSection";
 import { ContactCardTurnstileModal } from "./_sections/ContactCardTurnstileModal";
+import { NaluCTA } from "./_sections/NaluCTA";
 import { RecruiterCTA } from "./_sections/RecruiterCTA";
 import { useContactCardFlow } from "./_sections/useContactCardFlow";
 
@@ -160,13 +161,21 @@ export default function HomePage() {
                 <span>Get Contact Card</span>
               </Button>
               {calendarHref && (
-                <a href={calendarHref} target="_blank" rel="noopener noreferrer" className="w-full">
-                  <Button size="lg" variant="primary" className="w-full">
-                    <Calendar className="h-3.5 w-3.5" aria-hidden="true" />
-                    <span>Book in my Cal</span>
-                  </Button>
-                </a>
+                <Button
+                  as="a"
+                  href={calendarHref}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  size="lg"
+                  variant="primary"
+                  className="w-full"
+                >
+                  <Calendar className="h-3.5 w-3.5" aria-hidden="true" />
+                  <span>Book in my Cal</span>
+                </Button>
               )}
+              {/* Third CTA — aqua "product chip" linking to my Nalu learning app. */}
+              <NaluCTA />
             </div>
           </div>
 

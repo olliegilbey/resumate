@@ -26,12 +26,10 @@ export function RecruiterCTA() {
         View my full professional experience, download my resume, or explore my work history
         interactively.
       </p>
-      <Link href="/resume">
-        <Button size="lg" variant="primary">
-          <span>View Professional Profile</span>
-          <ArrowRight className="h-4 w-4" aria-hidden="true" />
-        </Button>
-      </Link>
+      <Button as={Link} href="/resume" size="lg" variant="primary">
+        <span>View Professional Profile</span>
+        <ArrowRight className="h-4 w-4" aria-hidden="true" />
+      </Button>
     </GlassPanel>
   );
 }

@@ -11,16 +11,17 @@
  * - `secondary`→ steel-blue accent glass
  * - `outline`  → steel-blue accent glass (back-compat)
  * - `gradient` → clear/neutral glass (back-compat for existing call sites)
+ * - `aqua`     → waveAqua2 accent glass (Kanagawa wave accent — used by the Nalu CTA)
  *
  * @module components/ui/Button
  */
 import { cva, type VariantProps } from "class-variance-authority";
 import { cn } from "@/lib/utils";
-import { ButtonHTMLAttributes, forwardRef } from "react";
+import { AnchorHTMLAttributes, ButtonHTMLAttributes, ElementType, forwardRef } from "react";
 
 // Per-tint layer classes. Light values default, dark values override under
 // the global `.dark` variant (configured in globals.css via @variant dark).
-const tintWashClasses: Record<"neutral" | "accent", string> = {
+const tintWashClasses: Record<"neutral" | "accent" | "aqua", string> = {
   // Clear glass — primary CTA. Light wash so the backdrop reads through.
   neutral: cn(
     "bg-[linear-gradient(180deg,oklch(1_0_0/0.30),oklch(0.96_0.005_240/0.22))]",
@@ -31,11 +32,18 @@ const tintWashClasses: Record<"neutral" | "accent", string> = {
     "bg-[linear-gradient(180deg,oklch(0.70_0.14_240/0.18),oklch(0.62_0.14_240/0.22))]",
     "dark:bg-[linear-gradient(180deg,oklch(0.70_0.14_240/0.24),oklch(0.62_0.14_240/0.30))]",
   ),
+  // Aqua glass — waveAqua2 (hue 175). Stronger wash than the steel accent so the
+  // lone aqua pill stands out against the two neutral CTAs above it.
+  aqua: cn(
+    "bg-[linear-gradient(180deg,oklch(0.72_0.07_175/0.22),oklch(0.64_0.07_175/0.28))]",
+    "dark:bg-[linear-gradient(180deg,oklch(0.70_0.08_175/0.32),oklch(0.60_0.08_175/0.42))]",
+  ),
 };
 
-const tintFgClasses: Record<"neutral" | "accent", string> = {
+const tintFgClasses: Record<"neutral" | "accent" | "aqua", string> = {
   neutral: "text-[oklch(0.22_0.012_250)] dark:text-[oklch(0.96_0.003_250)]",
   accent: "text-[oklch(0.22_0.08_240)] dark:text-[oklch(0.96_0.04_240)]",
+  aqua: "text-[oklch(0.30_0.06_175)] dark:text-[oklch(0.97_0.03_175)]",
 };
 
 const buttonVariants = cva(
@@ -62,6 +70,7 @@ const buttonVariants = cva(
         secondary: "",
         outline: "",
         gradient: "",
+        aqua: "",
       },
       // Gap is applied to the inner content span (see render below) since the
       // outer button's flex children are absolutely-positioned glass layers.
@@ -78,38 +87,67 @@ const buttonVariants = cva(
   },
 );
 
-function tintForVariant(variant: ButtonProps["variant"]): "neutral" | "accent" {
+function tintForVariant(variant: ButtonProps["variant"]): "neutral" | "accent" | "aqua" {
+  if (variant === "aqua") return "aqua";
   return variant === "secondary" || variant === "outline" ? "accent" : "neutral";
 }
 
-/** Props accepted by {@link Button} — standard button attrs plus CVA variants. */
+/**
+ * Props accepted by {@link Button} — standard button attrs, the anchor
+ * attributes needed for link CTAs (`href`/`target`/`rel`/`download`), and CVA
+ * variants.
+ *
+ * The button is polymorphic: it defaults to a native `<button>`, but `as`
+ * lets it render as another element so a link CTA is a *single* interactive
+ * element rather than a `<button>` nested inside an `<a>` (invalid HTML, and a
+ * duplicated control in the accessibility tree).
+ */
 export interface ButtonProps
-  extends ButtonHTMLAttributes<HTMLButtonElement>, VariantProps<typeof buttonVariants> {}
+  extends
+    ButtonHTMLAttributes<HTMLButtonElement>,
+    Pick<AnchorHTMLAttributes<HTMLAnchorElement>, "href" | "target" | "rel" | "download">,
+    VariantProps<typeof buttonVariants> {
+  /**
+   * Element or component to render as. Defaults to `"button"`. Use `"a"` for
+   * external links or a router component (e.g. Next's `Link`) for internal
+   * navigation — the glass layers render identically inside either.
+   */
+  as?: ElementType;
+}
 
 /**
- * Renders a tinted glass pill button.
+ * Renders a tinted glass pill, as a `<button>` by default or as the element
+ * given by `as` (e.g. `"a"` / Next `Link`) for link CTAs.
  *
  * @param className - Extra Tailwind classes merged via `cn()`.
- * @param variant - `primary` (clear glass, default) | `secondary` | `outline` | `gradient`.
+ * @param variant - `primary` (clear glass, default) | `secondary` | `outline` | `gradient` | `aqua`.
  * @param size - `sm` | `md` (default) | `lg`.
- * @param type - HTML button type. Defaults to `"button"` so an unspecified
- *   `<Button>` inside a form does not accidentally submit it.
+ * @param as - Element/component to render as. Defaults to `"button"`.
+ * @param type - HTML button type. Defaults to `"button"` (applied only when
+ *   rendering as a native `<button>`) so an unspecified `<Button>` inside a
+ *   form does not accidentally submit it.
  * @param children - Button content (icons, label text).
- * @param props - Any other `HTMLButtonElement` attributes (e.g., `onClick`, `disabled`).
- * @returns Forward-ref'd `<button>` rendered as a layered glass pill.
+ * @param props - Any other attributes valid on the rendered element (e.g.
+ *   `onClick`, `disabled` for buttons; `href`, `target`, `rel` for links).
+ * @returns Forward-ref'd glass pill rendered as `as` (default `<button>`).
  *
  * @example
  * <Button variant="primary" size="lg">Get contact card</Button>
- * <Button variant="secondary">Sign in</Button>
+ * <Button as="a" href="https://example.com" target="_blank" rel="noopener noreferrer">Visit</Button>
+ * <Button as={Link} href="/resume" variant="primary">View profile</Button>
  */
-const Button = forwardRef<HTMLButtonElement, ButtonProps>(
-  ({ className, variant, size, type = "button", children, ...props }, ref) => {
+const Button = forwardRef<HTMLElement, ButtonProps>(
+  ({ className, variant, size, as, type, children, ...props }, ref) => {
     const tint = tintForVariant(variant);
+    const Comp = as ?? "button";
+    // `type` is only meaningful on a native button; never leak it onto an
+    // anchor/router element (would render an invalid `type` attribute).
+    const buttonOnlyProps = Comp === "button" ? { type: type ?? "button" } : {};
     return (
-      <button
+      <Comp
         ref={ref}
-        type={type}
         className={cn(buttonVariants({ variant, size }), tintFgClasses[tint], className)}
+        {...buttonOnlyProps}
         {...props}
       >
         {/* Layer 1 — backdrop blur. Same recipe as GlassPanel. */}
@@ -142,7 +180,7 @@ const Button = forwardRef<HTMLButtonElement, ButtonProps>(
         >
           {children}
         </span>
-      </button>
+      </Comp>
     );
   },
 );
