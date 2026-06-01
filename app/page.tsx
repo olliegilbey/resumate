@@ -8,6 +8,7 @@ import resumeData from "@/data/resume-data.json";
 import { useTheme } from "@/contexts/ThemeContext";
 import { AboutSection } from "./_sections/AboutSection";
 import { ContactCardTurnstileModal } from "./_sections/ContactCardTurnstileModal";
+import { NaluCTA } from "./_sections/NaluCTA";
 import { RecruiterCTA } from "./_sections/RecruiterCTA";
 import { useContactCardFlow } from "./_sections/useContactCardFlow";
 
@@ -167,6 +168,8 @@ export default function HomePage() {
                   </Button>
                 </a>
               )}
+              {/* Third CTA — aqua "product chip" linking to my Nalu learning app. */}
+              <NaluCTA />
             </div>
           </div>
 

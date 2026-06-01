@@ -11,6 +11,7 @@
  * - `secondary`→ steel-blue accent glass
  * - `outline`  → steel-blue accent glass (back-compat)
  * - `gradient` → clear/neutral glass (back-compat for existing call sites)
+ * - `aqua`     → waveAqua2 accent glass (Kanagawa wave accent — used by the Nalu CTA)
  *
  * @module components/ui/Button
  */
@@ -20,7 +21,7 @@ import { ButtonHTMLAttributes, forwardRef } from "react";
 
 // Per-tint layer classes. Light values default, dark values override under
 // the global `.dark` variant (configured in globals.css via @variant dark).
-const tintWashClasses: Record<"neutral" | "accent", string> = {
+const tintWashClasses: Record<"neutral" | "accent" | "aqua", string> = {
   // Clear glass — primary CTA. Light wash so the backdrop reads through.
   neutral: cn(
     "bg-[linear-gradient(180deg,oklch(1_0_0/0.30),oklch(0.96_0.005_240/0.22))]",
@@ -31,11 +32,18 @@ const tintWashClasses: Record<"neutral" | "accent", string> = {
     "bg-[linear-gradient(180deg,oklch(0.70_0.14_240/0.18),oklch(0.62_0.14_240/0.22))]",
     "dark:bg-[linear-gradient(180deg,oklch(0.70_0.14_240/0.24),oklch(0.62_0.14_240/0.30))]",
   ),
+  // Aqua glass — waveAqua2 (hue 175). Stronger wash than the steel accent so the
+  // lone aqua pill stands out against the two neutral CTAs above it.
+  aqua: cn(
+    "bg-[linear-gradient(180deg,oklch(0.72_0.07_175/0.22),oklch(0.64_0.07_175/0.28))]",
+    "dark:bg-[linear-gradient(180deg,oklch(0.70_0.08_175/0.32),oklch(0.60_0.08_175/0.42))]",
+  ),
 };
 
-const tintFgClasses: Record<"neutral" | "accent", string> = {
+const tintFgClasses: Record<"neutral" | "accent" | "aqua", string> = {
   neutral: "text-[oklch(0.22_0.012_250)] dark:text-[oklch(0.96_0.003_250)]",
   accent: "text-[oklch(0.22_0.08_240)] dark:text-[oklch(0.96_0.04_240)]",
+  aqua: "text-[oklch(0.30_0.06_175)] dark:text-[oklch(0.97_0.03_175)]",
 };
 
 const buttonVariants = cva(
@@ -62,6 +70,7 @@ const buttonVariants = cva(
         secondary: "",
         outline: "",
         gradient: "",
+        aqua: "",
       },
       // Gap is applied to the inner content span (see render below) since the
       // outer button's flex children are absolutely-positioned glass layers.
@@ -78,7 +87,8 @@ const buttonVariants = cva(
   },
 );
 
-function tintForVariant(variant: ButtonProps["variant"]): "neutral" | "accent" {
+function tintForVariant(variant: ButtonProps["variant"]): "neutral" | "accent" | "aqua" {
+  if (variant === "aqua") return "aqua";
   return variant === "secondary" || variant === "outline" ? "accent" : "neutral";
 }
 
@@ -90,7 +100,7 @@ export interface ButtonProps
  * Renders a tinted glass pill button.
  *
  * @param className - Extra Tailwind classes merged via `cn()`.
- * @param variant - `primary` (clear glass, default) | `secondary` | `outline` | `gradient`.
+ * @param variant - `primary` (clear glass, default) | `secondary` | `outline` | `gradient` | `aqua`.
  * @param size - `sm` | `md` (default) | `lg`.
  * @param type - HTML button type. Defaults to `"button"` so an unspecified
  *   `<Button>` inside a form does not accidentally submit it.
