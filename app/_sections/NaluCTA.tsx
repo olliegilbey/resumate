@@ -17,6 +17,7 @@
  * @module app/_sections/NaluCTA
  */
 import { Button } from "@/components/ui/Button";
+import { cn } from "@/lib/utils";
 
 /** Public URL of the Nalu learning app. Opened in a new tab. */
 const NALU_URL = "https://nalu.ollie.gg";
@@ -40,28 +41,29 @@ export function NaluCTA() {
     // Aqua glass card — 5px pad / 29px radius keeps the frame concentric with
     // the inner pill. Aqua wash + border + soft aqua glow, tuned per theme.
     <div
-      className={[
+      className={cn(
         "rounded-[29px] p-[5px]",
         "border border-[oklch(0.66_0.05_175/0.45)] dark:border-[oklch(0.78_0.06_175/0.35)]",
         "bg-[linear-gradient(180deg,oklch(0.90_0.05_175/0.45),oklch(0.85_0.06_175/0.55))]",
         "dark:bg-[linear-gradient(180deg,oklch(0.40_0.05_175/0.22),oklch(0.30_0.05_175/0.30))]",
         "shadow-[0_10px_30px_-16px_oklch(0.66_0.06_175/0.5)] dark:shadow-[0_10px_30px_-16px_oklch(0.70_0.08_175/0.7)]",
-      ].join(" ")}
+      )}
     >
-      <a
+      {/* The pill is the link itself (a single interactive element). Slightly
+          shorter than the lg CTAs above (h-12 vs 54px) so it reads as nested. */}
+      <Button
+        as="a"
         href={NALU_URL}
         target="_blank"
         rel="noopener noreferrer"
-        className="block w-full"
+        variant="aqua"
+        size="lg"
+        className="w-full h-12 text-sm"
         aria-label="Try Nalu — Duolingo for Anything (opens in a new tab)"
       >
-        {/* Inner pill — slightly shorter than the lg CTAs above (h-12 vs 54px)
-            so it reads as nested rather than a fourth top-level button. */}
-        <Button variant="aqua" size="lg" className="w-full h-12 text-sm" tabIndex={-1}>
-          <span aria-hidden="true">🌊</span>
-          <span>Try Nalu</span>
-        </Button>
-      </a>
+        <span aria-hidden="true">🌊</span>
+        <span>Try Nalu</span>
+      </Button>
 
       {/* Pitch — bold hook on its own line, description beneath. Aqua-tinted to
           tie into the card; the button label, not this copy, is the CTA. */}

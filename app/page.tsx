@@ -161,12 +161,18 @@ export default function HomePage() {
                 <span>Get Contact Card</span>
               </Button>
               {calendarHref && (
-                <a href={calendarHref} target="_blank" rel="noopener noreferrer" className="w-full">
-                  <Button size="lg" variant="primary" className="w-full">
-                    <Calendar className="h-3.5 w-3.5" aria-hidden="true" />
-                    <span>Book in my Cal</span>
-                  </Button>
-                </a>
+                <Button
+                  as="a"
+                  href={calendarHref}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  size="lg"
+                  variant="primary"
+                  className="w-full"
+                >
+                  <Calendar className="h-3.5 w-3.5" aria-hidden="true" />
+                  <span>Book in my Cal</span>
+                </Button>
               )}
               {/* Third CTA — aqua "product chip" linking to my Nalu learning app. */}
               <NaluCTA />
