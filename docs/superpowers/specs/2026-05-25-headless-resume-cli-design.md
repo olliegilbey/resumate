@@ -1,6 +1,6 @@
 # Headless Resume CLI — Design
 
-**Status:** Drafted via /superpowers:brainstorming, awaiting implementation.
+**Status:** ❄️ SHELVED (2026-06-23) — not pursuing for now, likely won't return. Spec kept for reference. Originally drafted via /superpowers:brainstorming, awaiting implementation.
 **Date:** 2026-05-25
 **Owner:** Oliver
 
