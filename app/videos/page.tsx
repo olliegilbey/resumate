@@ -1,11 +1,20 @@
 import type { Metadata } from "next";
 
 import { YouTubeEmbed } from "@/components/ui/YouTubeEmbed";
+import resumeData from "@/data/resume-data.json";
 
-/** Per-page metadata for the video portfolio route. */
+/**
+ * Per-page metadata for the video portfolio route.
+ *
+ * A child `title` string fully overrides the root layout's branded title, so
+ * we self-brand here with the owner's name (sourced from `resumeData`, same as
+ * `layout.tsx`) to keep tab/social titles consistent across pages. The
+ * description summarises the page (a growing portfolio), not the single current
+ * video — so it stays accurate as more videos are added.
+ */
 export const metadata: Metadata = {
-  title: "Video Portfolio",
-  description: "Talks and video highlights — Oliver Gilbey.",
+  title: `Video Portfolio · ${resumeData.personal.name}`,
+  description: `Conference talks and video highlights from ${resumeData.personal.name}.`,
 };
 
 /**
