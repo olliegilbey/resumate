@@ -80,6 +80,8 @@ const eslintConfig = defineConfig([
     "lib/types/generated-*.ts",
     // WASM outputs
     "public/wasm/**",
+    // wasm-pack output (generated JS bindings — never lint generated code)
+    "crates/**/pkg/**",
   ]),
 ]);
 
