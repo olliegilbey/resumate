@@ -150,9 +150,9 @@ export function proxy(request: NextRequest) {
       "img-src 'self' data: https:; " +
       "font-src 'self' data:; " +
       "connect-src 'self' https://challenges.cloudflare.com https://vitals.vercel-insights.com; " +
-      "frame-src https://challenges.cloudflare.com; " +
+      "frame-src https://challenges.cloudflare.com https://www.youtube-nocookie.com; " +
       "worker-src 'self' blob:; " +
-      "child-src https://challenges.cloudflare.com;",
+      "child-src https://challenges.cloudflare.com https://www.youtube-nocookie.com;",
   );
 
   // Referrer policy

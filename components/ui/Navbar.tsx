@@ -3,7 +3,7 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { cn } from "@/lib/utils";
-import { Home, Briefcase, Eye } from "lucide-react";
+import { Home, Briefcase, Eye, Clapperboard } from "lucide-react";
 import { ThemeToggle } from "./ThemeToggle";
 import { Monogram } from "./Monogram";
 import resumeData from "@/data/resume-data.json";
@@ -33,6 +33,7 @@ export function Navbar() {
     { href: "/", label: "Home", icon: Home },
     { href: "/resume", label: "Resume", icon: Briefcase },
     { href: "/resume/view", label: "Experience", icon: Eye },
+    { href: "/videos", label: "Videos", icon: Clapperboard },
   ];
 
   return (
