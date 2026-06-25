@@ -21,6 +21,14 @@ export interface YouTubeEmbedProps {
  * Note: the embed requires `frame-src https://www.youtube-nocookie.com` in
  * the site CSP (see `proxy.ts`) or the iframe is blocked at runtime.
  *
+ * Security: the iframe is sandboxed to deny the third-party player the
+ * default full browser-context access. The granted tokens are the minimum the
+ * YouTube player needs to stay functional — `allow-scripts`/`allow-same-origin`
+ * for the player itself (cross-origin, so it cannot escape to *our* origin),
+ * `allow-presentation` for fullscreen/PiP, and `allow-popups` +
+ * `allow-popups-to-escape-sandbox` so "Watch on YouTube"/share still open.
+ * Notably absent: top-navigation, forms, pointer-lock, and plugins.
+ *
  * @example
  * <YouTubeEmbed videoId="fbFWHhN9E30" title="The Interchain Developer Experience" />
  */
@@ -37,6 +45,7 @@ export function YouTubeEmbed({ videoId, title, className }: YouTubeEmbedProps) {
           title={title}
           loading="lazy"
           allow="accelerometer; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
+          sandbox="allow-scripts allow-same-origin allow-presentation allow-popups allow-popups-to-escape-sandbox"
           allowFullScreen
           referrerPolicy="strict-origin-when-cross-origin"
           className="absolute inset-0 h-full w-full border-0"

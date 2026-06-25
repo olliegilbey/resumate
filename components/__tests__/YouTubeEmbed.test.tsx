@@ -18,6 +18,23 @@ describe("YouTubeEmbed", () => {
     expect(frame).toHaveAttribute("allowfullscreen");
   });
 
+  it("sandboxes the third-party player while preserving playback features", () => {
+    render(<YouTubeEmbed videoId="abc123" title="My talk" />);
+    const sandbox = screen.getByTitle("My talk").getAttribute("sandbox") ?? "";
+    // Restrictive by default: no top-navigation, no plugins.
+    expect(sandbox).not.toBe("");
+    // Tokens the YouTube player needs to function and stay interactive.
+    for (const token of [
+      "allow-scripts",
+      "allow-same-origin",
+      "allow-presentation",
+      "allow-popups",
+      "allow-popups-to-escape-sandbox",
+    ]) {
+      expect(sandbox.split(/\s+/)).toContain(token);
+    }
+  });
+
   it("wraps the iframe in a 16:9 aspect box and centered max-width wrapper", () => {
     const { container } = render(<YouTubeEmbed videoId="abc123" title="My talk" />);
     // Outer wrapper centers + caps width.
