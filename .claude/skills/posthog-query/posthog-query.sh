@@ -49,7 +49,7 @@ HQL="${1:?usage: posthog-query.sh \"<HogQL>\"}"
 
 BODY="$(HQL="$HQL" python3 -c 'import json,os; print(json.dumps({"query":{"kind":"HogQLQuery","query":os.environ["HQL"]}}))')"
 
-curl -sS \
+curl -sS --fail-with-body \
   -H "Authorization: Bearer $POSTHOG_PERSONAL_API_KEY" \
   -H "Content-Type: application/json" \
   -X POST "$API_HOST/api/projects/@current/query/" \

@@ -2,7 +2,7 @@
 name: posthog-query
 description: Use when checking PostHog analytics for this project — resume downloads, visitor geolocation, session/funnel reconstruction, or any ad-hoc HogQL query. Covers the EU query endpoint, the @current project trick, the narrow-scope personal API key, and filtering out self/dev traffic.
 user-invocable: true
-allowed-tools: Bash(bash *) Bash(.claude/skills/posthog-query/*) Bash(curl *) Bash(python3 *) Bash(jq *) Bash(source *) Read Grep Glob
+allowed-tools: Bash(.claude/skills/posthog-query/*) Bash(jq *) Read Grep Glob
 ---
 
 # PostHog Query
