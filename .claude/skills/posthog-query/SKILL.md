@@ -57,11 +57,13 @@ ORDER BY timestamp ASC LIMIT 300" | jq '.results'
 
 ## Filtering self / dev traffic
 
-Most events are Ollie's own testing. Exclude them before calling anything a real lead:
+Most events are your own testing, not real visitors. Exclude them before calling anything a lead:
 
-- Dev geo: `$geoip_city_name` in Cape Town / Johannesburg.
-- Dev referrers: `$referrer` containing `vercel.app` (preview deploys) or `github.com/olliegilbey`.
-- **VPN self-tests:** "foreign" downloads that land on an application-submission day are usually Ollie checking the live site via Nord VPN (e.g. a London exit), not a real visitor. Cross-check the date against `~/jarvis/projects/applications` before concluding.
+- **Dev locations:** filter out the cities you develop/test from (`$geoip_city_name`).
+- **Dev referrers:** filter out preview-deploy referrers (`$referrer` containing `vercel.app`) and links originating from your own repo.
+- **VPN self-tests:** a download from an unexpected country is often you checking the live site through a VPN — especially if it coincides with your own activity that day — not a real visitor. Confirm against your own records before concluding it's a lead.
+
+Keep the specific markers (your dev cities, personal paths, VPN habits) in local/private notes, **not** in this file — this is a public repo (see `AGENTS.md`: no PII).
 
 ## Common mistakes
 
