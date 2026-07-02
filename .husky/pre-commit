@@ -93,6 +93,27 @@ printf "${GREEN}✅ Phase 1.5 complete: staged files formatted${NC}\n"
 echo ""
 
 # ============================================
+# PHASE 1.6: PERSONAL-MARKER SCAN (<1s)
+# Personal PII guardrail installed from ~/dotfiles. Husky sets a local
+# hooksPath, so the global pre-commit dispatcher (and its pii-scan) never fires
+# for this repo — invoke it directly. Absent on CI / other clones → skipped.
+# Complements Phase 1's credential scanners: catches personal/operational
+# details they don't, before they reach this public repo.
+# Bypass (scoped, NOT --no-verify): ALLOW_PII="reason" git commit … or `pii-allow` inline.
+# ============================================
+printf "${BLUE}→ Phase 1.6/7: Personal-marker scan${NC}\n"
+PII_SCAN="${XDG_CONFIG_HOME:-$HOME/.config}/git/hooks/pii-scan.sh"
+if [ -x "$PII_SCAN" ]; then
+  if ! "$PII_SCAN"; then
+    exit 1
+  fi
+  printf "${GREEN}✅ Phase 1.6 complete: No personal markers${NC}\n"
+else
+  printf "${GREEN}  ✓${NC} Personal-marker scan not installed (skipped)\n"
+fi
+echo ""
+
+# ============================================
 # PHASE 2: LINT + TYPECHECK (~5-10s)
 # Fast validation before expensive operations
 # ============================================
@@ -410,6 +431,7 @@ echo "  Duration: ${DURATION}s"
 echo ""
 echo "  Phases:"
 echo "    ✓ Secret scanning"
+echo "    ✓ Personal-marker scan"
 echo "    ✓ Lint & typecheck"
 if [ "$WASM_REBUILT" = true ]; then
   echo "    ✓ WASM rebuild"
