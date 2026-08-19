@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
 import { Navbar } from "@/components/ui/Navbar";
+import { Footer } from "@/components/ui/Footer";
 import { ThemeProvider } from "@/contexts/ThemeContext";
 import { PostHogProvider } from "@/lib/posthog-client";
 import { SpeedInsights } from "@vercel/speed-insights/next";
@@ -59,6 +60,7 @@ export default function RootLayout({
           <ThemeProvider>
             <Navbar />
             {children}
+            <Footer />
           </ThemeProvider>
           <SpeedInsights />
         </PostHogProvider>
