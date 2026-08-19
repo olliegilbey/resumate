@@ -19,8 +19,8 @@ export function Footer() {
   return (
     <footer className="w-full py-6 px-6">
       <p className="max-w-5xl mx-auto text-center text-xs text-slate-500 dark:text-slate-400">
-        ollie.gg is the website of OLLIE.GG LTD, registered in England &amp; Wales, Company No.
-        17374210. Registered office: 71-75 Shelton Street, Covent Garden, London, WC2H 9JQ.
+        OLLIE.GG LTD &middot; Registered in England &amp; Wales &middot; Company No. 17374210
+        &middot; Registered office: 71-75 Shelton Street, Covent Garden, London, WC2H 9JQ
       </p>
     </footer>
   );
